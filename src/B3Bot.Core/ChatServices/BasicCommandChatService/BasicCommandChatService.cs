@@ -34,7 +34,7 @@ namespace B3Bot.Core.ChatServices
 
                 var command = basicCommands.FirstOrDefault(w => w.Command.ToLower().Equals(splitMessage[0].ToLower()));
 
-                if (command.Value != null)
+                if (command != null)
                 {
                     if (chatMessage.IsModerator || chatMessage.IsBroadcaster)
                     {

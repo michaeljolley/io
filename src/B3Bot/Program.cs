@@ -16,6 +16,7 @@ namespace B3Bot
 
             var serviceProvider = new ServiceCollection()
                     .AddSingleton<IChatService, BasicCommandChatService>()
+                    .AddSingleton<IChatService, ShoutOutChatService>()
                     .AddSingleton(twitchClient)
                     .BuildServiceProvider();
 
