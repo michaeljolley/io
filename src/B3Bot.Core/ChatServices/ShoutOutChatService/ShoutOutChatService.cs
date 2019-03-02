@@ -1,4 +1,5 @@
-﻿using TwitchLib.Client;
+﻿using System.Threading.Tasks;
+using TwitchLib.Client;
 using TwitchLib.Client.Models;
 
 namespace B3Bot.Core.ChatServices
@@ -15,7 +16,7 @@ namespace B3Bot.Core.ChatServices
             twitchClient = applicationTwitchClient;
         }
 
-        public void ProcessMessage(ChatMessage chatMessage)
+        public async Task<bool> ProcessMessageAsync(ChatMessage chatMessage)
         {
             string message = chatMessage.Message;
 
@@ -23,15 +24,20 @@ namespace B3Bot.Core.ChatServices
             {
                 string[] splitMessage = message.Split(null);
 
-                if (splitMessage.Length == 2)
+                if (splitMessage[0].ToLower().Equals("!so"))
                 {
-                    twitchClient.SendMessage(Constants.TwitchChannel, string.Format(shoutoutFormat, splitMessage[1]));
-                }
-                else
-                {
-                    twitchClient.SendMessage(Constants.TwitchChannel, string.Format(invalidFormat, chatMessage.DisplayName));
+                    if (splitMessage.Length == 2)
+                    {
+                        twitchClient.SendMessage(Constants.TwitchChannel, string.Format(shoutoutFormat, splitMessage[1]));
+                    }
+                    else
+                    {
+                        twitchClient.SendMessage(Constants.TwitchChannel, string.Format(invalidFormat, chatMessage.DisplayName));
+                    }
+                    return true;
                 }
             }
+            return false;
         }
     }
 }

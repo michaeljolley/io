@@ -9,33 +9,39 @@ using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 
 using B3Bot.Core.ChatServices;
+using TwitchLib.Api;
+using System.Threading.Tasks;
 
 namespace B3Bot.Core
 {
     public class Bot
     {
         private readonly TwitchClient twitchClient;
-     
+        private readonly TwitchAPI twitchAPI;
+
         private readonly IServiceProvider serviceProvider;
 
         public Bot(IServiceProvider applicationServiceProvider)
         {
             serviceProvider = applicationServiceProvider;
 
-            ConnectionCredentials credentials = new ConnectionCredentials(Constants.TwitchUsername, Constants.TwitchAccessToken);
-
             twitchClient = applicationServiceProvider.GetService<TwitchClient>();
+            twitchAPI = applicationServiceProvider.GetService<TwitchAPI>();
 
+            ConnectionCredentials credentials = new ConnectionCredentials(Constants.TwitchUsername, Constants.TwitchAccessToken);
             twitchClient.Initialize(credentials, Constants.TwitchChannel);
 
             twitchClient.OnLog += Client_OnLog;
             twitchClient.OnJoinedChannel += Client_OnJoinedChannel;
-            twitchClient.OnMessageReceived += Client_OnMessageReceived;
+            twitchClient.OnMessageReceived += Client_OnMessageReceivedAsync;
             twitchClient.OnWhisperReceived += Client_OnWhisperReceived;
             twitchClient.OnNewSubscriber += Client_OnNewSubscriber;
             twitchClient.OnConnected += Client_OnConnected;
             
             twitchClient.Connect();
+
+            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
+            twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
         }
 
         private void Client_OnLog(object sender, OnLogArgs e)
@@ -53,12 +59,19 @@ namespace B3Bot.Core
             twitchClient.SendMessage(e.Channel, "Hi everyone! B3 engaged.  Enjoy the stream!");
         }
 
-        private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
+        private async void Client_OnMessageReceivedAsync(object sender, OnMessageReceivedArgs e)
         {
             IEnumerable<IChatService> chatServices = serviceProvider.GetServices<IChatService>();
-            foreach(IChatService chatService in chatServices)
+            bool isProcessed = false;
+
+            foreach (IChatService chatService in chatServices)
             {
-                chatService.ProcessMessage(e.ChatMessage);
+                isProcessed = await chatService.ProcessMessageAsync(e.ChatMessage);
+
+                if (isProcessed)
+                {
+                    break;
+                }
             }
         }
 

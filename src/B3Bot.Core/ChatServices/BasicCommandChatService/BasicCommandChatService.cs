@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-
+using System.Threading.Tasks;
 using TwitchLib.Client;
 using TwitchLib.Client.Models;
 
@@ -24,7 +24,7 @@ namespace B3Bot.Core.ChatServices
             twitchClient = applicationTwitchClient;
         }
 
-        public void ProcessMessage(ChatMessage chatMessage)
+        public async Task<bool> ProcessMessageAsync(ChatMessage chatMessage)
         {
             string message = chatMessage.Message;
 
@@ -45,8 +45,10 @@ namespace B3Bot.Core.ChatServices
                     }
 
                     twitchClient.SendMessage(Constants.TwitchChannel, command.Value);
+                    return true;
                 }
             }
+            return false;
         }
     }
 }
