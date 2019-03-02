@@ -4,15 +4,15 @@ WORKDIR /app
 
 FROM microsoft/dotnet:2.2-sdk-stretch AS build
 WORKDIR /src
-COPY ["src/B3Bot/B3Bot.csproj", "src/B3Bot/"]
-COPY ["src/B3Bot.Core/B3Bot.Core.csproj", "src/B3Bot.Core/"]
-RUN dotnet restore "src/B3Bot/B3Bot.csproj"
+COPY src/B3Bot/B3Bot.csproj src/B3Bot/
+COPY src/B3Bot.Core/B3Bot.Core.csproj src/B3Bot.Core/
+RUN dotnet restore src/B3Bot/B3Bot.csproj
 COPY . .
-WORKDIR "/src/src/B3Bot"
-RUN dotnet build "B3Bot.csproj" -c Release -o /app
+WORKDIR /src/src/B3Bot
+RUN dotnet build B3Bot.csproj -c Release -o /app
 
 FROM build AS publish
-RUN dotnet publish "B3Bot.csproj" -c Release -o /app
+RUN dotnet publish B3Bot.csproj -c Release -o /app
 
 FROM base AS final
 WORKDIR /app
