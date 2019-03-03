@@ -1,8 +1,8 @@
-FROM microsoft/dotnet:2.2-runtime AS base
+FROM microsoft/dotnet:2.2-runtime-stretch-slim AS base
 WORKDIR /app
 
 
-FROM microsoft/dotnet:2.2-sdk AS build
+FROM microsoft/dotnet:2.2-sdk-stretch AS build
 WORKDIR /src
 COPY src/B3Bot/B3Bot.csproj src/B3Bot/
 COPY src/B3Bot.Core/B3Bot.Core.csproj src/B3Bot.Core/
