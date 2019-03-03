@@ -44,7 +44,7 @@ namespace B3Bot.Core.ChatServices
                             {
                                 upTimeValueMessage = $"{uptime.Value.Hours} hours and ";
                             }
-                            upTimeValueMessage += $"{uptime.Value.Minutes} minutes.";
+                            upTimeValueMessage += $"{uptime.Value.Minutes} minutes";
 
                             string followerMessage = "";
                             if (chatMessage.UserId != channelUser.Id)
