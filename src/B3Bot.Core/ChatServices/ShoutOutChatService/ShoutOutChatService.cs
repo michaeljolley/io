@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using TwitchLib.Client;
 using TwitchLib.Client.Models;
 
@@ -14,6 +15,14 @@ namespace B3Bot.Core.ChatServices
         public ShoutOutChatService(TwitchClient applicationTwitchClient)
         {
             twitchClient = applicationTwitchClient;
+        }
+
+        public List<ChatCommand> AvailableCommands()
+        {
+            return new List<ChatCommand>()
+            {
+                new ChatCommand("!so", "!so {streamer's username}", true)
+            };
         }
 
         public async Task<bool> ProcessMessageAsync(ChatMessage chatMessage)

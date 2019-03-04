@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
+using TwitchLib.Api;
 using TwitchLib.Client;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 
 using B3Bot.Core.ChatServices;
-using TwitchLib.Api;
-using System.Threading.Tasks;
+using B3Bot.Core.TimedServices;
 
 namespace B3Bot.Core
 {
@@ -56,7 +55,14 @@ namespace B3Bot.Core
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            twitchClient.SendMessage(e.Channel, "Hi everyone! B3 engaged.  Enjoy the stream!");
+            IEnumerable<ITimedService> timedServices = serviceProvider.GetServices<ITimedService>();
+         
+            foreach (ITimedService timedService in timedServices)
+            {
+                timedService.Initialize();
+            }
+
+            twitchClient.SendMessage(e.Channel, "Hi everyone! B3Bot engaged.  Enjoy the stream!  Remember, you can always use !commands to learn what I can do.");
         }
 
         private async void Client_OnMessageReceivedAsync(object sender, OnMessageReceivedArgs e)

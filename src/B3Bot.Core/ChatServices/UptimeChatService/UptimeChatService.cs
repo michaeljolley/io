@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TwitchLib.Api;
@@ -20,6 +21,14 @@ namespace B3Bot.Core.ChatServices
         {
             twitchClient = applicationTwitchClient;
             twitchAPI = applicationTwitchAPI;
+        }
+
+        public List<ChatCommand> AvailableCommands()
+        {
+            return new List<ChatCommand>()
+            {
+                new ChatCommand("!uptime", null, true)
+            };
         }
 
         public async Task<bool> ProcessMessageAsync(ChatMessage chatMessage)
