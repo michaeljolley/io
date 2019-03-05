@@ -46,8 +46,8 @@ namespace B3Bot.Core.ChatServices
                         if (splitMessage.Length > 1 && !command.IsLocked)
                         {
                             command.Value = string.Join(" ", splitMessage.Skip(1).Take(splitMessage.Length - 1));
+                            return true;
                         }
-                        return true;
                     }
 
                     twitchClient.SendMessage(Constants.TwitchChannel, command.Value);
