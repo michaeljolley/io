@@ -20,6 +20,7 @@ namespace B3Bot
                     .AddSingleton<IChatService, BasicCommandChatService>()
                     .AddSingleton<IChatService, ShoutOutChatService>()
                     .AddSingleton<IChatService, UptimeChatService>()
+                    .AddSingleton<IChatService, EmojiChatService>()
                     .AddSingleton<IChatService, HelpChatService>()
                     .AddSingleton(twitchAPI)
                     .AddSingleton(twitchClient)

@@ -10,13 +10,16 @@ using TwitchLib.Client.Models;
 
 using B3Bot.Core.ChatServices;
 using B3Bot.Core.TimedServices;
+using Microsoft.Extensions.Hosting;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace B3Bot.Core
 {
-    public class Bot
+    public class Bot : IHostedService
     {
-        private readonly TwitchClient twitchClient;
-        private readonly TwitchAPI twitchAPI;
+        private TwitchClient twitchClient;
+        private TwitchAPI twitchAPI;
 
         private readonly IServiceProvider serviceProvider;
 
@@ -24,8 +27,13 @@ namespace B3Bot.Core
         {
             serviceProvider = applicationServiceProvider;
 
-            twitchClient = applicationServiceProvider.GetService<TwitchClient>();
-            twitchAPI = applicationServiceProvider.GetService<TwitchAPI>();
+            ConfigureBot();
+        }
+
+        private void ConfigureBot()
+        {
+            twitchClient = serviceProvider.GetService<TwitchClient>();
+            twitchAPI = serviceProvider.GetService<TwitchAPI>();
 
             ConnectionCredentials credentials = new ConnectionCredentials(Constants.TwitchUsername, Constants.TwitchAccessToken);
             twitchClient.Initialize(credentials, Constants.TwitchChannel);
@@ -36,11 +44,14 @@ namespace B3Bot.Core
             twitchClient.OnWhisperReceived += Client_OnWhisperReceived;
             twitchClient.OnNewSubscriber += Client_OnNewSubscriber;
             twitchClient.OnConnected += Client_OnConnected;
-            
+
             twitchClient.Connect();
 
-            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
-            twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
+            if (twitchAPI != null)
+            { 
+                twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
+                twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
+            }
         }
 
         private void Client_OnLog(object sender, OnLogArgs e)
@@ -96,6 +107,24 @@ namespace B3Bot.Core
             { 
                 twitchClient.SendMessage(e.Channel, $"{e.Subscriber.DisplayName}, thanks so much for the sub!");
             }
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+
+            }
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (twitchClient.IsConnected)
+            {
+                twitchClient.Disconnect();
+            }
+
+            return Task.CompletedTask;
         }
     }
 }
