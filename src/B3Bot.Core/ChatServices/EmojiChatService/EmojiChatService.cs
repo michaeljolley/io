@@ -36,6 +36,7 @@ namespace B3Bot.Core.ChatServices
                     foreach (EmoteSet.Emote emote in emotes)
                     {
                         await _overlayHubContext.Clients.All.SendAsync("NewEmoji", emote.ImageUrl);
+                        await Task.Delay(300);
                     }
 
                     return true;
