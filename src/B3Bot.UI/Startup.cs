@@ -31,8 +31,15 @@ namespace B3Bot.UI
         public void ConfigureServices(IServiceCollection services)
         {
             TwitchClient twitchClient = new TwitchClient();
+            TwitchAPI twitchAPI = new TwitchAPI();
 
-            services.AddSingleton<IChatService, EmojiChatService>()
+            services
+                    .AddSingleton<IChatService, BasicCommandChatService>()
+                    .AddSingleton<IChatService, ShoutOutChatService>()
+                    .AddSingleton<IChatService, UptimeChatService>()
+                    .AddSingleton<IChatService, EmojiChatService>()
+                    .AddSingleton<IChatService, HelpChatService>()
+                    .AddSingleton(twitchAPI)
                     .AddSingleton(twitchClient);
 
             services.AddHostedService<Bot>();

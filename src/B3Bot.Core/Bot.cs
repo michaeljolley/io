@@ -47,11 +47,8 @@ namespace B3Bot.Core
 
             twitchClient.Connect();
 
-            if (twitchAPI != null)
-            { 
-                twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
-                twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
-            }
+            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
+            twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
         }
 
         private void Client_OnLog(object sender, OnLogArgs e)
@@ -72,8 +69,6 @@ namespace B3Bot.Core
             {
                 timedService.Initialize();
             }
-
-            twitchClient.SendMessage(e.Channel, "Hi everyone! B3Bot engaged.  Enjoy the stream!  Remember, you can always use !commands to learn what I can do.");
         }
 
         private async void Client_OnMessageReceivedAsync(object sender, OnMessageReceivedArgs e)
@@ -113,8 +108,12 @@ namespace B3Bot.Core
         {
             while (true)
             {
-
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
