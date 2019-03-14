@@ -108,10 +108,10 @@ namespace B3Bot.Core
         {
             while (true)
             {
-                //if (cancellationToken.IsCancellationRequested)
-                //{
-                //    break;
-                //}
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
             return Task.CompletedTask;
         }

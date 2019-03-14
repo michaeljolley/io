@@ -11,23 +11,23 @@ namespace B3Bot.Core
 {
     public class StreamAnalytics
     {
-        private readonly TwitchAPI twitchAPI;
+        private readonly TwitchAPI _twitchAPI;
 
-        public StreamAnalytics()
+        public StreamAnalytics(TwitchAPI twitchAPI)
         {
-            twitchAPI = new TwitchAPI();
-            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
-            twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
+            _twitchAPI = twitchAPI;
+            _twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
+            _twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
         }
 
         public async Task<int> GetFollowerCountAsync()
         {
-            var users = await twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
+            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
             if (users.Matches.Count() > 0)
             {
                 var channelUser = users.Matches[0];
 
-                List<ChannelFollow> followers = await twitchAPI.V5.Channels.GetAllFollowersAsync(channelUser.Id);
+                List<ChannelFollow> followers = await _twitchAPI.V5.Channels.GetAllFollowersAsync(channelUser.Id);
                 return followers.Count();
             }
 
@@ -36,12 +36,12 @@ namespace B3Bot.Core
 
         public async Task<int> GetViewerCountAsync()
         {
-            var users = await twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
+            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
             if (users.Matches.Count() > 0)
             {
                 var channelUser = users.Matches[0];
 
-                StreamByUser stream = await twitchAPI.V5.Streams.GetStreamByUserAsync(channelUser.Id);
+                StreamByUser stream = await _twitchAPI.V5.Streams.GetStreamByUserAsync(channelUser.Id);
                 if (stream != null && stream.Stream != null)
                 {
                     return stream.Stream.Viewers;

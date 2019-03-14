@@ -5,6 +5,11 @@
     padding: 0;
 }
 
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 #container {
     height: 100%;
     margin: 0;
@@ -19,4 +24,29 @@ img.emoji {
     display: block;
     left: 0;
     top: 0;
+}
+
+.chatBox {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+}
+
+.chatMessage {
+    background: rgba(98, 56, 132, 1);
+    color: #fff;
+    font-family: Arial;
+    padding: 10px 20px;
+    font-size: 16px;
+    line-height: 1.4em;
+    margin-bottom: 5px;
+}
+
+.chatMessage .name {
+    font-weight: bold;
+}
+
+.chatMessage img.emote {
+    width: 20px
 }

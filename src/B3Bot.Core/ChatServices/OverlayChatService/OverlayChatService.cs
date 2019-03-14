@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using TwitchLib.Client;
 using TwitchLib.Client.Models;
 
 using Microsoft.AspNetCore.SignalR;
 using B3Bot.Core.Hubs;
+using B3Bot.Core.Models;
 
 namespace B3Bot.Core.ChatServices
 {
-    public class EmojiChatService : Hub, IChatService
+    public class OverlayChatService : Hub, IChatService
     {
         private IHubContext<OverlayHub> _overlayHubContext { get; }
 
-        public EmojiChatService(IHubContext<OverlayHub> overlayHubContext)
+        public OverlayChatService(IHubContext<OverlayHub> overlayHubContext)
         {
             _overlayHubContext = overlayHubContext;
         }
@@ -28,6 +28,10 @@ namespace B3Bot.Core.ChatServices
 
             if (!string.IsNullOrEmpty(message))
             {
+                // Send chat message to the overlay to display
+                await _overlayHubContext.Clients.All.SendAsync("NewChatMessage", new ChatHubMessage(chatMessage));
+
+                // Send any emotes to the window as well
                 EmoteSet emoteSet = chatMessage.EmoteSet;
                 if (emoteSet != null && emoteSet.Emotes.Count > 0)
                 {

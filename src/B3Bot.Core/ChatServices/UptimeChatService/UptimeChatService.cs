@@ -16,6 +16,7 @@ namespace B3Bot.Core.ChatServices
         private readonly TwitchAPI twitchAPI;
 
         private const string upTimeResponse = "{0}, the stream has been up for {1}. {2}";
+        private const string offlineResponse = "{0}, the stream is currently offline.  Hit follow to be notified when we go live!";
 
         public UptimeChatService(TwitchClient applicationTwitchClient, TwitchAPI applicationTwitchAPI)
         {
@@ -41,35 +42,50 @@ namespace B3Bot.Core.ChatServices
 
                 if (splitMessage[0].ToLower().Equals("!uptime"))
                 {
-                    var users = await twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-                    if (users.Matches.Count() > 0)
+                    try
                     {
-                        var channelUser = users.Matches[0];
-                        TimeSpan? uptime = twitchAPI.V5.Streams.GetUptimeAsync(channelUser.Id).Result;
-                        if (uptime.HasValue)
+                        var users = await twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
+                        if (users.Matches.Count() > 0)
                         {
-                            string upTimeValueMessage = "";
-                            if (uptime.Value.Hours > 0)
-                            {
-                                upTimeValueMessage = $"{uptime.Value.Hours} hours and ";
-                            }
-                            upTimeValueMessage += $"{uptime.Value.Minutes} minutes";
+                            var channelUser = users.Matches[0];
 
-                            string followerMessage = "";
-                            if (chatMessage.UserId != channelUser.Id)
-                            {
-                                UserFollow userFollow = await twitchAPI.V5.Users.CheckUserFollowsByChannelAsync(chatMessage.UserId, channelUser.Id);
-
-                                if (userFollow == null)
+                            if (await twitchAPI.V5.Streams.BroadcasterOnlineAsync(channelUser.Id))
+                            { 
+                                TimeSpan? uptime = twitchAPI.V5.Streams.GetUptimeAsync(channelUser.Id).Result;
+                                if (uptime.HasValue)
                                 {
-                                    followerMessage = "Give us a follow so you won't miss a minute next time.";
+                                    string upTimeValueMessage = "";
+                                    if (uptime.Value.Hours > 0)
+                                    {
+                                        upTimeValueMessage = $"{uptime.Value.Hours} hours and ";
+                                    }
+                                    upTimeValueMessage += $"{uptime.Value.Minutes} minutes";
+
+                                    string followerMessage = "";
+                                    if (chatMessage.UserId != channelUser.Id)
+                                    {
+                                        UserFollow userFollow = await twitchAPI.V5.Users.CheckUserFollowsByChannelAsync(chatMessage.UserId, channelUser.Id);
+
+                                        if (userFollow == null)
+                                        {
+                                            followerMessage = "Give us a follow so you won't miss a minute next time.";
+                                        }
+                                    }
+
+                                    string response = string.Format(upTimeResponse, chatMessage.DisplayName, upTimeValueMessage, followerMessage);
+                            
+                                    twitchClient.SendMessage(Constants.TwitchChannel, response);
                                 }
                             }
-
-                            string response = string.Format(upTimeResponse, chatMessage.DisplayName, upTimeValueMessage, followerMessage);
-                            
-                            twitchClient.SendMessage(Constants.TwitchChannel, response);
+                            else
+                            {
+                                twitchClient.SendMessage(Constants.TwitchChannel, offlineResponse);
+                            }
                         }
+                    }
+                    catch (Exception ex)
+                    {
+
                     }
 
                     return true;

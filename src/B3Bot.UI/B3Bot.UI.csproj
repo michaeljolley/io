@@ -17,11 +17,6 @@
 
 
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <ProjectReference Include="..\B3Bot.Core\B3Bot.Core.csproj" />
   </ItemGroup>
 

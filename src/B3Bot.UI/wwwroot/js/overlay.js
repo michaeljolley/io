@@ -17,6 +17,24 @@ connection.on("NewEmoji", function (emojiUrl) {
     }, 10000, id);
 });
 
+connection.on("NewChatMessage", function (chatMessage) {
+    var msg = document.createElement('div');
+
+    var id = +(new Date());
+    msg.id = 'msg' + id.toString();
+
+    msg.classList.add('chatMessage');
+    msg.classList.add('animated');
+    msg.classList.add('lightSpeedIn');
+    msg.innerHTML = chatMessage.hubMessage;
+    $(".chatBox").prepend(msg);
+
+    setTimeout(function (id) {
+        $('#msg' + id).removeClass('lightSpeedIn');
+        $('#msg' + id).addClass('lightSpeedOut');
+    }, 60000, id);
+});
+
 connection.start();
 
 (function ($, window, undefined) {
