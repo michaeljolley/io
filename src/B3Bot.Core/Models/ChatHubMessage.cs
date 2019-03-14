@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 using TwitchLib.Client.Models;
@@ -64,7 +65,17 @@ namespace B3Bot.Core.Models
                 if (ChatMessage.EmoteSet != null &&
                     ChatMessage.EmoteSet.Emotes.Count > 0)
                 {
-                    foreach (EmoteSet.Emote emote in ChatMessage.EmoteSet.Emotes)
+                    // TODO: Need to consider the meh emote with urls.
+
+                    EmoteSet.Emote mehEmote = ChatMessage.EmoteSet.Emotes.FirstOrDefault(a => a.Name.Equals(":/"));
+                    if (mehEmote != null)
+                    {
+                        result = result.Replace(mehEmote.Name, string.Format(emoteImageTag, mehEmote.ImageUrl));
+                    }
+
+                    List<EmoteSet.Emote> nonMehEmotes = ChatMessage.EmoteSet.Emotes.Where(w => !w.Name.Equals(":/")).ToList();
+
+                    foreach (EmoteSet.Emote emote in nonMehEmotes)
                     {
                         result = result.Replace(emote.Name, string.Format(emoteImageTag, emote.ImageUrl));
                     }
