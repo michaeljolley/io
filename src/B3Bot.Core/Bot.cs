@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 using TwitchLib.Api;
 using TwitchLib.Client;
 using TwitchLib.Client.Enums;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
+using TwitchLib.Communication.Events;
 
 using B3Bot.Core.ChatServices;
 using B3Bot.Core.TimedServices;
-using Microsoft.Extensions.Hosting;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace B3Bot.Core
 {
@@ -40,16 +41,20 @@ namespace B3Bot.Core
 
             twitchClient.OnLog += Client_OnLog;
             twitchClient.OnJoinedChannel += Client_OnJoinedChannel;
+            twitchClient.OnConnected += Client_OnConnected;
+            twitchClient.OnDisconnected += Client_OnDisconnected;
+
             twitchClient.OnMessageReceived += Client_OnMessageReceivedAsync;
             twitchClient.OnWhisperReceived += Client_OnWhisperReceived;
+            twitchClient.OnRaidNotification += Client_OnRaidNotification;
             twitchClient.OnNewSubscriber += Client_OnNewSubscriber;
-            twitchClient.OnConnected += Client_OnConnected;
 
             twitchClient.Connect();
 
             twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
             twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
         }
+
 
         private void Client_OnLog(object sender, OnLogArgs e)
         {
@@ -59,6 +64,11 @@ namespace B3Bot.Core
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
             Console.WriteLine($"Connected to {e.AutoJoinChannel}");
+        }
+
+        private void Client_OnDisconnected(object sender, OnDisconnectedEventArgs e)
+        {
+            Console.WriteLine($"Disconnected from chat");
         }
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
@@ -102,6 +112,10 @@ namespace B3Bot.Core
             { 
                 twitchClient.SendMessage(e.Channel, $"{e.Subscriber.DisplayName}, thanks so much for the sub!");
             }
+        }
+
+        private void Client_OnRaidNotification(object sender, OnRaidNotificationArgs e)
+        {
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
