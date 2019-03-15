@@ -24,14 +24,14 @@ connection.on("NewChatMessage", function (chatMessage) {
     msg.id = 'msg' + id.toString();
 
     msg.classList.add('chatMessage');
-    msg.classList.add('animated');
-    msg.classList.add('lightSpeedIn');
+    msg.classList.add('hinge-in-right');
     msg.innerHTML = chatMessage.hubMessage;
     $(".chatBox").prepend(msg);
 
     setTimeout(function (id) {
-        $('#msg' + id).removeClass('lightSpeedIn');
-        $('#msg' + id).addClass('lightSpeedOut');
+        $('#msg' + id).removeClass('hinge-in-right');
+        $('#msg' + id).addClass('swing-out-right-bck');
+        $('#msg' + id).remove();
     }, 60000, id);
 });
 
