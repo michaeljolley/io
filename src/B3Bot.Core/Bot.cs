@@ -52,9 +52,9 @@ namespace B3Bot.Core
             twitchClient.Connect();
 
             twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
-            twitchAPI.Settings.AccessToken = Constants.TwitchAPIAccessToken;
+            twitchAPI.Settings.Secret = Constants.TwitchAPIClientSecret;
+            twitchAPI.Settings.AccessToken = Constants.TwitchAccessToken;
         }
-
 
         private void Client_OnLog(object sender, OnLogArgs e)
         {

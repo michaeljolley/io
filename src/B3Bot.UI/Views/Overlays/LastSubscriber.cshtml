@@ -1,9 +1,9 @@
-﻿@model CountModel
+﻿@model StreamUserModel
 
 @section Styles  {
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <style>
-        body {
+        body {     
             font-family: 'Roboto', sans-serif;
             font-size: 24px;
             font-weight: 600;
@@ -35,11 +35,14 @@
 }
 
 <div class="title">
-    viewers
+    last subscriber
 </div>
-<div class="user">
-    <div class="name">@Model.Value.ToString("N0")</div>
-</div>
+@if (Model.ProfileImageUrl != null) { 
+    <div class="user">
+        <img src="@Model.ProfileImageUrl" />
+        <div class="name">@Model.DisplayName</div>
+    </div>
+}
 
 @section Scripts  {
     <script>setTimeout(function () { location.reload(); }, @Model.RefreshMilliseconds);</script>

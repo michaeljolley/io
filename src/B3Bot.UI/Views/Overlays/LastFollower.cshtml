@@ -1,4 +1,4 @@
-﻿@model CountModel
+﻿@model StreamUserModel
 
 @section Styles  {
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
@@ -35,10 +35,11 @@
 }
 
 <div class="title">
-    viewers
+    last follower
 </div>
 <div class="user">
-    <div class="name">@Model.Value.ToString("N0")</div>
+    <img src="@Model.ProfileImageUrl" />
+    <div class="name">@Model.DisplayName</div>
 </div>
 
 @section Scripts  {

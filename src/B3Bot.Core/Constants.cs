@@ -9,6 +9,6 @@ namespace B3Bot.Core
         public static string TwitchChannel = Environment.GetEnvironmentVariable("twitch_channel");
 
         public static string TwitchAPIClientId= Environment.GetEnvironmentVariable("client_id");
-        public static string TwitchAPIAccessToken = Environment.GetEnvironmentVariable("api_access_token");
+        public static string TwitchAPIClientSecret = Environment.GetEnvironmentVariable("client_secret");
     }
 }

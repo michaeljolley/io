@@ -32,10 +32,10 @@ namespace B3Bot.UI
             services
                     .AddSingleton(twitchAPI)
                     .AddSingleton(twitchClient)
+                    .AddSingleton<IChatService, OverlayChatService>()
                     .AddSingleton<IChatService, BasicCommandChatService>()
                     .AddSingleton<IChatService, ShoutOutChatService>()
                     .AddSingleton<IChatService, UptimeChatService>()
-                    .AddSingleton<IChatService, OverlayChatService>()
                     .AddSingleton<IChatService, HelpChatService>()
                     .AddSingleton<StreamAnalytics>();
 

@@ -17,24 +17,6 @@ connection.on("NewEmoji", function (emojiUrl) {
     }, 10000, id);
 });
 
-connection.on("NewChatMessage", function (chatMessage) {
-    var msg = document.createElement('div');
-
-    var id = +(new Date());
-    msg.id = 'msg' + id.toString();
-
-    msg.classList.add('chatMessage');
-    msg.classList.add('hinge-in-right');
-    msg.innerHTML = chatMessage.hubMessage;
-    $(".chatBox").prepend(msg);
-
-    setTimeout(function (id) {
-        $('#msg' + id).removeClass('hinge-in-right');
-        $('#msg' + id).addClass('swing-out-right-bck');
-        $('#msg' + id).remove();
-    }, 60000, id);
-});
-
 connection.start();
 
 (function ($, window, undefined) {
