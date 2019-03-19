@@ -5,7 +5,6 @@ EXPOSE 443
 
 FROM microsoft/dotnet:2.2-sdk AS build
 WORKDIR /src
-COPY . .
 COPY ["src/B3Bot.UI/B3Bot.UI.csproj", "src/B3Bot.UI/"]
 COPY ["src/B3Bot.Core/B3Bot.Core.csproj", "src/B3Bot.Core/"]
 RUN dotnet restore "src/B3Bot.UI/B3Bot.UI.csproj"
