@@ -19,7 +19,7 @@ namespace B3Bot.Core.ChatServices
 
         public List<ChatCommand> AvailableCommands()
         {
-            return null;
+            return new List<ChatCommand>();
         }
 
         public async Task<bool> ProcessMessageAsync(ChatMessage chatMessage)

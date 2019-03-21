@@ -59,15 +59,15 @@ namespace B3Bot.Core
 
             #region PubSub Registrations
 
-            twitchPubSub.OnPubSubServiceConnected += onPubSubServiceConnected;
-            twitchPubSub.OnListenResponse += onListenResponse;
-            twitchPubSub.OnStreamUp += onStreamUp;
-            twitchPubSub.OnStreamDown += onStreamDown;
+            //twitchPubSub.OnPubSubServiceConnected += onPubSubServiceConnected;
+            //twitchPubSub.OnListenResponse += onListenResponse;
+            //twitchPubSub.OnStreamUp += onStreamUp;
+            //twitchPubSub.OnStreamDown += onStreamDown;
 
-            twitchPubSub.OnFollow += OnFollow;
-            twitchPubSub.OnBitsReceived += OnBitsReceived;
-            twitchPubSub.OnChannelSubscription += OnChannelSubscription;
-            twitchPubSub.OnHost += OnHost;
+            //twitchPubSub.OnFollow += OnFollow;
+            //twitchPubSub.OnBitsReceived += OnBitsReceived;
+            //twitchPubSub.OnChannelSubscription += OnChannelSubscription;
+            //twitchPubSub.OnHost += OnHost;
 
             #endregion
 
