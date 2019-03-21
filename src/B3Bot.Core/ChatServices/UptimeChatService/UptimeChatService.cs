@@ -44,43 +44,37 @@ namespace B3Bot.Core.ChatServices
                 {
                     try
                     {
-                        var users = await twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-                        if (users.Matches.Count() > 0)
-                        {
-                            var channelUser = users.Matches[0];
-
-                            if (await twitchAPI.V5.Streams.BroadcasterOnlineAsync(channelUser.Id))
-                            { 
-                                TimeSpan? uptime = twitchAPI.V5.Streams.GetUptimeAsync(channelUser.Id).Result;
-                                if (uptime.HasValue)
-                                {
-                                    string upTimeValueMessage = "";
-                                    if (uptime.Value.Hours > 0)
-                                    {
-                                        upTimeValueMessage = $"{uptime.Value.Hours} hours and ";
-                                    }
-                                    upTimeValueMessage += $"{uptime.Value.Minutes} minutes";
-
-                                    string followerMessage = "";
-                                    if (chatMessage.UserId != channelUser.Id)
-                                    {
-                                        UserFollow userFollow = await twitchAPI.V5.Users.CheckUserFollowsByChannelAsync(chatMessage.UserId, channelUser.Id);
-
-                                        if (userFollow == null)
-                                        {
-                                            followerMessage = "Give us a follow so you won't miss a minute next time.";
-                                        }
-                                    }
-
-                                    string response = string.Format(upTimeResponse, chatMessage.DisplayName, upTimeValueMessage, followerMessage);
-                            
-                                    twitchClient.SendMessage(Constants.TwitchChannel, response);
-                                }
-                            }
-                            else
+                        if (await twitchAPI.V5.Streams.BroadcasterOnlineAsync(Constants.TwitchChannelId))
+                        { 
+                            TimeSpan? uptime = twitchAPI.V5.Streams.GetUptimeAsync(Constants.TwitchChannelId).Result;
+                            if (uptime.HasValue)
                             {
-                                twitchClient.SendMessage(Constants.TwitchChannel, offlineResponse);
+                                string upTimeValueMessage = "";
+                                if (uptime.Value.Hours > 0)
+                                {
+                                    upTimeValueMessage = $"{uptime.Value.Hours} hours and ";
+                                }
+                                upTimeValueMessage += $"{uptime.Value.Minutes} minutes";
+
+                                string followerMessage = "";
+                                if (chatMessage.UserId != Constants.TwitchChannelId)
+                                {
+                                    UserFollow userFollow = await twitchAPI.V5.Users.CheckUserFollowsByChannelAsync(chatMessage.UserId, Constants.TwitchChannelId);
+
+                                    if (userFollow == null)
+                                    {
+                                        followerMessage = "Give us a follow so you won't miss a minute next time.";
+                                    }
+                                }
+
+                                string response = string.Format(upTimeResponse, chatMessage.DisplayName, upTimeValueMessage, followerMessage);
+                            
+                                twitchClient.SendMessage(Constants.TwitchChannel, response);
                             }
+                        }
+                        else
+                        {
+                            twitchClient.SendMessage(Constants.TwitchChannel, string.Format(offlineResponse, chatMessage.DisplayName));
                         }
                     }
                     catch (Exception ex)

@@ -73,19 +73,13 @@ namespace B3Bot.Core
 
         public async Task<StreamUserModel> GetLastSubscriberAsync()
         {
-            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-            if (users.Matches.Count() > 0)
+            List<Subscription> subscribers = await _twitchAPI.V5.Channels.GetAllSubscribersAsync(Constants.TwitchChannelId);
+
+            var lastSubscriber = subscribers.Last();
+
+            if (lastSubscriber != null)
             {
-                var channelUser = users.Matches[0];
-                
-                List<Subscription> subscribers = await _twitchAPI.V5.Channels.GetAllSubscribersAsync(channelUser.Id);
-
-                var lastSubscriber = subscribers.Last();
-
-                if (lastSubscriber != null)
-                {
-                    return new StreamUserModel(lastSubscriber.User.DisplayName, lastSubscriber.User.Logo);
-                }
+                return new StreamUserModel(lastSubscriber.User.DisplayName, lastSubscriber.User.Logo);
             }
 
             return null;
