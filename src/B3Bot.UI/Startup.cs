@@ -12,6 +12,7 @@ using TwitchLib.Client;
 using B3Bot.Core;
 using B3Bot.Core.ChatServices;
 using B3Bot.Core.Hubs;
+using B3Bot.Core.PubSub;
 
 namespace B3Bot.UI
 {
@@ -37,9 +38,11 @@ namespace B3Bot.UI
                     .AddSingleton<IChatService, ShoutOutChatService>()
                     .AddSingleton<IChatService, UptimeChatService>()
                     .AddSingleton<IChatService, HelpChatService>()
-                    .AddSingleton<StreamAnalytics>();
+                    .AddSingleton<StreamAnalytics>()
+                    ;
 
             services.AddHostedService<Bot>();
+            services.AddHostedService<BotPubSub>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 

@@ -27,6 +27,11 @@ namespace B3Bot.UI.Controllers
             return View();
         }
 
+        public IActionResult Alerts()
+        {
+            return View();
+        }
+
         public async Task<IActionResult> Followers()
         {
             int.TryParse(Environment.GetEnvironmentVariable("followerCountRefresh"), out int refreshFrequency);
