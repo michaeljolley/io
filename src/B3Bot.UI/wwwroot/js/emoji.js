@@ -1,8 +1,10 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/b3BotHub").build();
+var connection = new signalR.HubConnectionBuilder()
+    .withUrl("/b3BotHub")
+    .build();
 
-connection.on("NewEmoji", function (emojiUrl) {
+connection.on("ReceiveNewEmoji", function (emojiUrl) {
     var img = document.createElement("img");
     var id = +(new Date());
     img.src = emojiUrl;
@@ -17,7 +19,19 @@ connection.on("NewEmoji", function (emojiUrl) {
     }, 10000, id);
 });
 
+connection.onclose(async () => {
+    await start();
+});
+
 connection.start();
+
+async function start() {
+    try {
+        await connection.start();
+    } catch (err) {
+        setTimeout(() => start(), 5000);
+    }
+}
 
 (function ($, window, undefined) {
     $.fn.marqueeify = function (options) {

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Api;
+using TwitchLib.Api.Helix.Models.Users;
 using TwitchLib.Api.V5.Models.Channels;
 using TwitchLib.Api.V5.Models.Streams;
 using TwitchLib.Api.V5.Models.Subscriptions;
@@ -15,6 +16,9 @@ namespace B3Bot.Core
     {
         private readonly TwitchAPI _twitchAPI;
 
+        private string _lastFollowerId;
+        private StreamUserModel _lastFollower;
+
         public StreamAnalytics(TwitchAPI twitchAPI)
         {
             _twitchAPI = twitchAPI;
@@ -23,15 +27,13 @@ namespace B3Bot.Core
             _twitchAPI.Settings.AccessToken = Constants.TwitchAccessToken;
         }
 
-        public async Task<int> GetFollowerCountAsync()
+        public async Task<long> GetFollowerCountAsync()
         {
-            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-            if (users.Matches.Count() > 0)
-            {
-                var channelUser = users.Matches[0];
+            var followers = await _twitchAPI.Helix.Users.GetUsersFollowsAsync(toId: Constants.TwitchChannelId);
 
-                List<ChannelFollow> followers = await _twitchAPI.V5.Channels.GetAllFollowersAsync(channelUser.Id);
-                return followers.Count();
+            if (followers != null)
+            {
+                return followers.TotalFollows;
             }
 
             return 0;
@@ -39,33 +41,50 @@ namespace B3Bot.Core
 
         public async Task<int> GetViewerCountAsync()
         {
-            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-            if (users.Matches.Count() > 0)
-            {
-                var channelUser = users.Matches[0];
+            var streams = await _twitchAPI.Helix.Streams.GetStreamsAsync(userIds: new List<string>() { Constants.TwitchChannelId });
 
-                StreamByUser stream = await _twitchAPI.V5.Streams.GetStreamByUserAsync(channelUser.Id);
-                if (stream != null && stream.Stream != null)
-                {
-                    return stream.Stream.Viewers;
-                }
+            if (streams.Streams != null &&
+                streams.Streams.Count() > 0)
+            {
+                var channelStream = streams.Streams[0];
+
+                return channelStream.ViewerCount;
             }
 
             return 0;
         }
 
+        public async Task<User> GetUserAsync(string userId)
+        {
+            var users = await _twitchAPI.Helix.Users.GetUsersAsync(new List<string>() { userId }, null, Constants.TwitchAccessToken);
+            if (users != null &&
+                users.Users.Count() > 0)
+            {
+                var user = users.Users.First();
+                return user;
+            }
+            return null;
+        }
+
         public async Task<StreamUserModel> GetLastFollowerAsync()
         {
-            var users = await _twitchAPI.V5.Users.GetUserByNameAsync(Constants.TwitchChannel);
-            if (users.Matches.Count() > 0)
+            var followers = await _twitchAPI.Helix.Users.GetUsersFollowsAsync(toId: Constants.TwitchChannelId, first: 1);
+                
+            if (followers != null &&
+                followers.Follows.Count() > 0)
             {
-                var channelUser = users.Matches[0];
+                var lastFollower = followers.Follows.First();
 
-                List<ChannelFollow> followers = await _twitchAPI.V5.Channels.GetAllFollowersAsync(channelUser.Id);
+                if (_lastFollowerId != lastFollower.FromUserId)
+                {
+                    _lastFollowerId = lastFollower.FromUserId;
 
-                var lastFollower = followers.First();
+                    User userObj = await GetUserAsync(_lastFollowerId);
 
-                return new StreamUserModel(lastFollower.User.DisplayName, lastFollower.User.Logo);
+                    _lastFollower = new StreamUserModel(userObj.DisplayName, userObj.ProfileImageUrl);
+                }
+
+                return _lastFollower;
             }
 
             return null;

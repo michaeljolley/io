@@ -13,6 +13,8 @@ using B3Bot.Core;
 using B3Bot.Core.ChatServices;
 using B3Bot.Core.Hubs;
 using B3Bot.Core.PubSub;
+using B3Bot.Core.TimedServices;
+using Microsoft.AspNetCore.Http.Connections;
 
 namespace B3Bot.UI
 {
@@ -33,7 +35,6 @@ namespace B3Bot.UI
             services
                     .AddSingleton(twitchAPI)
                     .AddSingleton(twitchClient)
-                    .AddSingleton<IChatService, OverlayChatService>()
                     .AddSingleton<IChatService, BasicCommandChatService>()
                     .AddSingleton<IChatService, ShoutOutChatService>()
                     .AddSingleton<IChatService, UptimeChatService>()
@@ -41,6 +42,7 @@ namespace B3Bot.UI
                     .AddSingleton<StreamAnalytics>()
                     ;
 
+            services.AddHostedService<OverlayHostedService>();
             services.AddHostedService<Bot>();
             services.AddHostedService<BotPubSub>();
 

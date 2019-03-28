@@ -1,8 +1,10 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/b3BotHub").build();
+var connection = new signalR.HubConnectionBuilder()
+    .withUrl("/b3BotHub")
+    .build();
 
-connection.on("NewChatMessage", function (chatMessage) {
+connection.on("ReceiveNewChatMessage", function (chatMessage) {
     var msg = document.createElement('div');
 
     var id = +(new Date());
@@ -25,7 +27,19 @@ connection.on("NewChatMessage", function (chatMessage) {
     }, 50000, id);
 });
 
+connection.onclose(async () => {
+    await start();
+});
+
 connection.start();
+
+async function start() {
+    try {
+        await connection.start();
+    } catch (err) {
+        setTimeout(() => start(), 5000);
+    }
+}
 
 function calcPositions(newMessageDiv) {
     var nextBottom = 0;

@@ -5,38 +5,121 @@ using TwitchLib.Client.Models;
 using TwitchLib.PubSub.Events;
 using TwitchLib.PubSub.Models.Responses.Messages;
 
+using B3Bot.Core.Models;
+
 namespace B3Bot.Core.Hubs
 {
-    public class OverlayHub: Hub
+    public class OverlayHub : Hub
     {
-        public async Task NewEmojiAsync(string emojiUrl)
+        private readonly StreamAnalytics _streamAnalytics;
+
+        private static long _currentFollowerCount;
+        private static int _currentViewerCount;
+        private static StreamUserModel _lastFollower;
+        private static StreamUserModel _lastSubscriber;
+
+        public OverlayHub(StreamAnalytics streamAnalytics)
         {
-            await Clients.All.SendAsync("NewEmoji", emojiUrl);
+            _streamAnalytics = streamAnalytics;
         }
 
-        public async Task NewChatMessageAsync(ChatMessage chatMessage)
+        private async Task UpdateFollowerCountAsync()
         {
-            await Clients.All.SendAsync("NewChatMessage", chatMessage);
+            _currentFollowerCount = await _streamAnalytics.GetFollowerCountAsync();
         }
 
-        public async Task NewFollowerAsync(OnFollowArgs follower)
+        private async Task UpdateViewerCountAsync()
         {
-            await Clients.All.SendAsync("NewFollower", follower);
+            _currentViewerCount = await _streamAnalytics.GetViewerCountAsync();
         }
 
-        public async Task NewCheerAsync(OnBitsReceivedArgs bitsReceived)
+        private async Task UpdateLastFollowerAsync()
         {
-            await Clients.All.SendAsync("NewCheer", bitsReceived);
+            _lastFollower = await _streamAnalytics.GetLastFollowerAsync();
         }
 
-        public async Task NewSubscriptionAsync(ChannelSubscription subscription)
+        private async Task UpdateLastSubscriberAsync()
         {
-            await Clients.All.SendAsync("NewSubscription", subscription);
+            _lastSubscriber = await _streamAnalytics.GetLastSubscriberAsync();
         }
 
-        public async Task NewHostAsync(OnHostArgs host)
+        public async Task RequestFollowerCount()
         {
-            await Clients.All.SendAsync("NewHost", host);
+            if (_currentFollowerCount == 0)
+            {
+                await UpdateFollowerCountAsync();
+            }
+            await Clients.Client(Context.ConnectionId).SendAsync("ReceiveFollowerCount", _currentFollowerCount);
+        }
+
+        public async Task RequestViewerCount()
+        {
+            if (_currentViewerCount == 0)
+            {
+                await UpdateViewerCountAsync();
+            }
+            await Clients.Client(Context.ConnectionId).SendAsync("ReceiveViewerCount", _currentViewerCount);
+        }
+
+        public async Task RequestLastFollower()
+        {
+            if (_lastFollower == null)
+            {
+                await UpdateLastFollowerAsync(); 
+            }
+            await Clients.Client(Context.ConnectionId).SendAsync("ReceiveLastFollower", _lastFollower);
+        }
+
+        public async Task RequestLastSubscriber()
+        {
+            if (_lastSubscriber == null)
+            {
+                await UpdateLastSubscriberAsync();
+            }
+            await Clients.Client(Context.ConnectionId).SendAsync("ReceiveLastSubscriber", _lastSubscriber);
+        }
+
+        public Task BroadcastNewEmoji(string emojiUrl)
+        {
+            return Clients.All.SendAsync("ReceiveNewEmoji", emojiUrl);
+        }
+
+        public Task BroadcastNewChatMessage(ChatMessage chatMessage)
+        {
+            return Clients.All.SendAsync("ReceiveNewChatMessage", chatMessage);
+        }
+
+        public Task BroadcastFollowerCountChanged(long followerCount)
+        {
+            _currentFollowerCount = followerCount;
+            return Clients.All.SendAsync("ReceiveFollowerCount", _currentFollowerCount);
+        }
+        
+        public Task BroadcastViewerCountChanged(int viewerCount)
+        {
+            _currentViewerCount = viewerCount;
+            return Clients.All.SendAsync("ReceiveViewerCount", _currentViewerCount);
+        }
+
+        public Task BroadcastNewFollower(OnFollowArgs follower)
+        {
+            return Clients.All.SendAsync("ReceiveNewFollower", follower);
+        }
+
+        public Task BroadcastCheer(OnBitsReceivedArgs bitsReceived)
+        {
+            return Clients.All.SendAsync("ReceiveNewCheer", bitsReceived);
+        }
+
+        public async Task BroadcastSubscription(ChannelSubscription subscription)
+        {
+            await UpdateLastSubscriberAsync();
+            await Clients.All.SendAsync("ReceiveNewSubscription", _lastSubscriber);
+        }
+
+        public Task BroadcastHost(OnHostArgs host)
+        {
+            return Clients.All.SendAsync("ReceiveNewHost", host);
         }
     }
 }

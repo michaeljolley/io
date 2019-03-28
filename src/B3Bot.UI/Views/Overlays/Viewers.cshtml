@@ -1,46 +1,16 @@
-﻿@model CountModel
-
-@section Styles  {
+﻿@section Styles  {
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-            background: #47096B;
-        }
-
-        .title {
-            font-size: 14px;
-            text-transform: uppercase;
-            color: #AC8DC4;
-        }
-
-        .user {
-            margin-top: 3px;
-        }
-
-        .name {
-            position: absolute;
-            display: inline-block;
-            margin-left: 8px;
-        }
-
-        img {
-            width: 24px;
-            border: 1px solid #AC85C4;
-        }
-    </style>
+    <link href="~/css/counter.css" rel="stylesheet" />
 }
 
 <div class="title">
     viewers
 </div>
 <div class="user">
-    <div class="name">@Model.Value.ToString("N0")</div>
+    <div id="counter" class="name">0</div>
 </div>
 
 @section Scripts  {
-    <script>setTimeout(function () { location.reload(); }, @Model.RefreshMilliseconds);</script>
+    <script src="~/js/signalr.js"></script>
+    <script src="~/js/viewers.js"></script>
 }

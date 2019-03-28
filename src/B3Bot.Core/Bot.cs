@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -14,23 +15,26 @@ using TwitchLib.Communication.Events;
 
 using B3Bot.Core.ChatServices;
 using B3Bot.Core.TimedServices;
-using TwitchLib.PubSub;
-using TwitchLib.PubSub.Events;
-using Microsoft.AspNetCore.SignalR;
 using B3Bot.Core.Hubs;
+using B3Bot.Core.Models;
 
 namespace B3Bot.Core
 {
     public class Bot : IHostedService
     {
+        private readonly IServiceProvider serviceProvider;
+        private IHubContext<OverlayHub> _overlayHubContext { get; }
         private TwitchClient twitchClient;
         private TwitchAPI twitchAPI;
+        private StreamAnalytics _streamAnalytics;
 
-        private readonly IServiceProvider serviceProvider;
+        private bool isShuttingDown;
 
-        public Bot(IServiceProvider applicationServiceProvider)
+        public Bot(IServiceProvider applicationServiceProvider, IHubContext<OverlayHub> overlayHubContext)
         {
             serviceProvider = applicationServiceProvider;
+            _overlayHubContext = overlayHubContext;
+            _streamAnalytics = serviceProvider.GetService<StreamAnalytics>();
 
             ConfigureBot();
         }
@@ -79,16 +83,22 @@ namespace B3Bot.Core
         private void Client_OnDisconnected(object sender, OnDisconnectedEventArgs e)
         {
             Console.WriteLine($"Disconnected from chat");
+            
+            // if not shutting down on purpose, reconnect
+            if (!isShuttingDown)
+            {
+                twitchClient.Connect();
+            }
         }
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            IEnumerable<ITimedService> timedServices = serviceProvider.GetServices<ITimedService>();
+            //IEnumerable<ITimedService> timedServices = serviceProvider.GetServices<ITimedService>();
          
-            foreach (ITimedService timedService in timedServices)
-            {
-                timedService.Initialize();
-            }
+            //foreach (ITimedService timedService in timedServices)
+            //{
+            //    timedService.Initialize();
+            //}
         }
 
         private async void Client_OnMessageReceivedAsync(object sender, OnMessageReceivedArgs e)
@@ -105,6 +115,20 @@ namespace B3Bot.Core
                     break;
                 }
             }
+
+            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewChatMessage", new ChatHubMessage(e.ChatMessage));
+
+            EmoteSet emoteSet = e.ChatMessage.EmoteSet;
+            if (emoteSet != null && emoteSet.Emotes.Count > 0)
+            {
+                List<EmoteSet.Emote> emotes = emoteSet.Emotes;
+
+                foreach (EmoteSet.Emote emote in emotes)
+                {
+                    await _overlayHubContext.Clients.All.SendAsync("ReceiveNewEmoji", emote.ImageUrl);
+                    await Task.Delay(500);
+                }
+            }
         }
 
         private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
@@ -112,7 +136,7 @@ namespace B3Bot.Core
             twitchClient.SendWhisper(e.WhisperMessage.Username, $"Hey {e.WhisperMessage.Username}! I'm a bot.  I'm not great at whispering.");
         }
 
-        private void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e)
+        private async void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e)
         {
             if (e.Subscriber.SubscriptionPlan == SubscriptionPlan.Prime)
             {
@@ -122,6 +146,9 @@ namespace B3Bot.Core
             { 
                 twitchClient.SendMessage(e.Channel, $"{e.Subscriber.DisplayName}, thanks so much for the sub!");
             }
+
+            StreamUserModel lastSubscriber = await _streamAnalytics.GetLastSubscriberAsync();
+            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewSubscription", lastSubscriber);
         }
 
         private void Client_OnRaidNotification(object sender, OnRaidNotificationArgs e)
@@ -136,6 +163,7 @@ namespace B3Bot.Core
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    isShuttingDown = true;
                     break;
                 }
             }
@@ -144,6 +172,7 @@ namespace B3Bot.Core
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            isShuttingDown = true;
             if (twitchClient.IsConnected)
             {
                 twitchClient.Disconnect();
