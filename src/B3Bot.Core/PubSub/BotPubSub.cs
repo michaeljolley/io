@@ -54,17 +54,17 @@ namespace B3Bot.Core.PubSub
 
         private static async void OnFollow(object sender, OnFollowArgs e)
         {
-            await _overlayHubContext.Clients.All.SendAsync("NewFollower", e);
+            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewFollower", e);
         }
 
         private static async void OnBitsReceived(object sender, OnBitsReceivedArgs e)
         {
-            await _overlayHubContext.Clients.All.SendAsync("NewCheer", e);
+            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewCheer", e);
         }
 
         private static async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            await _overlayHubContext.Clients.All.SendAsync("NewSubscription", e.Subscription);
+            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewSubscription", e.Subscription);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)

@@ -2,7 +2,7 @@
 
 var connection = new signalR.HubConnectionBuilder().withUrl("/b3BotHub").build();
 
-connection.on("NewFollower", function (follower) {
+connection.on("ReceiveNewFollower", function (follower) {
 
     var div = document.createElement("div");
     var id = +(new Date());
@@ -11,13 +11,10 @@ connection.on("NewFollower", function (follower) {
 
     div.innerText = follower.displayName + ' just followed.';
 
-    
-
-
     $("#container").append(div);
 }); 
 
-connection.on("NewCheer", function (bitReceived) {
+connection.on("ReceiveNewCheer", function (bitReceived) {
 
     var div = document.createElement("div");
     var id = +(new Date());
@@ -27,7 +24,7 @@ connection.on("NewCheer", function (bitReceived) {
     $("#container").append(div);
 }); 
 
-connection.on("NewSubscription", function (subscription) {
+connection.on("ReceiveNewSubscription", function (subscription) {
 
     var div = document.createElement("div");
     var id = +(new Date());
@@ -39,4 +36,19 @@ connection.on("NewSubscription", function (subscription) {
     $("#container").append(div);
 }); 
 
+connection.onclose(async () => {
+    console.log('Closing (Alerts)');
+    await start();
+});
+
 connection.start();
+
+async function start() {
+    try {
+        console.log('Reconnecting (Alerts)');
+        await connection.start();
+    } catch (err) {
+        setTimeout(() => start(), 5000);
+    }
+}
+
