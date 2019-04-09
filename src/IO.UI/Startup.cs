@@ -1,5 +1,4 @@
 ﻿using System;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +10,7 @@ using TwitchLib.Client;
 
 using IO.Core;
 using IO.Core.ChatServices;
-using IO.Core.Hubs;
-using IO.Core.PubSub;
-using IO.Core.TimedServices;
-using Microsoft.AspNetCore.Http.Connections;
+using IO.Core.SignalR;
 
 namespace IO.UI
 {
@@ -29,26 +25,32 @@ namespace IO.UI
 
         public void ConfigureServices(IServiceCollection services)
         {
-            TwitchClient twitchClient = new TwitchClient();
-            TwitchAPI twitchAPI = new TwitchAPI();
-
-            services
-                    .AddSingleton(twitchAPI)
-                    .AddSingleton(twitchClient)
-                    .AddSingleton<IChatService, BasicCommandChatService>()
-                    .AddSingleton<IChatService, ShoutOutChatService>()
-                    .AddSingleton<IChatService, UptimeChatService>()
-                    .AddSingleton<IChatService, HelpChatService>()
-                    .AddSingleton<StreamAnalytics>()
-                    ;
-
-            services.AddHostedService<OverlayHostedService>();
-            services.AddHostedService<IoBot>();
-            services.AddHostedService<BotPubSub>();
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddSignalR();
+            // Setup the TwitchAPI and add to service collection for use later
+            // in IChatServices that may be registered and need it.
+            TwitchAPI twitchAPI = new TwitchAPI();
+            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
+            twitchAPI.Settings.Secret = Constants.TwitchAPIClientSecret;
+            twitchAPI.Settings.AccessToken = Constants.TwitchChannelAccessToken;
+            services.AddSingleton(twitchAPI);
+
+            services.AddSingleton<StreamAnalytics>();
+            services.AddSingleton<TwitchClient>();
+
+            // Add all IChatService's that we want to use in processing incoming
+            // chat messages from Twitch IRC channel
+            services.AddSingleton<IChatService, BasicCommandChatService>();
+            services.AddSingleton<IChatService, ShoutOutChatService>();
+            services.AddSingleton<IChatService, UptimeChatService>();
+            services.AddSingleton<IChatService, HelpChatService>();
+
+            services.AddSignalR(config =>
+            {
+                config.EnableDetailedErrors = true;
+            });
+
+            services.AddHostedService<IoBot>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -67,7 +69,9 @@ namespace IO.UI
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<IoHub>("/IO");
+                routes.MapHub<AlertHub>("/IO-Alert");
+                routes.MapHub<ChatHub>("/IO-Chat");
+                routes.MapHub<OverlayHub>("/IO-Overlay");
             });
 
             app.UseMvc(routes =>

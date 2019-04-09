@@ -1,190 +1,113 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using TwitchLib.Api;
 using TwitchLib.Client;
-using TwitchLib.Client.Enums;
-using TwitchLib.Client.Events;
-using TwitchLib.Client.Models;
-using TwitchLib.Communication.Events;
+using TwitchLib.PubSub;
 
 using IO.Core.ChatServices;
-using IO.Core.TimedServices;
-using IO.Core.Hubs;
 using IO.Core.Models;
 
 namespace IO.Core
 {
-    public class IoBot : IHostedService
+    public partial class IoBot : IHostedService
     {
-        private readonly IServiceProvider serviceProvider;
-        private IHubContext<IoHub> _overlayHubContext { get; }
-        private TwitchClient twitchClient;
-        private TwitchAPI twitchAPI;
-        private StreamAnalytics _streamAnalytics;
+        private IServiceProvider _serviceProvider;
+
+        private readonly TwitchClient _twitchClient;
+        private readonly StreamAnalytics _streamAnalytics;
+        private TwitchPubSub _twitchPubSub = new TwitchPubSub();
+        private Timer _timer;
+        private int _refreshMilliSeconds = Convert.ToInt32(Constants.OverlayRefreshMilliSeconds);
+
+        private List<StreamUserModel> _knownUsers = new List<StreamUserModel>();
+
+        private CancellationToken _cancellationToken;
 
         private bool isShuttingDown;
-
-        public IoBot(IServiceProvider applicationServiceProvider, IHubContext<IoHub> overlayHubContext)
+        
+        public IoBot(TwitchClient twitchClient, StreamAnalytics streamAnalytics, IServiceProvider serviceProvider)
         {
-            serviceProvider = applicationServiceProvider;
-            _overlayHubContext = overlayHubContext;
-            _streamAnalytics = serviceProvider.GetService<StreamAnalytics>();
-
-            ConfigureBot();
+            _streamAnalytics = streamAnalytics;
+            _serviceProvider = serviceProvider;
+            _twitchClient = twitchClient;
         }
 
-        private void ConfigureBot()
+        private async Task ConfigureBotAsync()
         {
-            twitchClient = serviceProvider.GetService<TwitchClient>();
-            twitchAPI = serviceProvider.GetService<TwitchAPI>();
-
-            ConnectionCredentials credentials = new ConnectionCredentials(Constants.TwitchChatBotUsername, Constants.TwitchChatBotAccessToken);
-            twitchClient.Initialize(credentials, Constants.TwitchChannel);
-
-            #region Client Registrations
-
-            twitchClient.OnLog += Client_OnLog;
-            twitchClient.OnJoinedChannel += Client_OnJoinedChannel;
-            twitchClient.OnConnected += Client_OnConnected;
-            twitchClient.OnDisconnected += Client_OnDisconnected;
-
-            twitchClient.OnMessageReceived += Client_OnMessageReceivedAsync;
-            twitchClient.OnWhisperReceived += Client_OnWhisperReceived;
-            twitchClient.OnRaidNotification += Client_OnRaidNotification;
-            twitchClient.OnNewSubscriber += Client_OnNewSubscriber;
-
-            #endregion
-
-            twitchClient.Connect();
-
-            twitchAPI.Settings.ClientId = Constants.TwitchAPIClientId;
-            twitchAPI.Settings.Secret = Constants.TwitchAPIClientSecret;
-            twitchAPI.Settings.AccessToken = Constants.TwitchChannelAccessToken;
+            await ConfigureHubsAsync();
+            ConfigurePubSub();
+            ConfigureChat();
+            ConfigurePolling();
         }
 
-        #region Client Methods
-
-        private void Client_OnLog(object sender, OnLogArgs e)
+        private void AddKnownUser(StreamUserModel newUser)
         {
-            Console.WriteLine($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data}");
-        }
-
-        private void Client_OnConnected(object sender, OnConnectedArgs e)
-        {
-            Console.WriteLine($"Connected to {e.AutoJoinChannel}");
-        }
-
-        private void Client_OnDisconnected(object sender, OnDisconnectedEventArgs e)
-        {
-            Console.WriteLine($"Disconnected from chat");
-            
-            // if not shutting down on purpose, reconnect
-            if (!isShuttingDown)
+            if (!_knownUsers.Any(a => a.Id.Equals(newUser.Id, StringComparison.InvariantCultureIgnoreCase)))
             {
-                twitchClient.Connect();
+                _knownUsers.Add(newUser);
             }
         }
 
-        private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            //IEnumerable<ITimedService> timedServices = serviceProvider.GetServices<ITimedService>();
-         
-            //foreach (ITimedService timedService in timedServices)
-            //{
-            //    timedService.Initialize();
-            //}
-        }
+            _cancellationToken = cancellationToken;
 
-        private async void Client_OnMessageReceivedAsync(object sender, OnMessageReceivedArgs e)
-        {
-            IEnumerable<IChatService> chatServices = serviceProvider.GetServices<IChatService>();
-            string botResponse = string.Empty;
+            await ConfigureBotAsync();
 
-            foreach (IChatService chatService in chatServices)
-            {
-                botResponse = await chatService.ProcessMessageAsync(e.ChatMessage);
-
-                if (!string.IsNullOrEmpty(botResponse))
-                {
-                    break;
-                }
-            }
-
-            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewChatMessage", new ChatHubMessage(e.ChatMessage));
-
-            if (!string.IsNullOrEmpty(botResponse))
-            {
-                ChatHubMessage chatHubMessage = new ChatHubMessage(botResponse);
-                await _overlayHubContext.Clients.All.SendAsync("ReceiveNewChatMessage", chatHubMessage);
-            }
-
-            EmoteSet emoteSet = e.ChatMessage.EmoteSet;
-            if (emoteSet != null && emoteSet.Emotes.Count > 0)
-            {
-                List<EmoteSet.Emote> emotes = emoteSet.Emotes;
-
-                foreach (EmoteSet.Emote emote in emotes)
-                {
-                    await _overlayHubContext.Clients.All.SendAsync("ReceiveNewEmoji", emote.ImageUrl);
-                    await Task.Delay(500);
-                }
-            }
-        }
-
-        private void Client_OnWhisperReceived(object sender, OnWhisperReceivedArgs e)
-        {
-            twitchClient.SendWhisper(e.WhisperMessage.Username, $"Hey {e.WhisperMessage.Username}! I'm a bot.  I'm not great at whispering.");
-        }
-
-        private async void Client_OnNewSubscriber(object sender, OnNewSubscriberArgs e)
-        {
-            if (e.Subscriber.SubscriptionPlan == SubscriptionPlan.Prime)
-            {
-                twitchClient.SendMessage(e.Channel, $"{e.Subscriber.DisplayName}, thanks for your Prime subscription!");
-            }
-            else
-            { 
-                twitchClient.SendMessage(e.Channel, $"{e.Subscriber.DisplayName}, thanks so much for the sub!");
-            }
-
-            StreamUserModel lastSubscriber = await _streamAnalytics.GetLastSubscriberAsync();
-            await _overlayHubContext.Clients.All.SendAsync("ReceiveNewSubscription", lastSubscriber);
-        }
-
-        private void Client_OnRaidNotification(object sender, OnRaidNotificationArgs e)
-        {
-        }
-
-        #endregion
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
             while (true)
             {
-                if (cancellationToken.IsCancellationRequested)
+                if (_cancellationToken.IsCancellationRequested)
                 {
-                    isShuttingDown = true;
                     break;
                 }
             }
-            return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             isShuttingDown = true;
-            if (twitchClient.IsConnected)
+            if (_twitchClient != null && _twitchClient.IsConnected)
             {
-                twitchClient.Disconnect();
+                _twitchClient.Disconnect();
             }
-
-            return Task.CompletedTask;
+            if (_twitchPubSub != null)
+            {
+                _twitchPubSub.Disconnect();
+            }
+            if (_timer != null)
+            {
+                _timer.Dispose();
+            }
+            if (_alertHubConnection != null)
+            {
+                if (_alertHubConnection.State == HubConnectionState.Connected)
+                {
+                    await _alertHubConnection.StopAsync();
+                }
+                await _alertHubConnection.DisposeAsync();
+            }
+            if (_chatHubConnection != null)
+            {
+                if (_chatHubConnection.State == HubConnectionState.Connected)
+                {
+                    await _chatHubConnection.StopAsync();
+                }
+                await _chatHubConnection.DisposeAsync();
+            }
+            if (_overlayHubConnection != null)
+            {
+                if (_overlayHubConnection.State == HubConnectionState.Connected)
+                {
+                    await _overlayHubConnection.StopAsync();
+                }
+                await _overlayHubConnection.DisposeAsync();
+            }
         }
     }
 }

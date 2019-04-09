@@ -16,5 +16,7 @@ namespace IO.Core
         public static string TwitchAPIClientSecret = Environment.GetEnvironmentVariable("client_secret");
 
         public static string OverlayRefreshMilliSeconds = Environment.GetEnvironmentVariable("refreshMilliseconds");
+
+        public static string HubOverlayUrl = Environment.GetEnvironmentVariable("hubOverlayUrl");
     }
 }

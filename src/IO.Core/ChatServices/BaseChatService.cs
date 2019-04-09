@@ -1,12 +1,6 @@
-﻿using IO.Core.Hubs;
-using IO.Core.Models;
-using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+
 using TwitchLib.Client;
-using TwitchLib.Client.Models;
 
 namespace IO.Core.ChatServices
 {

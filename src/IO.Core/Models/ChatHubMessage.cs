@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using TwitchLib.Client.Models;
 
@@ -12,35 +11,45 @@ namespace IO.Core.Models
         private const string emoteImageTag = "<img class=\"emote\" src=\"{0}\"/>";
         private const string displayNameTag = "<span style=\"color:{0}\" class=\"name\">{1}</span>";
 
-        public ChatHubMessage(ChatMessage chatMessage)
+        public static ChatHubMessage FromChatMessage(ChatMessage chatMessage)
         {
-            ChatMessage = chatMessage;
-            Bits = chatMessage.Bits;
-            Id = chatMessage.Id;
-            IsBroadcaster = chatMessage.IsBroadcaster;
-            IsModerator = chatMessage.IsModerator;
-            IsSubscriber = chatMessage.IsSubscriber;
-            Message = chatMessage.Message;
-            SubscribedMonthCount = chatMessage.SubscribedMonthCount;
-            ColorHex = chatMessage.ColorHex;
-            Username = chatMessage.Username;
-            DisplayName = chatMessage.DisplayName;
-            UserType = (int)chatMessage.UserType;
+            var chatHubMessage = new ChatHubMessage() 
+            {
+                ChatMessage = chatMessage,
+                Bits = chatMessage.Bits,
+                Id = chatMessage.Id,
+                IsBroadcaster = chatMessage.IsBroadcaster,
+                IsModerator = chatMessage.IsModerator,
+                IsSubscriber = chatMessage.IsSubscriber,
+                Message = chatMessage.Message,
+                SubscribedMonthCount = chatMessage.SubscribedMonthCount,
+                ColorHex = chatMessage.ColorHex,
+                Username = chatMessage.Username,
+                DisplayName = chatMessage.DisplayName,
+                UserType = (int)chatMessage.UserType
+            };
+            chatHubMessage.HubMessage = chatHubMessage.GenerateHubMessage();
+            return chatHubMessage;
         }
 
-        public ChatHubMessage(string message)
+        public static ChatHubMessage FromBot(string message)
         {
-            Bits = 0;
-            Id = Guid.NewGuid().ToString();
-            IsBroadcaster = false;
-            IsModerator = true;
-            IsSubscriber = true;
-            Message = message;
-            SubscribedMonthCount = 12;
-            ColorHex = "#01b9ff";
-            Username = Constants.TwitchChatBotUsername;
-            DisplayName = Constants.TwitchChatBotUsername;
-            UserType = 1;
+            var chatHubMessage = new ChatHubMessage()
+            {
+                Bits = 0,
+                Id = Guid.NewGuid().ToString(),
+                IsBroadcaster = false,
+                IsModerator = true,
+                IsSubscriber = true,
+                Message = message,
+                SubscribedMonthCount = 12,
+                ColorHex = "#01b9ff",
+                Username = Constants.TwitchChatBotUsername,
+                DisplayName = Constants.TwitchChatBotUsername,
+                UserType = 1
+            };
+            chatHubMessage.HubMessage = chatHubMessage.GenerateHubMessage();
+            return chatHubMessage;
         }
 
         private ChatMessage ChatMessage { get; set; }
@@ -67,13 +76,14 @@ namespace IO.Core.Models
 
         public int UserType { get; set; }
 
-        public string HubMessage
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Message)) return "";
+        public string HubMessage { get; set; }
 
-                string result = string.Format(displayNameTag, ColorHex, DisplayName + ": ");
+        private string GenerateHubMessage()
+        {
+            string result = "";
+            if (!string.IsNullOrEmpty(Message))
+            {
+                result = string.Format(displayNameTag, ColorHex, DisplayName + ": ");
                 result += Message;
 
                 // Replace emotes with img tags
@@ -97,8 +107,8 @@ namespace IO.Core.Models
                     }
                 }
 
-                return result;
             }
+            return result;
         }
     }
 }

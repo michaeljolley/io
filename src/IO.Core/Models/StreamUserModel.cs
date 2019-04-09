@@ -1,16 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IO.Core.Models
 {
     public class StreamUserModel
     {
-        public StreamUserModel(string displayName, string profileImageUrl)
+        public StreamUserModel(string userId, string displayName, string profileImageUrl)
         {
+            Id = userId;
             DisplayName = displayName;
             ProfileImageUrl = profileImageUrl;
         }
+
+        public string Id { get; set; }
 
         public string DisplayName { get; set; }
 

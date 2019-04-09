@@ -1,7 +1,7 @@
 ﻿"use strict";
 
 var connection = new signalR.HubConnectionBuilder()
-    .withUrl("/IO")
+    .withUrl("/IO-Overlay")
     .build();
 
 connection.on("ReceiveLastFollower", function (streamUserModel) {
@@ -16,15 +16,11 @@ connection.onclose(async () => {
     await start();
 });
 
-connection.start().then(function () {
-    connection.invoke('RequestLastFollower');
-});
+connection.start();
 
 async function start() {
     try {
-        await connection.start().then(function () {
-            connection.invoke('RequestLastFollower');
-        });
+        await connection.start();
     } catch (err) {
         setTimeout(() => start(), 5000);
     }

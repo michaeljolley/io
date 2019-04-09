@@ -1,7 +1,7 @@
 ﻿"use strict";
 
 var connection = new signalR.HubConnectionBuilder()
-    .withUrl("/IO")
+    .withUrl("/IO-Overlay")
     .build();
 
 connection.on("ReceiveFollowerCount", function (count) {
@@ -15,10 +15,7 @@ connection.onclose(async () => {
     await start();
 });
 
-connection.start().then(function () {
-    console.log('Connecting (Follower)');
-    connection.invoke('RequestFollowerCount');
-});
+connection.start();
 
 async function start() {
     try {

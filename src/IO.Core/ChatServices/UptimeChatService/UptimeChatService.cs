@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
 using TwitchLib.Api;
 using TwitchLib.Api.V5.Models.Users;
 using TwitchLib.Client;

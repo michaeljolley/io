@@ -6,7 +6,7 @@ namespace IO.Core.ChatServices
 {
     public class BasicChatCommand : ChatCommand
     {
-        public BasicChatCommand(string command, string value, string format, bool isLocked = false) 
+        public BasicChatCommand(string command, string value, string format, bool isLocked = true) 
             : base(command, format, isLocked)
         {
             Value = value;

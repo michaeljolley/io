@@ -1,6 +1,6 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/IO").build();
+var connection = new signalR.HubConnectionBuilder().withUrl("/IO-Alert").build();
 
 connection.on("ReceiveNewFollower", function (follower) {
 
@@ -24,7 +24,7 @@ connection.on("ReceiveNewCheer", function (bitReceived) {
     $("#container").append(div);
 });
 
-connection.on("ReceiveNewSubscription", function (subscription) {
+connection.on("ReceiveNewSubscriber", function (subscription) {
 
     var div = document.createElement("div");
     var id = +(new Date());
@@ -32,6 +32,18 @@ connection.on("ReceiveNewSubscription", function (subscription) {
     var name = subscription.recipientDisplayName === undefined ? subscription.displayName : subscription.recipientDisplayName;
 
     div.innerText = name + ' just subscribed.';
+
+    $("#container").append(div);
+});
+
+connection.on("ReceiveNewRaid", function (subscription) {
+
+    var div = document.createElement("div");
+    var id = +(new Date());
+
+    var name = subscription.recipientDisplayName === undefined ? subscription.displayName : subscription.recipientDisplayName;
+
+    div.innerText = name + ' just raided.';
 
     $("#container").append(div);
 });

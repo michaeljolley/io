@@ -1,10 +1,10 @@
 ﻿"use strict";
 
 var connection = new signalR.HubConnectionBuilder()
-    .withUrl("/IO")
+    .withUrl("/IO-Chat")
     .build();
 
-connection.on("ReceiveNewEmoji", function (emojiUrl) {
+connection.on("ReceiveEmote", function (emojiUrl) {
     var img = document.createElement("img");
     var id = +(new Date());
 
@@ -18,6 +18,11 @@ connection.on("ReceiveNewEmoji", function (emojiUrl) {
     setTimeout(function (id) {
         $('#emoji' + id).remove();
     }, 10000, id);
+});
+
+
+connection.on("ReceiveChatMessage", function (chatMessage) {
+    console.log(JSON.stringify(chatMessage));
 });
 
 connection.onclose(async () => {

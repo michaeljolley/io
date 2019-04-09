@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+  io.ui:
+    image: twitchlivestream.azurecr.io/ioui
+    build:
+      context: .
+      dockerfile: src/IO.UI/Dockerfile
+    ports:
+      - "5000:80"
+      - "5001:443"
+    env_file:
+      - .env
