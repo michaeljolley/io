@@ -3,12 +3,13 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    font-family: 'Roboto', sans-serif;
 }
 
 .chatWrapper {
     display: table-cell;
     vertical-align: bottom;
-    height: 100vh;
+    height: 95vh;
     position: absolute;
     right: 0;
     width: 300px;
@@ -21,10 +22,6 @@
 }
 
 .chatMessage {
-    background: rgba(66, 52, 78, 1);
-    color: #fff;
-    font-family: Arial;
-    padding: 10px 20px;
     font-size: 18px;
     line-height: 1.4em;
     margin-top: 5px;
@@ -35,10 +32,73 @@
     display: none;
 }
 
-    .chatMessage .name {
-        font-weight: bold;
-    }
+.profile {
+    position: absolute;
+    left: -25px;
+    bottom: -30px;
+    border-radius: 25px;
+}
 
-    .chatMessage img.emote {
-        width: 20px
-    }
+.profile img {
+    width: 50px;
+    background-color: #fff;
+    border-radius: 25px;
+    border: solid 3px rgba(66, 52, 78, 1);
+}
+
+.body {
+    width: 300px;
+    overflow: hidden;
+}
+
+.bubble {
+    text-align: left;
+    padding: 10px 15px 0px 20px;
+    background: rgba(66, 52, 78, 1);
+    color: #fff;
+    border-radius: 20px 0px;
+    padding-bottom: 30px;
+}
+
+img.emote {
+    width: 20px
+}
+
+.name {
+    color: rgba(255,255,255,.3);
+    font-size: 24px;
+    font-weight: bold;
+    position: absolute;
+    bottom: 0;
+    right: 15px;
+    text-align: right;
+    font-family: 'Black Ops One', cursive;
+}
+
+.message {
+    font-family: 'Roboto'
+}
+
+.bits .bubble {
+    background-color: rgb(194, 147, 0);
+    color: #3c3c3c;
+    padding-top: 15px;
+}
+
+.bits .profile img {
+    border-color: rgb(194, 147, 0);
+}
+
+.cheer {
+    background-color: #fff;
+    border-radius: 25px;
+    height: 25px;
+    border: solid 3px rgb(194, 147, 0);
+    position: absolute;
+    right: -1px;
+    top: -14px;
+    text-align: right;
+    padding: 0px 10px;
+    font-family: 'Black Ops One', cursive;
+    color: rgb(66, 52, 78);
+}

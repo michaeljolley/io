@@ -9,8 +9,14 @@ connection.on("ReceiveNewFollower", function (follower) {
 
     div.classList.add('newFollower');
 
+    console.log(JSON.stringify(follower));
     div.innerText = follower.displayName + ' just followed.';
 
+    var audioFile = document.createElement("audio");
+    audioFile.src = '/assets/audio/hair.mp3';
+
+    var promise = audioFile.play();
+    
     $("#container").append(div);
 });
 

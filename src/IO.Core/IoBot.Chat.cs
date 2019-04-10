@@ -84,7 +84,14 @@ namespace IO.Core
                 }
             }
 
-            await BroadcastChatMessage(ChatHubMessage.FromChatMessage(e.ChatMessage));
+            StreamUserModel chatUser = _knownUsers.FirstOrDefault(f => f.Id.Equals(e.ChatMessage.UserId, StringComparison.CurrentCultureIgnoreCase));
+            if (chatUser == null)
+            {
+                chatUser = await _streamAnalytics.GetUserAsync(e.ChatMessage.UserId);
+                AddKnownUser(chatUser);
+            }
+
+            await BroadcastChatMessage(ChatHubMessage.FromChatMessage(e.ChatMessage, chatUser));
 
             if (!string.IsNullOrEmpty(botResponse))
             {
