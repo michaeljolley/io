@@ -1,6 +1,6 @@
 # IO
 
-[![Build status](https://dev.azure.com/twitch-livestream/B3Bot/_apis/build/status/B3Bot%20-%20CI)](https://dev.azure.com/twitch-livestream/B3Bot/_build/latest?definitionId=1)
+[![Build status](https://dev.azure.com/io-bot/io-bot/_apis/build/status/io-bot%20-%20CI)](https://dev.azure.com/io-bot/io-bot/_build/latest?definitionId=1)
 
 ### What is this?
 
