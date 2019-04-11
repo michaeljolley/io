@@ -17,7 +17,9 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
      *     profileImg
      *   body
      *     bubble
+     *       moderator (optional)
      *       message
+     *       name
      */
 
     var newChatMessage = createChatDiv('chatMessage');
@@ -33,7 +35,7 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
     profile.append(profileImg);
 
     var bubble = createChatDiv('bubble');
-
+    
     var name = createChatDiv('name');
     name.innerText = chatMessage.streamUserModel.displayName;
 
@@ -43,7 +45,6 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
     bubble.append(message);
     bubble.append(name);
 
-    body.append(bubble);
 
     if (chatMessage.bits > 0) {
         newChatMessage.classList.add('bits');
@@ -51,6 +52,16 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
         cheer.innerText = 'Cheer for ' + chatMessage.bits + ' bits';
         newChatMessage.append(cheer);
     }
+
+    if (chatMessage.isModerator) {
+        newChatMessage.classList.add('moderator');
+
+        var moderator = createChatDiv('moderator');
+        moderator.innerHTML = shieldSVG;
+        body.prepend(moderator);
+    }
+
+    body.append(bubble);
 
     newChatMessage.append(body);
     newChatMessage.append(profile);
@@ -62,11 +73,11 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
 
     $('#msg' + id).fadeIn('slow');
 
-    setTimeout(function (id) {
-        $('#msg' + id).fadeOut('slow', () => {
-            $('#msg' + id).remove();
-        });
-    }, 50000, id);
+    //setTimeout(function (id) {
+    //    $('#msg' + id).fadeOut('slow', () => {
+    //        $('#msg' + id).remove();
+    //    });
+    //}, 50000, id);
 });
 
 connection.onclose(async () => {
@@ -103,3 +114,5 @@ function calcPositions(newMessageDiv) {
         }
     });
 }
+
+const shieldSVG = "<svg xmlns = 'http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path class='strokeColor' d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' /></svg>"

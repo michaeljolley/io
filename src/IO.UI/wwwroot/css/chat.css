@@ -41,7 +41,7 @@
 
 .profile img {
     width: 50px;
-    background-color: #fff;
+    background-color: #3c3c3c;
     border-radius: 25px;
     border: solid 3px rgba(66, 52, 78, 1);
 }
@@ -79,6 +79,36 @@ img.emote {
     font-family: 'Roboto'
 }
 
+
+/* Mod skin start */
+
+.moderator {
+    position: absolute;
+    right: 0;
+}
+
+    .moderator svg {
+        width: 50px;
+        height: 100%;
+    }
+
+    .moderator .strokeColor {
+        stroke: rgba(255, 255, 255, .1);
+    }
+
+    .moderator .bubble {
+        background-color: #008011;
+        padding-top: 15px;
+    }
+
+    .moderator .profile img {
+        border-color: #008011;
+    }
+
+/* Mod skin end */
+
+/* Cheer skin start */
+
 .bits .bubble {
     background-color: rgb(194, 147, 0);
     color: #3c3c3c;
@@ -102,3 +132,20 @@ img.emote {
     font-family: 'Black Ops One', cursive;
     color: rgb(66, 52, 78);
 }
+
+/* Cheer skin end */
+
+/* Sub skin start */
+
+
+/* Sub skin end */
+
+/* Host skin start */
+
+
+/* Host skin end */
+
+/* Raid skin start */
+
+
+/* Raid skin end */
