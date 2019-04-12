@@ -42,9 +42,12 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
     var message = createChatDiv('message');
     message.innerHTML = chatMessage.hubMessage;
 
-    bubble.append(message);
-    bubble.append(name);
-
+    // If this chat message is from the bot then handle it separately from 
+    // all other skins
+    if (chatMessage.isBot) {
+        newChatMessage.classList.add('bot');
+        name.innerText = "IO";
+    } 
 
     if (chatMessage.bits > 0) {
         newChatMessage.classList.add('bits');
@@ -53,13 +56,18 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
         newChatMessage.append(cheer);
     }
 
-    if (chatMessage.isModerator) {
+    if (chatMessage.isModerator ||
+        chatMessage.isBroadcaster ||
+        chatMessage.isBot) {
         newChatMessage.classList.add('moderator');
 
         var moderator = createChatDiv('moderator');
         moderator.innerHTML = shieldSVG;
         body.prepend(moderator);
     }
+
+    bubble.append(message);
+    bubble.append(name);
 
     body.append(bubble);
 
@@ -73,11 +81,11 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
 
     $('#msg' + id).fadeIn('slow');
 
-    //setTimeout(function (id) {
-    //    $('#msg' + id).fadeOut('slow', () => {
-    //        $('#msg' + id).remove();
-    //    });
-    //}, 50000, id);
+    setTimeout(function (id) {
+        $('#msg' + id).fadeOut('slow', () => {
+            $('#msg' + id).remove();
+        });
+    }, 50000, id);
 });
 
 connection.onclose(async () => {
@@ -115,4 +123,5 @@ function calcPositions(newMessageDiv) {
     });
 }
 
-const shieldSVG = "<svg xmlns = 'http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path class='strokeColor' d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' /></svg>"
+const shieldSVG = "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path class='strokeColor' d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' /></svg>";
+const swordSVG = "<svg xmlns='http://www.w3.org/2000/svg' version='1.1' x='0px' y='0px' viewBox='0 0 100 125' enable-background='new 0 0 100 100' xml:space = 'preserve' > <polygon class='strokeColor' points='36.328,63.672 41.64,70.627 90.811,23.947 99.895,0.105 76.053,9.189 29.375,58.359 ' /> <path class='strokeColor' d='M42.741,88.611l4.795-4.793L33.956,66.045L16.183,52.463l-4.794,4.797l11.463,11.463L9.373,82.201  c-2.4-0.109-4.836,0.727-6.67,2.561c-3.461,3.459-3.465,9.072-0.001,12.535c3.464,3.465,9.079,3.465,12.541,0.002  c1.834-1.834,2.665-4.27,2.556-6.67l13.48-13.48L42.741,88.611z' /></svg >";

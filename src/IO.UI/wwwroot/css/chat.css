@@ -69,10 +69,10 @@ img.emote {
     font-size: 24px;
     font-weight: bold;
     position: absolute;
-    bottom: 0;
+    bottom: 3px;
     right: 15px;
     text-align: right;
-    font-family: 'Black Ops One', cursive;
+    font-family: 'Titillium Web', sans-serif;
 }
 
 .message {
@@ -149,3 +149,15 @@ img.emote {
 
 
 /* Raid skin end */
+
+/* Bot skin start */
+
+.bot .bubble {
+    background-color: #337fad;
+}
+
+.bot .profile img {
+    border-color: #337fad;
+}
+
+/* Bot skin end */

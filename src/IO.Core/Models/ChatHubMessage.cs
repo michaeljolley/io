@@ -22,6 +22,7 @@ namespace IO.Core.Models
                 IsBroadcaster = chatMessage.IsBroadcaster,
                 IsModerator = chatMessage.IsModerator,
                 IsSubscriber = chatMessage.IsSubscriber,
+                IsBot = chatMessage.Username.Equals(Constants.TwitchChatBotUsername, StringComparison.InvariantCultureIgnoreCase),
                 Message = chatMessage.Message,
                 SubscribedMonthCount = chatMessage.SubscribedMonthCount,
                 ColorHex = chatMessage.ColorHex,
@@ -44,6 +45,7 @@ namespace IO.Core.Models
                 IsBroadcaster = false,
                 IsModerator = true,
                 IsSubscriber = true,
+                IsBot = true,
                 Message = message,
                 SubscribedMonthCount = 12,
                 ColorHex = "#01b9ff",
@@ -71,6 +73,8 @@ namespace IO.Core.Models
         public bool IsModerator { get; set; }
 
         public bool IsSubscriber { get; set; }
+
+        public bool IsBot { get; set; }
 
         public string Message { get; set; }
 
