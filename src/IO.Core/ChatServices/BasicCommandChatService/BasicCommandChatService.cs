@@ -31,7 +31,15 @@ namespace IO.Core.ChatServices
             new BasicChatCommand("!project",
                                  "I have no idea what this guy is working on.  theMichaelJolley, how about an update?",
                                  "!project {new project value}",
-                                 false)
+                                 false),
+            new BasicChatCommand("!candle",
+                                 "I dunno. It smells like stinky feet. Maybe we should light a candle theMichaelJolley.",
+                                 "!candle {candle scent}",
+                                 false),
+            new BasicChatCommand("!discord",
+                                 "You can join our discord using this link: https://discord.gg/XSG7HJm",
+                                 null,
+                                 true)
         };
 
         public BasicCommandChatService(TwitchClient applicationTwitchClient) :

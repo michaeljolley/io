@@ -4,54 +4,55 @@ var connection = new signalR.HubConnectionBuilder().withUrl("/IO-Alert").build()
 
 connection.on("ReceiveNewFollower", function (follower) {
 
-    var div = document.createElement("div");
-    var id = +(new Date());
+    if (follower.displayName &&
+        follower.displayName.length > 0) {
 
-    div.classList.add('newFollower');
+        var msg = follower.displayName + ' just followed!';
 
-    console.log(JSON.stringify(follower));
-    div.innerText = follower.displayName + ' just followed.';
+        var div = createDiv('newFollower');
+        $("#container").append(div);
+        typeWriter(div, msg, 0);
 
-    var audioFile = document.createElement("audio");
-    audioFile.src = '/assets/audio/hair.mp3';
-
-    var promise = audioFile.play();
-    
-    $("#container").append(div);
+        setTimeout(removeDiv, 7500, div.id);
+    }
 });
 
 connection.on("ReceiveNewCheer", function (bitReceived) {
 
-    var div = document.createElement("div");
-    var id = +(new Date());
+    if (bitReceived.username &&
+        bitReceived.username.length > 0) {
 
-    div.innerText = bitReceived.username + ' just cheered ' + bitReceived.bitsUsed + '.';
+        var msg = bitReceived.username + ' just cheered ' + bitReceived.bitsUsed + ' bits!';
 
-    $("#container").append(div);
+        var div = createDiv('newCheer');
+        $("#container").append(div);
+        typeWriter(div, msg, 0);
+
+        setTimeout(removeDiv, 7500, div.id);
+    }
 });
 
 connection.on("ReceiveNewSubscriber", function (subscription) {
 
-    var div = document.createElement("div");
-    var id = +(new Date());
-
     var name = subscription.recipientDisplayName === undefined ? subscription.displayName : subscription.recipientDisplayName;
+    var msg = name + ' just subscribed!';
 
-    div.innerText = name + ' just subscribed.';
-
+    var div = createDiv('newSubscriber');
     $("#container").append(div);
+    typeWriter(div, msg, 0);
+
+    setTimeout(removeDiv, 7500, div.id);
 });
 
-connection.on("ReceiveNewRaid", function (subscription) {
+connection.on("ReceiveNewRaid", function (raid) {
 
-    var div = document.createElement("div");
-    var id = +(new Date());
+    var msg = raid.raidNotification.displayName + ' just raided with ' + raid.raidNotification.msgParamViewerCount + ' viewers!';
 
-    var name = subscription.recipientDisplayName === undefined ? subscription.displayName : subscription.recipientDisplayName;
-
-    div.innerText = name + ' just raided.';
-
+    var div = createDiv('newRaid');
     $("#container").append(div);
+    typeWriter(div, msg, 0);
+
+    setTimeout(removeDiv, 7500, div.id);
 });
 
 connection.onclose(async () => {
@@ -70,3 +71,27 @@ async function start() {
     }
 }
 
+function createDiv(cssClass) {
+    var id = +(new Date());
+
+    var newDiv = document.createElement('div');
+    newDiv.classList.add(cssClass);
+    newDiv.id = id;
+
+    return newDiv;
+}
+
+function typeWriter(container, textToWrite, i) {
+    var speed = 50;
+    if (i < textToWrite.length) {
+        container.innerHTML += textToWrite.charAt(i);
+        i++;
+        setTimeout(typeWriter, speed, container, textToWrite, i);
+    }
+}
+
+function removeDiv(id) {
+    $('#' + id).fadeOut('slow', () => {
+        $('#' + id).remove();
+    });
+}
