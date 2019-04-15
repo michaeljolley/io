@@ -4,13 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using TwitchLib.Client;
 using TwitchLib.PubSub;
 
-using IO.Core.ChatServices;
 using IO.Core.Models;
 
 namespace IO.Core
