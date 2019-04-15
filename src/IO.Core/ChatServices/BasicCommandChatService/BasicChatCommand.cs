@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IO.Core.ChatServices
 {
     public class BasicChatCommand : ChatCommand
     {
-        public BasicChatCommand(string command, string value, string format, bool isLocked = true) 
+        public BasicChatCommand(string command, string value, string format, int throttleInSeconds, bool isLocked = true) 
             : base(command, format, isLocked)
         {
             Value = value;

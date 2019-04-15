@@ -16,6 +16,9 @@ namespace IO.Core.ChatServices
         private const string upTimeResponse = "{0}, the stream has been up for {1}. {2}";
         private const string offlineResponse = "{0}, the stream is currently offline.  Hit follow to be notified when we go live!";
 
+        private const int _throttleInSeconds = 300;
+        private static DateTime? _commandLastRun;
+
         public UptimeChatService(TwitchClient applicationTwitchClient, TwitchAPI applicationTwitchAPI) :
             base(applicationTwitchClient)
         {
@@ -29,6 +32,15 @@ namespace IO.Core.ChatServices
 
         public async Task<string> ProcessMessageAsync(ChatMessage chatMessage)
         {
+            // Regardless of whether this method should or can respond
+            // to this message, return if throttled. (Unless it's initiated by
+            // the bot or broadcaster)
+            if (!chatMessage.IsBroadcaster &&
+                !chatMessage.Username.Equals(Constants.TwitchChatBotUsername, StringComparison.InvariantCultureIgnoreCase) &&
+                _commandLastRun.HasValue &&
+                _commandLastRun.Value.AddSeconds(_throttleInSeconds) >= DateTime.Now)
+                return string.Empty;
+
             string message = chatMessage.Message;
 
             if (!string.IsNullOrEmpty(message))
@@ -65,11 +77,13 @@ namespace IO.Core.ChatServices
 
                                 responseMessage = string.Format(upTimeResponse, chatMessage.DisplayName, upTimeValueMessage, followerMessage);
 
+                                _commandLastRun = DateTime.Now;
                                 SendMessage(responseMessage);
                             }
                         }
                         else
                         {
+                            _commandLastRun = DateTime.Now;
                             responseMessage = string.Format(offlineResponse, chatMessage.DisplayName);
                             SendMessage(responseMessage);
                         }

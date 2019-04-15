@@ -16,5 +16,6 @@ namespace IO.Core.ChatServices
         public string Command { get; set; }
         public string Format { get; set; }
         public bool IsLocked { get; set; }
+        public int ThrottleInSeconds { get; set; }
     }
 }

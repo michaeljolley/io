@@ -12,8 +12,10 @@ namespace IO.Core.ChatServices
     public class HelpChatService : BaseChatService, IChatService
     {
         private readonly IServiceProvider serviceProvider;
-
         private static List<ChatCommand> availableCommands = new List<ChatCommand>();
+
+        private const int _throttleInSeconds = 30;
+        private static DateTime? _commandLastRun;
 
         public HelpChatService(TwitchClient applicationTwitchClient, IServiceProvider applicationServiceProvider) :
             base(applicationTwitchClient)
@@ -30,6 +32,15 @@ namespace IO.Core.ChatServices
 
         public async Task<string> ProcessMessageAsync(ChatMessage chatMessage)
         {
+            // Regardless of whether this method should or can respond
+            // to this message, return if throttled. (Unless it's initiated by
+            // the bot or broadcaster)
+            if (!chatMessage.IsBroadcaster &&
+                !chatMessage.Username.Equals(Constants.TwitchChatBotUsername, StringComparison.InvariantCultureIgnoreCase) &&
+                _commandLastRun.HasValue && 
+                _commandLastRun.Value.AddSeconds(_throttleInSeconds) >= DateTime.Now)
+                return string.Empty;
+
             string message = chatMessage.Message;
 
             if (!string.IsNullOrEmpty(message))
@@ -71,6 +82,7 @@ namespace IO.Core.ChatServices
                         responseMessage = "Uh oh.  I don't seem to know any commands at the moment.";
                     }
 
+                    _commandLastRun = DateTime.Now;
                     SendMessage(responseMessage);
                     return responseMessage;
                 }
