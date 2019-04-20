@@ -1,10 +1,10 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder()
+var alertConnection = new signalR.HubConnectionBuilder()
     .withUrl("/IO-Overlay")
     .build();
 
-connection.on("ReceiveLastFollower", function (streamUserModel) {
+alertConnection.on("ReceiveLastFollower", function (streamUserModel) {
     var profileImg = document.getElementById('profileImageUrl');
     var userName = document.getElementById('displayName');
 
@@ -12,17 +12,17 @@ connection.on("ReceiveLastFollower", function (streamUserModel) {
     userName.innerText = streamUserModel.displayName;
 });
 
-connection.onclose(async () => {
-    await start();
+alertConnection.onclose(async () => {
+    await startAlertConnection();
 });
 
-connection.start();
+alertConnection.start();
 
-async function start() {
+async function startAlertConnection() {
     try {
-        await connection.start();
+        await alertConnection.start();
     } catch (err) {
-        setTimeout(() => start(), 5000);
+        setTimeout(() => startAlertConnection(), 5000);
     }
 }
 

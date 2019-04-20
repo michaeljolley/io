@@ -1,27 +1,27 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder()
+var alertConnection = new signalR.HubConnectionBuilder()
     .withUrl("/IO-Overlay")
     .build();
 
-connection.on("ReceiveViewerCount", function (count) {
+alertConnection.on("ReceiveViewerCount", function (count) {
     console.log('Updated viewer count: ' + count);
     var counter = document.getElementById('counter');
     counter.innerText = count;
 });
 
-connection.onclose(async () => {
+alertConnection.onclose(async () => {
     console.log('Closing (Viewer)');
-    await start();
+    await startAlertConnection();
 });
 
-connection.start();
+alertConnection.start();
 
-async function start() {
+async function startAlertConnection() {
     try {
         console.log('Reconnecting (Viewer)');
-        await connection.start();
+        await alertConnection.start();
     } catch (err) {
-        setTimeout(() => start(), 5000);
+        setTimeout(() => startAlertConnection(), 5000);
     }
 }

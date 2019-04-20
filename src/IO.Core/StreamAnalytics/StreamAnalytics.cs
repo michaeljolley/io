@@ -88,7 +88,6 @@ namespace IO.Core
         public async Task<StreamUserModel> GetLastSubscriberAsync()
         {
             List<Subscription> subscribers = await _twitchAPI.V5.Channels.GetAllSubscribersAsync(Constants.TwitchChannelId);
-
             var lastSubscriber = subscribers.Last();
 
             if (lastSubscriber != null)

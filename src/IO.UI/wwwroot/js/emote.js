@@ -1,10 +1,10 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder()
+var alertConnection = new signalR.HubConnectionBuilder()
     .withUrl("/IO-Chat")
     .build();
 
-connection.on("ReceiveEmote", function (emojiUrl) {
+alertConnection.on("ReceiveEmote", function (emojiUrl) {
     var img = document.createElement("img");
     var id = +(new Date());
 
@@ -21,21 +21,21 @@ connection.on("ReceiveEmote", function (emojiUrl) {
 });
 
 
-connection.on("ReceiveChatMessage", function (chatMessage) {
+alertConnection.on("ReceiveChatMessage", function (chatMessage) {
     console.log(JSON.stringify(chatMessage));
 });
 
-connection.onclose(async () => {
-    await start();
+alertConnection.onclose(async () => {
+    await startAlertConnection();
 });
 
-connection.start();
+alertConnection.start();
 
-async function start() {
+async function startAlertConnection() {
     try {
-        await connection.start();
+        await alertConnection.start();
     } catch (err) {
-        setTimeout(() => start(), 5000);
+        setTimeout(() => startAlertConnection(), 5000);
     }
 }
 

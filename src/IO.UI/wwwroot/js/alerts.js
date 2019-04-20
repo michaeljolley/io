@@ -1,8 +1,14 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/IO-Alert").build();
+var alertConnection = new signalR.HubConnectionBuilder().withUrl("/IO-Alert").build();
+var nakedConnection = new signalR.HubConnectionBuilder().withUrl("/IO-Naked").build();
 
-connection.on("ReceiveNewFollower", function (follower) {
+var isNaked = false;
+var isNakedActive = false;
+
+/* Alert hub client logic */
+
+alertConnection.on("ReceiveNewFollower", function (follower) {
 
     if (follower.displayName &&
         follower.displayName.length > 0) {
@@ -17,7 +23,7 @@ connection.on("ReceiveNewFollower", function (follower) {
     }
 });
 
-connection.on("ReceiveNewCheer", function (bitReceived) {
+alertConnection.on("ReceiveNewCheer", function (bitReceived) {
 
     if (bitReceived.username &&
         bitReceived.username.length > 0) {
@@ -32,7 +38,7 @@ connection.on("ReceiveNewCheer", function (bitReceived) {
     }
 });
 
-connection.on("ReceiveNewSubscriber", function (subscription) {
+alertConnection.on("ReceiveNewSubscriber", function (subscription) {
 
     var name = subscription.recipientDisplayName === undefined ? subscription.displayName : subscription.recipientDisplayName;
     var msg = name + ' just subscribed!';
@@ -44,7 +50,7 @@ connection.on("ReceiveNewSubscriber", function (subscription) {
     setTimeout(removeDiv, 7500, div.id);
 });
 
-connection.on("ReceiveNewRaid", function (raid) {
+alertConnection.on("ReceiveNewRaid", function (raid) {
 
     var msg = raid.raidNotification.displayName + ' just raided with ' + raid.raidNotification.msgParamViewerCount + ' viewers!';
 
@@ -55,21 +61,50 @@ connection.on("ReceiveNewRaid", function (raid) {
     setTimeout(removeDiv, 7500, div.id);
 });
 
-connection.onclose(async () => {
+alertConnection.onclose(async () => {
     console.log('Closing (Alerts)');
-    await start();
+    await startAlertConnection();
 });
 
-connection.start();
+alertConnection.start();
 
-async function start() {
+async function startAlertConnection() {
     try {
         console.log('Reconnecting (Alerts)');
-        await connection.start();
+        await alertConnection.start();
     } catch (err) {
-        setTimeout(() => start(), 5000);
+        setTimeout(() => startAlertConnection(), 5000);
     }
 }
+
+/* Naked hub client logic */
+
+alertConnection.on("ReceiveToggleNaked", function () {
+    if (isNakedActive) {
+        isNaked = !isNaked;
+    }
+});
+
+alertConnection.on("ReceiveToggleActive", function (_isNakedActive) {
+    isNakedActive = _isNakedActive;
+});
+
+nakedConnection.onclose(async () => {
+    console.log('Closing (Naked)');
+    await startNakedConnection();
+});
+
+nakedConnection.start();
+
+async function startNakedConnection() {
+    try {
+        console.log('Reconnecting (Naked)');
+        await nakedConnection.start();
+    } catch (err) {
+        setTimeout(() => startNakedConnection(), 5000);
+    }
+}
+
 
 function createDiv(cssClass) {
     var id = +(new Date());

@@ -40,5 +40,10 @@ namespace IO.UI.Controllers
         {
             return View();
         }
+
+        public IActionResult Audio()
+        {
+            return View();
+        }
     }
 }

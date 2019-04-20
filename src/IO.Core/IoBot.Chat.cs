@@ -95,8 +95,41 @@ namespace IO.Core
 
             if (!string.IsNullOrEmpty(botResponse))
             {
-                ChatHubMessage chatHubMessage = ChatHubMessage.FromBot(botResponse);
-                await BroadcastChatMessage(chatHubMessage);
+                if (botResponse.Contains("av:stop"))
+                {
+                    await BroadcastStopAudioClip();
+                    await BroadcastStopVideoClip();
+                }
+                else if(botResponse.Contains("av:a="))
+                {
+                    string filename = botResponse.Replace("av:a=", "");
+                    await BroadcastNewAudioClip(filename);
+                }
+                else if (botResponse.Contains("av:v="))
+                {
+                    string filename = botResponse.Replace("av:v=", "");
+                    await BroadcastNewVideoClip(filename);
+                }
+                else if (botResponse.Contains("naked:"))
+                {
+                    switch (botResponse)
+                    {
+                        case "naked:":
+                            await BroadcastToggleNaked();
+                            break;
+                        case "naked:activate":
+                            await BroadcastToggleNakedActive(true);
+                            break;
+                        case "naked:deactivate":
+                            await BroadcastToggleNakedActive(false);
+                            break;
+                    }
+                }
+                else
+                {
+                    ChatHubMessage chatHubMessage = ChatHubMessage.FromBot(botResponse);
+                    await BroadcastChatMessage(chatHubMessage);
+                }
             }
 
             EmoteSet emoteSet = e.ChatMessage.EmoteSet;

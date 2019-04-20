@@ -20,7 +20,6 @@ namespace IO.Core
         private readonly TwitchClient _twitchClient;
         private readonly StreamAnalytics _streamAnalytics;
         private TwitchPubSub _twitchPubSub = new TwitchPubSub();
-        private Timer _timer;
         private int _refreshMilliSeconds = Convert.ToInt32(Constants.OverlayRefreshMilliSeconds);
 
         private List<StreamUserModel> _knownUsers = new List<StreamUserModel>();
@@ -82,6 +81,13 @@ namespace IO.Core
             {
                 _timer.Dispose();
             }
+            if (_chatReminderTimers != null)
+            {
+                foreach(var chatReminder in _chatReminderTimers)
+                {
+                    chatReminder.Value.Dispose();
+                }
+            }
             if (_alertHubConnection != null)
             {
                 if (_alertHubConnection.State == HubConnectionState.Connected)
@@ -90,6 +96,14 @@ namespace IO.Core
                 }
                 await _alertHubConnection.DisposeAsync();
             }
+            if (_avHubConnection != null)
+            {
+                if (_avHubConnection.State == HubConnectionState.Connected)
+                {
+                    await _avHubConnection.StopAsync();
+                }
+                await _avHubConnection.DisposeAsync();
+            }
             if (_chatHubConnection != null)
             {
                 if (_chatHubConnection.State == HubConnectionState.Connected)
@@ -97,6 +111,14 @@ namespace IO.Core
                     await _chatHubConnection.StopAsync();
                 }
                 await _chatHubConnection.DisposeAsync();
+            }
+            if (_nakedHubConnection != null)
+            {
+                if (_nakedHubConnection.State == HubConnectionState.Connected)
+                {
+                    await _nakedHubConnection.StopAsync();
+                }
+                await _nakedHubConnection.DisposeAsync();
             }
             if (_overlayHubConnection != null)
             {

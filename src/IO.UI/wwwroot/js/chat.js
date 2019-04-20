@@ -1,10 +1,10 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder()
+var alertConnection = new signalR.HubConnectionBuilder()
     .withUrl("/IO-Chat")
     .build();
 
-connection.on("ReceiveChatMessage", function (chatMessage) {
+alertConnection.on("ReceiveChatMessage", function (chatMessage) {
 
     console.log(JSON.stringify(chatMessage));
 
@@ -88,17 +88,17 @@ connection.on("ReceiveChatMessage", function (chatMessage) {
     }, 50000, id);
 });
 
-connection.onclose(async () => {
-    await start();
+alertConnection.onclose(async () => {
+    await startAlertConnection();
 });
 
-connection.start();
+alertConnection.start();
 
-async function start() {
+async function startAlertConnection() {
     try {
-        await connection.start();
+        await alertConnection.start();
     } catch (err) {
-        setTimeout(() => start(), 5000);
+        setTimeout(() => startAlertConnection(), 5000);
     }
 }
 

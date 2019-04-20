@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.AspNetCore.Builder;
+﻿using System;using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -41,6 +40,8 @@ namespace IO.UI
             // Add all IChatService's that we want to use in processing incoming
             // chat messages from Twitch IRC channel
             services.AddSingleton<IChatService, BasicCommandChatService>();
+            services.AddSingleton<IChatService, AVChatService>();
+            //services.AddSingleton<IChatService, NakedChatService>();
             services.AddSingleton<IChatService, ShoutOutChatService>();
             services.AddSingleton<IChatService, UptimeChatService>();
             services.AddSingleton<IChatService, HelpChatService>();
@@ -70,7 +71,9 @@ namespace IO.UI
             app.UseSignalR(routes =>
             {
                 routes.MapHub<AlertHub>("/IO-Alert");
+                routes.MapHub<AVHub>("/IO-AV");
                 routes.MapHub<ChatHub>("/IO-Chat");
+                routes.MapHub<NakedHub>("/IO-Naked");
                 routes.MapHub<OverlayHub>("/IO-Overlay");
             });
 
