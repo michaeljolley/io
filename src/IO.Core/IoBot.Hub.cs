@@ -14,9 +14,7 @@ namespace IO.Core
     public partial class IoBot
     {
         private HubConnection _alertHubConnection;
-        private HubConnection _avHubConnection;
         private HubConnection _chatHubConnection;
-        private HubConnection _nakedHubConnection;
         private HubConnection _overlayHubConnection;
 
         private async Task ConfigureHubsAsync()
@@ -29,28 +27,12 @@ namespace IO.Core
                 .WithUrl(Constants.HubOverlayUrl + "/IO-Alert")
                 .Build();
 
-            _avHubConnection = new HubConnectionBuilder()
-                .ConfigureLogging(log =>
-                {
-                    log.AddConsole();
-                })
-                .WithUrl(Constants.HubOverlayUrl + "/IO-AV")
-                .Build();
-
             _chatHubConnection = new HubConnectionBuilder()
                 .ConfigureLogging(log =>
                 {
                     log.AddConsole();
                 })
                 .WithUrl(Constants.HubOverlayUrl + "/IO-Chat")
-                .Build();
-
-            _nakedHubConnection = new HubConnectionBuilder()
-                .ConfigureLogging(log =>
-                {
-                    log.AddConsole();
-                })
-                .WithUrl(Constants.HubOverlayUrl + "/IO-Naked")
                 .Build();
 
             _overlayHubConnection = new HubConnectionBuilder()
@@ -66,20 +48,10 @@ namespace IO.Core
                 await Task.Delay(new Random().Next(0, 5) * 1000);
                 await ConnectToAlertHub();
             };
-            _avHubConnection.Closed += async (error) =>
-            {
-                await Task.Delay(new Random().Next(0, 5) * 1000);
-                await ConnectToAVHub();
-            };
             _chatHubConnection.Closed += async (error) =>
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
                 await ConnectToAlertHub();
-            };
-            _nakedHubConnection.Closed += async (error) =>
-            {
-                await Task.Delay(new Random().Next(0, 5) * 1000);
-                await ConnectToNakedHub();
             };
             _overlayHubConnection.Closed += async (error) =>
             {
@@ -88,9 +60,7 @@ namespace IO.Core
             };
 
             await ConnectToAlertHub();
-            await ConnectToAVHub();
             await ConnectToChatHub();
-            await ConnectToNakedHub();
             await ConnectToOverlayHub();
         }
 
@@ -106,35 +76,11 @@ namespace IO.Core
             }
         }
 
-        private async Task ConnectToAVHub()
-        {
-            try
-            {
-                await _avHubConnection.StartAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-
         private async Task ConnectToChatHub()
         {
             try
             {
                 await _chatHubConnection.StartAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
-
-        private async Task ConnectToNakedHub()
-        {
-            try
-            {
-                await _nakedHubConnection.StartAsync();
             }
             catch (Exception ex)
             {
@@ -231,36 +177,5 @@ namespace IO.Core
         {
             await _alertHubConnection.InvokeAsync("BroadcastNewRaid", onRaidNotificationArgs);
         }
-
-        private async Task BroadcastNewAudioClip(string filename)
-        {
-            await _avHubConnection.InvokeAsync("BroadcastNewAudioClip", filename);
-        }
-
-        private async Task BroadcastNewVideoClip(string filename)
-        {
-            await _avHubConnection.InvokeAsync("BroadcastNewVideoClip", filename);
-        }
-
-        private async Task BroadcastStopAudioClip()
-        {
-            await _avHubConnection.InvokeAsync("BroadcastStopAudioClips");
-        }
-
-        private async Task BroadcastStopVideoClip()
-        {
-            await _avHubConnection.InvokeAsync("BroadcastStopVideoClips");
-        }
-
-        private async Task BroadcastToggleNaked()
-        {
-            await _nakedHubConnection.InvokeAsync("BroadcastToggleNaked");
-        }
-
-        private async Task BroadcastToggleNakedActive(bool isActive)
-        {
-            await _nakedHubConnection.InvokeAsync("BroadcastToggleNakedActive", isActive);
-        }
-
     }
 }

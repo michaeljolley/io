@@ -11,8 +11,11 @@ namespace IO.Core
     public partial class IoBot
     {
         private Timer _timer;
+        private Timer _streamStatusCheck;
 
         private Dictionary<string, Timer> _chatReminderTimers = new Dictionary<string, Timer>();
+
+        private bool _isBroadcasting = false;
 
         private void ConfigurePolling()
         {
@@ -20,6 +23,9 @@ namespace IO.Core
             // poll StreamAnalytics to send changes to the SignalR hub
             _timer = new Timer(async (e) => await PollAsync(e, _cancellationToken), null, TimeSpan.Zero,
                 TimeSpan.FromMilliseconds(_refreshMilliSeconds));
+
+            _streamStatusCheck = new Timer(async (e) => await PollStreamStatusAsync(e, _cancellationToken), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(5));
 
             // Setup reminders to fire and reminder chatters of various topics
             _chatReminderTimers.Add("follow", new Timer(async (e) => await FollowChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
@@ -68,6 +74,17 @@ namespace IO.Core
                 AddKnownUser(lastSubscriber);
             }
             await BroadcastLastSubscriber(lastSubscriber);
+        }
+
+        private async Task PollStreamStatusAsync(object state, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _streamStatusCheck?.Change(Timeout.Infinite, Timeout.Infinite);
+                return;
+            }
+
+            _isBroadcasting = await _streamAnalytics.BroadcasterOnlineAsync();
         }
 
         private async Task FollowChatReminderAsync(object state, CancellationToken cancellationToken)
@@ -119,7 +136,8 @@ namespace IO.Core
 
         private async Task SendBotMessage(string message)
         {
-            if (!_twitchClient.IsConnected ||
+            if (!_isBroadcasting ||
+                !_twitchClient.IsConnected ||
                 _twitchClient.JoinedChannels.Count == 0)
                 return;
          

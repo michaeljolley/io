@@ -81,6 +81,10 @@ namespace IO.Core
             {
                 _timer.Dispose();
             }
+            if (_streamStatusCheck != null)
+            {
+                _streamStatusCheck.Dispose();
+            }
             if (_chatReminderTimers != null)
             {
                 foreach(var chatReminder in _chatReminderTimers)
@@ -96,14 +100,6 @@ namespace IO.Core
                 }
                 await _alertHubConnection.DisposeAsync();
             }
-            if (_avHubConnection != null)
-            {
-                if (_avHubConnection.State == HubConnectionState.Connected)
-                {
-                    await _avHubConnection.StopAsync();
-                }
-                await _avHubConnection.DisposeAsync();
-            }
             if (_chatHubConnection != null)
             {
                 if (_chatHubConnection.State == HubConnectionState.Connected)
@@ -111,14 +107,6 @@ namespace IO.Core
                     await _chatHubConnection.StopAsync();
                 }
                 await _chatHubConnection.DisposeAsync();
-            }
-            if (_nakedHubConnection != null)
-            {
-                if (_nakedHubConnection.State == HubConnectionState.Connected)
-                {
-                    await _nakedHubConnection.StopAsync();
-                }
-                await _nakedHubConnection.DisposeAsync();
             }
             if (_overlayHubConnection != null)
             {

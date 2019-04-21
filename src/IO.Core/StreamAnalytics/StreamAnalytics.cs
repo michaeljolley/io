@@ -32,6 +32,11 @@ namespace IO.Core
             return 0;
         }
 
+        public async Task<bool> BroadcasterOnlineAsync()
+        {
+            return await _twitchAPI.V5.Streams.BroadcasterOnlineAsync(Constants.TwitchChannelId);
+        }
+
         public async Task<int> GetViewerCountAsync()
         {
             var streams = await _twitchAPI.Helix.Streams.GetStreamsAsync(userIds: new List<string>() { Constants.TwitchChannelId });
