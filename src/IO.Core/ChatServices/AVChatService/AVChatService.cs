@@ -47,7 +47,14 @@ namespace IO.Core.ChatServices
 
                     if (!string.IsNullOrEmpty(identifiedClipFileName))
                     {
-                        await BroadcastNewAudioClip(identifiedClipFileName);
+                        if (!splitMessage[0].Equals("!sub", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            await BroadcastNewAudioClip(identifiedClipFileName);
+                        }
+                        else if (chatMessage.IsBroadcaster)
+                        {
+                            await BroadcastNewAudioClip(identifiedClipFileName);
+                        }
                     }
                 }
                 else if (splitMessage[0].Equals("!stop", StringComparison.InvariantCultureIgnoreCase))
