@@ -85,12 +85,21 @@ namespace IO.Core
             {
                 _streamStatusCheck.Dispose();
             }
-            if (_chatReminderTimers != null)
+            if (_followerChatReminder != null)
             {
-                foreach(var chatReminder in _chatReminderTimers)
-                {
-                    chatReminder.Value.Dispose();
-                }
+                _followerChatReminder.Dispose();
+            }
+            if (_discordChatReminder != null)
+            {
+                _discordChatReminder.Dispose();
+            }
+            if (_questionChatReminder != null)
+            {
+                _questionChatReminder.Dispose();
+            }
+            if (_primeChatReminder != null)
+            {
+                _primeChatReminder.Dispose();
             }
             if (_alertHubConnection != null)
             {

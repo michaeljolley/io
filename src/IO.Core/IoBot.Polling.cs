@@ -10,10 +10,13 @@ namespace IO.Core
 {
     public partial class IoBot
     {
-        private Timer _timer;
-        private Timer _streamStatusCheck;
+        private static Timer _timer;
+        private static Timer _streamStatusCheck;
 
-        private Dictionary<string, Timer> _chatReminderTimers = new Dictionary<string, Timer>();
+        private static Timer _followerChatReminder;
+        private static Timer _primeChatReminder;
+        private static Timer _discordChatReminder;
+        private static Timer _questionChatReminder;
 
         private bool _isBroadcasting = false;
 
@@ -28,17 +31,17 @@ namespace IO.Core
                 TimeSpan.FromMinutes(5));
 
             // Setup reminders to fire and reminder chatters of various topics
-            _chatReminderTimers.Add("follow", new Timer(async (e) => await FollowChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(9)));
+            _followerChatReminder = new Timer(async (e) => await FollowChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(9));
 
-            _chatReminderTimers.Add("prime", new Timer(async (e) => await PrimeChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(19)));
+            _primeChatReminder = new Timer(async (e) => await PrimeChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(19));
 
-            _chatReminderTimers.Add("discord", new Timer(async (e) => await DiscordChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(16)));
+            _discordChatReminder = new Timer(async (e) => await DiscordChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(16));
 
-            _chatReminderTimers.Add("question", new Timer(async (e) => await QuestionChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(7)));
+            _questionChatReminder = new Timer(async (e) => await QuestionChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(7));
         }
 
         private async Task PollAsync(object state, CancellationToken cancellationToken)
@@ -91,7 +94,7 @@ namespace IO.Core
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                _chatReminderTimers["follow"]?.Change(Timeout.Infinite, Timeout.Infinite);
+                _followerChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
                 return;
             }
 
@@ -103,7 +106,7 @@ namespace IO.Core
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                _chatReminderTimers["prime"]?.Change(Timeout.Infinite, Timeout.Infinite);
+                _primeChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
                 return;
             }
 
@@ -115,7 +118,7 @@ namespace IO.Core
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                _chatReminderTimers["discord"]?.Change(Timeout.Infinite, Timeout.Infinite);
+                _discordChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
                 return;
             }
             
@@ -127,7 +130,7 @@ namespace IO.Core
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                _chatReminderTimers["question"]?.Change(Timeout.Infinite, Timeout.Infinite);
+                _questionChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
                 return;
             }
             string message = "Thanks for stopping by today!  Have a question?  Feel free to ask.  We love to help others succeed!";
