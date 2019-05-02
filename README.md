@@ -1,6 +1,6 @@
 # IO
 
-[![Build status](https://dev.azure.com/io-bot/io-bot/_apis/build/status/io-bot%20-%20CI)](https://dev.azure.com/io-bot/io-bot/_build/latest?definitionId=1)
+[![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master)
 
 ### What is this?
 
