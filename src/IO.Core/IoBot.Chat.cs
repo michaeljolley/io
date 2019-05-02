@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.Extensions.DependencyInjection;
 
 using TwitchLib.Client.Events;
@@ -17,15 +15,6 @@ namespace IO.Core
 {
     public partial class IoBot
     {
-        private string[] _whitelistedHTMLTags = new string[]
-        {
-            "h1","h2","h3","h4","h5","h6",
-            "marquee","blink","b","i","u"
-        };
-       
-        private const string _htmlOpenTag = @"<\/?[^>]*>";
-        private const string _htmlCloseTag = "";
-
         private void ConfigureChat()
         {
             ConnectionCredentials credentials = new ConnectionCredentials(Constants.TwitchChatBotUsername, Constants.TwitchChatBotAccessToken);
@@ -130,33 +119,6 @@ namespace IO.Core
         private async Task Client_OnRaidNotification(object sender, OnRaidNotificationArgs e)
         {
             await BroadcastNewRaid(e);
-        }
-
-        private string DecodeSpecificTags(string[] whiteListedTagNames, string encodedInput)
-        {
-            //String regex = "";
-            //foreach (string s in whiteListedTagNames)
-            //{
-            //    regex = "&lt;" + @"\s*/?\s*" + s + ".*?" + "&gt;";
-            //    encodedInput = Regex.Replace(encodedInput, regex);
-            //}
-
-            //HttpUtility.)
-
-            //return encodedInput;
-
-            //string acceptable = string.Join("|", whiteListedTagNames);
-            //string stringPattern = @"</?(?(?=" + acceptable + @")notag|[a-zA-Z0-9]+)(?:\s[a-zA-Z0-9\-]+=?(?:(["",']?).*?\1?)?)*\s*/?>";
-
-            //encodedInput = Regex.Replace()
-
-            //foreach (string s in whiteListedTagNames)
-            //{
-            //    encodedInput = Regex.Replace(encodedInput, string.Format(_htmlOpenTag, s));
-            //    // encodedInput = Regex.Replace(encodedInput, string.Format(_htmlCloseTag, s));
-            //}
-
-            return encodedInput;
         }
     }
 }

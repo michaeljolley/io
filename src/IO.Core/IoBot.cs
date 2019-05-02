@@ -81,26 +81,26 @@ namespace IO.Core
             {
                 _timer.Dispose();
             }
-            if (_streamStatusCheck != null)
-            {
-                _streamStatusCheck.Dispose();
-            }
-            if (_followerChatReminder != null)
-            {
-                _followerChatReminder.Dispose();
-            }
-            if (_discordChatReminder != null)
-            {
-                _discordChatReminder.Dispose();
-            }
-            if (_questionChatReminder != null)
-            {
-                _questionChatReminder.Dispose();
-            }
-            if (_primeChatReminder != null)
-            {
-                _primeChatReminder.Dispose();
-            }
+            //if (_streamStatusCheck != null)
+            //{
+            //    _streamStatusCheck.Dispose();
+            //}
+            //if (_followerChatReminder != null)
+            //{
+            //    _followerChatReminder.Dispose();
+            //}
+            //if (_discordChatReminder != null)
+            //{
+            //    _discordChatReminder.Dispose();
+            //}
+            //if (_questionChatReminder != null)
+            //{
+            //    _questionChatReminder.Dispose();
+            //}
+            //if (_primeChatReminder != null)
+            //{
+            //    _primeChatReminder.Dispose();
+            //}
             if (_alertHubConnection != null)
             {
                 if (_alertHubConnection.State == HubConnectionState.Connected)

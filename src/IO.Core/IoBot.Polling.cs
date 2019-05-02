@@ -11,14 +11,14 @@ namespace IO.Core
     public partial class IoBot
     {
         private static Timer _timer;
-        private static Timer _streamStatusCheck;
+        //private static Timer _streamStatusCheck;
 
-        private static Timer _followerChatReminder;
-        private static Timer _primeChatReminder;
-        private static Timer _discordChatReminder;
-        private static Timer _questionChatReminder;
+        //private static Timer _followerChatReminder;
+        //private static Timer _primeChatReminder;
+        //private static Timer _discordChatReminder;
+        //private static Timer _questionChatReminder;
 
-        private bool _isBroadcasting = false;
+        //private bool _isBroadcasting = false;
 
         private void ConfigurePolling()
         {
@@ -27,21 +27,21 @@ namespace IO.Core
             _timer = new Timer(async (e) => await PollAsync(e, _cancellationToken), null, TimeSpan.Zero,
                 TimeSpan.FromMilliseconds(_refreshMilliSeconds));
 
-            _streamStatusCheck = new Timer(async (e) => await PollStreamStatusAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(5));
+            //_streamStatusCheck = new Timer(async (e) => await PollStreamStatusAsync(e, _cancellationToken), null, TimeSpan.Zero,
+            //    TimeSpan.FromMinutes(5));
 
-            // Setup reminders to fire and reminder chatters of various topics
-            _followerChatReminder = new Timer(async (e) => await FollowChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(9));
+            //// Setup reminders to fire and reminder chatters of various topics
+            //_followerChatReminder = new Timer(async (e) => await FollowChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+            //    TimeSpan.FromMinutes(9));
 
-            _primeChatReminder = new Timer(async (e) => await PrimeChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(19));
+            //_primeChatReminder = new Timer(async (e) => await PrimeChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+            //    TimeSpan.FromMinutes(19));
 
-            _discordChatReminder = new Timer(async (e) => await DiscordChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(16));
+            //_discordChatReminder = new Timer(async (e) => await DiscordChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+            //    TimeSpan.FromMinutes(16));
 
-            _questionChatReminder = new Timer(async (e) => await QuestionChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(7));
+            //_questionChatReminder = new Timer(async (e) => await QuestionChatReminderAsync(e, _cancellationToken), null, TimeSpan.Zero,
+            //    TimeSpan.FromMinutes(7));
         }
 
         private async Task PollAsync(object state, CancellationToken cancellationToken)
@@ -79,74 +79,74 @@ namespace IO.Core
             await BroadcastLastSubscriber(lastSubscriber);
         }
 
-        private async Task PollStreamStatusAsync(object state, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _streamStatusCheck?.Change(Timeout.Infinite, Timeout.Infinite);
-                return;
-            }
+        //private async Task PollStreamStatusAsync(object state, CancellationToken cancellationToken)
+        //{
+        //    if (cancellationToken.IsCancellationRequested)
+        //    {
+        //        _streamStatusCheck?.Change(Timeout.Infinite, Timeout.Infinite);
+        //        return;
+        //    }
 
-            _isBroadcasting = await _streamAnalytics.BroadcasterOnlineAsync();
-        }
+        //    _isBroadcasting = await _streamAnalytics.BroadcasterOnlineAsync();
+        //}
 
-        private async Task FollowChatReminderAsync(object state, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _followerChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
-                return;
-            }
+        //private async Task FollowChatReminderAsync(object state, CancellationToken cancellationToken)
+        //{
+        //    if (cancellationToken.IsCancellationRequested)
+        //    {
+        //        _followerChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
+        //        return;
+        //    }
 
-            string message = "Enjoying the stream?  Press the follow button above to be notified when we're live.";
-            await SendBotMessage(message);
-        }
+        //    string message = "Enjoying the stream?  Press the follow button above to be notified when we're live.";
+        //    await SendBotMessage(message);
+        //}
 
-        private async Task PrimeChatReminderAsync(object state, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _primeChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
-                return;
-            }
+        //private async Task PrimeChatReminderAsync(object state, CancellationToken cancellationToken)
+        //{
+        //    if (cancellationToken.IsCancellationRequested)
+        //    {
+        //        _primeChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
+        //        return;
+        //    }
 
-            string message = "Have Amazon Prime?  You can use Twitch Prime to subscribe for free!";
-            await SendBotMessage(message);
-        }
+        //    string message = "Have Amazon Prime?  You can use Twitch Prime to subscribe for free!";
+        //    await SendBotMessage(message);
+        //}
 
-        private async Task DiscordChatReminderAsync(object state, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _discordChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
-                return;
-            }
+        //private async Task DiscordChatReminderAsync(object state, CancellationToken cancellationToken)
+        //{
+        //    if (cancellationToken.IsCancellationRequested)
+        //    {
+        //        _discordChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
+        //        return;
+        //    }
             
-            string message = "Stay in touch when we're not live. Join our Discord channel at https://discord.gg/XSG7HJm";
-            await SendBotMessage(message);
-        }
+        //    string message = "Stay in touch when we're not live. Join our Discord channel at https://discord.gg/XSG7HJm";
+        //    await SendBotMessage(message);
+        //}
 
-        private async Task QuestionChatReminderAsync(object state, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _questionChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
-                return;
-            }
-            string message = "Thanks for stopping by today!  Have a question?  Feel free to ask.  We love to help others succeed!";
-            await SendBotMessage(message);
-        }
+        //private async Task QuestionChatReminderAsync(object state, CancellationToken cancellationToken)
+        //{
+        //    if (cancellationToken.IsCancellationRequested)
+        //    {
+        //        _questionChatReminder?.Change(Timeout.Infinite, Timeout.Infinite);
+        //        return;
+        //    }
+        //    string message = "Thanks for stopping by today!  Have a question?  Feel free to ask.  We love to help others succeed!";
+        //    await SendBotMessage(message);
+        //}
 
-        private async Task SendBotMessage(string message)
-        {
-            if (!_isBroadcasting ||
-                !_twitchClient.IsConnected ||
-                _twitchClient.JoinedChannels.Count == 0)
-                return;
+        //private async Task SendBotMessage(string message)
+        //{
+        //    if (!_isBroadcasting ||
+        //        !_twitchClient.IsConnected ||
+        //        _twitchClient.JoinedChannels.Count == 0)
+        //        return;
          
-            _twitchClient.SendMessage(Constants.TwitchChannel, message);
-            ChatHubMessage chatHubMessage = ChatHubMessage.FromBot(message);
-            await BroadcastChatMessage(chatHubMessage);
-        }
+        //    _twitchClient.SendMessage(Constants.TwitchChannel, message);
+        //    ChatHubMessage chatHubMessage = ChatHubMessage.FromBot(message);
+        //    await BroadcastChatMessage(chatHubMessage);
+        //}
     }
 }

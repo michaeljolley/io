@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Web;
 using TwitchLib.Client.Models;
 
 namespace IO.Core.Models
@@ -10,6 +10,13 @@ namespace IO.Core.Models
     {
         private const string emoteImageTag = "<img class=\"emote\" src=\"{0}\"/>";
         private const string displayNameTag = "<span style=\"color:{0}\" class=\"name\">{1}</span>";
+
+        private string[] _whitelistedHTMLTags = new string[]
+        {
+            "h1","h2","h3","h4","h5","h6",
+            "marquee","blink","b","i","u",
+            "strong", "em"
+        };
 
         public static ChatHubMessage FromChatMessage(ChatMessage chatMessage, StreamUserModel streamUserModel)
         {
@@ -95,8 +102,7 @@ namespace IO.Core.Models
             string result = "";
             if (!string.IsNullOrEmpty(Message))
             {
-                //result = string.Format(displayNameTag, ColorHex, DisplayName + ": ");
-                result += Message;
+                result += DecodeSpecificTags();
 
                 // Replace emotes with img tags
                 if (ChatMessage != null &&
@@ -120,6 +126,13 @@ namespace IO.Core.Models
 
             }
             return result;
+        }
+
+        private string DecodeSpecificTags()
+        {
+            // string content = $"<div>{Message}</div>";
+            string content = HttpUtility.HtmlEncode(Message);
+            return content;
         }
     }
 }
