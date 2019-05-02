@@ -136,7 +136,6 @@ namespace IO.Core.Models
             sanitizer.AllowedTags.Clear();
             sanitizer.AllowedAttributes.Clear();
             sanitizer.AllowedAtRules.Clear();
-            sanitizer.AllowedCssClasses.Clear();
             sanitizer.AllowedCssProperties.Clear();
 
             foreach (string tag in _whitelistedHTMLTags)
