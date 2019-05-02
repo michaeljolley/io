@@ -90,23 +90,28 @@ namespace IO.Core
                 AddKnownUser(chatUser);
             }
 
-            await BroadcastChatMessage(ChatHubMessage.FromChatMessage(e.ChatMessage, chatUser));
+            ChatHubMessage chatHubMessage = ChatHubMessage.FromChatMessage(e.ChatMessage, chatUser);
 
-            if (!string.IsNullOrEmpty(botResponse))
+            if (!string.IsNullOrEmpty(chatHubMessage.HubMessage.Trim()))
             {
-                ChatHubMessage chatHubMessage = ChatHubMessage.FromBot(botResponse);
                 await BroadcastChatMessage(chatHubMessage);
-            }
-
-            EmoteSet emoteSet = e.ChatMessage.EmoteSet;
-            if (emoteSet != null && emoteSet.Emotes.Count > 0)
-            {
-                List<EmoteSet.Emote> emotes = emoteSet.Emotes;
-
-                foreach (EmoteSet.Emote emote in emotes)
+           
+                if (!string.IsNullOrEmpty(botResponse))
                 {
-                    await BroadcastEmote(emote.ImageUrl);
-                    await Task.Delay(new Random().Next(500, 1200));
+                    ChatHubMessage botChatHubMessage = ChatHubMessage.FromBot(botResponse);
+                    await BroadcastChatMessage(botChatHubMessage);
+                }
+
+                EmoteSet emoteSet = e.ChatMessage.EmoteSet;
+                if (emoteSet != null && emoteSet.Emotes.Count > 0)
+                {
+                    List<EmoteSet.Emote> emotes = emoteSet.Emotes;
+
+                    foreach (EmoteSet.Emote emote in emotes)
+                    {
+                        await BroadcastEmote(emote.ImageUrl);
+                        await Task.Delay(new Random().Next(500, 1200));
+                    }
                 }
             }
         }

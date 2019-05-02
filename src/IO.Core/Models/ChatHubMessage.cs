@@ -15,8 +15,8 @@ namespace IO.Core.Models
         private string[] _whitelistedHTMLTags = new string[]
         {
             "h1","h2","h3","h4","h5","h6",
-            "marquee","blink","b","i","u",
-            "strong", "em"
+            "marquee","code","b","i","u",
+            "strong", "em", "blink"
         };
 
         public static ChatHubMessage FromChatMessage(ChatMessage chatMessage, StreamUserModel streamUserModel)
@@ -141,6 +141,12 @@ namespace IO.Core.Models
             foreach (string tag in _whitelistedHTMLTags)
             {
                 sanitizer.AllowedTags.Add(tag);
+            }
+
+            if (IsModerator)
+            {
+                sanitizer.AllowedTags.Add("img");
+                sanitizer.AllowedAttributes.Add("src");
             }
 
             return sanitizer.Sanitize(Message); 
