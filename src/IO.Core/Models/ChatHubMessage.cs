@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ganss.XSS;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -130,9 +131,20 @@ namespace IO.Core.Models
 
         private string DecodeSpecificTags()
         {
-            // string content = $"<div>{Message}</div>";
-            string content = HttpUtility.HtmlEncode(Message);
-            return content;
+            HtmlSanitizer sanitizer = new HtmlSanitizer();
+            sanitizer.AllowDataAttributes = false;
+            sanitizer.AllowedTags.Clear();
+            sanitizer.AllowedAttributes.Clear();
+            sanitizer.AllowedAtRules.Clear();
+            sanitizer.AllowedCssClasses.Clear();
+            sanitizer.AllowedCssProperties.Clear();
+
+            foreach (string tag in _whitelistedHTMLTags)
+            {
+                sanitizer.AllowedTags.Add(tag);
+            }
+
+            return sanitizer.Sanitize(Message); 
         }
     }
 }

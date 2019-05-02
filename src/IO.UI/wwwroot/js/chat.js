@@ -17,7 +17,7 @@ alertConnection.on("ReceiveChatMessage", function (chatMessage) {
      *     profileImg
      *   body
      *     bubble
-     *       moderator (optional)
+     *       io / cheer / moderator (optional)
      *       message
      *       name
      */
@@ -40,7 +40,7 @@ alertConnection.on("ReceiveChatMessage", function (chatMessage) {
     name.innerText = chatMessage.streamUserModel.displayName;
 
     var message = createChatDiv('message');
-    message.innerText = chatMessage.hubMessage;
+    message.innerHTML = chatMessage.hubMessage;
 
     // If this chat message is from the bot then handle it separately from 
     // all other skins
