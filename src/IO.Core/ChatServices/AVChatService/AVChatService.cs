@@ -16,6 +16,8 @@ namespace IO.Core.ChatServices
 
         private Dictionary<string, string> _availableFiles = new Dictionary<string, string>();
 
+        private bool isPaused = false;
+
         public AVChatService(TwitchClient applicationTwitchClient, IHostingEnvironment hostingEnvironment) :
             base(applicationTwitchClient)
         {
@@ -41,7 +43,8 @@ namespace IO.Core.ChatServices
             {
                 string[] splitMessage = message.Split(null);
 
-                if (_availableFiles.ContainsKey(splitMessage[0].ToLower()))
+                if (_availableFiles.ContainsKey(splitMessage[0].ToLower()) &&
+                    !isPaused)
                 {
                     string identifiedClipFileName = _availableFiles[splitMessage[0].ToLower()];
 
@@ -61,6 +64,22 @@ namespace IO.Core.ChatServices
                 {
                     await BroadcastStopAudioClip();
                     await BroadcastStopVideoClip();
+                }
+                else if (splitMessage[0].Equals("!av", StringComparison.InvariantCultureIgnoreCase) &&
+                        (chatMessage.IsBroadcaster || chatMessage.IsModerator))
+                {
+                    if (splitMessage.Length > 1)
+                    {
+                        if (splitMessage[1].Equals("start", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            isPaused = false;
+                        }
+
+                        if (splitMessage[1].Equals("stop", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            isPaused = true;
+                        }
+                    }
                 }
             }
             return string.Empty;

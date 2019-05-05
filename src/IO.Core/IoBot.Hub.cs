@@ -51,7 +51,7 @@ namespace IO.Core
             _chatHubConnection.Closed += async (error) =>
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
-                await ConnectToAlertHub();
+                await ConnectToChatHub();
             };
             _overlayHubConnection.Closed += async (error) =>
             {
