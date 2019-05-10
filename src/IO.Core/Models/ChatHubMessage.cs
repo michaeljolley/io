@@ -60,7 +60,7 @@ namespace IO.Core.Models
                 Username = Constants.TwitchChatBotUsername,
                 DisplayName = Constants.TwitchChatBotUsername,
                 UserType = 1,
-                StreamUserModel = new StreamUserModel("abc123", Constants.TwitchChatBotUsername, "")
+                StreamUserModel = new StreamUserModel("b3_bot", Constants.TwitchChatBotUsername, "https://static-cdn.jtvnw.net/jtv_user_pictures/5cfc8383-1169-47bb-aeaf-c0d365ffb890-profile_image-300x300.png")
             };
             chatHubMessage.HubMessage = chatHubMessage.GenerateHubMessage();
             return chatHubMessage;

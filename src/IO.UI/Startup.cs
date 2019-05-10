@@ -42,6 +42,7 @@ namespace IO.UI
             services.AddSingleton<IChatService, BasicCommandChatService>();
             services.AddSingleton<IChatService, AVChatService>();
             //services.AddSingleton<IChatService, NakedChatService>();
+            services.AddSingleton<IChatService, ShameChatService>();
             services.AddSingleton<IChatService, ShoutOutChatService>();
             services.AddSingleton<IChatService, UptimeChatService>();
             services.AddSingleton<IChatService, HelpChatService>();

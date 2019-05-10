@@ -8,6 +8,8 @@ namespace IO.Core.ChatServices
     {
         private readonly TwitchClient _twitchClient;
 
+        public bool IsAVPaused = false;
+
         public BaseChatService(TwitchClient twitchClient)
         {
             _twitchClient = twitchClient;
