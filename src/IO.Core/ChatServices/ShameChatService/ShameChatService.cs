@@ -34,7 +34,7 @@ namespace IO.Core.ChatServices
                 switch (message)
                 {
                     case "!theme hotdogstand":
-                        string response = $"HotDog Stand!?! Shame on you @{chatMessage.DisplayName}! themic5Hose  ";
+                        string response = $"HotDog Stand!?! Shame on you @{chatMessage.DisplayName}!";
                         SendMessage(response);
                         await BroadcastNewAudioClip("shame.mp3");
                         return $"HotDog Stand!?! Shame on you @{chatMessage.DisplayName}! <img class='emote' src='https://static-cdn.jtvnw.net/emoticons/v1/300179561/1.0'/>";
