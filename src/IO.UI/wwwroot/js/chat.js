@@ -77,6 +77,7 @@ alertConnection.on("ReceiveChatMessage", function (chatMessage) {
     $('#msg' + id).hide();
     $(".chatBox").append(newChatMessage);
 
+    animateCSS(newChatMessage, 'zoomInUp', null);
     calcPositions(newChatMessage);
 
     $('#msg' + id).fadeIn('slow');
@@ -111,16 +112,45 @@ function createChatDiv(cssClass) {
 function calcPositions(newMessageDiv) {
     var nextBottom = 0;
     var transparency = 100;
+
+    // Calc bottoms & remove any divs that need
     $($('.chatBox .chatMessage').get().reverse()).each(function (i, el) {
-        if (transparency < 0) {
-            $(el).remove();
+        transparency = (nextBottom / 100) * 7;
+
+        if (transparency > 0 && (1 - (transparency / 100)) < .5) {
+            animateCSS(el, 'zoomOutRight', (node) => {
+                $(node).remove();
+            })
         }
         else {
-            transparency = (nextBottom / 100) * 7;
-            $(el).css('bottom', nextBottom).css({ 'opacity': 1 - (transparency / 100) });
             nextBottom = nextBottom + $(el).height() + 25;
         }
     });
+
+    nextBottom = 0;
+    transparency = 100;
+
+    // Iterate through remainder and move/add
+    $($('.chatBox .chatMessage').get().reverse()).each(function (i, el) {
+        transparency = (nextBottom / 100) * 7;
+
+        animateCSS(el, 'bounce', null);
+        $(el).css('bottom', nextBottom).css({ 'opacity': 1 - (transparency / 100) });
+        nextBottom = nextBottom + $(el).height() + 25;
+    });
+}
+
+function animateCSS(node, animationName, callback) {
+    node.classList.add('animated', animationName)
+
+    function handleAnimationEnd() {
+        node.classList.remove('animated', animationName)
+        node.removeEventListener('animationend', handleAnimationEnd)
+
+        if (typeof callback === 'function') callback(node)
+    }
+
+    node.addEventListener('animationend', handleAnimationEnd)
 }
 
 const shieldSVG = "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='#000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path class='strokeColor' d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' /></svg>";

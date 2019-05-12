@@ -52,31 +52,39 @@ namespace IO.Core
                 return;
             }
 
-            // Check follower count & publish to SignalR hub
-            long followerCount = await _streamAnalytics.GetFollowerCountAsync();
-            await BroadcastNewFollowerCount(followerCount);
-
-            // Check viewer count & publish to SignalR hub
-            int viewerCount = await _streamAnalytics.GetViewerCountAsync();
-            await BroadcastNewViewerCount(viewerCount);
-
-            // Check for last follower and publish to SignalR hub
-            string lastFollowerId = await _streamAnalytics.GetLastFollowerAsync();
-            StreamUserModel _lastFollower = _knownUsers.FirstOrDefault(f => f.Id.Equals(lastFollowerId, StringComparison.InvariantCultureIgnoreCase));
-            if (_lastFollower == null)
+            try
             {
-                _lastFollower = await _streamAnalytics.GetUserAsync(lastFollowerId);
-                AddKnownUser(_lastFollower);
-            }
-            await BroadcastLastFollower(_lastFollower);
+                // Check follower count & publish to SignalR hub
+                long followerCount = await _streamAnalytics.GetFollowerCountAsync();
+                await BroadcastNewFollowerCount(followerCount);
+            
+                // Check viewer count & publish to SignalR hub
+                int viewerCount = await _streamAnalytics.GetViewerCountAsync();
+                await BroadcastNewViewerCount(viewerCount);
 
-            // Check for last subscriber and publish to SignalR hub
-            StreamUserModel lastSubscriber = await _streamAnalytics.GetLastSubscriberAsync();
-            if (!_knownUsers.Any(f => f.Id.Equals(lastSubscriber.Id, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                AddKnownUser(lastSubscriber);
+                // Check for last follower and publish to SignalR hub
+                string lastFollowerId = await _streamAnalytics.GetLastFollowerAsync();
+                StreamUserModel _lastFollower = _knownUsers.FirstOrDefault(f => f.Id.Equals(lastFollowerId, StringComparison.InvariantCultureIgnoreCase));
+                if (_lastFollower == null)
+                {
+                    _lastFollower = await _streamAnalytics.GetUserAsync(lastFollowerId);
+                    AddKnownUser(_lastFollower);
+                }
+                await BroadcastLastFollower(_lastFollower);
+
+                // Check for last subscriber and publish to SignalR hub
+                StreamUserModel lastSubscriber = await _streamAnalytics.GetLastSubscriberAsync();
+                if (!_knownUsers.Any(f => f.Id.Equals(lastSubscriber.Id, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    AddKnownUser(lastSubscriber);
+                }
+                await BroadcastLastSubscriber(lastSubscriber);
+
             }
-            await BroadcastLastSubscriber(lastSubscriber);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         //private async Task PollStreamStatusAsync(object state, CancellationToken cancellationToken)
