@@ -1,0 +1,734 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.2",
+    "signature": "a1283f1582df3c9d1f59a52d4549a321739b0c46"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.2": {
+      "IO.Core/1.0.0": {
+        "dependencies": {
+          "HtmlSanitizer": "4.0.210",
+          "Microsoft.AspNetCore.SignalR.Client": "1.1.0",
+          "Microsoft.NETCore.App": "2.2.0",
+          "TwitchLib": "3.0.1"
+        },
+        "runtime": {
+          "IO.Core.dll": {}
+        }
+      },
+      "AngleSharp/0.9.11": {
+        "dependencies": {
+          "System.Net.Primitives": "4.3.0",
+          "System.Net.Requests": "4.0.11"
+        },
+        "runtime": {
+          "lib/netstandard1.0/AngleSharp.dll": {
+            "assemblyVersion": "0.9.9.0",
+            "fileVersion": "0.9.9.0"
+          }
+        }
+      },
+      "HtmlSanitizer/4.0.210": {
+        "dependencies": {
+          "AngleSharp": "0.9.11"
+        },
+        "runtime": {
+          "lib/netstandard2.0/HtmlSanitizer.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.210.0"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Http.Connections.Client/1.1.0": {
+        "runtime": {
+          "lib/netcoreapp2.2/Microsoft.AspNetCore.Http.Connections.Client.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.18316"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SignalR.Client/1.1.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Http.Connections.Client": "1.1.0",
+          "Microsoft.AspNetCore.SignalR.Client.Core": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.AspNetCore.SignalR.Client.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.18316"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SignalR.Client.Core/1.1.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.AspNetCore.SignalR.Client.Core.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.18316"
+          }
+        }
+      },
+      "Microsoft.NETCore.App/2.2.0": {
+        "dependencies": {
+          "Microsoft.NETCore.DotNetHostPolicy": "2.2.0",
+          "Microsoft.NETCore.Platforms": "2.2.0",
+          "Microsoft.NETCore.Targets": "2.0.0",
+          "NETStandard.Library": "2.0.3"
+        }
+      },
+      "Microsoft.NETCore.DotNetAppHost/2.2.0": {},
+      "Microsoft.NETCore.DotNetHostPolicy/2.2.0": {
+        "dependencies": {
+          "Microsoft.NETCore.DotNetHostResolver": "2.2.0"
+        }
+      },
+      "Microsoft.NETCore.DotNetHostResolver/2.2.0": {
+        "dependencies": {
+          "Microsoft.NETCore.DotNetAppHost": "2.2.0"
+        }
+      },
+      "Microsoft.NETCore.Platforms/2.2.0": {},
+      "Microsoft.NETCore.Targets/2.0.0": {},
+      "NETStandard.Library/2.0.3": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.2.0"
+        }
+      },
+      "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/debian.8-x64/native/_._": {
+            "rid": "debian.8-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/fedora.23-x64/native/_._": {
+            "rid": "fedora.23-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/fedora.24-x64/native/_._": {
+            "rid": "fedora.24-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "dependencies": {
+          "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2",
+          "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
+        }
+      },
+      "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/opensuse.13.2-x64/native/_._": {
+            "rid": "opensuse.13.2-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/opensuse.42.1-x64/native/_._": {
+            "rid": "opensuse.42.1-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/osx.10.10-x64/native/_._": {
+            "rid": "osx.10.10-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/rhel.7-x64/native/_._": {
+            "rid": "rhel.7-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/ubuntu.14.04-x64/native/_._": {
+            "rid": "ubuntu.14.04-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/ubuntu.16.04-x64/native/_._": {
+            "rid": "ubuntu.16.04-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+        "runtimeTargets": {
+          "runtime/ubuntu.16.10-x64/native/_._": {
+            "rid": "ubuntu.16.10-x64",
+            "assetType": "native"
+          }
+        }
+      },
+      "Serilog/2.3.0": {
+        "runtime": {
+          "lib/netstandard1.3/Serilog.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.3.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Logging/2.0.2": {
+        "dependencies": {
+          "Serilog": "2.3.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Serilog.Extensions.Logging.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.2.0"
+          }
+        }
+      },
+      "System.Net.Http/4.3.3": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.2.0",
+          "System.Net.Primitives": "4.3.0",
+          "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
+        },
+        "runtimeTargets": {
+          "runtime/unix/lib/_._": {
+            "rid": "unix",
+            "assetType": "runtime"
+          },
+          "runtime/win/lib/_._": {
+            "rid": "win",
+            "assetType": "runtime"
+          }
+        }
+      },
+      "System.Net.Primitives/4.3.0": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.2.0",
+          "Microsoft.NETCore.Targets": "2.0.0"
+        }
+      },
+      "System.Net.Requests/4.0.11": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.2.0",
+          "System.Net.Http": "4.3.3",
+          "System.Net.Primitives": "4.3.0",
+          "System.Net.WebHeaderCollection": "4.0.1"
+        },
+        "runtimeTargets": {
+          "runtime/unix/lib/_._": {
+            "rid": "unix",
+            "assetType": "runtime"
+          },
+          "runtime/win/lib/_._": {
+            "rid": "win",
+            "assetType": "runtime"
+          }
+        }
+      },
+      "System.Net.WebHeaderCollection/4.0.1": {},
+      "TwitchLib/3.0.1": {
+        "dependencies": {
+          "TwitchLib.Api": "3.0.0",
+          "TwitchLib.Client": "3.0.3",
+          "TwitchLib.PubSub": "3.0.2"
+        }
+      },
+      "TwitchLib.Api/3.0.0": {
+        "dependencies": {
+          "Serilog.Extensions.Logging": "2.0.2",
+          "System.Net.Http": "4.3.3",
+          "TwitchLib.Api.Core": "1.1.0",
+          "TwitchLib.Api.Helix": "1.1.0",
+          "TwitchLib.Api.V5": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Core/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core.Enums": "1.1.0",
+          "TwitchLib.Api.Core.Interfaces": "1.1.0",
+          "TwitchLib.Api.Core.Models": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Core.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Core.Enums/1.1.0": {
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Core.Enums.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Core.Interfaces/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core.Enums": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Core.Interfaces.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Core.Models/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core.Enums": "1.1.0",
+          "TwitchLib.Api.Core.Interfaces": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Core.Models.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Helix/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core": "1.1.0",
+          "TwitchLib.Api.Helix.Models": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Helix.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.Helix.Models/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core.Enums": "1.1.0",
+          "TwitchLib.Api.Core.Interfaces": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.Helix.Models.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.V5/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core": "1.1.0",
+          "TwitchLib.Api.V5.Models": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.V5.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Api.V5.Models/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Api.Core.Enums": "1.1.0",
+          "TwitchLib.Api.Core.Interfaces": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Api.V5.Models.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Client/3.0.3": {
+        "dependencies": {
+          "TwitchLib.Client.Enums": "1.1.0",
+          "TwitchLib.Client.Models": "1.1.0",
+          "TwitchLib.Communication": "1.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Client.dll": {
+            "assemblyVersion": "3.0.3.0",
+            "fileVersion": "3.0.3.0"
+          }
+        }
+      },
+      "TwitchLib.Client.Enums/1.1.0": {
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Client.Enums.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Client.Models/1.1.0": {
+        "dependencies": {
+          "TwitchLib.Client.Enums": "1.1.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Client.Models.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "TwitchLib.Communication/1.0.0": {
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.Communication.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "TwitchLib.PubSub/3.0.2": {
+        "dependencies": {
+          "TwitchLib.Communication": "1.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/TwitchLib.PubSub.dll": {
+            "assemblyVersion": "3.0.2.0",
+            "fileVersion": "3.0.2.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "IO.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AngleSharp/0.9.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Mo1+W3kY8k+0+NtLvDUJTWbyzCMlJZ4JKTVuD3iSNExiUuRU943BMZSvDJ/tWQHxI66L0shyhQFqUj9MDZsWLg==",
+      "path": "anglesharp/0.9.11",
+      "hashPath": "anglesharp.0.9.11.nupkg.sha512"
+    },
+    "HtmlSanitizer/4.0.210": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-aeDSyD1rm65q94va4ZkjgqXn8XPkf+JE0f+JYZnJaC8ruJ+n+AWToPk1KmiIvdhH0mticZoACPkeETb30OmCiA==",
+      "path": "htmlsanitizer/4.0.210",
+      "hashPath": "htmlsanitizer.4.0.210.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.Http.Connections.Client/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Gd6ula8vhp9VwAlagKGvijO1e1n3mLPJVlF2nmuZoVg5fn3ckXH3KXsZ2nEOV5h6GQq+QuR9rlTpZzt/PVx+5g==",
+      "path": "microsoft.aspnetcore.http.connections.client/1.1.0",
+      "hashPath": "microsoft.aspnetcore.http.connections.client.1.1.0.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.SignalR.Client/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Z3W5AqFHib4BV0AdZbeM1+f3esISArklGbptKxKm7n0IVlAllHmvGB8ItrxENtLx5Wf12976QheqnQsnB5Jghw==",
+      "path": "microsoft.aspnetcore.signalr.client/1.1.0",
+      "hashPath": "microsoft.aspnetcore.signalr.client.1.1.0.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.SignalR.Client.Core/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9FbQoZagonFPUvzn/G1uUntv0F0uYmX4pLFuOH7CSBGjMb3J9MVjnr9QRTLP1EOhxUmM1edubplY9ZiJHAOUBw==",
+      "path": "microsoft.aspnetcore.signalr.client.core/1.1.0",
+      "hashPath": "microsoft.aspnetcore.signalr.client.core.1.1.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.App/2.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QU8taCyeyePwatrj+h+750lMnsPCq3YPaGmsdtSHXPCjDyjto2KT7QDNVet0oRliX4PjaINpyg0Yzd9DnQ/Wkw==",
+      "path": "microsoft.netcore.app/2.2.0",
+      "hashPath": "microsoft.netcore.app.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.DotNetAppHost/2.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qIrVLupwT2NYTrf7KM7Nh+mJr36V5MITVRjyGOByVVCwGmQgQmI/6bjZYQv+QdExi4Cm87eCKJX9FdT6nc00Xg==",
+      "path": "microsoft.netcore.dotnetapphost/2.2.0",
+      "hashPath": "microsoft.netcore.dotnetapphost.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.DotNetHostPolicy/2.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-5Xvh/3bDr6YAl6TKfeONvRDZ9QOmvVmzFzA0M6g8uubWdf5/o6qdVOqByFBT/fhjVb6okP0E5+v1oxh1Pk+c+w==",
+      "path": "microsoft.netcore.dotnethostpolicy/2.2.0",
+      "hashPath": "microsoft.netcore.dotnethostpolicy.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.DotNetHostResolver/2.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Q3j3KC2ugqIVasf7pO4NRDEn7GysZX3ZH6fAHfbjrP8cYXY9cmHeFcbaniw36q8kFhsPt2EnRHzSsLBpbG6l2Q==",
+      "path": "microsoft.netcore.dotnethostresolver/2.2.0",
+      "hashPath": "microsoft.netcore.dotnethostresolver.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.Platforms/2.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-39+GVHdbm+cmoOjdvm+fhiMbddnuVyUlBdYS8Yhn5xsNaBoTXpgBsxQQlI2Sv9EjIP0F+itG6yrDaOM2OEGupQ==",
+      "path": "microsoft.netcore.platforms/2.2.0",
+      "hashPath": "microsoft.netcore.platforms.2.2.0.nupkg.sha512"
+    },
+    "Microsoft.NETCore.Targets/2.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-odP/tJj1z6GylFpNo7pMtbd/xQgTC3Ex2If63dRTL38bBNMwsBnJ+RceUIyHdRBC0oik/3NehYT+oECwBhIM3Q==",
+      "path": "microsoft.netcore.targets/2.0.0",
+      "hashPath": "microsoft.netcore.targets.2.0.0.nupkg.sha512"
+    },
+    "NETStandard.Library/2.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-st47PosZSHrjECdjeIzZQbzivYBJFv6P2nv4cj2ypdI204DO+vZ7l5raGMiX4eXMJ53RfOIg+/s4DHVZ54Nu2A==",
+      "path": "netstandard.library/2.0.3",
+      "hashPath": "netstandard.library.2.0.3.nupkg.sha512"
+    },
+    "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jwcVUu4ELwy6ObG6ChIFz3PeRH1mKZW65o+FellG99FUwCmnnjdGkIFnVoeHPIvyue/lf1y9Zgw2axylGCP38g==",
+      "path": "runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oTXKD09aSTGbWlK39DOPil/EOH7fJvKebL9jo8OjeytcUcnK9WLsQeRw+6KBBgNiRlvFaRW+eC1sdXeKphleRg==",
+      "path": "runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-LyTiy6iKlrsjhI4UBIeORHimVkI4e3t2qkAHWH/nxNggjL3lPT7WX40Ncc1oi/wWvmbcX3vPhMeyzPGzxQWwtA==",
+      "path": "runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-o0rS2+Z+/K6X/L6levOGswZgqYq4IppWwNyiQTFuZzz3om4Zxu+2txF8wnH98gh0G6b4RHriVMkay6Pdt9KSOg==",
+      "path": "runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zghz4HAA35jmQL0mXpadSpI2U1zuJpnFNj86spdVew11YmBVeZXy7hY8/wX8K6ki1mug5MsoUh+EHn1UarO2Pg==",
+      "path": "runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.opensuse.13.2-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v3VMGmbNcNwb041U/mdendRwQX67pi4veeJ4vo8GzDSW/1jtkNMLXdTT7+qazL0J6xfNh76IKVHA/fuDPDcfcA==",
+      "path": "runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.opensuse.42.1-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-CjjyXodztYFVtdP5T4SbkzU9CAnaViKLjrq1yXbmRYylDrWjisykyJQGeObpUh+1euSHM398vy6niTrp4/Q5NQ==",
+      "path": "runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.osx.10.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KunbS3GbMfp+QMYPUscAOPyGaOApz04dEg/ejClWMdawggfXAYoik3t5VGAWxWDIlOJ91uvAHV4PZ3Vn5rLE8g==",
+      "path": "runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.rhel.7-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zUt7p0TegAhlIatnytLbMIXUiDiNPZy4PZlGOJ8PTHhFOb86T/uNTzNHxceBOq3vlbNV/SVj4wyUiog8J7lShw==",
+      "path": "runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1/woqfYA5HHtzgmJwBxIXU4qfplVH1MUE6+nUDmkAE1OLCfoiXbWVDJjWjIdhjFqPGza68ey/vpCFBtk9PENZg==",
+      "path": "runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-X+DmqHjv9Zz+JKjVevURQFdtjg/sSYjkiSwjPEezo+7SfewHKmwNVd1hV3fNnOP+VFxTU7SpUok3atC5QI7Uvg==",
+      "path": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl/4.3.2",
+      "hashPath": "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512"
+    },
+    "Serilog/2.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pcXDk2q+a4GCtpXpXDFgpWMp8TrUnEDwGzjvNbLc41wsXv5jL6hmgtHIJ8XSvhUqov6I8oTSv9GcfOFpdhmt/g==",
+      "path": "serilog/2.3.0",
+      "hashPath": "serilog.2.3.0.nupkg.sha512"
+    },
+    "Serilog.Extensions.Logging/2.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6zGo0AmWHWVICQ49DiODo9qboYKTqpg9osNWS0TBdRk/Af8HDgWsK+rYfl7TuNyzRgVhFZMbBElqjPyBQ2AQLg==",
+      "path": "serilog.extensions.logging/2.0.2",
+      "hashPath": "serilog.extensions.logging.2.0.2.nupkg.sha512"
+    },
+    "System.Net.Http/4.3.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/3Rpbezfj/lz+Qv/55bdKso16KhZF38gHW9wX0g0R4GfK5vr9z9WjDcF8SrVN/AK0A9sdh/AOC3YnCdX+UGKpw==",
+      "path": "system.net.http/4.3.3",
+      "hashPath": "system.net.http.4.3.3.nupkg.sha512"
+    },
+    "System.Net.Primitives/4.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qOu+hDwFwoZPbzPvwut2qATe3ygjeQBDQj91xlsaqGFQUI5i4ZnZb8yyQuLGpDGivEPIt8EJkd1BVzVoP31FXA==",
+      "path": "system.net.primitives/4.3.0",
+      "hashPath": "system.net.primitives.4.3.0.nupkg.sha512"
+    },
+    "System.Net.Requests/4.0.11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vxGt7C0cZixN+VqoSW4Yakc1Y9WknmxauDqzxgpw/FnBdz4kQNN51l4wxdXX5VY1xjqy//+G+4CvJWp1+f+y6Q==",
+      "path": "system.net.requests/4.0.11",
+      "hashPath": "system.net.requests.4.0.11.nupkg.sha512"
+    },
+    "System.Net.WebHeaderCollection/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XX2TIAN+wBSAIV51BU2FvvXMdstUa8b0FBSZmDWjZdwUMmggQSifpTOZ5fNH20z9ZCg2fkV1L5SsZnpO2RQDRQ==",
+      "path": "system.net.webheadercollection/4.0.1",
+      "hashPath": "system.net.webheadercollection.4.0.1.nupkg.sha512"
+    },
+    "TwitchLib/3.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-tOGZhOfGO1y+4qMBEzT8UflaagxESEjWuZvYetkSEK3AKP2o2K7lh7kkwA775Us2muv3swCT1aEuVBxqdTGq3g==",
+      "path": "twitchlib/3.0.1",
+      "hashPath": "twitchlib.3.0.1.nupkg.sha512"
+    },
+    "TwitchLib.Api/3.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GyQx6xpKylVw76BTmfpPA7g4AQi+Tn8ewwbnx/KQn1taTDtpSQKgN9b5z/314NpHftcRObiihM1Nxx0fE/+O4A==",
+      "path": "twitchlib.api/3.0.0",
+      "hashPath": "twitchlib.api.3.0.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Core/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3GdQJKDHVT9L8Leo4TIe7zbqLRAZTFrvuSUKk+V8repM8ZDfNWDxODkt23XLVODvDYUhRRK38V09QdgplNoZ3A==",
+      "path": "twitchlib.api.core/1.1.0",
+      "hashPath": "twitchlib.api.core.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Core.Enums/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mY8k8fVdMQ3dGUYTE/Q4QUVR5XMu9nI8a1JIg1JazsRwY4XgK1ydTzk1H2A5Ig4MUXdsz6s6WFDGDso054A0pw==",
+      "path": "twitchlib.api.core.enums/1.1.0",
+      "hashPath": "twitchlib.api.core.enums.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Core.Interfaces/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zLfRMMDfvTzFabHE5i99hMd66rtLL5nBBXro4xJ/s/iyereRB9MWZcYvWaqLHvrXA9MKtLsIFT/bis1MR8z4xQ==",
+      "path": "twitchlib.api.core.interfaces/1.1.0",
+      "hashPath": "twitchlib.api.core.interfaces.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Core.Models/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oPdxXssnKQGiYYcFEG3mREaepM0q0HRth60ox3QrHhM3Ydj37zFFapMHPXLXLoqJZpt66tCzUbqgurlkaEgTYA==",
+      "path": "twitchlib.api.core.models/1.1.0",
+      "hashPath": "twitchlib.api.core.models.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Helix/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-E/bhu/cZWThyR7GQhdVNCJQFmi4vX4i7t9gdwplLwnuawsB8umGp5TOnUXbnzaBwE4GInMrgTBlPGJ3bWWqKIQ==",
+      "path": "twitchlib.api.helix/1.1.0",
+      "hashPath": "twitchlib.api.helix.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.Helix.Models/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-MFyqSqONvrF5I7VMbhkO+KPTqLzwVv/1zWX5s9YlwpyFg+lbbNs2+A/X4IshQtozahQEozoJFdwLUZmLKlox6w==",
+      "path": "twitchlib.api.helix.models/1.1.0",
+      "hashPath": "twitchlib.api.helix.models.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.V5/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4zdgzxyoDfXeTwkyht5tFoUCpPO1ppNjdwfN1ZnT/Ll9H0Qjq6/07M3QK0XgctzN3ru8c6pqMyq0yofQd/FqYQ==",
+      "path": "twitchlib.api.v5/1.1.0",
+      "hashPath": "twitchlib.api.v5.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Api.V5.Models/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UqvZA27upkPvluxREcFsM6kVFTsnrfhSDyIMfaFBRCz9RwoArepj8cQRDwo68Sm/n66xTaWn1i3xInzEyMhf0A==",
+      "path": "twitchlib.api.v5.models/1.1.0",
+      "hashPath": "twitchlib.api.v5.models.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Client/3.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OJpDouPoIYiO+gxpf6Xh6wgLXxo3Qhu8votDkwFRcFuF1RFrH5VFT3PZokmi54S18Q4gX02mfsbbusqDZ7Ek/Q==",
+      "path": "twitchlib.client/3.0.3",
+      "hashPath": "twitchlib.client.3.0.3.nupkg.sha512"
+    },
+    "TwitchLib.Client.Enums/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IsIFmiBxunqryiRB77hY5P7E3aJ5ZUTtflnONjbW/bgmE36bBqM9h1PyE6OYa1LdPtxmC7s9NABuPV3vuoIZfw==",
+      "path": "twitchlib.client.enums/1.1.0",
+      "hashPath": "twitchlib.client.enums.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Client.Models/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ZTeLhTPJgq4Ru/zZYiWn6zfmmJAH70x98js1jBdcUHTeHZ3biwAMPVn6tZ37x5jILQx2AY8mlhUuU2P2JDLlTg==",
+      "path": "twitchlib.client.models/1.1.0",
+      "hashPath": "twitchlib.client.models.1.1.0.nupkg.sha512"
+    },
+    "TwitchLib.Communication/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-21tzncWeuMFnUHKksxEUx1dbdibUXUPbpaZjVa3FD3WTM1KxpJzaBA9iZ+8Cr83LmwqkZVNSba7rQuNcdh9EKw==",
+      "path": "twitchlib.communication/1.0.0",
+      "hashPath": "twitchlib.communication.1.0.0.nupkg.sha512"
+    },
+    "TwitchLib.PubSub/3.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-x4Ud64qKE1+MkK/H6navUixcDFrX20O+sYCKq1qFeYM/yXqgV0XQ5CnQpAc+tOV+eP7O9aACED8FfmUzQ3MjEQ==",
+      "path": "twitchlib.pubsub/3.0.2",
+      "hashPath": "twitchlib.pubsub.3.0.2.nupkg.sha512"
+    }
+  }
+}

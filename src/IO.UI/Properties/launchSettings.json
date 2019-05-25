@@ -1,0 +1,36 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:56828",
+      "sslPort": 44345
+    }
+  },
+  "profiles": {
+    "IO.UI": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "chatbot_username": "B3_Bot",
+        "client_secret": "c8269an05gpp3pj5l2lg0a8tb1ivfl",
+        "twitch_channel_access_token": "ucuyqvqlj569w2j1sbxowkvxmibjwi",
+        "twitch_channel": "themichaeljolley",
+        "client_id": "nf56rsp3y60xsj86p5pm6wqagil1ta",
+        "chatbot_access_token": "icf4f7avn08dumyxyv3qn8q1xeo2gj",
+        "refreshMilliseconds": "60000",
+        "twitch_channel_id": "279965339",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "hubOverlayUrl": "https://localhost:5001"
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 56829,
+      "useSSL": true,
+      "sslPort": 44346
+    }
+  }
+}

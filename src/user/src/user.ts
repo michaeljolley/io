@@ -32,11 +32,11 @@ export class User {
 
       const payload: APIResponse = await this.getUser(req.params.username);
       log('info',JSON.stringify(payload));
-      res.send(payload.response);
+      res.send(payload);
     });
   }
 
-  private getUser = (username: string): APIResponse => {
+  private getUser = async (username: string): Promise<APIResponse> => {
     const queries = queryString.stringify({login: [username]});
     const url = `${this.usersUrl}${queries}`;
 
@@ -46,15 +46,14 @@ export class User {
       return new APIResponse(200, "success", user, "OK");
     }
     else {
-
+      await this.get(url).then((data) => {
+        return new APIResponse(200, "success", data, "OK");
+      })
+      .catch((err: any) => {
+      });
     }
-
-
-
+    return new APIResponse(500, "error", {}, "Error");
   }
-
-
-
 
   private get = (url: string) => {
     return new Promise((resolve, reject) => {
@@ -68,7 +67,6 @@ export class User {
         });
     });
   }
-
 
 
   /**
