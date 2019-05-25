@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  chat:
+    build: ./src/chat
+    ports:
+      - "5050:80"
+  hub:
+    build: ./src/hub
+    ports:
+      - "5060:80"
+    expose:
+      - "5060"
+  api:
+    build: ./src/api
+    ports:
+      - "5001:80"
+    expose:
+      - "5001
+  overlay:
+    build: ./src/overlay
+    ports:
+      - "5000:80"
+    expose:
+      - "5000"
+    links:
+      - hub
+  user:
+    build: ./src/user
+    ports:
+      - "5070:80"

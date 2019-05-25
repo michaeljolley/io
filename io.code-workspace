@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "src\\api"
+		},
+		{
+			"path": "src\\chat"
+		},
+		{
+			"path": "src\\hub"
+		},
+		{
+			"path": "src\\overlay"
+		},
+		{
+			"path": "src\\user"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
