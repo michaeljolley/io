@@ -16,7 +16,7 @@ services:
     ports:
       - "5001:80"
     expose:
-      - "5001
+      - "5001"
   overlay:
     build: ./src/overlay
     ports:
