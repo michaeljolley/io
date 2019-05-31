@@ -14,17 +14,17 @@ export class Helix {
     const url = `${this.usersUrl}${queries}`;
 
     return await this.get(url).then((data: any) => {
-              return new APIResponse(200, "success", data, "OK");
-          });
+      return data.data[0];
+    });
   }
 
-  public async getUserByUsername(username: string): Promise<APIResponse> {
+  public async getUserByUsername(username: string): Promise<any> {
     const queries = queryString.stringify({login: [username]});
     const url = `${this.usersUrl}${queries}`;
 
     return await this.get(url).then((data: any) => {
-              return new APIResponse(200, "success", data, "OK");
-          });
+      return data.data[0];
+    });
   }
 
   private get = (url: string) => {

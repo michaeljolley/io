@@ -2,12 +2,14 @@ import { Client, ChatUserstate, Userstate } from 'tmi.js';
 import io from 'socket.io-client';
 
 import { log } from './log';
+import * as restler from 'restler';
+import { Emote } from './emote';
+import { APIResponse } from './api-response';
 
 export class TwitchChat {
   public tmi: Client;
   private clientUsername: string = 'theMichaelJolley';
   private moderators: string[] = ['theMichaelJolley'];
-  private isChatClientEnabled: boolean = true;
   private socket!: SocketIOClient.Socket;
 
   constructor() {
@@ -161,49 +163,25 @@ export class TwitchChat {
     log('info', `[${hours}:${minutes}] ${user.username} subscribed`);
   }
 
-
   /**
    * When a user sends a message in chat
    */
-  private onChatMessage = (channel: string, user: ChatUserstate, message: string) => {
-    const userName = user['display-name'] || user.username! || '';
-    const lowerCaseMessage = message.toLowerCase();
+  private onChatMessage = async (channel: string, user: ChatUserstate, message: string): Promise<any> => {
+    log('info', message);
 
-    user.message = message;
+    // Parse chat for any commands & update
+    // message for display in overlays
+    message = this.processChatMessage(message, user);
 
-    this.emitMessage('chatMessage', user);
+    const username: string = user.username ? user.username : '';
 
-    if (
-      this.moderators.indexOf(userName.toLowerCase()) > -1
-    ) {
-      const logMessage = `Moderator (${userName}) sent a message`;
-      log('info', logMessage);
+    // Identify user and pass along to hub
+    const userInfo = await this.getUser(username);
 
-      if (
-        lowerCaseMessage.includes('enable') ||
-        lowerCaseMessage.includes('disable')
-      ) {
-        this.isChatClientEnabled = lowerCaseMessage.includes('enable');
-        const state = this.isChatClientEnabled ? 'enabled' : 'disabled';
-        log(
-          'info',
-          `TTV Chat Listener to control the lights has been ${state}`
-        );
-        return;
-      }
-    }
-
-    if (this.isChatClientEnabled) {
-      this.parseChat(lowerCaseMessage, userName);
-    } else {
-      log(
-        'info',
-        'Command was ignored because the TTV Chat Listener is disabled'
-      );
-    }
+    this.emitMessage('chatMessage', {user, message, userInfo});
   };
 
-  private getTime = () => {
+  private getTime() {
     const date = new Date();
     const rawMinutes = date.getMinutes();
     const rawHours = date.getHours();
@@ -217,12 +195,60 @@ export class TwitchChat {
    * something about
    *
    * @param message the message sent by a user
-   * @param userName the user who sent the message
+   * @param user the user who sent the message
    */
-  private parseChat = (message: string, userName: string) => {
+  private processChatMessage = (message: string, user: ChatUserstate): string => {
 
-    return Promise.resolve('there was nothing to do');
+    let tempMessage: string = message;
+
+    // If the message has emotes, modify message to include img tags to the emote
+    if (user.emotes) {
+      let emoteSet: Emote[] = [];
+
+      for (const emote of Object.keys(user.emotes)) {
+        const emoteLocations = user.emotes[emote];
+        emoteLocations.forEach(location => {
+          emoteSet.push(new Emote(emote, location));
+        });
+      }
+
+      // Order the emotes descending so we can iterate
+      // through them with indexes
+      emoteSet = emoteSet.sort((a, b) => {
+        return b.end - a.end;
+      });
+
+      emoteSet.forEach(emote => {
+        let emoteMessage = tempMessage.slice(0, emote.start);
+        emoteMessage += emote.emoteImageTag;
+        emoteMessage += tempMessage.slice(emote.end + 1, tempMessage.length);
+        tempMessage = emoteMessage;
+      });
+    }
+
+    return tempMessage;
   };
+
+  private getUser = async (username: string): Promise<any> => {
+    const url = `http://user/users/${username}`;
+
+    return await this.get(url).then((user: any) => {
+      return user;
+    });
+  };
+
+  private get = (url: string) => {
+    return new Promise((resolve, reject) => {
+        restler.get(url, {
+            headers: {
+                "Client-ID": 'nf56rsp3y60xsj86p5pm6wqagil1ta',
+                "Content-Type": "application/json"
+            }
+        }).on("complete", (data: any) => {
+            resolve(data);
+        });
+    });
+  }
 
   private emitMessage = (event: string, ...payload: any[]) => {
     if (!this.socket.disconnected) {

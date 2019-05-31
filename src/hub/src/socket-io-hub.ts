@@ -21,7 +21,7 @@ export class IOHub {
   /**
    * Bind events to Socket.IO hub
    */
-  private bindIOEvents = (): void => {
+  private bindIOEvents() {
     this.io.on('connection', (socket: io.Socket) => {
 
       /**
@@ -38,13 +38,13 @@ export class IOHub {
       socket.on('newSubscription', (subscriber: any, isRenewal: boolean, isGift: boolean) => this.onNewSubscription(subscriber, isRenewal, isGift));
       socket.on('newRaid', (raid: string) => this.onNewRaid(raid));
       socket.on('newCheer', (cheer: any) => this.onNewCheer(cheer));
-
     });
   }
 
   private onChatMessage(userWithMessage: any) {
-    log('info', `onChatMessage: ${userWithMessage.message}`);
-    this.io.emit('chatMessage', userWithMessage);
+    const chatMessage = userWithMessage[0];
+    log('info', `onChatMessage: ${chatMessage.message}`);
+    this.io.emit('chatMessage', chatMessage);
   }
 
   private onUserJoinedChannel(username: string) {

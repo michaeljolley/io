@@ -24,35 +24,36 @@ export class User {
   /**
    *
    */
-  private loadRoutes = (): void => {
+  private loadRoutes() {
 
     // Get user by username
     this.app.get('/users/:username', async (req, res) => {
       log('info', `route: /users/:username called with username: ${req.params.username}`);
 
-      const payload: APIResponse = await this.getUser(req.params.username);
+      const payload: any = await this.getUser(req.params.username);
       log('info',JSON.stringify(payload));
       res.send(payload);
     });
   }
 
-  private getUser = async (username: string): Promise<APIResponse> => {
-    const queries = queryString.stringify({login: [username]});
-    const url = `${this.usersUrl}${queries}`;
+  private getUser = async (username: string): Promise<any> => {
 
-    const user = this.users.filter(f => f.username.toLocaleLowerCase() == username.toLocaleLowerCase())[0];
+    log('info', JSON.stringify(this.users));
+
+    let user = this.users.filter(f => f.login.toLocaleLowerCase() === username.toLocaleLowerCase())[0];
 
     if (user) {
-      return new APIResponse(200, "success", user, "OK");
+      return user;
     }
     else {
-      await this.get(url).then((data) => {
-        return new APIResponse(200, "success", data, "OK");
-      })
-      .catch((err: any) => {
+      const url = `${this.usersUrl}${username}`;
+
+      return await this.get(url).then((data: any) => {
+        user = data;
+        this.users.push(user);
+        return user;
       });
     }
-    return new APIResponse(500, "error", {}, "Error");
   }
 
   private get = (url: string) => {
