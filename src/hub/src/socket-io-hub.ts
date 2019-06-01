@@ -2,7 +2,7 @@ import express = require('express');
 import { Server } from 'http';
 import io from 'socket.io';
 
-import { log } from './log';
+import { log } from './common';
 
 export class IOHub {
   public app: express.Application;
@@ -15,6 +15,9 @@ export class IOHub {
     this.io = io(this.http);
 
     this.bindIOEvents();
+  }
+
+  public start() {
     this.listen();
   }
 
@@ -28,6 +31,7 @@ export class IOHub {
        * Chat related events
        */
       socket.on('chatMessage', (userWithMessage: any) => this.onChatMessage(userWithMessage));
+      socket.on('emote', (emoteUrl: string) => this.onEmote(emoteUrl));
       socket.on('userLeft', (username: string) => this.onUserLeftChannel(username));
       socket.on('userJoined', (username: string) => this.onUserJoinedChannel(username));
 
@@ -35,9 +39,9 @@ export class IOHub {
        * Alert related events
        */
       socket.on('newFollow', (follower: any) => this.onNewFollow(follower));
-      socket.on('newSubscription', (subscriber: any, isRenewal: boolean, isGift: boolean) => this.onNewSubscription(subscriber, isRenewal, isGift));
-      socket.on('newRaid', (raid: string) => this.onNewRaid(raid));
-      socket.on('newCheer', (cheer: any) => this.onNewCheer(cheer));
+      socket.on('newSubscription', (user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
+      socket.on('newRaid', (username: string, userInfo: any, viewers:number) => this.onNewRaid(username, userInfo, viewers));
+      socket.on('newCheer', (user: any, userInfo: any, message: string) => this.onNewCheer(user, userInfo, message));
     });
   }
 
@@ -45,6 +49,11 @@ export class IOHub {
     const chatMessage = userWithMessage[0];
     log('info', `onChatMessage: ${chatMessage.message}`);
     this.io.emit('chatMessage', chatMessage);
+  }
+
+  private onEmote(emoteUrl: string) {
+    log('info', `onEmote: ${emoteUrl}`);
+    this.io.emit('emote', emoteUrl);
   }
 
   private onUserJoinedChannel(username: string) {
@@ -62,19 +71,19 @@ export class IOHub {
     this.io.emit('newFollow', follower);
   }
 
-  private onNewSubscription(subscriber: any, isRenewal: boolean, isGift: boolean) {
-    log('info', `onNewSubscription: ${subscriber.user}`);
-    this.io.emit('newSubscription', subscriber, isRenewal, isGift);
+  private onNewSubscription(user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) {
+    log('info', `onNewSubscription: ${user.username}`);
+    this.io.emit('newSubscription', user, userInfo, isRenewal, wasGift, message);
   }
 
-  private onNewRaid(raid: string) {
-    log('info', `onNewRaid: ${raid}`);
-    this.io.emit('newRaid', raid);
+  private onNewRaid(username: string, userInfo: any, viewers:number) {
+    log('info', `onNewRaid: ${username}: ${viewers}`);
+    this.io.emit('newRaid', username, userInfo, viewers);
   }
 
-  private onNewCheer(cheer: any) {
-    log('info', `onNewCheer: ${cheer.user}`);
-    this.io.emit('newCheer', cheer);
+  private onNewCheer(user: any, userInfo: any, message: string) {
+    log('info', `onNewCheer: ${user.username}`);
+    this.io.emit('newCheer', user, userInfo, message);
   }
 
   /**

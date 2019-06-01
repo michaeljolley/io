@@ -1,10 +1,7 @@
 import express = require('express');
 import { Server } from 'http';
-import * as restler from 'restler';
-import * as queryString from 'query-string';
 
-import { log } from './log';
-import { APIResponse } from './api-response';
+import { get, log } from './common';
 
 export class User {
   public app: express.Application;
@@ -18,6 +15,9 @@ export class User {
     this.http = new Server(this.app);
 
     this.loadRoutes();
+  }
+
+  public start() {
     this.listen();
   }
 
@@ -48,27 +48,13 @@ export class User {
     else {
       const url = `${this.usersUrl}${username}`;
 
-      return await this.get(url).then((data: any) => {
+      return await get(url).then((data: any) => {
         user = data;
         this.users.push(user);
         return user;
       });
     }
   }
-
-  private get = (url: string) => {
-    return new Promise((resolve, reject) => {
-        restler.get(url, {
-            headers: {
-                "Client-ID": 'nf56rsp3y60xsj86p5pm6wqagil1ta',
-                "Content-Type": "application/json"
-            }
-        }).on("complete", (data: any) => {
-            resolve(data);
-        });
-    });
-  }
-
 
   /**
    * Start the Node.js server

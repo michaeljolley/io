@@ -1,7 +1,7 @@
 import express = require('express');
 import { Server } from 'http';
 
-import { log } from './log';
+import { log } from './common';
 
 export class Overlay {
   public app: express.Application;
@@ -12,7 +12,9 @@ export class Overlay {
     this.app.use(express.static('dist/wwwroot'));
 
     this.http = new Server(this.app);
+  }
 
+  public start() {
     this.listen();
   }
 

@@ -1,15 +1,22 @@
 import { Client, ChatUserstate, Userstate } from 'tmi.js';
 import io from 'socket.io-client';
+import sanitizeHtml from 'sanitize-html';
 
-import { log } from './log';
-import * as restler from 'restler';
+import { config, get, log } from './common';
 import { Emote } from './emote';
-import { APIResponse } from './api-response';
+
+const htmlSanitizeOpts = {
+  allowedAttributes: {},
+  allowedTags: [
+    'h1','h2','h3','h4','h5','h6',
+    'marquee','em','strong','b','i','code',
+    'blockquote','strike'
+  ]
+};
 
 export class TwitchChat {
   public tmi: Client;
-  private clientUsername: string = 'theMichaelJolley';
-  private moderators: string[] = ['theMichaelJolley'];
+  private clientUsername: string = config.twitchClientUsername;
   private socket!: SocketIOClient.Socket;
 
   constructor() {
@@ -49,16 +56,20 @@ export class TwitchChat {
     this.tmi.ping();
   };
 
+  /**
+   * Sends message to Twitch chat
+   * @param message message to send
+   */
   public sendChatMessage(message: string) {
     // Default to first channel in connected channels
-    this.tmi.say('theMichaelJolley', message);
+    this.tmi.say(config.twitchClientUsername, message);
   }
 
   /**
    * Set the options for the twitch bot
    */
   private setTwitchChatOptions = (): {} => {
-    const channels = ['theMichaelJolley'];
+    const channels = [config.twitchClientUsername];
 
     return {
       channels,
@@ -67,11 +78,10 @@ export class TwitchChat {
         secure: true
       },
       identity: {
-        password: 'oauth:mqldn8rzzboiufj9qk6ursujhqsvtu',
+        password: config.twitchBotToken,
         username: this.clientUsername
       },
       options: {
-        // clientId: ttvClientId,
         debug: true
       }
     };
@@ -80,9 +90,11 @@ export class TwitchChat {
   /**
    * When a user joins the channel
    */
-  private onUserJoined = (channel: string, username: string, self: boolean) => {
+  private onUserJoined = async (channel: string, username: string, self: boolean) => {
     const { hours, minutes } = this.getTime();
-    const channels = ['theMichaelJolley'];
+
+    // Identify user and add to user state if needed
+    await this.getUser(username);
 
     log('info', `[${hours}:${minutes}] ${username} has JOINED the channel`);
     this.emitMessage('userJoined', username);
@@ -91,14 +103,6 @@ export class TwitchChat {
       log('info', 'This client joined the channel...');
       // Assume first channel in channels array is 'self' - owner monitoring their own channel
       setTimeout(this.pingTtv, 30000);
-      this.tmi
-        .mods(channels[0])
-        .then((modsFromTwitch: any) => {
-          this.moderators = this.moderators.concat(modsFromTwitch);
-        })
-        .catch((error: any) =>
-          log('error', `There was an error getting moderators: ${error}`)
-        );
     }
   };
 
@@ -113,52 +117,71 @@ export class TwitchChat {
     log('info', `[${hours}:${minutes}] ${username} has LEFT the channel`);
   };
 
-  private onRaid = (channel: string, username: string, viewers: number) => {
+  /**
+   * When a user raids the channel
+   */
+  private onRaid = async (channel: string, username: string, viewers: number) => {
     const { hours, minutes } = this.getTime();
 
-    this.emitMessage('newRaid', username);
+    // Identify user and add to user state if needed
+    const userInfo = await this.getUser(username);
+
+    this.emitMessage('newRaid', username, userInfo, viewers);
 
     log('info', `[${hours}:${minutes}] ${username} has RAIDED the channel with ${viewers} viewers`);
   }
 
-  private onCheer = (channel: string, user: Userstate, message: string) => {
+  /**
+   * When a user cheers
+   */
+  private onCheer = async (channel: string, user: Userstate, message: string) => {
     const { hours, minutes } = this.getTime();
 
-    this.emitMessage('newCheer', user.username);
+    const username: string = user.username ? user.username : '';
+
+    // Identify user and add to user state if needed
+    const userInfo = await this.getUser(username);
+
+    this.emitMessage('newCheer', user, userInfo, message);
 
     const bits = user.bits;
 
     log('info', `[${hours}:${minutes}] ${user.username} cheered ${bits} bits`);
   }
 
-  private onGiftSubRenew = (channel: string, username: string, sender: string, user: Userstate) => {
-    this.onAnySub(user, true, true);
+  private onGiftSubRenew = async (channel: string, username: string, sender: string, user: Userstate) => {
+    await this.onAnySub(user, true, true, '');
   }
 
-  private onAnonymousGiftSubRenew = (channel: string, username: string, user: Userstate) => {
-    this.onAnySub(user, true, true);
+  private onAnonymousGiftSubRenew = async (channel: string, username: string, user: Userstate) => {
+    await this.onAnySub(user, true, true, '');
   }
 
-  private onGiftSub = (channel: string, username: string, streakMonths: number, recipient: string, methods: any, user: Userstate) => {
-    this.onAnySub(user, false, true);
+  private onGiftSub = async (channel: string, username: string, streakMonths: number, recipient: string, methods: any, user: Userstate) => {
+    await this.onAnySub(user, false, true, '');
   }
 
-  private onGiftMysterySub = (channel: string, username: string, numberOfSubs: number, methods: any, user: Userstate) => {
-    this.onAnySub(user, false, true);
+  private onGiftMysterySub = async (channel: string, username: string, numberOfSubs: number, methods: any, user: Userstate) => {
+    await this.onAnySub(user, false, true, '');
   }
 
-  private onResub = (channel: string, username: string, streakMonths: number, message: string, user: Userstate, methods: any) => {
-    this.onAnySub(user, true, false);
+  private onResub = async (channel: string, username: string, streakMonths: number, message: string, user: Userstate, methods: any) => {
+    await this.onAnySub(user, true, false, message);
   }
 
-  private onSub = (channel: string, username: string, methods: any, message: string, user: Userstate) => {
-    this.onAnySub(user, false, false);
+  private onSub = async (channel: string, username: string, methods: any, message: string, user: Userstate) => {
+    await this.onAnySub(user, false, false, message);
   }
 
-  private onAnySub(user: Userstate, isRenewal: boolean, wasGift: boolean) {
+  private onAnySub = async (user: Userstate, isRenewal: boolean, wasGift: boolean, message: string) => {
     const { hours, minutes } = this.getTime();
 
-    this.emitMessage('newSubscription', user, isRenewal, wasGift);
+    const username: string = user.username ? user.username : '';
+
+    // Identify user and add to user state if needed
+    const userInfo = await this.getUser(username);
+
+    this.emitMessage('newSubscription', user, userInfo, isRenewal, wasGift, message);
 
     log('info', `[${hours}:${minutes}] ${user.username} subscribed`);
   }
@@ -178,7 +201,7 @@ export class TwitchChat {
     // Identify user and pass along to hub
     const userInfo = await this.getUser(username);
 
-    this.emitMessage('chatMessage', {user, message, userInfo});
+    this.emitMessage('chatMessage', { user, message, userInfo });
   };
 
   private getTime() {
@@ -199,7 +222,7 @@ export class TwitchChat {
    */
   private processChatMessage = (message: string, user: ChatUserstate): string => {
 
-    let tempMessage: string = message;
+    let tempMessage: string = sanitizeHtml(message, htmlSanitizeOpts);
 
     // If the message has emotes, modify message to include img tags to the emote
     if (user.emotes) {
@@ -219,6 +242,9 @@ export class TwitchChat {
       });
 
       emoteSet.forEach(emote => {
+
+        this.emitMessage('emote', emote.emoteUrl);
+
         let emoteMessage = tempMessage.slice(0, emote.start);
         emoteMessage += emote.emoteImageTag;
         emoteMessage += tempMessage.slice(emote.end + 1, tempMessage.length);
@@ -232,23 +258,10 @@ export class TwitchChat {
   private getUser = async (username: string): Promise<any> => {
     const url = `http://user/users/${username}`;
 
-    return await this.get(url).then((user: any) => {
+    return await get(url).then((user: any) => {
       return user;
     });
   };
-
-  private get = (url: string) => {
-    return new Promise((resolve, reject) => {
-        restler.get(url, {
-            headers: {
-                "Client-ID": 'nf56rsp3y60xsj86p5pm6wqagil1ta',
-                "Content-Type": "application/json"
-            }
-        }).on("complete", (data: any) => {
-            resolve(data);
-        });
-    });
-  }
 
   private emitMessage = (event: string, ...payload: any[]) => {
     if (!this.socket.disconnected) {

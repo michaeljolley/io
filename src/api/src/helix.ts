@@ -1,8 +1,7 @@
-import * as restler from 'restler';
 import * as queryString from 'query-string';
 
+import { get } from './common';
 
-import { log } from './log';
 import { APIResponse } from './api-response';
 
 export class Helix {
@@ -13,7 +12,7 @@ export class Helix {
     const queries = queryString.stringify({id: [userId]});
     const url = `${this.usersUrl}${queries}`;
 
-    return await this.get(url).then((data: any) => {
+    return await get(url).then((data: any) => {
       return data.data[0];
     });
   }
@@ -22,21 +21,8 @@ export class Helix {
     const queries = queryString.stringify({login: [username]});
     const url = `${this.usersUrl}${queries}`;
 
-    return await this.get(url).then((data: any) => {
+    return await get(url).then((data: any) => {
       return data.data[0];
-    });
-  }
-
-  private get = (url: string) => {
-    return new Promise((resolve, reject) => {
-        restler.get(url, {
-            headers: {
-                "Client-ID": 'nf56rsp3y60xsj86p5pm6wqagil1ta',
-                "Content-Type": "application/json"
-            }
-        }).on("complete", (data: any) => {
-            resolve(data);
-        });
     });
   }
 }

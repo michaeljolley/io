@@ -2,8 +2,7 @@ import express = require('express');
 import { Server } from 'http';
 
 import { Helix } from './helix';
-import { log } from './log';
-import { APIResponse } from './api-response';
+import { log } from './common';
 
 export class API {
   public app: express.Application;
@@ -16,6 +15,9 @@ export class API {
     this.helix = new Helix();
 
     this.loadRoutes();
+  }
+
+  public start() {
     this.listen();
   }
 
