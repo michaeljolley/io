@@ -3,6 +3,10 @@
 /src/**/*.js.map
 /dist/*
 
+
+!/src/overlay/src/wwwroot/js/*.js
+
+
 # Logs
 logs
 *.log
