@@ -7,6 +7,9 @@
 			"path": "src\\chat"
 		},
 		{
+			"path": "src\\chron"
+		},
+		{
 			"path": "src\\hub"
 		},
 		{

@@ -42,6 +42,33 @@ export class API {
       log('info',JSON.stringify(payload));
       res.send(payload);
     });
+
+    // Get latest follower by username
+    this.app.get('/followers', async (req, res) => {
+      log('info', `route: /followers called`);
+
+      const payload: any = await this.helix.getFollowers();
+      log('info',JSON.stringify(payload));
+      res.send(payload);
+    });
+
+    // Get all subscribers
+    this.app.get('/subscribers', async (req, res) => {
+      log('info', `route: /subscribers called`);
+
+      const payload: any = await this.helix.getSubscribers();
+      log('info',JSON.stringify(payload));
+      res.send(payload);
+    });
+
+    // Get stream info
+    this.app.get('/stream', async (req, res) => {
+      log('info', `route: /stream called`);
+
+      const payload: any = await this.helix.getStream();
+      log('info',JSON.stringify(payload));
+      res.send(payload);
+    });
   }
 
   /**

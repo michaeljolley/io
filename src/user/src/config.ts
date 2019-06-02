@@ -4,6 +4,7 @@ const {
   TWITCH_CLIENT_ID,
   TWITCH_CLIENT_TOKEN,
   TWITCH_CLIENT_USERNAME,
+  TWITCH_CLIENT_USER_ID,
   TWITCH_BOT_USERNAME,
   TWITCH_BOT_TOKEN
 } = process.env;
@@ -26,6 +27,9 @@ export const twitchClientToken: string =
 
 export const twitchClientUsername: string =
   TWITCH_CLIENT_USERNAME || 'themichaeljolley';
+
+export const twitchClientUserId: string =
+  TWITCH_CLIENT_USER_ID || '279965339';
 
 export const twitchBotUsername: string =
   TWITCH_BOT_USERNAME || 'b3_bot';

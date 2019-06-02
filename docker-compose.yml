@@ -1,31 +1,41 @@
 version: '3'
 
 services:
-  chat:
-    build: ./src/chat
+  api:
+    build: ./src/api
     ports:
-      - "5050:80"
+      - "5001:80"
   hub:
     build: ./src/hub
     ports:
       - "5060:80"
     expose:
       - "5060"
-  api:
-    build: ./src/api
+  chat:
+    build: ./src/chat
     ports:
-      - "5001:80"
-    expose:
-      - "5001"
+      - "5050:80"
+    depends_on:
+      - hub
+      - api
   overlay:
     build: ./src/overlay
     ports:
       - "5000:80"
     expose:
       - "5000"
-    links:
+    depends_on:
       - hub
   user:
     build: ./src/user
     ports:
       - "5070:80"
+    depends_on:
+      - api
+  chron:
+    build: ./src/chron
+    ports:
+      - "5080:80"
+    depends_on:
+      - api
+      - hub

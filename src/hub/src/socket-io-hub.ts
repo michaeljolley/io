@@ -36,6 +36,14 @@ export class IOHub {
       socket.on('userJoined', (username: string) => this.onUserJoinedChannel(username));
 
       /**
+       * Chron related events
+       */
+      socket.on('followerCount', (followerCount: number) => this.onFollowerCount(followerCount));
+      socket.on('viewerCount', (viewerCount: number) => this.onViewerCount(viewerCount));
+      socket.on('lastFollower', (lastFollower: any) => this.onLastFollower(lastFollower[0]));
+      socket.on('lastSubscriber', (lastSubscriber: any) => this.onLastSubscriber(lastSubscriber[0]));
+
+      /**
        * Alert related events
        */
       socket.on('newFollow', (follower: any) => this.onNewFollow(follower));
@@ -84,6 +92,26 @@ export class IOHub {
   private onNewCheer(user: any, userInfo: any, message: string) {
     log('info', `onNewCheer: ${user.username}`);
     this.io.emit('newCheer', user, userInfo, message);
+  }
+
+  private onFollowerCount(followerCount: number) {
+    log('info', `onFollowerCount: ${followerCount}`);
+    this.io.emit('followerCount', followerCount);
+  }
+
+  private onViewerCount(viewerCount: number) {
+    log('info', `onViewerCount: ${viewerCount}`);
+    this.io.emit('viewerCount', viewerCount);
+  }
+
+  private onLastFollower(lastFollower: any) {
+    log('info', `onLastFollower: ${lastFollower.login}`);
+    this.io.emit('lastFollower', lastFollower);
+  }
+
+  private onLastSubscriber(lastSubscriber: any) {
+    log('info', `onLastSubscriber: ${lastSubscriber.login}`);
+    this.io.emit('lastSubscriber', lastSubscriber);
   }
 
   /**
