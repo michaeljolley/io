@@ -4,7 +4,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { config, get, log } from './common';
 import { Emote } from './emote';
-import { BasicCommands, SetCommands } from './commands';
+import { AVCommands, BasicCommands, SetCommands } from './commands';
 
 const htmlSanitizeOpts = {
   allowedAttributes: {},
@@ -199,7 +199,7 @@ export class TwitchChat {
 
     // Process any commands
     for (const basicCommand of Object.values(BasicCommands)) {
-      handledByCommand = basicCommand(originalMessage, this.sendChatMessage)
+      handledByCommand = basicCommand(originalMessage, this.sendChatMessage);
       if (handledByCommand) {
         break;
       }
@@ -207,7 +207,16 @@ export class TwitchChat {
 
     if (!handledByCommand) {
       for (const setCommand of Object.values(SetCommands)) {
-        handledByCommand = setCommand(originalMessage, user, this.sendChatMessage)
+        handledByCommand = setCommand(originalMessage, user, this.sendChatMessage);
+        if (handledByCommand) {
+          break;
+        }
+      }
+    }
+
+    if (!handledByCommand) {
+      for (const avCommand of Object.values(AVCommands)) {
+        handledByCommand = avCommand(originalMessage, this.sendChatMessage);
         if (handledByCommand) {
           break;
         }

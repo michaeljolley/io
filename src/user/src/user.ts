@@ -37,9 +37,6 @@ export class User {
   }
 
   private getUser = async (username: string): Promise<any> => {
-
-    log('info', JSON.stringify(this.users));
-
     let user = this.users.filter(f => f.login.toLocaleLowerCase() === username.toLocaleLowerCase())[0];
 
     if (user) {

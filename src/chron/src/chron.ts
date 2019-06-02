@@ -51,9 +51,9 @@ export class Chron {
     let viewerCount: number = 0;
 
     const resp = await get(url).then((data: any) => data);
-    if (resp.data !== undefined &&
-        resp.data[0] !== undefined) {
-      viewerCount = resp.data[0].viewer_count;
+    if (resp !== undefined &&
+        resp.viewer_count !== undefined) {
+      viewerCount = resp.viewer_count;
     }
 
     log('info', `Viewer count: ${viewerCount}`);

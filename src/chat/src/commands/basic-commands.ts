@@ -1,4 +1,3 @@
-
 export const websiteCommand = (message: string, twitchChatFunc: Function) : boolean => {
 
   if (message === undefined || message.length === 0) {
