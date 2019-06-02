@@ -1,24 +1,22 @@
 # IO
 
-[![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master)
 
-### What is this?
 
-IO is a chat & overlay bot for Twitch using ASPNET core & SignalR to communicate with the Twitch API, PubSub & IRC Chat.  IO runs in a Linux Docker container.
 
-### How do I use it?
 
-IO uses environment variables for sensitive information.  Any variable mentioned below with `access_token` in the name can be retrieved at [https://twitchapps.com/tmi/](https://twitchapps.com/tmi/).
+## Release Notes
 
-Also, the variables prefixed with `chatbot` can be the same as the corresponding variables with `twitch_channel` if you don't use a separate account for your chat bot.
+See [CHANGELOG.md](CHANGELOG.md)
 
-Name  |  Description
--- | --
-chatbot_access_token | OAuth access token for the chatbot user
-chatbot_username | Username of the chatbot user
-client_id | ClientId of the Twitch app registered [https://dev.twitch.tv](https://dev.twitch.tv)
-client_secret | Client secret of Twitch app
-refreshMilliseconds | Frequency in milliseconds to check for updates to follower count, viewer count and last follower
-twitch_channel | Username of the Twitch channel
-twitch_channel_access_token | Access token of the channel user
-twitch_channel_id | Twitch identifier for the channel user
+
+## Contributing
+
+Want to contribute? Check out our [Code of Conduct](CODE_OF_CONDUCT.md) and [Contributing](CONTRIBUTING.md) docs. This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification.  Contributions of any kind welcome!
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
