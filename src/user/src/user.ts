@@ -31,7 +31,6 @@ export class User {
       log('info', `route: /users/:username called with username: ${req.params.username}`);
 
       const payload: any = await this.getUser(req.params.username);
-      log('info',JSON.stringify(payload));
       res.send(payload);
     });
   }

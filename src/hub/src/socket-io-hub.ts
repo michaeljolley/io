@@ -50,6 +50,13 @@ export class IOHub {
       socket.on('newSubscription', (user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
       socket.on('newRaid', (username: string, userInfo: any, viewers:number) => this.onNewRaid(username, userInfo, viewers));
       socket.on('newCheer', (user: any, userInfo: any, message: string) => this.onNewCheer(user, userInfo, message));
+
+      /**
+       * User generated events
+       */
+      socket.on('playAudio', (soundClipName: string) => this.onPlayAudio(soundClipName));
+      socket.on('stopAudio', () => this.onStopAudio());
+
     });
   }
 
@@ -112,6 +119,16 @@ export class IOHub {
   private onLastSubscriber(lastSubscriber: any) {
     log('info', `onLastSubscriber: ${lastSubscriber.login}`);
     this.io.emit('lastSubscriber', lastSubscriber);
+  }
+
+  private onPlayAudio(soundClipName: string) {
+    log('info', `onPlayAudio: ${soundClipName}`);
+    this.io.emit('playAudio', soundClipName);
+  }
+
+  private onStopAudio() {
+    log('info', `onStopAudio`);
+    this.io.emit('stopAudio');
   }
 
   /**

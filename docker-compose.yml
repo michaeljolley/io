@@ -16,7 +16,7 @@ services:
     ports:
       - "5050:80"
     volumes:
-      - /assets:/src/chat/src/assets
+      - ./assets:/app/dist/assets
     depends_on:
       - hub
       - api
@@ -27,7 +27,7 @@ services:
     expose:
       - "5000"
     volumes:
-      - /assets:/src/overlay/src/wwwroot/assets
+      - ./assets:/app/dist/wwwroot/assets
     depends_on:
       - hub
   user:

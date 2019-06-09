@@ -216,7 +216,7 @@ export class TwitchChat {
 
     if (!handledByCommand) {
       for (const avCommand of Object.values(AVCommands)) {
-        handledByCommand = avCommand(originalMessage, this.sendChatMessage);
+        handledByCommand = avCommand(originalMessage, this.sendChatMessage, this.emitMessage);
         if (handledByCommand) {
           break;
         }

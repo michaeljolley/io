@@ -39,7 +39,6 @@ export class API {
       log('info', `route: /users/:username called with username: ${req.params.username}`);
 
       const payload: any = await this.helix.getUserByUsername(req.params.username);
-      log('info',JSON.stringify(payload));
       res.send(payload);
     });
 
@@ -48,7 +47,6 @@ export class API {
       log('info', `route: /followers called`);
 
       const payload: any = await this.helix.getFollowers();
-      log('info',JSON.stringify(payload));
       res.send(payload);
     });
 
@@ -57,7 +55,6 @@ export class API {
       log('info', `route: /subscribers called`);
 
       const payload: any = await this.helix.getSubscribers();
-      log('info',JSON.stringify(payload));
       res.send(payload);
     });
 
@@ -66,7 +63,6 @@ export class API {
       log('info', `route: /stream called`);
 
       const payload: any = await this.helix.getStream();
-      log('info',JSON.stringify(payload));
       res.send(payload);
     });
   }
