@@ -9,9 +9,20 @@ import { AVCommands, BasicCommands, SetCommands } from './commands';
 const htmlSanitizeOpts = {
   allowedAttributes: {},
   allowedTags: [
-    'h1','h2','h3','h4','h5','h6',
-    'marquee','em','strong','b','i','code',
-    'blockquote','strike'
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'marquee',
+    'em',
+    'strong',
+    'b',
+    'i',
+    'code',
+    'blockquote',
+    'strike'
   ]
 };
 
@@ -61,10 +72,10 @@ export class TwitchChat {
    * Sends message to Twitch chat
    * @param message message to send
    */
-  public sendChatMessage = (message: string) : void => {
+  public sendChatMessage = (message: string): void => {
     // Default to first channel in connected channels
     this.tmi.say(config.twitchClientUsername, message);
-  }
+  };
 
   /**
    * Set the options for the twitch bot
@@ -91,7 +102,11 @@ export class TwitchChat {
   /**
    * When a user joins the channel
    */
-  private onUserJoined = async (channel: string, username: string, self: boolean) => {
+  private onUserJoined = async (
+    channel: string,
+    username: string,
+    self: boolean
+  ) => {
     // Identify user and add to user state if needed
     await this.getUser(username);
 
@@ -117,19 +132,27 @@ export class TwitchChat {
   /**
    * When a user raids the channel
    */
-  private onRaid = async (channel: string, username: string, viewers: number) => {
+  private onRaid = async (
+    channel: string,
+    username: string,
+    viewers: number
+  ) => {
     // Identify user and add to user state if needed
     const userInfo = await this.getUser(username);
 
     this.emitMessage('newRaid', username, userInfo, viewers);
 
     log('info', `${username} has RAIDED the channel with ${viewers} viewers`);
-  }
+  };
 
   /**
    * When a user cheers
    */
-  private onCheer = async (channel: string, user: Userstate, message: string) => {
+  private onCheer = async (
+    channel: string,
+    user: Userstate,
+    message: string
+  ) => {
     const username: string = user.username ? user.username : '';
 
     // Identify user and add to user state if needed
@@ -140,47 +163,98 @@ export class TwitchChat {
     const bits = user.bits;
 
     log('info', `${user.username} cheered ${bits} bits`);
-  }
+  };
 
-  private onGiftSubRenew = async (channel: string, username: string, sender: string, user: Userstate) => {
+  private onGiftSubRenew = async (
+    channel: string,
+    username: string,
+    sender: string,
+    user: Userstate
+  ) => {
     await this.onAnySub(user, true, true, '');
-  }
+  };
 
-  private onAnonymousGiftSubRenew = async (channel: string, username: string, user: Userstate) => {
+  private onAnonymousGiftSubRenew = async (
+    channel: string,
+    username: string,
+    user: Userstate
+  ) => {
     await this.onAnySub(user, true, true, '');
-  }
+  };
 
-  private onGiftSub = async (channel: string, username: string, streakMonths: number, recipient: string, methods: any, user: Userstate) => {
+  private onGiftSub = async (
+    channel: string,
+    username: string,
+    streakMonths: number,
+    recipient: string,
+    methods: any,
+    user: Userstate
+  ) => {
     await this.onAnySub(user, false, true, '');
-  }
+  };
 
-  private onGiftMysterySub = async (channel: string, username: string, numberOfSubs: number, methods: any, user: Userstate) => {
+  private onGiftMysterySub = async (
+    channel: string,
+    username: string,
+    numberOfSubs: number,
+    methods: any,
+    user: Userstate
+  ) => {
     await this.onAnySub(user, false, true, '');
-  }
+  };
 
-  private onResub = async (channel: string, username: string, streakMonths: number, message: string, user: Userstate, methods: any) => {
+  private onResub = async (
+    channel: string,
+    username: string,
+    streakMonths: number,
+    message: string,
+    user: Userstate,
+    methods: any
+  ) => {
     await this.onAnySub(user, true, false, message);
-  }
+  };
 
-  private onSub = async (channel: string, username: string, methods: any, message: string, user: Userstate) => {
+  private onSub = async (
+    channel: string,
+    username: string,
+    methods: any,
+    message: string,
+    user: Userstate
+  ) => {
     await this.onAnySub(user, false, false, message);
-  }
+  };
 
-  private onAnySub = async (user: Userstate, isRenewal: boolean, wasGift: boolean, message: string) => {
+  private onAnySub = async (
+    user: Userstate,
+    isRenewal: boolean,
+    wasGift: boolean,
+    message: string
+  ) => {
     const username: string = user.username ? user.username : '';
 
     // Identify user and add to user state if needed
     const userInfo = await this.getUser(username);
 
-    this.emitMessage('newSubscription', user, userInfo, isRenewal, wasGift, message);
+    this.emitMessage(
+      'newSubscription',
+      user,
+      userInfo,
+      isRenewal,
+      wasGift,
+      message
+    );
 
     log('info', `${user.username} subscribed`);
-  }
+  };
 
   /**
    * When a user sends a message in chat
    */
-  private onChatMessage = async (channel: string, user: ChatUserstate, message: string): Promise<any> => {
+  private onChatMessage = async (
+    channel: string,
+    user: ChatUserstate,
+    message: string
+  ): Promise<any> => {
     log('info', message);
     const originalMessage = message;
 
@@ -207,7 +281,11 @@ export class TwitchChat {
 
     if (!handledByCommand) {
       for (const setCommand of Object.values(SetCommands)) {
-        handledByCommand = setCommand(originalMessage, user, this.sendChatMessage);
+        handledByCommand = setCommand(
+          originalMessage,
+          user,
+          this.sendChatMessage
+        );
         if (handledByCommand) {
           break;
         }
@@ -216,7 +294,12 @@ export class TwitchChat {
 
     if (!handledByCommand) {
       for (const avCommand of Object.values(AVCommands)) {
-        handledByCommand = avCommand(originalMessage, this.sendChatMessage, this.emitMessage);
+        handledByCommand = avCommand(
+          originalMessage,
+          user,
+          this.sendChatMessage,
+          this.emitMessage
+        );
         if (handledByCommand) {
           break;
         }
@@ -231,8 +314,10 @@ export class TwitchChat {
    * @param message the message sent by a user
    * @param user the user who sent the message
    */
-  private processChatMessage = (message: string, user: ChatUserstate): string => {
-
+  private processChatMessage = (
+    message: string,
+    user: ChatUserstate
+  ): string => {
     let tempMessage: string = sanitizeHtml(message, htmlSanitizeOpts);
 
     // If the message has emotes, modify message to include img tags to the emote
@@ -253,7 +338,6 @@ export class TwitchChat {
       });
 
       emoteSet.forEach(emote => {
-
         this.emitMessage('emote', emote.emoteUrl);
 
         let emoteMessage = tempMessage.slice(0, emote.start);
@@ -278,5 +362,5 @@ export class TwitchChat {
     if (!this.socket.disconnected) {
       this.socket.emit(event, payload);
     }
-  }
+  };
 }

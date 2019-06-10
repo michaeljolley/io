@@ -4,8 +4,27 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import * as config from './config';
+import { Userstate } from 'tmi.js';
 
 export { config };
+
+export const isMod = (user: Userstate) : boolean => {
+  if (user &&
+      user.badges &&
+      user.badges.moderator) {
+        return true;
+      }
+  return false;
+}
+
+export const isBroadcaster = (user: Userstate) : boolean => {
+  if (user &&
+      user.badges &&
+      user.badges.broadcaster) {
+        return true;
+      }
+  return false;
+}
 
 export const log = (level: string, message: string) => {
   const captains: any = console;
