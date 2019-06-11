@@ -21,9 +21,9 @@
       "profile": "https://github.com/sushinateur",
       "contributions": [
         "ideas"
-        ]
-      },
-      {
+      ]
+    },
+    {
       "login": "codephobia",
       "name": "Martin Raymond",
       "avatar_url": "https://avatars1.githubusercontent.com/u/6385224?v=4",
@@ -32,9 +32,9 @@
         "ideas",
         "code",
         "infra"
-        ]
-      },
-      {
+      ]
+    },
+    {
       "login": "mtheoryx",
       "name": "David Poindexter",
       "avatar_url": "https://avatars0.githubusercontent.com/u/119065?v=4",
@@ -42,6 +42,18 @@
       "contributions": [
         "infra",
         "ideas"
+      ]
+    },
+    {
+      "login": "MichaelJolley",
+      "name": "Michael Jolley",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1228996?v=4",
+      "profile": "https://michaeljolley.com/",
+      "contributions": [
+        "ideas",
+        "code",
+        "infra",
+        "doc"
       ]
     }
   ],
