@@ -4,7 +4,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { config, get, log } from './common';
 import { Emote } from './emote';
-import { AVCommands, BasicCommands, SetCommands } from './commands';
+import { AVCommands, BasicCommands, CandleCommands, SetCommands, UptimeCommands } from './commands';
 
 const htmlSanitizeOpts = {
   allowedAttributes: {},
@@ -30,6 +30,7 @@ export class TwitchChat {
   public tmi: Client;
   private clientUsername: string = config.twitchClientUsername;
   private socket!: SocketIOClient.Socket;
+  private activeStream: any | undefined;
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -51,6 +52,14 @@ export class TwitchChat {
     this.tmi.on('subgift', this.onGiftSub);
     this.tmi.on('submysterygift', this.onGiftMysterySub);
     this.tmi.on('subscription', this.onSub);
+
+    this.socket.on('streamStart', (currentStream: any) => {
+      this.activeStream = currentStream;
+    });
+
+    this.socket.on('streamEnd', () => {
+      this.activeStream = undefined;
+    });
   }
 
   /**
@@ -139,6 +148,10 @@ export class TwitchChat {
   ) => {
     // Identify user and add to user state if needed
     const userInfo = await this.getUser(username);
+
+    const userDisplayName: string = userInfo['display-name'] ? userInfo['display-name'] : username;
+
+    this.sendChatMessage(`WARNING!!! ${userDisplayName} is raiding us with ${viewers} accomplices!  DEFEND!!`);
 
     this.emitMessage('newRaid', username, userInfo, viewers);
 
@@ -255,7 +268,6 @@ export class TwitchChat {
     user: ChatUserstate,
     message: string
   ): Promise<any> => {
-    log('info', message);
     const originalMessage = message;
 
     // Parse chat for any commands & update
@@ -283,6 +295,7 @@ export class TwitchChat {
       for (const setCommand of Object.values(SetCommands)) {
         handledByCommand = setCommand(
           originalMessage,
+          this.activeStream,
           user,
           this.sendChatMessage
         );
@@ -297,6 +310,34 @@ export class TwitchChat {
         handledByCommand = avCommand(
           originalMessage,
           user,
+          this.sendChatMessage,
+          this.emitMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
+      }
+    }
+
+    if (!handledByCommand) {
+      for (const upCommand of Object.values(UptimeCommands)) {
+        handledByCommand = upCommand(
+          originalMessage,
+          this.activeStream,
+          this.sendChatMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
+      }
+    }
+
+    if (!handledByCommand) {
+      for (const candleCommand of Object.values(CandleCommands)) {
+        handledByCommand = await candleCommand(
+          originalMessage,
+          user,
+          this.activeStream,
           this.sendChatMessage,
           this.emitMessage
         );

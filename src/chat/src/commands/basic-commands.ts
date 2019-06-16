@@ -161,7 +161,28 @@ export const helpCommand = (message: string, twitchChatFunc: Function) : boolean
   }
 
   if (twitchChatFunc) {
-    twitchChatFunc(`I can respond to the following commands: !blog, !candle, !discord, !github, !project, !so {user name}, !twitter, !website`);
+    twitchChatFunc(`I can respond to the following commands: !blog, !candle, !discord, !github, !project, !so {user name}, !twitter, !website, !youtube`);
+    return true;
+  }
+
+  return false;
+};
+
+export const youTubeCommand = (message: string, twitchChatFunc: Function) : boolean => {
+
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!youtube') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(`You can catch all our streams on YouTube at https://www.youtube.com/channel/UCn2FoDbv_veJB_UbrF93_jw`);
     return true;
   }
 

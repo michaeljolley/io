@@ -1,7 +1,17 @@
 import express = require('express');
+import mongodb = require('mongodb');
 import { Server } from 'http';
-
 import { get, log } from './common';
+
+const mongoUsername = encodeURIComponent('root');
+const mongoPassword = encodeURIComponent('example');
+
+const mongoOptions: mongodb.MongoClientOptions = {
+  auth: {
+    password: mongoPassword,
+    user: mongoUsername
+  }
+};
 
 export class User {
   public app: express.Application;
@@ -9,6 +19,8 @@ export class User {
 
   private users: any[] = [];
   private usersUrl: string = 'http://api/users/';
+  private mongoUrl: string = `mongodb://mongo:27017`;
+  private mongoClient = mongodb.MongoClient;
 
   constructor() {
     this.app = express();
@@ -36,20 +48,39 @@ export class User {
   }
 
   private getUser = async (username: string): Promise<any> => {
-    let user = this.users.filter(f => f.login.toLocaleLowerCase() === username.toLocaleLowerCase())[0];
+
+    let user = this.users.find(f => f.login.toLocaleLowerCase() === username.toLocaleLowerCase());
 
     if (user) {
+      log('info', `Retrieved from cache: ${username}`);
       return user;
+    }
+
+    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
+      this.mongoClient.connect(this.mongoUrl, mongoOptions, (err, client) => { resolve(client); }));
+
+    const db = mongoClient.db('iodb');
+
+    if (db.collection('users') !== undefined) {
+      user = await db.collection('users').findOne({ login: username.toLocaleLowerCase() });
+    }
+
+    if (user) {
+      log('info', `Retrieved from db: ${username}`);
     }
     else {
       const url = `${this.usersUrl}${username}`;
 
-      return await get(url).then((data: any) => {
-        user = data;
-        this.users.push(user);
-        return user;
-      });
+      user = await get(url);
+
+      log('info', `Retrieved from api: ${username}`);
+      await db.collection('users').insertOne(user);
+      this.users.push(user);
     }
+
+    await mongoClient.close();
+
+    return user;
   }
 
   /**

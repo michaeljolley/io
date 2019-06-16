@@ -6,6 +6,8 @@ export class Chron {
   private socket!: SocketIOClient.Socket;
   private apiUrl: string = 'http://api';
 
+  private activeStream: any | undefined;
+
   constructor() {
     this.socket = io('http://hub');
   }
@@ -29,7 +31,7 @@ export class Chron {
     setInterval(async () => { await this.broadcastLastSubscriber(); }, 60000);
 
     log('info', 'Chron is online and running...');
-  };
+  }
 
   public broadcastFollowers = async () : Promise<any> => {
     const url = `${this.apiUrl}/followers`;
@@ -51,9 +53,27 @@ export class Chron {
     let viewerCount: number = 0;
 
     const resp = await get(url).then((data: any) => data);
-    if (resp !== undefined &&
-        resp.viewer_count !== undefined) {
-      viewerCount = resp.viewer_count;
+    if (resp !== undefined) {
+      viewerCount = resp.viewer_count !== undefined ? resp.viewer_count : 0;
+
+      // stream ended
+      if (resp.started_at === undefined && this.activeStream !== undefined) {
+        this.emitMessage('streamEnd', this.activeStream.id);
+        this.activeStream = undefined;
+        log('info', `Stream ended`);
+      }
+
+      // stream started
+      if (resp.started_at !== undefined && this.activeStream === undefined) {
+        this.activeStream = resp;
+        this.emitMessage('streamStart', this.activeStream);
+        log('info', `Stream started: ${JSON.stringify(this.activeStream)}`);
+      }
+
+    }
+    else {
+      viewerCount = 0;
+      this.activeStream = undefined;
     }
 
     log('info', `Viewer count: ${viewerCount}`);

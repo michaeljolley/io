@@ -44,6 +44,12 @@ export class IOHub {
       socket.on('lastSubscriber', (lastSubscriber: any) => this.onLastSubscriber(lastSubscriber[0]));
 
       /**
+       * Stream start/stop events
+       */
+      socket.on('streamStart', (activeStream: any) => this.onStreamStart(activeStream));
+      socket.on('streamEnd', () => this.onStreamEnd());
+
+      /**
        * Alert related events
        */
       socket.on('newFollow', (follower: any) => this.onNewFollow(follower));
@@ -56,7 +62,6 @@ export class IOHub {
        */
       socket.on('playAudio', (soundClipName: string) => this.onPlayAudio(soundClipName));
       socket.on('stopAudio', () => this.onStopAudio());
-
     });
   }
 
@@ -129,6 +134,16 @@ export class IOHub {
   private onStopAudio() {
     log('info', `onStopAudio`);
     this.io.emit('stopAudio');
+  }
+
+  private onStreamStart(activeStream: any) {
+    log('info', `onStreamStart: ${activeStream.id}`);
+    this.io.emit('streamStart', activeStream);
+  }
+
+  private onStreamEnd() {
+    log('info', `onStreamEnd`);
+    this.io.emit('streamEnd');
   }
 
   /**
