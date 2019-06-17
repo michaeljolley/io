@@ -47,6 +47,7 @@ export class IOHub {
        * Stream start/stop events
        */
       socket.on('streamStart', (activeStream: any) => this.onStreamStart(activeStream));
+      socket.on('streamUpdate', (activeStream: any) => this.onStreamUpdate(activeStream));
       socket.on('streamEnd', () => this.onStreamEnd());
 
       /**
@@ -137,8 +138,15 @@ export class IOHub {
   }
 
   private onStreamStart(activeStream: any) {
+    activeStream = activeStream[0];
     log('info', `onStreamStart: ${activeStream.id}`);
     this.io.emit('streamStart', activeStream);
+  }
+
+  private onStreamUpdate(activeStream: any) {
+    activeStream = activeStream[0];
+    log('info', `onStreamUpdate: ${activeStream.id}`);
+    this.io.emit('streamUpdate', activeStream);
   }
 
   private onStreamEnd() {

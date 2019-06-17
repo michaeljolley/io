@@ -54,6 +54,12 @@ export class TwitchChat {
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on('streamStart', (currentStream: any) => {
+      log('info', `oss: ${JSON.stringify(currentStream)}`);
+      this.activeStream = currentStream;
+    });
+
+    this.socket.on('streamUpdate', (currentStream: any) => {
+      log('info', `ssu: ${JSON.stringify(currentStream)}`);
       this.activeStream = currentStream;
     });
 

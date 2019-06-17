@@ -1,19 +1,7 @@
 import mongodb = require('mongodb');
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
-import { log, isMod, isBroadcaster } from '../../common';
-
-const mongoUsername = encodeURIComponent('root');
-const mongoPassword = encodeURIComponent('example');
-
-const mongoOptions: mongodb.MongoClientOptions = {
-  auth: {
-    password: mongoPassword,
-    user: mongoUsername
-  }
-};
-
-const mongoUrl: string = `mongodb://mongo:27017`;
+import { config, isBroadcaster, isMod, log } from '../../common';
 
 let secondsToVote: number = 60;
 let voteActive: boolean = false;
@@ -39,11 +27,6 @@ export const candleCommand = async (
   if (splitMessage[0].toLocaleLowerCase() !== '!candle') {
     return false;
   }
-
-  // activeStream = {
-  //   id: '34544610096',
-  //   started_at: '2019-06-15T20:17:32Z'
-  // };
 
   if (activeStream === undefined ||
     activeStream.started_at === undefined) {
@@ -88,7 +71,7 @@ const baseCandleCommand = async (
   twitchChatFunc: Function) => {
 
     const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(mongoUrl, mongoOptions, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
 
     const db = mongoClient.db('iodb');
 
@@ -106,7 +89,7 @@ const baseCandleCommand = async (
     }
     else {
       twitchChatFunc(
-        `We're burning ${streamCandle.candle.label}. Try it yourself at ${streamCandle.candle.url}!`
+        `We're burning ${streamCandle.candle.label}. Try it yourself at ${streamCandle.candle.url}`
       );
     }
 };
@@ -122,7 +105,7 @@ const startCandleVoteCommand = async (
   }
 
   const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-    mongodb.MongoClient.connect(mongoUrl, mongoOptions, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+    mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
 
   const db = mongoClient.db('iodb');
 
@@ -147,7 +130,7 @@ const startCandleVoteCommand = async (
         stopCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
       }, secondsToVote * 1000);
 
-    twitchChatFunc(`Voting is open for our candle to code by. Send !vote {candle name} to vote.  Available choices are: ${availableCandles}`);
+    twitchChatFunc(`Voting is open for our Candle to Code By. Send !vote {candle name} to vote.  Available choices are: ${availableCandles}`);
     emitMessageFunc('voteStart');
     log('info', `Vote for candle started`);
   }
@@ -162,7 +145,7 @@ const stopCandleVoteCommand = async (
     voteTimeout = undefined;
 
     const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(mongoUrl, mongoOptions, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
 
     const db = mongoClient.db('iodb');
 
@@ -213,7 +196,7 @@ const resetCandleVoteCommand = async (
     }
 
     const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(mongoUrl, mongoOptions, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
 
     const db = mongoClient.db('iodb');
 
@@ -237,7 +220,7 @@ const candleVoteCommand = async (
     const userDisplayName: string | undefined = user["display-name"] ? user["display-name"] : user.username;
 
     const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(mongoUrl, mongoOptions, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
 
     const db = mongoClient.db('iodb');
 

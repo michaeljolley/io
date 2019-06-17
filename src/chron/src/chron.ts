@@ -70,6 +70,10 @@ export class Chron {
         log('info', `Stream started: ${JSON.stringify(this.activeStream)}`);
       }
 
+      if (this.activeStream) {
+        this.emitMessage('streamUpdate', this.activeStream);
+        log('info', `Stream update: ${JSON.stringify(this.activeStream)}`);
+      }
     }
     else {
       viewerCount = 0;

@@ -117,7 +117,7 @@ export const heroinesCommand = (message: string, twitchChatFunc: Function) : boo
   }
 
   if (twitchChatFunc) {
-    twitchChatFunc(`The Heroines of JavaScript cards are created by Vue Vixens and support their scholarship fund. You can learn more at https://github.com/mtheoryx/heroines-of-javascript and https://vuevixens.org`);
+    twitchChatFunc(`The Heroines of JavaScript cards are created by Vue Vixens and support their scholarship fund. Lauryn (12) & Layla (10) interview a new heroine every other Sunday.  Check our events to catch the next one.  You can learn more at https://github.com/mtheoryx/heroines-of-javascript and https://vuevixens.org`);
     return true;
   }
 
@@ -161,7 +161,7 @@ export const helpCommand = (message: string, twitchChatFunc: Function) : boolean
   }
 
   if (twitchChatFunc) {
-    twitchChatFunc(`I can respond to the following commands: !blog, !candle, !discord, !github, !project, !so {user name}, !twitter, !website, !youtube`);
+    twitchChatFunc(`I can respond to the following commands: !blog, !candle, !discord, !github, !heroines, !project, !so {user name}, !team, !twitter, !website, !youtube`);
     return true;
   }
 
@@ -183,6 +183,27 @@ export const youTubeCommand = (message: string, twitchChatFunc: Function) : bool
 
   if (twitchChatFunc) {
     twitchChatFunc(`You can catch all our streams on YouTube at https://www.youtube.com/channel/UCn2FoDbv_veJB_UbrF93_jw`);
+    return true;
+  }
+
+  return false;
+};
+
+export const liveCodersCommand = (message: string, twitchChatFunc: Function) : boolean => {
+
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!team') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(`Check out the entire Live Coders team and give them all a follow at https://livecoders.dev`);
     return true;
   }
 

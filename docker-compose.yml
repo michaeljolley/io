@@ -29,7 +29,6 @@ services:
     depends_on:
       - hub
       - api
-      - mongo
   overlay:
     build: ./src/overlay
     restart: always
@@ -48,7 +47,6 @@ services:
       - "5070:80"
     depends_on:
       - api
-      - mongo
   chron:
     build: ./src/chron
     restart: always
@@ -57,19 +55,3 @@ services:
     depends_on:
       - api
       - hub
-  mongo:
-    image: mongo:4.1.13-bionic
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-  mongoex:
-    image: mongo-express
-    restart: always
-    ports:
-      - "8081:8081"
-    expose:
-      - "8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: example

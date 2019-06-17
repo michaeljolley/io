@@ -1,17 +1,7 @@
 import express = require('express');
 import mongodb = require('mongodb');
 import { Server } from 'http';
-import { get, log } from './common';
-
-const mongoUsername = encodeURIComponent('root');
-const mongoPassword = encodeURIComponent('example');
-
-const mongoOptions: mongodb.MongoClientOptions = {
-  auth: {
-    password: mongoPassword,
-    user: mongoUsername
-  }
-};
+import { config, get, log } from './common';
 
 export class User {
   public app: express.Application;
@@ -19,7 +9,6 @@ export class User {
 
   private users: any[] = [];
   private usersUrl: string = 'http://api/users/';
-  private mongoUrl: string = `mongodb://mongo:27017`;
   private mongoClient = mongodb.MongoClient;
 
   constructor() {
@@ -57,7 +46,7 @@ export class User {
     }
 
     const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      this.mongoClient.connect(this.mongoUrl, mongoOptions, (err, client) => { resolve(client); }));
+      this.mongoClient.connect(config.mongoDBConnectionString, (err, client) => { resolve(client); }));
 
     const db = mongoClient.db('iodb');
 
