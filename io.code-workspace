@@ -16,6 +16,9 @@
 			"path": "src\\hub"
 		},
 		{
+			"path": "src\\models"
+		},
+		{
 			"path": "src\\overlay"
 		},
 		{

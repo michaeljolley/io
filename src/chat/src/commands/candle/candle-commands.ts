@@ -79,8 +79,6 @@ const baseCandleCommand = async (
 
     await mongoClient.close();
 
-    log('info',`candles: ${JSON.stringify(streamCandle)}`);
-
     if (streamCandle == null ||
       streamCandle.length === 0) {
       twitchChatFunc(
@@ -130,7 +128,7 @@ const startCandleVoteCommand = async (
         stopCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
       }, secondsToVote * 1000);
 
-    twitchChatFunc(`Voting is open for our Candle to Code By. Send !vote {candle name} to vote.  Available choices are: ${availableCandles}`);
+    twitchChatFunc(`Voting is open for our Candle to Code By. Send !candle {candle name} to vote.  Available choices are: ${availableCandles}`);
     emitMessageFunc('voteStart');
     log('info', `Vote for candle started`);
   }
@@ -224,7 +222,7 @@ const candleVoteCommand = async (
 
     const db = mongoClient.db('iodb');
 
-    const candles: any = await new Promise((resolve: any) =>
+    const candles: any[] = await new Promise((resolve: any) =>
       db.collection('candles').find({}).toArray((err: any, res: any) => {
       if (err) {
         resolve(null);
@@ -232,7 +230,7 @@ const candleVoteCommand = async (
       resolve(res);
     }));
 
-    let votes: any =  await new Promise((resolve: any) =>
+    let votes: any[] = await new Promise((resolve: any) =>
       db.collection('candleVotes').find({ streamId: activeStream.id }).toArray((err: any, res: any) => {
         if (err) {
           resolve(null);
@@ -246,8 +244,11 @@ const candleVoteCommand = async (
 
       const vote = candles.find((f: any) => f.name === userCandleChoice);
 
-      if (vote == null) {
-        twitchChatFunc(`@${userDisplayName}, ${splitMessage[1]} isn't a valid choice. Acceptable choices are: ${candles.join((f: any) => f.name, ', ')}`);
+      if (vote === undefined) {
+
+        const availableCandles: string = candles.map((f: any) => f.name).join(', ');
+
+        twitchChatFunc(`@${userDisplayName}, ${splitMessage[1]} isn't a valid choice. Acceptable choices are: ${availableCandles}`);
         return;
       }
 

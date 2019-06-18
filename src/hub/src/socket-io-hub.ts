@@ -53,7 +53,7 @@ export class IOHub {
       /**
        * Alert related events
        */
-      socket.on('newFollow', (follower: any) => this.onNewFollow(follower));
+      socket.on('newFollow', (follower: any, userInfo: any) => this.onNewFollow(follower, userInfo));
       socket.on('newSubscription', (user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
       socket.on('newRaid', (username: string, userInfo: any, viewers:number) => this.onNewRaid(username, userInfo, viewers));
       socket.on('newCheer', (user: any, userInfo: any, message: string) => this.onNewCheer(user, userInfo, message));
@@ -87,9 +87,9 @@ export class IOHub {
     this.io.emit('userLeft', username);
   }
 
-  private onNewFollow(follower: any) {
+  private onNewFollow(follower: any, userInfo: any) {
     log('info', `onNewFollow: ${follower.user}`);
-    this.io.emit('newFollow', follower);
+    this.io.emit('newFollow', follower, userInfo);
   }
 
   private onNewSubscription(user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) {
