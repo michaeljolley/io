@@ -4,6 +4,12 @@ import io from 'socket.io';
 
 import { log } from './common';
 
+import {
+  ICandle,
+  ICandleVote,
+  ICandleVoteResult
+} from './models';
+
 export class IOHub {
   public app: express.Application;
   public io!: SocketIO.Server;
@@ -63,6 +69,16 @@ export class IOHub {
        */
       socket.on('playAudio', (soundClipName: string) => this.onPlayAudio(soundClipName));
       socket.on('stopAudio', () => this.onStopAudio());
+
+      /**
+       * Candle related events
+       */
+      socket.on('candleReset', this.onCandleReset);
+      socket.on('candleStop', this.onCandleStop);
+      socket.on('candleVote', this.onCandleVote);
+      socket.on('candleWinner', this.onCandleWinner);
+      socket.on('candleVoteUpdate', this.onCandleVoteUpdate);
+
     });
   }
 
@@ -89,7 +105,7 @@ export class IOHub {
 
   private onNewFollow(follower: any, userInfo: any) {
     log('info', `onNewFollow: ${follower.user}`);
-    this.io.emit('newFollow', follower, userInfo);
+    this.io.emit('newFollow', userInfo);
   }
 
   private onNewSubscription(user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) {
@@ -152,6 +168,31 @@ export class IOHub {
   private onStreamEnd() {
     log('info', `onStreamEnd`);
     this.io.emit('streamEnd');
+  }
+
+  private onCandleWinner(streamCandle: ICandle) {
+    log('info', 'onCandleWinner');
+    this.io.emit('candleWinner', streamCandle);
+  }
+
+  private onCandleStop(streamId: string) {
+    log('info', 'onCandleStop');
+    this.io.emit('candleStop', streamId);
+  }
+
+  private onCandleVote(streamId: string, candleVote: ICandleVote) {
+    log('info', 'onCandleVote');
+    this.io.emit('candleVote', streamId, candleVote);
+  }
+
+  private onCandleReset(streamId: string) {
+    log('info', 'onCandleReset');
+    this.io.emit('candleReset', streamId);
+  }
+
+  private onCandleVoteUpdate(results: ICandleVoteResult[]) {
+    log('info', 'onCandleVoteUpdate');
+    this.io.emit('candleVoteUpdate', results);
   }
 
   /**

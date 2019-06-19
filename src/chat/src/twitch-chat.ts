@@ -2,6 +2,8 @@ import { Client, ChatUserstate, Userstate } from 'tmi.js';
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
+import { ICandle } from './models';
+
 import { config, get, log } from './common';
 import { Emote } from './emote';
 import { AVCommands, BasicCommands, CandleCommands, SetCommands, UptimeCommands } from './commands';
@@ -54,13 +56,15 @@ export class TwitchChat {
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on('streamStart', (currentStream: any) => {
-      log('info', `oss: ${JSON.stringify(currentStream)}`);
       this.activeStream = currentStream;
     });
 
     this.socket.on('streamUpdate', (currentStream: any) => {
-      log('info', `ssu: ${JSON.stringify(currentStream)}`);
       this.activeStream = currentStream;
+    });
+
+    this.socket.on('candleWinner', (streamCandle: ICandle) => {
+      this.sendChatMessage(`The vote is over and today's Candle to Code By is ${streamCandle.label}.  You can try it yourself at ${streamCandle.url}`);
     });
 
     this.socket.on('streamEnd', () => {

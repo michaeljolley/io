@@ -13,12 +13,6 @@ services:
     restart: always
     ports:
       - "5001:80"
-  hub:
-    build: ./src/hub
-    ports:
-      - "5060:80"
-    expose:
-      - "5060"
   chat:
     build: ./src/chat
     restart: always
@@ -29,6 +23,24 @@ services:
     depends_on:
       - hub
       - api
+  chron:
+    build: ./src/chron
+    restart: always
+    ports:
+      - "5080:80"
+    depends_on:
+      - api
+      - hub
+  hub:
+    build: ./src/hub
+    ports:
+      - "5060:80"
+    expose:
+      - "5060"
+  logger:
+    build: ./src/logger
+    depends_on:
+      - hub
   overlay:
     build: ./src/overlay
     restart: always
@@ -47,11 +59,3 @@ services:
       - "5070:80"
     depends_on:
       - api
-  chron:
-    build: ./src/chron
-    restart: always
-    ports:
-      - "5080:80"
-    depends_on:
-      - api
-      - hub

@@ -1,6 +1,7 @@
 import mongodb = require('mongodb');
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
+import { ICandle, IStream, ICandleVote } from '../../models';
 import { config, isBroadcaster, isMod, log } from '../../common';
 
 let secondsToVote: number = 60;
@@ -10,7 +11,7 @@ let voteTimeout: any;
 export const candleCommand = async (
   message: string,
   user: ChatUserstate,
-  activeStream: any | undefined,
+  activeStream: IStream | undefined,
   twitchChatFunc: Function,
   emitMessageFunc: Function
 ) => {
@@ -67,34 +68,34 @@ export const candleCommand = async (
 };
 
 const baseCandleCommand = async (
-  activeStream: any,
+  activeStream: IStream,
   twitchChatFunc: Function) => {
 
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+    const stream: IStream | null | undefined = await getStream(activeStream.streamId);
 
-    const db = mongoClient.db('iodb');
-
-    const streamCandle: any = await db.collection('streamCandles').findOne({ streamId: activeStream.id });
-
-    await mongoClient.close();
-
-    if (streamCandle == null ||
-      streamCandle.length === 0) {
-      twitchChatFunc(
-        `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @theMichaelJolley.`
-      );
+    if (stream == null ||
+      stream.candle == null) {
+        if (voteActive) {
+          twitchChatFunc(
+            `It's still up in the air. Voting is active now.`
+          );
+        }
+        else {
+          twitchChatFunc(
+            `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @theMichaelJolley.`
+          );
+        }
     }
     else {
       twitchChatFunc(
-        `We're burning ${streamCandle.candle.label}. Try it yourself at ${streamCandle.candle.url}`
+        `We're burning ${stream.candle.label}. Try it yourself at ${stream.candle.url}`
       );
     }
 };
 
 const startCandleVoteCommand = async (
   splitMessage: string[],
-  activeStream: any,
+  activeStream: IStream,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
@@ -102,20 +103,7 @@ const startCandleVoteCommand = async (
     secondsToVote = parseInt(splitMessage[2], undefined);
   }
 
-  const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-    mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-  const db = mongoClient.db('iodb');
-
-  const candles: any = await new Promise((resolve: any) =>
-    db.collection('candles').find({}).toArray((err: any, res: any) => {
-    if (err) {
-      resolve(null);
-    }
-    resolve(res);
-  }));
-
-  await mongoClient.close();
+  const candles: ICandle[] = await getCandles();
 
   if (secondsToVote > 0 && candles != null && candles.length > 0) {
 
@@ -129,62 +117,24 @@ const startCandleVoteCommand = async (
       }, secondsToVote * 1000);
 
     twitchChatFunc(`Voting is open for our Candle to Code By. Send !candle {candle name} to vote.  Available choices are: ${availableCandles}`);
-    emitMessageFunc('voteStart');
     log('info', `Vote for candle started`);
   }
 };
 
 const stopCandleVoteCommand = async (
-  activeStream: any,
+  activeStream: IStream,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
     voteActive = false;
     voteTimeout = undefined;
 
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    const candles: any = await new Promise((resolve: any) =>
-      db.collection('candles').find({}).toArray((err: any, res: any) => {
-      if (err) {
-        resolve(null);
-      }
-      resolve(res);
-    }));
-
-    const votes: any =  await new Promise((resolve: any) =>
-      db.collection('candleVotes').find({ streamId: activeStream.id }).toArray((err: any, res: any) => {
-        if (err) {
-          resolve(null);
-        }
-        resolve(res);
-      }));
-
-    if (votes != null && votes.length > 0) {
-      const results = tabulateResults(candles, votes);
-      log('info', JSON.stringify(results));
-
-      const winner = results.reduce((l: any, e: any) => {
-        return e.votes > l.votes ? e : l;
-      });
-
-      const streamCandle: any = { streamId: activeStream.id, candle: winner.candle };
-      await db.collection('streamCandles').insertOne(streamCandle);
-
-      twitchChatFunc(`The vote is over and today's Candle to Code By is ${streamCandle.candle.label}.  You can try it yourself at ${streamCandle.candle.url}`);
-    }
-
-    await mongoClient.close();
-
-    emitMessageFunc('voteStop');
+    emitMessageFunc('candleStop', activeStream.streamId);
     log('info', `Vote for candle stopped`);
 };
 
 const resetCandleVoteCommand = async (
-  activeStream: any,
+  activeStream: IStream,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
@@ -193,105 +143,76 @@ const resetCandleVoteCommand = async (
       voteTimeout = undefined;
     }
 
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    await db.collection('streamCandles').deleteOne({ streamId: activeStream.id });
-    await db.collection('candleVotes').deleteMany({ streamId: activeStream.id });
-
-    await mongoClient.close();
-
-    twitchChatFunc(`The vote for today's Candle to Code By has been reset.`);
-
+    emitMessageFunc('candleReset', activeStream.streamId);
     return;
 };
 
 const candleVoteCommand = async (
   splitMessage: string[],
   user: ChatUserstate,
-  activeStream: any,
+  activeStream: IStream,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
     const userDisplayName: string | undefined = user["display-name"] ? user["display-name"] : user.username;
 
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    const candles: any[] = await new Promise((resolve: any) =>
-      db.collection('candles').find({}).toArray((err: any, res: any) => {
-      if (err) {
-        resolve(null);
-      }
-      resolve(res);
-    }));
-
-    let votes: any[] = await new Promise((resolve: any) =>
-      db.collection('candleVotes').find({ streamId: activeStream.id }).toArray((err: any, res: any) => {
-        if (err) {
-          resolve(null);
-        }
-        resolve(res);
-      }));
+    const candles: ICandle[] = await getCandles();
 
     if (candles != null && candles.length > 0) {
 
       const userCandleChoice: string = splitMessage[1].toLocaleLowerCase();
 
-      const vote = candles.find((f: any) => f.name === userCandleChoice);
+      const vote: ICandle | undefined = candles.find((f: ICandle) => f.name === userCandleChoice);
 
       if (vote === undefined) {
-
         const availableCandles: string = candles.map((f: any) => f.name).join(', ');
-
         twitchChatFunc(`@${userDisplayName}, ${splitMessage[1]} isn't a valid choice. Acceptable choices are: ${availableCandles}`);
         return;
       }
 
-      let existingVote: any | undefined;
-
-      if (votes != null && votes.length > 0) {
-        existingVote = votes.find((f: any) => f.user.username === user.username);
-      }
-
-      if (existingVote == null) {
-
-        const userVote: any = { streamId: activeStream.id, user, candle: vote };
-        await db.collection('candleVotes').insertOne(userVote);
-
-        votes =  await new Promise((resolve: any) =>
-          db.collection('candleVotes').find({ streamId: activeStream.id }).toArray((err: any, res: any) => {
-            if (err) {
-              resolve(null);
-            }
-            resolve(res);
-          }));
-
-        const results = tabulateResults(candles, votes);
-
-        log('info', `Vote for ${userDisplayName}: ${userVote.candle.label}`);
-
-        emitMessageFunc('voteUpdate', JSON.stringify(results));
+      if (user.username) {
+        const userVote: ICandleVote = { candleName: vote.name, username: user.username };
+        emitMessageFunc('candleVote', activeStream.streamId, userVote);
+        log('info', `Vote for ${userDisplayName}: ${userVote.candleName}`);
       }
     }
-
-    await mongoClient.close();
 };
 
-const tabulateResults : any = (candles: any, votes: any) => {
-  const voteResults: any = _.groupBy(votes, 'candle.name');
 
-  const results: any = [];
+const getStream = async (streamId: string) : Promise<IStream | null | undefined>  => {
 
-  for (const key of Object.keys(voteResults)) {
-    const candle = candles.find((f: any) => f.name === key);
-    results.push({candle, votes: voteResults[key].length});
+  const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
+    mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+
+  const db = mongoClient.db('iodb');
+
+  let stream: IStream | null | undefined;
+
+  if (db.collection('streams') !== undefined) {
+    stream = await db.collection('streams').findOne({ streamId });
   }
 
-  log('info', `tabulateResults: ${JSON.stringify(results)}`);
-  return results;
+  await mongoClient.close();
+
+  return stream;
+};
+
+const getCandles = async () : Promise<ICandle[]>  => {
+
+  const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
+  mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
+
+  const db = mongoClient.db('iodb');
+
+  const candles: ICandle[] = await new Promise((resolve: any) =>
+    db.collection('candles').find({}).toArray((err: any, res: any) => {
+    if (err) {
+      resolve(null);
+    }
+    resolve(res);
+  }));
+
+  await mongoClient.close();
+
+  return candles;
 };

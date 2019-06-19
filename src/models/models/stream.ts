@@ -1,4 +1,5 @@
 import { ICandle } from './candle';
+import { ICandleVote } from './candle-vote';
 import { IRaider } from './raider';
 import { ISubscriber } from './subscriber';
 import { IStreamGoal } from './stream-goal';
@@ -14,11 +15,13 @@ export interface IStream {
   ended_at: string;
   replayLink: string;
 
+  candle?: ICandle;
+  candleVotes?: ICandleVote[];
+
   segments?: IStreamSegment[];
   goals?: IStreamGoal[];
   notes?: IStreamNote[];
 
-  candle?: ICandle;
   followers?: IUserInfo[];
   subscribers?: ISubscriber[];
   raiders?: IRaider[];

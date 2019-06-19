@@ -16,13 +16,16 @@
 			"path": "src\\hub"
 		},
 		{
-			"path": "src\\models"
+      "path": "src\\logger"
 		},
 		{
 			"path": "src\\overlay"
 		},
 		{
 			"path": "src\\user"
+		},
+		{
+			"path": "src\\models"
 		},
 		{
 			"path": "."
