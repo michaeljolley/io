@@ -1,6 +1,7 @@
 import mongodb = require('mongodb');
 import io from 'socket.io-client';
 import { config, log } from './common';
+import _ from 'lodash';
 
 import {
   IUserInfo,

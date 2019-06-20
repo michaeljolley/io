@@ -4,8 +4,8 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY . .
-COPY package*.json ./
+COPY ./chat .
+COPY ./models ./src
 
 RUN npm install
 
