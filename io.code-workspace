@@ -1,31 +1,31 @@
 {
 	"folders": [
 		{
-			"path": "src\\admin"
+			"path": "src/admin"
 		},
 		{
-			"path": "src\\api"
+			"path": "src/api"
 		},
 		{
-			"path": "src\\chat"
+			"path": "src/chat"
 		},
 		{
-			"path": "src\\chron"
+			"path": "src/chron"
 		},
 		{
-			"path": "src\\hub"
+			"path": "src/hub"
 		},
 		{
-      "path": "src\\logger"
+      		"path": "src/logger"
 		},
 		{
-			"path": "src\\overlay"
+			"path": "src/overlay"
 		},
 		{
-			"path": "src\\user"
+			"path": "src/user"
 		},
 		{
-			"path": "src\\models"
+			"path": "src/models"
 		},
 		{
 			"path": "."

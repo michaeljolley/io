@@ -4,8 +4,8 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY . .
-COPY package*.json ./
+COPY ./logger .
+COPY ./models ./src
 
 RUN npm install
 
@@ -14,4 +14,4 @@ RUN npm run build
 
 EXPOSE 80
 
-CMD [ "npm", "start"]
+CMD [ "npm", "start" ]

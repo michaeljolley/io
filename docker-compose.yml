@@ -14,7 +14,9 @@ services:
     ports:
       - "5001:80"
   chat:
-    build: ./src/chat
+    build:
+      context: ./src
+      dockerfile: chat/Dockerfile
     restart: always
     ports:
       - "5050:80"
@@ -32,14 +34,18 @@ services:
       - api
       - hub
   hub:
-    build: ./src/hub
+    build:
+      context: ./src
+      dockerfile: hub/Dockerfile
     restart: always
     ports:
       - "5060:80"
     expose:
       - "5060"
   logger:
-    build: ./src/logger
+    build:
+      context: ./src
+      dockerfile: logger/Dockerfile
     restart: always
     depends_on:
       - hub
