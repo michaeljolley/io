@@ -33,12 +33,14 @@ services:
       - hub
   hub:
     build: ./src/hub
+    restart: always
     ports:
       - "5060:80"
     expose:
       - "5060"
   logger:
     build: ./src/logger
+    restart: always
     depends_on:
       - hub
   overlay:
