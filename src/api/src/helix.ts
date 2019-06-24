@@ -10,25 +10,25 @@ export class Helix {
   private subscribersUrl: string = `${this.baseHelixUrl}/subscriptions`;
   private streamsUrl: string = `${this.baseHelixUrl}/streams`;
 
-  private testStream: any = {
-    "id" : "34604630896",
-    "user_id" : "279965339",
-    "user_name" : "theMichaelJolley",
-// tslint:disable-next-line: object-literal-sort-keys
-    "game_id" : "509670",
-    "community_ids" : [ ],
-    "type" : "live",
-    "title" : "June 20, 2019 - Testing changes to statefulness of our chatbot and then working on a client project using Angular on a Raspberry Pi",
-    "viewer_count" : 16,
-    "started_at" : "2019-06-20T18:01:22Z",
-    "language" : "en",
-    "thumbnail_url" : "https://static-cdn.jtvnw.net/previews-ttv/live_user_themichaeljolley-{width}x{height}.jpg",
-    "tag_ids" : [
-      "a59f1e4e-257b-4bd0-90c7-189c3efbf917",
-      "6f86127d-6051-4a38-94bb-f7b475dde109",
-      "6ea6bca4-4712-4ab9-a906-e3336a9d8039"
-    ]
-  };
+//   private testStream: any = {
+//     "id" : "34604630896",
+//     "user_id" : "279965339",
+//     "user_name" : "theMichaelJolley",
+// // tslint:disable-next-line: object-literal-sort-keys
+//     "game_id" : "509670",
+//     "community_ids" : [ ],
+//     "type" : "live",
+//     "title" : "June 20, 2019 - Testing changes to statefulness of our chatbot and then working on a client project using Angular on a Raspberry Pi",
+//     "viewer_count" : 16,
+//     "started_at" : "2019-06-20T18:01:22Z",
+//     "language" : "en",
+//     "thumbnail_url" : "https://static-cdn.jtvnw.net/previews-ttv/live_user_themichaeljolley-{width}x{height}.jpg",
+//     "tag_ids" : [
+//       "a59f1e4e-257b-4bd0-90c7-189c3efbf917",
+//       "6f86127d-6051-4a38-94bb-f7b475dde109",
+//       "6ea6bca4-4712-4ab9-a906-e3336a9d8039"
+//     ]
+//   };
 
   public async getUserById(userId: string): Promise<any> {
     const queries = queryString.stringify({id: [userId]});
@@ -91,7 +91,7 @@ export class Helix {
     const url: string = `${this.streamsUrl}?${queries}`;
 
     return await get(url).then((data: any) => {
-      return this.testStream; // data.data[0] || null;
+      return data.data[0] || null;
     });
   }
 }

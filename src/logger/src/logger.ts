@@ -40,8 +40,7 @@ export class Logger {
     this.socket.on('candleVote', (vote: IVote) => this.onCandleVote(vote));
   }
 
-  public start() {
-  }
+  public start() {}
 
   private async onStreamStart(currentStream: IStream) {
     await this.streamDb.saveStream(currentStream);
@@ -66,24 +65,27 @@ export class Logger {
   }
 
   private onNewCheer(cheerer: ICheer) {
-
+    // We want to record the cheer on the current stream
   }
 
   private onNewSubscription(subscriber: ISubscriber) {
-
+    // We want to record the subcription on the current stream
   }
 
   private async onCandleWinner(streamId: string, streamCandle: ICandle) {
+    log('info', `onCandleWinner: ${streamId} - ${JSON.stringify(streamCandle)}`);
     // Only need to set the streams candle property
     await this.streamDb.saveStream({ id: streamId, candle: streamCandle });
   }
 
   private async onCandleReset(streamId: string) {
+    log('info', `onCandleReset: ${streamId}`);
     // Only need to set the streams candle property to null
     await this.streamDb.saveStream({ id: streamId, candle: null, candleVotes: [] });
   }
 
   private async onCandleStop(streamId: string) {
+    log('info', `onCandleStop: ${streamId}`);
 
     const stream: IStream | undefined = await this.streamDb.getStream(streamId);
 
@@ -100,14 +102,15 @@ export class Logger {
           return e.votes > l.votes ? e : l;
         });
 
-        this.socket.emit('candleWinner', winner);
+        log('info', `winner: ${JSON.stringify(winner)}`);
+        if (winner) {
+          this.socket.emit('candleWinner', streamId, winner);
+        }
       }
     }
   }
 
   private async onCandleVote(vote: IVote) {
-    log('info', `onCandleVote: ${JSON.stringify(vote)}}`);
-
     await this.streamDb.recordCandleVote(vote);
 
     // tablulate current results & emit
@@ -127,8 +130,9 @@ const tabulateResults = (candles: ICandle[], votes: ICandleVote[]) : ICandleVote
   const results: ICandleVoteResult[] = [];
 
   for (const key of Object.keys(voteResults)) {
-    const candleVoteResult: ICandleVoteResult | undefined = candles.find((f: any) => f.name === key);
+    const candleVoteResult: ICandleVoteResult = candles.find((f: any) => f.name === key) as ICandleVoteResult;
     if (candleVoteResult) {
+      log('info', `${key}: ${voteResults[key].length}`);
       candleVoteResult.votes = voteResults[key].length;
       results.push(candleVoteResult);
     }
@@ -137,4 +141,3 @@ const tabulateResults = (candles: ICandle[], votes: ICandleVote[]) : ICandleVote
   log('info', `tabulateResults: ${JSON.stringify(results)}`);
   return results;
 };
-

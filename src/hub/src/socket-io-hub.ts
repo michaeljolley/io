@@ -77,8 +77,8 @@ export class IOHub {
        */
       socket.on('candleReset', (streamId: string[]) => this.onCandleReset(streamId[0]));
       socket.on('candleStop', (streamId: string[]) => this.onCandleStop(streamId[0]));
-      socket.on('candleVote', (vote: IVote) => this.onCandleVote(vote));
-      socket.on('candleWinner', (candle: ICandle[]) => this.onCandleWinner(candle[0]));
+      socket.on('candleVote', (vote: IVote[]) => this.onCandleVote(vote[0]));
+      socket.on('candleWinner', (streamId: string, candle: ICandle) => this.onCandleWinner(streamId, candle));
       socket.on('candleVoteUpdate', (results: ICandleVoteResult[]) => this.onCandleVoteUpdate(results));
 
     });
@@ -170,9 +170,9 @@ export class IOHub {
     this.io.emit('streamEnd');
   }
 
-  private onCandleWinner(streamCandle: ICandle) {
-    log('info', 'onCandleWinner');
-    this.io.emit('candleWinner', streamCandle);
+  private onCandleWinner(streamId: string, streamCandle: ICandle) {
+    log('info', `onCandleWinner: ${streamId} - ${JSON.stringify(streamCandle)}`);
+    this.io.emit('candleWinner', streamId, streamCandle);
   }
 
   private onCandleStop(streamId: string) {
@@ -181,7 +181,7 @@ export class IOHub {
   }
 
   private onCandleVote(vote: IVote) {
-    log('info', `onCandleVote: ${JSON.stringify(vote)}}`);
+    log('info', `onCandleVote:`);
     this.io.emit('candleVote', vote);
   }
 

@@ -67,7 +67,7 @@ export class TwitchChat {
       this.activeStream = currentStream;
     });
 
-    this.socket.on('candleWinner', (streamCandle: ICandle) => {
+    this.socket.on('candleWinner', (streamId: string, streamCandle: ICandle) => {
       this.sendChatMessage(`The vote is over and today's Candle to Code By is ${streamCandle.label}.  You can try it yourself at ${streamCandle.url}`);
     });
 
