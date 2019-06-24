@@ -2,11 +2,15 @@ import { Client, ChatUserstate, Userstate } from 'tmi.js';
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { ICandle } from './models';
+import { ICandle, IUserInfo } from './models';
 
 import { config, get, log } from './common';
 import { Emote } from './emote';
-import { AVCommands, BasicCommands, CandleCommands, SetCommands, UptimeCommands } from './commands';
+import {
+  AVCommands,
+  BasicCommands,
+  CandleCommands,
+  UptimeCommands } from './commands';
 
 const htmlSanitizeOpts = {
   allowedAttributes: {},
@@ -157,9 +161,9 @@ export class TwitchChat {
     viewers: number
   ) => {
     // Identify user and add to user state if needed
-    const userInfo = await this.getUser(username);
+    const userInfo: IUserInfo = await this.getUser(username);
 
-    const userDisplayName: string = userInfo['display-name'] ? userInfo['display-name'] : username;
+    const userDisplayName: string = userInfo.display_name || userInfo.login;
 
     this.sendChatMessage(`WARNING!!! ${userDisplayName} is raiding us with ${viewers} accomplices!  DEFEND!!`);
 
@@ -179,7 +183,7 @@ export class TwitchChat {
     const username: string = user.username ? user.username : '';
 
     // Identify user and add to user state if needed
-    const userInfo = await this.getUser(username);
+    const userInfo: IUserInfo = await this.getUser(username);
 
     this.emitMessage('newCheer', user, userInfo, message);
 
@@ -256,7 +260,7 @@ export class TwitchChat {
     const username: string = user.username ? user.username : '';
 
     // Identify user and add to user state if needed
-    const userInfo = await this.getUser(username);
+    const userInfo: IUserInfo = await this.getUser(username);
 
     this.emitMessage(
       'newSubscription',
@@ -287,7 +291,7 @@ export class TwitchChat {
     const username: string = user.username ? user.username : '';
 
     // Identify user and pass along to hub
-    const userInfo = await this.getUser(username);
+    const userInfo: IUserInfo = await this.getUser(username);
 
     this.emitMessage('chatMessage', { user, message, userInfo });
 
@@ -298,20 +302,6 @@ export class TwitchChat {
       handledByCommand = basicCommand(originalMessage, this.sendChatMessage);
       if (handledByCommand) {
         break;
-      }
-    }
-
-    if (!handledByCommand) {
-      for (const setCommand of Object.values(SetCommands)) {
-        handledByCommand = setCommand(
-          originalMessage,
-          this.activeStream,
-          user,
-          this.sendChatMessage
-        );
-        if (handledByCommand) {
-          break;
-        }
       }
     }
 
@@ -347,6 +337,7 @@ export class TwitchChat {
         handledByCommand = await candleCommand(
           originalMessage,
           user,
+          userInfo,
           this.activeStream,
           this.sendChatMessage,
           this.emitMessage
@@ -401,7 +392,7 @@ export class TwitchChat {
     return tempMessage;
   };
 
-  private getUser = async (username: string): Promise<any> => {
+  private getUser = async (username: string): Promise<IUserInfo> => {
     const url = `http://user/users/${username}`;
 
     return await get(url).then((user: any) => {

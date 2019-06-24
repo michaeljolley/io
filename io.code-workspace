@@ -16,7 +16,7 @@
 			"path": "src/hub"
 		},
 		{
-      		"path": "src/logger"
+			"path": "src/logger"
 		},
 		{
 			"path": "src/overlay"
@@ -25,7 +25,7 @@
 			"path": "src/user"
 		},
 		{
-			"path": "src/models"
+			"path": "src/common"
 		},
 		{
 			"path": "."

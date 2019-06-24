@@ -7,6 +7,24 @@ import * as config from './config';
 
 export { config };
 
+export const isMod = (user: any) : boolean => {
+  if (user &&
+      user.badges &&
+      user.badges.moderator) {
+        return true;
+      }
+  return false;
+}
+
+export const isBroadcaster = (user: any) : boolean => {
+  if (user &&
+      user.badges &&
+      user.badges.broadcaster) {
+        return true;
+      }
+  return false;
+}
+
 export const log = (level: string, message: string) => {
   const captains: any = console;
   const { hours, minutes } = getTime();
@@ -32,8 +50,8 @@ export const get = (url: string) => {
       restler.get(url, {
           headers: {
               "Authorization": `Bearer ${config.twitchClientToken}`,
-              "Client-ID": config.twitchClientId,
-              "Content-Type": "application/json"
+              "Content-Type": "application/json",
+              "Client-ID": config.twitchClientId
           }
       }).on("complete", (data: any) => {
           resolve(data);

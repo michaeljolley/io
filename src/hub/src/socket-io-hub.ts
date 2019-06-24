@@ -6,8 +6,10 @@ import { log } from './common';
 
 import {
   ICandle,
-  ICandleVote,
-  ICandleVoteResult
+  ICandleVoteResult,
+  IStream,
+  IUserInfo,
+  IVote
 } from './models';
 
 export class IOHub {
@@ -46,23 +48,23 @@ export class IOHub {
        */
       socket.on('followerCount', (followerCount: number) => this.onFollowerCount(followerCount));
       socket.on('viewerCount', (viewerCount: number) => this.onViewerCount(viewerCount));
-      socket.on('lastFollower', (lastFollower: any) => this.onLastFollower(lastFollower[0]));
-      socket.on('lastSubscriber', (lastSubscriber: any) => this.onLastSubscriber(lastSubscriber[0]));
+      socket.on('lastFollower', (lastFollower: IUserInfo[]) => this.onLastFollower(lastFollower[0]));
+      socket.on('lastSubscriber', (lastSubscriber: IUserInfo[]) => this.onLastSubscriber(lastSubscriber[0]));
 
       /**
        * Stream start/stop events
        */
-      socket.on('streamStart', (activeStream: any) => this.onStreamStart(activeStream));
-      socket.on('streamUpdate', (activeStream: any) => this.onStreamUpdate(activeStream));
+      socket.on('streamStart', (activeStream: IStream[]) => this.onStreamStart(activeStream[0]));
+      socket.on('streamUpdate', (activeStream: IStream[]) => this.onStreamUpdate(activeStream[0]));
       socket.on('streamEnd', () => this.onStreamEnd());
 
       /**
        * Alert related events
        */
-      socket.on('newFollow', (follower: any, userInfo: any) => this.onNewFollow(follower, userInfo));
-      socket.on('newSubscription', (user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
-      socket.on('newRaid', (username: string, userInfo: any, viewers:number) => this.onNewRaid(username, userInfo, viewers));
-      socket.on('newCheer', (user: any, userInfo: any, message: string) => this.onNewCheer(user, userInfo, message));
+      socket.on('newFollow', (follower: any, userInfo: IUserInfo) => this.onNewFollow(follower, userInfo));
+      socket.on('newSubscription', (user: any, userInfo: IUserInfo, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
+      socket.on('newRaid', (username: string, userInfo: IUserInfo, viewers:number) => this.onNewRaid(username, userInfo, viewers));
+      socket.on('newCheer', (user: any, userInfo: IUserInfo, message: string) => this.onNewCheer(user, userInfo, message));
 
       /**
        * User generated events
@@ -73,11 +75,11 @@ export class IOHub {
       /**
        * Candle related events
        */
-      socket.on('candleReset', this.onCandleReset);
-      socket.on('candleStop', this.onCandleStop);
-      socket.on('candleVote', this.onCandleVote);
-      socket.on('candleWinner', this.onCandleWinner);
-      socket.on('candleVoteUpdate', this.onCandleVoteUpdate);
+      socket.on('candleReset', (streamId: string[]) => this.onCandleReset(streamId[0]));
+      socket.on('candleStop', (streamId: string[]) => this.onCandleStop(streamId[0]));
+      socket.on('candleVote', (vote: IVote) => this.onCandleVote(vote));
+      socket.on('candleWinner', (candle: ICandle[]) => this.onCandleWinner(candle[0]));
+      socket.on('candleVoteUpdate', (results: ICandleVoteResult[]) => this.onCandleVoteUpdate(results));
 
     });
   }
@@ -103,22 +105,22 @@ export class IOHub {
     this.io.emit('userLeft', username);
   }
 
-  private onNewFollow(follower: any, userInfo: any) {
+  private onNewFollow(follower: any, userInfo: IUserInfo) {
     log('info', `onNewFollow: ${follower.user}`);
     this.io.emit('newFollow', userInfo);
   }
 
-  private onNewSubscription(user: any, userInfo: any, isRenewal: boolean, wasGift: boolean, message: string) {
+  private onNewSubscription(user: any, userInfo: IUserInfo, isRenewal: boolean, wasGift: boolean, message: string) {
     log('info', `onNewSubscription: ${user.username}`);
     this.io.emit('newSubscription', user, userInfo, isRenewal, wasGift, message);
   }
 
-  private onNewRaid(username: string, userInfo: any, viewers:number) {
+  private onNewRaid(username: string, userInfo: IUserInfo, viewers:number) {
     log('info', `onNewRaid: ${username}: ${viewers}`);
     this.io.emit('newRaid', username, userInfo, viewers);
   }
 
-  private onNewCheer(user: any, userInfo: any, message: string) {
+  private onNewCheer(user: any, userInfo: IUserInfo, message: string) {
     log('info', `onNewCheer: ${user.username}`);
     this.io.emit('newCheer', user, userInfo, message);
   }
@@ -133,12 +135,12 @@ export class IOHub {
     this.io.emit('viewerCount', viewerCount);
   }
 
-  private onLastFollower(lastFollower: any) {
+  private onLastFollower(lastFollower: IUserInfo) {
     log('info', `onLastFollower: ${lastFollower.login}`);
     this.io.emit('lastFollower', lastFollower);
   }
 
-  private onLastSubscriber(lastSubscriber: any) {
+  private onLastSubscriber(lastSubscriber: IUserInfo) {
     log('info', `onLastSubscriber: ${lastSubscriber.login}`);
     this.io.emit('lastSubscriber', lastSubscriber);
   }
@@ -153,15 +155,13 @@ export class IOHub {
     this.io.emit('stopAudio');
   }
 
-  private onStreamStart(activeStream: any) {
-    activeStream = activeStream[0];
-    log('info', `onStreamStart: ${activeStream.id}`);
+  private onStreamStart(activeStream: IStream) {
+    log('info', `onStreamStart: ${JSON.stringify(activeStream.id)}`);
     this.io.emit('streamStart', activeStream);
   }
 
-  private onStreamUpdate(activeStream: any) {
-    activeStream = activeStream[0];
-    log('info', `onStreamUpdate: ${activeStream.id}`);
+  private onStreamUpdate(activeStream: IStream) {
+    log('info', `onStreamUpdate: ${JSON.stringify(activeStream.id)}`);
     this.io.emit('streamUpdate', activeStream);
   }
 
@@ -180,9 +180,9 @@ export class IOHub {
     this.io.emit('candleStop', streamId);
   }
 
-  private onCandleVote(streamId: string, candleVote: ICandleVote) {
-    log('info', 'onCandleVote');
-    this.io.emit('candleVote', streamId, candleVote);
+  private onCandleVote(vote: IVote) {
+    log('info', `onCandleVote: ${JSON.stringify(vote)}}`);
+    this.io.emit('candleVote', vote);
   }
 
   private onCandleReset(streamId: string) {

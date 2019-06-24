@@ -1,8 +1,8 @@
-import mongodb = require('mongodb');
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
-import { ICandle, IStream, ICandleVote } from '../../models';
-import { config, isBroadcaster, isMod, log } from '../../common';
+import { CandleDb, StreamDb } from '../../db';
+import { ICandle, IStream, IUserInfo, IVote } from '../../models';
+import { isBroadcaster, isMod, log } from '../../common';
 
 let secondsToVote: number = 60;
 let voteActive: boolean = false;
@@ -11,6 +11,7 @@ let voteTimeout: any;
 export const candleCommand = async (
   message: string,
   user: ChatUserstate,
+  userInfo: IUserInfo,
   activeStream: IStream | undefined,
   twitchChatFunc: Function,
   emitMessageFunc: Function
@@ -39,28 +40,30 @@ export const candleCommand = async (
 
   // base !candle command
   if (splitMessage.length === 1) {
-    await baseCandleCommand(activeStream, twitchChatFunc);
+    const streamDb: StreamDb = new StreamDb();
+    await baseCandleCommand(activeStream, streamDb, twitchChatFunc);
   }
   else {
+    const candleDb: CandleDb = new CandleDb();
 
     // Only accessible by mods or the broadcaster
     if (isMod(user) || isBroadcaster(user)) {
       if (splitMessage[1].toLocaleLowerCase() === 'start' && voteActive === false) {
-        await startCandleVoteCommand(splitMessage, activeStream, twitchChatFunc, emitMessageFunc);
+        await startCandleVoteCommand(splitMessage, activeStream, candleDb, twitchChatFunc, emitMessageFunc);
       }
 
       if (splitMessage[1].toLocaleLowerCase() === 'stop' && voteActive === true) {
-        await stopCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
+        await stopCandleVoteCommand(activeStream, emitMessageFunc);
       }
 
       if (splitMessage[1].toLocaleLowerCase() === 'reset') {
-        await resetCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
+        await resetCandleVoteCommand(activeStream, emitMessageFunc);
       }
     }
 
     const commandArray: string[] = ['start', 'stop', 'reset'];
     if (commandArray.indexOf(splitMessage[1].toLocaleLowerCase()) === -1 && voteActive === true) {
-      await candleVoteCommand(splitMessage, user, activeStream, twitchChatFunc, emitMessageFunc);
+      await candleVoteCommand(splitMessage, user, userInfo, activeStream, candleDb, twitchChatFunc, emitMessageFunc);
     }
   }
 
@@ -69,9 +72,10 @@ export const candleCommand = async (
 
 const baseCandleCommand = async (
   activeStream: IStream,
+  streamDb: StreamDb,
   twitchChatFunc: Function) => {
 
-    const stream: IStream | null | undefined = await getStream(activeStream.streamId);
+    const stream: IStream | null | undefined = await streamDb.getStream(activeStream.id);
 
     if (stream == null ||
       stream.candle == null) {
@@ -96,6 +100,7 @@ const baseCandleCommand = async (
 const startCandleVoteCommand = async (
   splitMessage: string[],
   activeStream: IStream,
+  candleDb: CandleDb,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
@@ -103,17 +108,17 @@ const startCandleVoteCommand = async (
     secondsToVote = parseInt(splitMessage[2], undefined);
   }
 
-  const candles: ICandle[] = await getCandles();
+  const candles: ICandle[] = await candleDb.getCandles();
 
   if (secondsToVote > 0 && candles != null && candles.length > 0) {
 
-    await resetCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
+    await resetCandleVoteCommand(activeStream, emitMessageFunc);
 
     const availableCandles: string = candles.map((f: any) => f.name).join(', ');
 
     voteActive = true;
     voteTimeout = setTimeout(() => {
-        stopCandleVoteCommand(activeStream, twitchChatFunc, emitMessageFunc);
+        stopCandleVoteCommand(activeStream, emitMessageFunc);
       }, secondsToVote * 1000);
 
     twitchChatFunc(`Voting is open for our Candle to Code By. Send !candle {candle name} to vote.  Available choices are: ${availableCandles}`);
@@ -123,19 +128,17 @@ const startCandleVoteCommand = async (
 
 const stopCandleVoteCommand = async (
   activeStream: IStream,
-  twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
     voteActive = false;
     voteTimeout = undefined;
 
-    emitMessageFunc('candleStop', activeStream.streamId);
+    emitMessageFunc('candleStop', activeStream.id);
     log('info', `Vote for candle stopped`);
 };
 
 const resetCandleVoteCommand = async (
   activeStream: IStream,
-  twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
     voteActive = false;
@@ -143,76 +146,42 @@ const resetCandleVoteCommand = async (
       voteTimeout = undefined;
     }
 
-    emitMessageFunc('candleReset', activeStream.streamId);
+    emitMessageFunc('candleReset', activeStream.id);
     return;
 };
 
 const candleVoteCommand = async (
   splitMessage: string[],
   user: ChatUserstate,
+  userInfo: IUserInfo,
   activeStream: IStream,
+  candleDb: CandleDb,
   twitchChatFunc: Function,
   emitMessageFunc: Function) => {
 
     const userDisplayName: string | undefined = user["display-name"] ? user["display-name"] : user.username;
 
-    const candles: ICandle[] = await getCandles();
+    const candles: ICandle[] = await candleDb.getCandles();
 
     if (candles != null && candles.length > 0) {
 
       const userCandleChoice: string = splitMessage[1].toLocaleLowerCase();
 
-      const vote: ICandle | undefined = candles.find((f: ICandle) => f.name === userCandleChoice);
+      const candleVote: ICandle | undefined = candles.find((f: ICandle) => f.name === userCandleChoice);
 
-      if (vote === undefined) {
+      if (candleVote === undefined) {
         const availableCandles: string = candles.map((f: any) => f.name).join(', ');
         twitchChatFunc(`@${userDisplayName}, ${splitMessage[1]} isn't a valid choice. Acceptable choices are: ${availableCandles}`);
         return;
       }
 
-      if (user.username) {
-        const userVote: ICandleVote = { candleName: vote.name, username: user.username };
-        emitMessageFunc('candleVote', activeStream.streamId, userVote);
-        log('info', `Vote for ${userDisplayName}: ${userVote.candleName}`);
-      }
+      const vote: IVote = {
+        candle: candleVote,
+        streamId: activeStream.id,
+        user: userInfo
+      };
+      emitMessageFunc('candleVote', vote);
+      log('info', `Vote for ${userDisplayName}: ${candleVote.label}`);
+
     }
-};
-
-
-const getStream = async (streamId: string) : Promise<IStream | null | undefined>  => {
-
-  const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-    mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-  const db = mongoClient.db('iodb');
-
-  let stream: IStream | null | undefined;
-
-  if (db.collection('streams') !== undefined) {
-    stream = await db.collection('streams').findOne({ streamId });
-  }
-
-  await mongoClient.close();
-
-  return stream;
-};
-
-const getCandles = async () : Promise<ICandle[]>  => {
-
-  const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-  mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-  const db = mongoClient.db('iodb');
-
-  const candles: ICandle[] = await new Promise((resolve: any) =>
-    db.collection('candles').find({}).toArray((err: any, res: any) => {
-    if (err) {
-      resolve(null);
-    }
-    resolve(res);
-  }));
-
-  await mongoClient.close();
-
-  return candles;
 };

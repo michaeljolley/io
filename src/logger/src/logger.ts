@@ -1,6 +1,5 @@
-import mongodb = require('mongodb');
 import io from 'socket.io-client';
-import { config, log } from './common';
+import { log } from './common';
 import _ from 'lodash';
 
 import {
@@ -10,60 +9,52 @@ import {
   ISubscriber,
   ICandle,
   IStream,
-  IStreamCandle,
   ICandleVote,
-  ICandleVoteResult} from './models';
-import { isNullOrUndefined } from 'util';
+  ICandleVoteResult,
+  IVote} from './models';
+  import { CandleDb, StreamDb } from './db';
 
 export class Logger {
 
-  private mongoClient = mongodb.MongoClient;
   private socket!: SocketIOClient.Socket;
+  private streamDb: StreamDb;
+  private candleDb: CandleDb;
 
   constructor() {
     this.socket = io('http://hub');
+    this.streamDb = new StreamDb();
+    this.candleDb = new CandleDb();
 
-    this.socket.on('streamStart', this.onStreamStart);
-    this.socket.on('streamUpdate', this.onStreamUpdate);
-    this.socket.on('streamEnd', this.onStreamEnd);
+    this.socket.on('streamStart', (currentStream: IStream) => this.onStreamStart(currentStream));
+    this.socket.on('streamUpdate', (currentStream: IStream) => this.onStreamUpdate(currentStream));
+    this.socket.on('streamEnd', (streamId: string) => this.onStreamEnd(streamId));
 
-    this.socket.on('newFollow', this.onNewFollow);
-    this.socket.on('newSubscription', this.onNewSubscription);
-    this.socket.on('newRaid', this.onNewRaid);
-    this.socket.on('newCheer', this.onNewCheer);
+    this.socket.on('newFollow', (follower: IUserInfo) => this.onNewFollow(follower));
+    this.socket.on('newSubscription', (subscriber: ISubscriber) => this.onNewSubscription(subscriber));
+    this.socket.on('newRaid', (raider: IRaider) => this.onNewRaid(raider));
+    this.socket.on('newCheer', (cheerer: ICheer) => this.onNewCheer(cheerer));
 
-    this.socket.on('candleWinner', this.onCandleWinner);
-    this.socket.on('candleReset', this.onCandleReset);
-    this.socket.on('candleStop', this.onCandleStop);
-    this.socket.on('candleVote', this.onCandleVote);
+    this.socket.on('candleWinner', (streamId: string, streamCandle: ICandle) => this.onCandleWinner(streamId, streamCandle));
+    this.socket.on('candleReset', (streamId: string) => this.onCandleReset(streamId));
+    this.socket.on('candleStop', (streamId: string) => this.onCandleStop(streamId));
+    this.socket.on('candleVote', (vote: IVote) => this.onCandleVote(vote));
   }
 
   public start() {
   }
 
-  private async onStreamStart(currentStream: any) {
-    let existingStream = await this.getStream(currentStream.streamId);
-
-    if (isNullOrUndefined(existingStream)) {
-      const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      this.mongoClient.connect(config.mongoDBConnectionString, (err, client) => { resolve(client); }));
-
-      const db = mongoClient.db('iodb');
-
-      await db.collection('streams').insertOne(currentStream);
-
-      await mongoClient.close();
-    }
+  private async onStreamStart(currentStream: IStream) {
+    await this.streamDb.saveStream(currentStream);
   }
 
   private async onStreamEnd(streamId: string) {
     // Only need to set the streams ended_at property
-    await this.updateStream(streamId, { ended_at: new Date().toUTCString() });
+    await this.streamDb.saveStream({ id: streamId, ended_at: new Date().toUTCString() });
   }
 
   private async onStreamUpdate(currentStream: IStream) {
     // Only need to update title
-    await this.updateStream(currentStream.streamId, { title: currentStream.title });
+    await this.streamDb.saveStream(currentStream);
   }
 
   private onNewFollow(follower: IUserInfo) {
@@ -82,30 +73,28 @@ export class Logger {
 
   }
 
-  private async onCandleWinner(streamCandle: IStreamCandle) {
+  private async onCandleWinner(streamId: string, streamCandle: ICandle) {
     // Only need to set the streams candle property
-    await this.updateStream(streamCandle.streamId, { candle: streamCandle.candle });
+    await this.streamDb.saveStream({ id: streamId, candle: streamCandle });
   }
 
   private async onCandleReset(streamId: string) {
     // Only need to set the streams candle property to null
-    await this.updateStream(streamId, { candle: null, candleVotes: [] });
+    await this.streamDb.saveStream({ id: streamId, candle: null, candleVotes: [] });
   }
 
   private async onCandleStop(streamId: string) {
 
-    const stream: IStream | null | undefined = await this.getStream(streamId);
+    const stream: IStream | undefined = await this.streamDb.getStream(streamId);
 
     if (stream) {
-      const votes: ICandleVote[] | null | undefined = stream.candleVotes;
+      const votes: ICandleVote[] | undefined = stream.candleVotes;
 
       if (votes && votes.length > 0) {
 
-        const candles: ICandle[] = await this.getCandles();
+        const candles: ICandle[] = await this.candleDb.getCandles();
 
         const results = tabulateResults(candles, votes);
-
-        log('info', JSON.stringify(results));
 
         const winner: ICandleVoteResult = results.reduce((l: any, e: any) => {
           return e.votes > l.votes ? e : l;
@@ -116,82 +105,24 @@ export class Logger {
     }
   }
 
-  private async onCandleVote(streamId: string, candleVote: ICandleVote) {
-    // Save vote
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err, client) => { resolve(client); }));
+  private async onCandleVote(vote: IVote) {
+    log('info', `onCandleVote: ${JSON.stringify(vote)}}`);
 
-    const db = mongoClient.db('iodb');
-
-    await db.collection('streams').findOneAndUpdate({
-            query: { streamId: streamId, candleVotes: { $elemMatch: { username: candleVote.username } } } },
-            { $set: { 'candleVotes.$.candleName': candleVote.candleName,
-                      'candleVotes.$.username': candleVote.username } },
-            { upsert: true }
-          );
+    await this.streamDb.recordCandleVote(vote);
 
     // tablulate current results & emit
-    const candles: ICandle[] = await this.getCandles();
-    const stream: IStream | null | undefined = await this.getStream(streamId);
+    const candles: ICandle[] = await this.candleDb.getCandles();
+    const stream: IStream | null | undefined = await this.streamDb.getStream(vote.streamId);
 
     if (stream && stream.candleVotes) {
       const results = tabulateResults(candles, stream.candleVotes);
       this.socket.emit('candleVoteUpdate', results);
     }
   }
-
-  private getStream = async (streamId: string) : Promise<IStream | null | undefined> => {
-
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err, client) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    let stream: IStream | null | undefined;
-
-    if (db.collection('streams') !== undefined) {
-      stream = await db.collection('streams').findOne({ streamId: streamId });
-    }
-
-    await mongoClient.close();
-
-    return stream;
-  }
-
-  private getCandles = async () : Promise<ICandle[]>  => {
-
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-    mongodb.MongoClient.connect(config.mongoDBConnectionString, (err: any, client: mongodb.MongoClient) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    const candles: ICandle[] = await new Promise((resolve: any) =>
-      db.collection('candles').find({}).toArray((err: any, res: any) => {
-      if (err) {
-        resolve(null);
-      }
-      resolve(res);
-    }));
-
-    await mongoClient.close();
-
-    return candles;
-  }
-
-  private updateStream = async (streamId: string, payload: any) => {
-    const mongoClient: mongodb.MongoClient = await new Promise((resolve: any) =>
-      mongodb.MongoClient.connect(config.mongoDBConnectionString, (err, client) => { resolve(client); }));
-
-    const db = mongoClient.db('iodb');
-
-    await db.collection('streams').updateOne({ streamId: streamId }, payload);
-
-    await mongoClient.close();
-  }
 }
 
 const tabulateResults = (candles: ICandle[], votes: ICandleVote[]) : ICandleVoteResult[] => {
-  const voteResults: any = _.groupBy(votes, 'candleName');
+  const voteResults: any = _.groupBy(votes, 'candle.name');
 
   const results: ICandleVoteResult[] = [];
 

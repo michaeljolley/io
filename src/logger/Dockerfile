@@ -5,7 +5,7 @@ ARG BUILDVERSION=0.0.0
 WORKDIR /app
 
 COPY ./logger .
-COPY ./models ./src
+COPY ./common ./src
 
 RUN npm install
 

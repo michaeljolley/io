@@ -2,14 +2,18 @@ version: '3'
 
 services:
   admin:
-    build: ./src/admin
+    build:
+      context: ./src
+      dockerfile: admin/Dockerfile
     restart: always
     ports:
       - "5090:80"
     expose:
       - "5090"
   api:
-    build: ./src/api
+    build:
+      context: ./src
+      dockerfile: api/Dockerfile
     restart: always
     ports:
       - "5001:80"
@@ -26,7 +30,9 @@ services:
       - hub
       - api
   chron:
-    build: ./src/chron
+    build:
+      context: ./src
+      dockerfile: chron/Dockerfile
     restart: always
     ports:
       - "5080:80"
@@ -50,7 +56,9 @@ services:
     depends_on:
       - hub
   overlay:
-    build: ./src/overlay
+    build:
+      context: ./src
+      dockerfile: overlay/Dockerfile
     restart: always
     ports:
       - "5000:80"
@@ -61,7 +69,9 @@ services:
     depends_on:
       - hub
   user:
-    build: ./src/user
+    build:
+      context: ./src
+      dockerfile: user/Dockerfile
     restart: always
     ports:
       - "5070:80"
