@@ -9,7 +9,10 @@ import {
   ICandleVoteResult,
   IStream,
   IUserInfo,
-  IVote
+  IVote,
+  ISubscriber,
+  IRaider,
+  ICheer
 } from './models';
 
 export class IOHub {
@@ -61,10 +64,10 @@ export class IOHub {
       /**
        * Alert related events
        */
-      socket.on('newFollow', (follower: any, userInfo: IUserInfo) => this.onNewFollow(follower, userInfo));
-      socket.on('newSubscription', (user: any, userInfo: IUserInfo, isRenewal: boolean, wasGift: boolean, message: string) => this.onNewSubscription(user, userInfo, isRenewal, wasGift, message));
-      socket.on('newRaid', (username: string, userInfo: IUserInfo, viewers:number) => this.onNewRaid(username, userInfo, viewers));
-      socket.on('newCheer', (user: any, userInfo: IUserInfo, message: string) => this.onNewCheer(user, userInfo, message));
+      socket.on('newFollow', (streamId: string, follower: IUserInfo[]) => this.onNewFollow(streamId, follower[0]));
+      socket.on('newSubscription', (streamId: string, subscriber: ISubscriber[]) => this.onNewSubscription(streamId, subscriber[0]));
+      socket.on('newRaid', (streamId: string, raider: IRaider[]) => this.onNewRaid(streamId, raider[0]));
+      socket.on('newCheer', (streamId: string, cheerer: ICheer[]) => this.onNewCheer(streamId, cheerer[0]));
 
       /**
        * User generated events
@@ -105,24 +108,24 @@ export class IOHub {
     this.io.emit('userLeft', username);
   }
 
-  private onNewFollow(follower: any, userInfo: IUserInfo) {
-    log('info', `onNewFollow: ${follower.user}`);
-    this.io.emit('newFollow', userInfo);
+  private onNewFollow(streamId: string, follower: IUserInfo) {
+    log('info', `onNewFollow: ${follower.login}`);
+    this.io.emit('newFollow', streamId, follower);
   }
 
-  private onNewSubscription(user: any, userInfo: IUserInfo, isRenewal: boolean, wasGift: boolean, message: string) {
-    log('info', `onNewSubscription: ${user.username}`);
-    this.io.emit('newSubscription', user, userInfo, isRenewal, wasGift, message);
+  private onNewSubscription(streamId: string, subscriber: ISubscriber) {
+    log('info', `onNewSubscription: ${subscriber.user.login}`);
+    this.io.emit('newSubscription', streamId, subscriber);
   }
 
-  private onNewRaid(username: string, userInfo: IUserInfo, viewers:number) {
-    log('info', `onNewRaid: ${username}: ${viewers}`);
-    this.io.emit('newRaid', username, userInfo, viewers);
+  private onNewRaid(streamId: string, raider: IRaider) {
+    log('info', `onNewRaid: ${raider.user.login}: ${raider.viewers}`);
+    this.io.emit('newRaid', streamId, raider);
   }
 
-  private onNewCheer(user: any, userInfo: IUserInfo, message: string) {
-    log('info', `onNewCheer: ${user.username}`);
-    this.io.emit('newCheer', user, userInfo, message);
+  private onNewCheer(streamId: string, cheer: ICheer) {
+    log('info', `onNewCheer: ${cheer.user.login} - ${cheer.bits}`);
+    this.io.emit('newCheer', streamId, cheer);
   }
 
   private onFollowerCount(followerCount: number) {

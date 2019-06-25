@@ -2,7 +2,7 @@ import { Client, ChatUserstate, Userstate } from 'tmi.js';
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { ICandle, IUserInfo } from './models';
+import { ICandle, IUserInfo, ISubscriber, IRaider, ICheer } from './models';
 
 import { config, get, log } from './common';
 import { Emote } from './emote';
@@ -10,7 +10,8 @@ import {
   AVCommands,
   BasicCommands,
   CandleCommands,
-  UptimeCommands } from './commands';
+  StreamCommands
+} from './commands';
 
 const htmlSanitizeOpts = {
   allowedAttributes: {},
@@ -67,9 +68,16 @@ export class TwitchChat {
       this.activeStream = currentStream;
     });
 
-    this.socket.on('candleWinner', (streamId: string, streamCandle: ICandle) => {
-      this.sendChatMessage(`The vote is over and today's Candle to Code By is ${streamCandle.label}.  You can try it yourself at ${streamCandle.url}`);
-    });
+    this.socket.on(
+      'candleWinner',
+      (streamId: string, streamCandle: ICandle) => {
+        this.sendChatMessage(
+          `The vote is over and today's Candle to Code By is ${
+            streamCandle.label
+          }.  You can try it yourself at ${streamCandle.url}`
+        );
+      }
+    );
 
     this.socket.on('streamEnd', () => {
       this.activeStream = undefined;
@@ -160,16 +168,25 @@ export class TwitchChat {
     username: string,
     viewers: number
   ) => {
-    // Identify user and add to user state if needed
-    const userInfo: IUserInfo = await this.getUser(username);
+    if (this.activeStream) {
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(username);
 
-    const userDisplayName: string = userInfo.display_name || userInfo.login;
+      const userDisplayName: string = userInfo.display_name || userInfo.login;
 
-    this.sendChatMessage(`WARNING!!! ${userDisplayName} is raiding us with ${viewers} accomplices!  DEFEND!!`);
+      const raider: IRaider = {
+        user: userInfo,
+        viewers
+      };
 
-    this.emitMessage('newRaid', username, userInfo, viewers);
+      this.sendChatMessage(
+        `WARNING!!! ${userDisplayName} is raiding us with ${viewers} accomplices!  DEFEND!!`
+      );
 
-    log('info', `${username} has RAIDED the channel with ${viewers} viewers`);
+      this.emitMessage('newRaid', this.activeStream.id, raider);
+
+      log('info', `${username} has RAIDED the channel with ${viewers} viewers`);
+    }
   };
 
   /**
@@ -180,16 +197,21 @@ export class TwitchChat {
     user: Userstate,
     message: string
   ) => {
-    const username: string = user.username ? user.username : '';
+    if (this.activeStream) {
+      const username: string = user.username ? user.username : '';
+      const bits = user.bits || 0;
 
-    // Identify user and add to user state if needed
-    const userInfo: IUserInfo = await this.getUser(username);
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(username);
 
-    this.emitMessage('newCheer', user, userInfo, message);
+      const cheerer: ICheer = {
+        bits,
+        user: userInfo
+      };
 
-    const bits = user.bits;
-
-    log('info', `${user.username} cheered ${bits} bits`);
+      this.emitMessage('newCheer', this.activeStream.id, cheerer);
+      log('info', `${user.username} cheered ${bits} bits`);
+    }
   };
 
   private onGiftSubRenew = async (
@@ -198,7 +220,7 @@ export class TwitchChat {
     sender: string,
     user: Userstate
   ) => {
-    await this.onAnySub(user, true, true, '');
+    await this.onAnySub(user, true, '');
   };
 
   private onAnonymousGiftSubRenew = async (
@@ -206,7 +228,7 @@ export class TwitchChat {
     username: string,
     user: Userstate
   ) => {
-    await this.onAnySub(user, true, true, '');
+    await this.onAnySub(user, true, '');
   };
 
   private onGiftSub = async (
@@ -217,7 +239,7 @@ export class TwitchChat {
     methods: any,
     user: Userstate
   ) => {
-    await this.onAnySub(user, false, true, '');
+    await this.onAnySub(user, true, '');
   };
 
   private onGiftMysterySub = async (
@@ -227,7 +249,7 @@ export class TwitchChat {
     methods: any,
     user: Userstate
   ) => {
-    await this.onAnySub(user, false, true, '');
+    await this.onAnySub(user, true, '');
   };
 
   private onResub = async (
@@ -238,7 +260,7 @@ export class TwitchChat {
     user: Userstate,
     methods: any
   ) => {
-    await this.onAnySub(user, true, false, message);
+    await this.onAnySub(user, false, message);
   };
 
   private onSub = async (
@@ -248,30 +270,29 @@ export class TwitchChat {
     message: string,
     user: Userstate
   ) => {
-    await this.onAnySub(user, false, false, message);
+    await this.onAnySub(user, false, message);
   };
 
   private onAnySub = async (
     user: Userstate,
-    isRenewal: boolean,
     wasGift: boolean,
     message: string
   ) => {
-    const username: string = user.username ? user.username : '';
+    if (this.activeStream) {
+      const username: string = user.username ? user.username : '';
 
-    // Identify user and add to user state if needed
-    const userInfo: IUserInfo = await this.getUser(username);
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(username);
 
-    this.emitMessage(
-      'newSubscription',
-      user,
-      userInfo,
-      isRenewal,
-      wasGift,
-      message
-    );
+      const subscriber: ISubscriber = {
+        user: userInfo,
+        wasGift
+      };
 
-    log('info', `${user.username} subscribed`);
+      this.emitMessage('newSubscription', this.activeStream.id, subscriber);
+
+      log('info', `${user.username} subscribed`);
+    }
   };
 
   /**
@@ -299,7 +320,11 @@ export class TwitchChat {
 
     // Process any commands
     for (const basicCommand of Object.values(BasicCommands)) {
-      handledByCommand = basicCommand(originalMessage, this.sendChatMessage);
+      handledByCommand = basicCommand(
+        originalMessage,
+        user,
+        this.sendChatMessage
+      );
       if (handledByCommand) {
         break;
       }
@@ -320,9 +345,10 @@ export class TwitchChat {
     }
 
     if (!handledByCommand) {
-      for (const upCommand of Object.values(UptimeCommands)) {
-        handledByCommand = upCommand(
+      for (const streamCommand of Object.values(StreamCommands)) {
+        handledByCommand = streamCommand(
           originalMessage,
+          user,
           this.activeStream,
           this.sendChatMessage
         );

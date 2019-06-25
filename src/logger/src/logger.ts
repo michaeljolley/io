@@ -29,10 +29,10 @@ export class Logger {
     this.socket.on('streamUpdate', (currentStream: IStream) => this.onStreamUpdate(currentStream));
     this.socket.on('streamEnd', (streamId: string) => this.onStreamEnd(streamId));
 
-    this.socket.on('newFollow', (follower: IUserInfo) => this.onNewFollow(follower));
-    this.socket.on('newSubscription', (subscriber: ISubscriber) => this.onNewSubscription(subscriber));
-    this.socket.on('newRaid', (raider: IRaider) => this.onNewRaid(raider));
-    this.socket.on('newCheer', (cheerer: ICheer) => this.onNewCheer(cheerer));
+    this.socket.on('newFollow', (streamId: string, follower: IUserInfo) => this.onNewFollow(streamId, follower));
+    this.socket.on('newSubscription', (streamId: string, subscriber: ISubscriber) => this.onNewSubscription(streamId, subscriber));
+    this.socket.on('newRaid', (streamId: string, raider: IRaider) => this.onNewRaid(streamId, raider));
+    this.socket.on('newCheer', (streamId: string, cheerer: ICheer) => this.onNewCheer(streamId, cheerer));
 
     this.socket.on('candleWinner', (streamId: string, streamCandle: ICandle) => this.onCandleWinner(streamId, streamCandle));
     this.socket.on('candleReset', (streamId: string) => this.onCandleReset(streamId));
@@ -56,20 +56,23 @@ export class Logger {
     await this.streamDb.saveStream(currentStream);
   }
 
-  private onNewFollow(follower: IUserInfo) {
+  private onNewFollow(streamId: string, follower: IUserInfo) {
     // We want to record the follower on the current stream
   }
 
-  private onNewRaid(raider: IRaider) {
+  private async onNewRaid(streamId: string, raider: IRaider) {
     // We want to record the raider on the current stream
+    await this.streamDb.recordRaid(streamId, raider);
   }
 
-  private onNewCheer(cheerer: ICheer) {
+  private async onNewCheer(streamId: string, cheerer: ICheer) {
     // We want to record the cheer on the current stream
+    await this.streamDb.recordCheer(streamId, cheerer);
   }
 
-  private onNewSubscription(subscriber: ISubscriber) {
+  private async onNewSubscription(streamId: string, subscriber: ISubscriber) {
     // We want to record the subcription on the current stream
+    await this.streamDb.recordSubscriber(streamId, subscriber);
   }
 
   private async onCandleWinner(streamId: string, streamCandle: ICandle) {

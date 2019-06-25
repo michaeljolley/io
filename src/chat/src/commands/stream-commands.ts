@@ -1,8 +1,11 @@
 import moment = require('moment');
+import { IStream } from '../models';
+import { ChatUserstate } from 'tmi.js';
 
 export const uptimeCommand = (
   message: string,
-  activeStream: any | undefined,
+  user: ChatUserstate,
+  activeStream: IStream | undefined,
   twitchChatFunc: Function
 ): boolean => {
 
@@ -37,6 +40,38 @@ export const uptimeCommand = (
   if (twitchChatFunc) {
     twitchChatFunc(
       `We've been streaming for ${response}.`
+    );
+  }
+
+  return true;
+};
+
+export const projectCommand = (
+  message: string,
+  user: ChatUserstate,
+  activeStream: IStream | undefined,
+  twitchChatFunc: Function
+): boolean => {
+
+  if (
+    message === undefined ||
+    activeStream === undefined ||
+    activeStream.title === undefined ||
+    message.length === 0
+  ) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!project') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `${activeStream.title}`
     );
   }
 

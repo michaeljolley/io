@@ -1,7 +1,15 @@
 import mongoose from "mongoose";
 
 import { config, log } from "../common";
-import { IStream, StreamModel, IVote, ICandleVote } from "../models";
+import {
+  IStream,
+  StreamModel,
+  IVote,
+  ICandleVote,
+  ISubscriber,
+  ICheer,
+  IRaider
+} from "../models";
 
 export class StreamDb {
   constructor() {
@@ -52,26 +60,36 @@ export class StreamDb {
     );
   };
 
-
-
-  public recordCandleVote = async (
-    vote: IVote
+  public recordSubscriber = async (
+    streamId: string,
+    subscriber: ISubscriber
   ): Promise<boolean> => {
-    log('info', `recordCandleVote: ${JSON.stringify(vote)}`);
+    log("info", `recordSubscriber: ${subscriber.user.login}`);
 
-    const stream = await this.getStream(vote.streamId);
+    const stream = await this.getStream(streamId);
 
-    if (stream &&
-        stream.candleVotes &&
-        stream.candleVotes.find((f: ICandleVote) => f.user._id === vote.user._id)) {
-      // modify existing vote
+    if (
+      stream &&
+      (stream.subscribers == null ||
+        stream.subscribers.find(
+          (f: ISubscriber) => f.user._id === subscriber.user._id
+        ) === undefined)
+    ) {
+      // record subscriber
       return await new Promise((resolve: any) =>
         StreamModel.updateOne(
-          { id: vote.streamId, candleVotes: { $elemMatch: { user: vote.user._id }}},
-          { $set: { 'candleVotes.$.candle': vote.candle._id } },
+          { id: streamId },
+          {
+            $push: {
+              subscribers: { user: subscriber.user._id, wasGift: subscriber.wasGift }
+            }
+          },
           (err: any, res: any) => {
             if (err) {
-              log("info", `ERROR: recordCandleVote (existing) ${JSON.stringify(err)}`);
+              log(
+                "info",
+                `ERROR: recordSubscriber ${JSON.stringify(err)}`
+              );
               resolve(false);
             }
             resolve(true);
@@ -79,15 +97,124 @@ export class StreamDb {
         )
       );
     }
-    else {
+    return false;
+  };
+
+  public recordRaid = async (
+    streamId: string,
+    raider: IRaider
+  ): Promise<boolean> => {
+    log("info", `recordRaid: ${raider.user.login}`);
+
+    const stream = await this.getStream(streamId);
+
+    if (
+      stream &&
+      (stream.raiders == null ||
+        stream.raiders.find(
+          (f: IRaider) => f.user._id === raider.user._id
+        ) === undefined)
+    ) {
+      // record raider
+      return await new Promise((resolve: any) =>
+        StreamModel.updateOne(
+          { id: streamId },
+          {
+            $push: {
+              raiders: { user: raider.user._id, viewers: raider.viewers }
+            }
+          },
+          (err: any, res: any) => {
+            if (err) {
+              log(
+                "info",
+                `ERROR: recordRaid ${JSON.stringify(err)}`
+              );
+              resolve(false);
+            }
+            resolve(true);
+          }
+        )
+      );
+    }
+    return false;
+  };
+
+  public recordCheer = async (
+    streamId: string,
+    cheerer: ICheer
+  ): Promise<boolean> => {
+    log("info", `recordCheer: ${cheerer.user.login}`);
+
+    // record cheer
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            cheers: { user: cheerer.user._id, bits: cheerer.bits }
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordCheer ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
+  };
+
+  public recordCandleVote = async (vote: IVote): Promise<boolean> => {
+    log("info", `recordCandleVote: ${JSON.stringify(vote)}`);
+
+    const stream = await this.getStream(vote.streamId);
+
+    if (
+      stream &&
+      stream.candleVotes &&
+      stream.candleVotes.find((f: ICandleVote) => f.user._id === vote.user._id)
+    ) {
+      // modify existing vote
+      return await new Promise((resolve: any) =>
+        StreamModel.updateOne(
+          {
+            id: vote.streamId,
+            candleVotes: { $elemMatch: { user: vote.user._id } }
+          },
+          { $set: { "candleVotes.$.candle": vote.candle._id } },
+          (err: any, res: any) => {
+            if (err) {
+              log(
+                "info",
+                `ERROR: recordCandleVote (existing) ${JSON.stringify(err)}`
+              );
+              resolve(false);
+            }
+            resolve(true);
+          }
+        )
+      );
+    } else {
       // record new vote
       return await new Promise((resolve: any) =>
         StreamModel.updateOne(
           { id: vote.streamId },
-          { $push: { 'candleVotes': { user: vote.user._id, candle: vote.candle._id } } },
+          {
+            $push: {
+              candleVotes: { user: vote.user._id, candle: vote.candle._id }
+            }
+          },
           (err: any, res: any) => {
             if (err) {
-              log("info", `ERROR: recordCandleVote (new) ${JSON.stringify(err)}`);
+              log(
+                "info",
+                `ERROR: recordCandleVote (new) ${JSON.stringify(err)}`
+              );
               resolve(false);
             }
             resolve(true);
