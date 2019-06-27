@@ -64,10 +64,10 @@ export class IOHub {
       /**
        * Alert related events
        */
-      socket.on('newFollow', (streamId: string, follower: IUserInfo[]) => this.onNewFollow(streamId, follower[0]));
-      socket.on('newSubscription', (streamId: string, subscriber: ISubscriber[]) => this.onNewSubscription(streamId, subscriber[0]));
-      socket.on('newRaid', (streamId: string, raider: IRaider[]) => this.onNewRaid(streamId, raider[0]));
-      socket.on('newCheer', (streamId: string, cheerer: ICheer[]) => this.onNewCheer(streamId, cheerer[0]));
+      socket.on('newFollow', (streamId: string, follower: IUserInfo) => this.onNewFollow(streamId, follower));
+      socket.on('newSubscription', (streamId: string, subscriber: ISubscriber) => this.onNewSubscription(streamId, subscriber));
+      socket.on('newRaid', (streamId: string, raider: IRaider) => this.onNewRaid(streamId, raider));
+      socket.on('newCheer', (streamId: string, cheerer: ICheer) => this.onNewCheer(streamId, cheerer));
 
       /**
        * User generated events
