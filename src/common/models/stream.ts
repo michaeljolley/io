@@ -33,7 +33,7 @@ export interface IStream extends mongoose.Document {
 export const StreamModel = mongoose.model<IStream>(
   "Stream",
   new mongoose.Schema({
-    id: { type: String },
+    id: { type: String, unique: true, required: true },
     title: { type: String, required: true },
     started_at: { type: String, required: true },
     ended_at: String,

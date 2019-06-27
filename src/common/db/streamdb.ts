@@ -177,7 +177,7 @@ export class StreamDb {
     if (
       stream &&
       stream.candleVotes &&
-      stream.candleVotes.find((f: ICandleVote) => f.user._id === vote.user._id)
+      stream.candleVotes.find((f: ICandleVote) => f.user._id == vote.user._id)
     ) {
       // modify existing vote
       return await new Promise((resolve: any) =>
@@ -195,6 +195,10 @@ export class StreamDb {
               );
               resolve(false);
             }
+            log(
+              "info",
+              `recordCandleVote (existing)`
+            );
             resolve(true);
           }
         )
@@ -217,6 +221,10 @@ export class StreamDb {
               );
               resolve(false);
             }
+            log(
+              "info",
+              `recordCandleVote (new)`
+            );
             resolve(true);
           }
         )
