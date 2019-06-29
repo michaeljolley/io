@@ -27,7 +27,7 @@ export class Logger {
 
     this.socket.on('streamStart', (currentStream: IStream) => this.onStreamStart(currentStream));
     this.socket.on('streamUpdate', (currentStream: IStream) => this.onStreamUpdate(currentStream));
-    this.socket.on('streamEnd', (streamId: string) => this.onStreamEnd(streamId));
+    this.socket.on('streamEnd', (currentStream: IStream) => this.onStreamEnd(currentStream));
 
     this.socket.on('newFollow', (streamId: string, follower: IUserInfo) => this.onNewFollow(streamId, follower));
     this.socket.on('newSubscription', (streamId: string, subscriber: ISubscriber) => this.onNewSubscription(streamId, subscriber));
@@ -46,9 +46,9 @@ export class Logger {
     await this.streamDb.saveStream(currentStream);
   }
 
-  private async onStreamEnd(streamId: string) {
+  private async onStreamEnd(currentStream: IStream) {
     // Only need to set the streams ended_at property
-    await this.streamDb.saveStream({ id: streamId, ended_at: new Date().toUTCString() });
+    await this.streamDb.saveStream({ id: currentStream.id, ended_at: new Date().toUTCString() });
   }
 
   private async onStreamUpdate(currentStream: IStream) {

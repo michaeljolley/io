@@ -59,7 +59,7 @@ export class IOHub {
        */
       socket.on('streamStart', (activeStream: IStream[]) => this.onStreamStart(activeStream[0]));
       socket.on('streamUpdate', (activeStream: IStream[]) => this.onStreamUpdate(activeStream[0]));
-      socket.on('streamEnd', () => this.onStreamEnd());
+      socket.on('streamEnd', (activeStream: IStream[]) => this.onStreamEnd(activeStream[0]));
 
       /**
        * Alert related events
@@ -168,9 +168,9 @@ export class IOHub {
     this.io.emit('streamUpdate', activeStream);
   }
 
-  private onStreamEnd() {
+  private onStreamEnd(activeStream: IStream) {
     log('info', `onStreamEnd`);
-    this.io.emit('streamEnd');
+    this.io.emit('streamEnd', activeStream);
   }
 
   private onCandleWinner(streamId: string, streamCandle: ICandle) {

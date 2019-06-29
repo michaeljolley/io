@@ -68,7 +68,7 @@ export class Chron {
 
       // stream ended
       if (resp.started_at === undefined && this.activeStream !== undefined) {
-        this.emitMessage('streamEnd', this.activeStream.id);
+        this.emitMessage('streamEnd', this.activeStream);
         this.activeStream = undefined;
         log('info', `Stream ended: ${this.activeStream.id}`);
       }
