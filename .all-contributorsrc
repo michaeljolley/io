@@ -55,6 +55,15 @@
         "infra",
         "doc"
       ]
+    },
+    {
+      "login": "andresamaris",
+      "name": "Andrés Amarís",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/19216518?v=4",
+      "profile": "https://github.com/andresamaris",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
