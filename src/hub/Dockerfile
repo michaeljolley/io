@@ -4,8 +4,9 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./hub .
-COPY ./common ./src
+COPY ./src/hub .
+COPY ./src/common ./src
+COPY .env .
 
 RUN npm install
 

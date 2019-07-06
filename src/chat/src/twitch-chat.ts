@@ -309,7 +309,7 @@ export class TwitchChat {
     // message for display in overlays
     message = this.processChatMessage(message, user);
 
-    const username: string = user.username ? user.username : '';
+    const username: string = user.username || '';
 
     // Identify user and pass along to hub
     const userInfo: IUserInfo = await this.getUser(username);

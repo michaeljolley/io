@@ -4,8 +4,9 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./chron .
-COPY ./common ./src
+COPY ./src/chron .
+COPY ./src/common ./src
+COPY .env .
 
 RUN npm install
 

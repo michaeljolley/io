@@ -1,5 +1,8 @@
 const {
   MONGO_DB_CONN_STRING,
+  MONGO_DB_DATABASE,
+  MONGO_DB_PASSWORD,
+  MONGO_DB_USER,
   TWITCH_CLIENT_ID,
   TWITCH_CLIENT_TOKEN,
   TWITCH_CLIENT_USERNAME,
@@ -12,6 +15,15 @@ const requireConfigMessage = 'REQUIRED CONFIGURATION WAS NOT PROVIDED';
 
 export const mongoDBConnectionString: string =
   MONGO_DB_CONN_STRING || requireConfigMessage;
+
+export const mongoDBDatabase: string =
+  MONGO_DB_DATABASE || requireConfigMessage;
+
+export const mongoDBUser: string =
+  MONGO_DB_USER || requireConfigMessage;
+
+export const mongoDBPassword: string =
+  MONGO_DB_PASSWORD || requireConfigMessage;
 
 export const twitchClientId: string =
   TWITCH_CLIENT_ID || requireConfigMessage;

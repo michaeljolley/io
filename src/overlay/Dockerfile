@@ -4,8 +4,9 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./overlay .
-COPY ./common ./src
+COPY ./src/overlay .
+COPY ./src/common ./src
+COPY .env .
 
 RUN npm install
 

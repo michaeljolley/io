@@ -4,8 +4,9 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./admin .
-COPY ./common ./src
+COPY ./src/admin .
+COPY ./src/common ./src
+COPY .env .
 
 RUN npm install
 

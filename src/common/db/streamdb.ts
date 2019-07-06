@@ -13,10 +13,25 @@ import {
 
 export class StreamDb {
   constructor() {
+    this.connect();
+  }
+
+  private connect() {
     mongoose.connect(config.mongoDBConnectionString, {
-      useNewUrlParser: true,
+      pass: config.mongoDBPassword,
+      user: config.mongoDBUser,
+      dbName: config.mongoDBDatabase,
+      useCreateIndex: true,
       useFindAndModify: false,
-      useCreateIndex: true
+      useNewUrlParser: true
+    }, (err) => {
+      if (err) {
+        log('info', `Err: ${JSON.stringify(err)}`);
+        setTimeout(() => this.connect, 2000);
+      }
+      else {
+        log('info', `All good holmes`);
+      }
     });
   }
 

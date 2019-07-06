@@ -4,8 +4,9 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./logger .
-COPY ./common ./src
+COPY ./src/logger .
+COPY ./src/common ./src
+COPY .env .
 
 RUN npm install
 

@@ -3,24 +3,26 @@ version: '3'
 services:
   admin:
     build:
-      context: ./src
-      dockerfile: admin/Dockerfile
+      context: .
+      dockerfile: src/admin/Dockerfile
     restart: always
     ports:
       - "5090:80"
     expose:
       - "5090"
+    depends_on:
+      - mongo
   api:
     build:
-      context: ./src
-      dockerfile: api/Dockerfile
+      context: .
+      dockerfile: src/api/Dockerfile
     restart: always
     ports:
       - "5001:80"
   chat:
     build:
-      context: ./src
-      dockerfile: chat/Dockerfile
+      context: .
+      dockerfile: src/chat/Dockerfile
     restart: always
     ports:
       - "5050:80"
@@ -29,10 +31,11 @@ services:
     depends_on:
       - hub
       - api
+      - mongo
   chron:
     build:
-      context: ./src
-      dockerfile: chron/Dockerfile
+      context: .
+      dockerfile: src/chron/Dockerfile
     restart: always
     ports:
       - "5080:80"
@@ -41,8 +44,8 @@ services:
       - hub
   hub:
     build:
-      context: ./src
-      dockerfile: hub/Dockerfile
+      context: .
+      dockerfile: src/hub/Dockerfile
     restart: always
     ports:
       - "5060:80"
@@ -50,15 +53,16 @@ services:
       - "5060"
   logger:
     build:
-      context: ./src
-      dockerfile: logger/Dockerfile
+      context: .
+      dockerfile: src/logger/Dockerfile
     restart: always
     depends_on:
       - hub
+      - mongo
   overlay:
     build:
-      context: ./src
-      dockerfile: overlay/Dockerfile
+      context: .
+      dockerfile: src/overlay/Dockerfile
     restart: always
     ports:
       - "5000:80"
@@ -70,10 +74,31 @@ services:
       - hub
   user:
     build:
-      context: ./src
-      dockerfile: user/Dockerfile
+      context: .
+      dockerfile: src/user/Dockerfile
     restart: always
     ports:
       - "5070:80"
     depends_on:
       - api
+      - mongo
+  mongo:
+    image: mongo:4.0
+    restart: always
+    volumes:
+      - "mongodata:/data/db"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+  mongoex:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    expose:
+      - "8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+volumes:
+  mongodata:
