@@ -4,11 +4,12 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
+COPY ./src/api/package.json .
+COPY ./src/common/package.json ./src
+RUN npm install
+
 COPY ./src/api .
 COPY ./src/common ./src
-COPY ./.env* .
-
-RUN npm install
 
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
