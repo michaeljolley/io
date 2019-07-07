@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY ./src/hub .
 COPY ./src/common ./src
-COPY ./.env .
+COPY ./.env* .
 
 RUN npm install
 
