@@ -10,7 +10,6 @@ RUN npm install
 
 COPY ./src/admin .
 COPY ./src/common ./src
-COPY ./.env .
 
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
