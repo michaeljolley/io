@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: src/admin/Dockerfile
+    image: io/admin
     restart: always
     ports:
       - "5090:80"
@@ -16,6 +17,7 @@ services:
     build:
       context: .
       dockerfile: src/api/Dockerfile
+    image: io/api
     restart: always
     ports:
       - "5001:80"
@@ -23,6 +25,7 @@ services:
     build:
       context: .
       dockerfile: src/chat/Dockerfile
+    image: io/chat
     restart: always
     ports:
       - "5050:80"
@@ -36,6 +39,7 @@ services:
     build:
       context: .
       dockerfile: src/chron/Dockerfile
+    image: io/chron
     restart: always
     ports:
       - "5080:80"
@@ -46,6 +50,7 @@ services:
     build:
       context: .
       dockerfile: src/hub/Dockerfile
+    image: io/hub
     restart: always
     ports:
       - "5060:80"
@@ -55,6 +60,7 @@ services:
     build:
       context: .
       dockerfile: src/logger/Dockerfile
+    image: io/logger
     restart: always
     depends_on:
       - hub
@@ -63,6 +69,7 @@ services:
     build:
       context: .
       dockerfile: src/overlay/Dockerfile
+    image: io/overlay
     restart: always
     ports:
       - "5000:80"
@@ -76,6 +83,7 @@ services:
     build:
       context: .
       dockerfile: src/user/Dockerfile
+    image: io/user
     restart: always
     ports:
       - "5070:80"
