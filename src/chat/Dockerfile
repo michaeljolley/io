@@ -7,6 +7,12 @@ WORKDIR /app
 COPY ./src/chat .
 COPY ./src/common ./src
 
+WORKDIR /app/src
+
+RUN npm install
+
+WORKDIR /app
+
 RUN npm install
 
 RUN npm version $BUILDVERSION --allow-same-version;
