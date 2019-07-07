@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY ./src/chron .
 COPY ./src/common ./src
-COPY .env .
+COPY ./.env .
 
 RUN npm install
 
