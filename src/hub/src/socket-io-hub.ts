@@ -3,17 +3,24 @@ import { Server } from 'http';
 import io from 'socket.io';
 
 import { log } from './common';
-
 import {
-  ICandle,
-  ICandleVoteResult,
-  IStream,
-  IUserInfo,
-  IVote,
-  ISubscriber,
-  IRaider,
-  ICheer
-} from './models';
+  IChatMessageEventArg,
+  IEmoteEventArg,
+  IUserLeftEventArg,
+  IUserJoinedEventArg,
+  IFollowerCountEventArg,
+  IViewerCountEventArg,
+  ILastUserEventArg,
+  IStreamEventArg,
+  INewSubscriptionEventArg,
+  INewCheerEventArg,
+  INewRaidEventArg,
+  INewFollowerEventArg,
+  IMediaEventArg,
+  ICandleVoteEventArg,
+  ICandleWinnerEventArg,
+  ICandleVoteResultEventArg
+} from './event_args';
 
 export class IOHub {
   public app: express.Application;
@@ -37,120 +44,170 @@ export class IOHub {
    */
   private bindIOEvents() {
     this.io.on('connection', (socket: io.Socket) => {
-
       /**
        * Chat related events
        */
-      socket.on('chatMessage', (userWithMessage: any) => this.onChatMessage(userWithMessage));
-      socket.on('emote', (emoteUrl: string) => this.onEmote(emoteUrl));
-      socket.on('userLeft', (username: string) => this.onUserLeftChannel(username));
-      socket.on('userJoined', (username: string) => this.onUserJoinedChannel(username));
+      socket.on('chatMessage', (chatMessageArg: IChatMessageEventArg) =>
+        this.onChatMessage(chatMessageArg)
+      );
+      socket.on('emote', (emoteArg: IEmoteEventArg) => this.onEmote(emoteArg));
+      socket.on('userLeft', (userEvent: IUserLeftEventArg) =>
+        this.onUserLeftChannel(userEvent)
+      );
+      socket.on('userJoined', (userEvent: IUserJoinedEventArg) =>
+        this.onUserJoinedChannel(userEvent)
+      );
 
       /**
        * Chron related events
        */
-      socket.on('followerCount', (followerCount: number) => this.onFollowerCount(followerCount));
-      socket.on('viewerCount', (viewerCount: number) => this.onViewerCount(viewerCount));
-      socket.on('lastFollower', (lastFollower: IUserInfo[]) => this.onLastFollower(lastFollower[0]));
-      socket.on('lastSubscriber', (lastSubscriber: IUserInfo[]) => this.onLastSubscriber(lastSubscriber[0]));
+      socket.on('followerCount', (followerCountEvent: IFollowerCountEventArg) =>
+        this.onFollowerCount(followerCountEvent)
+      );
+      socket.on('viewerCount', (viewerCountEvent: IViewerCountEventArg) =>
+        this.onViewerCount(viewerCountEvent)
+      );
+      socket.on('lastFollower', (lastUserEvent: ILastUserEventArg) =>
+        this.onLastFollower(lastUserEvent)
+      );
+      socket.on('lastSubscriber', (lastUserEvent: ILastUserEventArg) =>
+        this.onLastSubscriber(lastUserEvent)
+      );
 
       /**
        * Stream start/stop events
        */
-      socket.on('streamStart', (activeStream: IStream[]) => this.onStreamStart(activeStream[0]));
-      socket.on('streamUpdate', (activeStream: IStream[]) => this.onStreamUpdate(activeStream[0]));
-      socket.on('streamEnd', (activeStream: IStream[]) => this.onStreamEnd(activeStream[0]));
+      socket.on('streamStart', (streamEvent: IStreamEventArg) =>
+        this.onStreamStart(streamEvent)
+      );
+      socket.on('streamUpdate', (streamEvent: IStreamEventArg) =>
+        this.onStreamUpdate(streamEvent)
+      );
+      socket.on('streamEnd', (streamEvent: IStreamEventArg) =>
+        this.onStreamEnd(streamEvent)
+      );
 
       /**
        * Alert related events
        */
-      socket.on('newFollow', (streamId: string, follower: IUserInfo) => this.onNewFollow(streamId, follower));
-      socket.on('newSubscription', (streamId: string, subscriber: ISubscriber) => this.onNewSubscription(streamId, subscriber));
-      socket.on('newRaid', (streamId: string, raider: IRaider) => this.onNewRaid(streamId, raider));
-      socket.on('newCheer', (streamId: string, cheerer: ICheer) => this.onNewCheer(streamId, cheerer));
+      socket.on('newFollow', (newFollowerEvent: INewFollowerEventArg) =>
+        this.onNewFollow(newFollowerEvent)
+      );
+      socket.on(
+        'newSubscription',
+        (newSubscriptionEvent: INewSubscriptionEventArg) =>
+          this.onNewSubscription(newSubscriptionEvent)
+      );
+      socket.on('newRaid', (newRaidEvent: INewRaidEventArg) =>
+        this.onNewRaid(newRaidEvent)
+      );
+      socket.on('newCheer', (newCheerEvent: INewCheerEventArg) =>
+        this.onNewCheer(newCheerEvent)
+      );
 
       /**
        * User generated events
        */
-      socket.on('playAudio', (soundClipName: string) => this.onPlayAudio(soundClipName));
+      socket.on('playAudio', (mediaEvent: IMediaEventArg) =>
+        this.onPlayAudio(mediaEvent)
+      );
       socket.on('stopAudio', () => this.onStopAudio());
 
       /**
        * Candle related events
        */
-      socket.on('candleReset', (streamId: string[]) => this.onCandleReset(streamId[0]));
-      socket.on('candleStop', (streamId: string[]) => this.onCandleStop(streamId[0]));
-      socket.on('candleVote', (vote: IVote[]) => this.onCandleVote(vote[0]));
-      socket.on('candleWinner', (streamId: string, candle: ICandle) => this.onCandleWinner(streamId, candle));
-      socket.on('candleVoteUpdate', (results: ICandleVoteResult[]) => this.onCandleVoteUpdate(results));
-
+      socket.on('candleReset', (streamEvent: IStreamEventArg) =>
+        this.onCandleReset(streamEvent)
+      );
+      socket.on('candleStop', (streamEvent: IStreamEventArg) =>
+        this.onCandleStop(streamEvent)
+      );
+      socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) => this.onCandleVote(candleVoteEventArg));
+      socket.on('candleWinner', (candleWinnerEventArg: ICandleWinnerEventArg) =>
+        this.onCandleWinner(candleWinnerEventArg)
+      );
+      socket.on('candleVoteUpdate', (candleVoteResultEventArg: ICandleVoteResultEventArg) =>
+        this.onCandleVoteUpdate(candleVoteResultEventArg)
+      );
     });
   }
 
-  private onChatMessage(userWithMessage: any) {
-    const chatMessage = userWithMessage[0];
-    log('info', `onChatMessage: ${chatMessage.message}`);
-    this.io.emit('chatMessage', chatMessage);
+  private onChatMessage(chatMessageArg: IChatMessageEventArg) {
+    log('info', `onChatMessage: ${chatMessageArg.message}`);
+    this.io.emit('chatMessage', chatMessageArg);
   }
 
-  private onEmote(emoteUrl: string) {
-    log('info', `onEmote: ${emoteUrl}`);
-    this.io.emit('emote', emoteUrl);
+  private onEmote(emoteArg: IEmoteEventArg) {
+    log('info', `onEmote: ${emoteArg.emoteUrl}`);
+    this.io.emit('emote', emoteArg);
   }
 
-  private onUserJoinedChannel(username: string) {
-    log('info', `onUserJoinedChannel: ${username}`);
-    this.io.emit('userJoined', username);
+  private onUserJoinedChannel(userEvent: IUserJoinedEventArg) {
+    log('info', `onUserJoinedChannel: ${userEvent.username}`);
+    this.io.emit('userJoined', userEvent);
   }
 
-  private onUserLeftChannel(username: string) {
-    log('info', `onUserLeftChannel: ${username}`);
-    this.io.emit('userLeft', username);
+  private onUserLeftChannel(userEvent: IUserLeftEventArg) {
+    log('info', `onUserLeftChannel: ${userEvent.username}`);
+    this.io.emit('userLeft', userEvent);
   }
 
-  private onNewFollow(streamId: string, follower: IUserInfo) {
-    log('info', `onNewFollow: ${follower.login}`);
-    this.io.emit('newFollow', streamId, follower);
+  private onNewFollow(followerEventArg: INewFollowerEventArg) {
+    log('info', `onNewFollow: ${followerEventArg.follower.login}`);
+    this.io.emit('newFollow', followerEventArg);
   }
 
-  private onNewSubscription(streamId: string, subscriber: ISubscriber) {
-    log('info', `onNewSubscription: ${subscriber.user.login}`);
-    this.io.emit('newSubscription', streamId, subscriber);
+  private onNewSubscription(subscriptionEventArg: INewSubscriptionEventArg) {
+    log(
+      'info',
+      `onNewSubscription: ${subscriptionEventArg.subscriber.user.login}`
+    );
+    this.io.emit('newSubscription', subscriptionEventArg);
   }
 
-  private onNewRaid(streamId: string, raider: IRaider) {
-    log('info', `onNewRaid: ${raider.user.login}: ${raider.viewers}`);
-    this.io.emit('newRaid', streamId, raider);
+  private onNewRaid(raidEventArg: INewRaidEventArg) {
+    log(
+      'info',
+      `onNewRaid: ${raidEventArg.raider.user.login}: ${
+        raidEventArg.raider.viewers
+      }`
+    );
+    this.io.emit('newRaid', raidEventArg);
   }
 
-  private onNewCheer(streamId: string, cheer: ICheer) {
-    log('info', `onNewCheer: ${cheer.user.login} - ${cheer.bits}`);
-    this.io.emit('newCheer', streamId, cheer);
+  private onNewCheer(cheerEventArg: INewCheerEventArg) {
+    log(
+      'info',
+      `onNewCheer: ${cheerEventArg.cheerer.user.login} - ${
+        cheerEventArg.cheerer.bits
+      }`
+    );
+    this.io.emit('newCheer', cheerEventArg);
   }
 
-  private onFollowerCount(followerCount: number) {
-    log('info', `onFollowerCount: ${followerCount}`);
-    this.io.emit('followerCount', followerCount);
+  private onFollowerCount(followerCountArg: IFollowerCountEventArg) {
+    log('info', `onFollowerCount: ${followerCountArg.followers}`);
+    this.io.emit('followerCount', followerCountArg);
   }
 
-  private onViewerCount(viewerCount: number) {
-    log('info', `onViewerCount: ${viewerCount}`);
-    this.io.emit('viewerCount', viewerCount);
+  private onViewerCount(viewerCountEvent: IViewerCountEventArg) {
+    log('info', `onViewerCount: ${viewerCountEvent.viewers}`);
+    this.io.emit('viewerCount', viewerCountEvent);
   }
 
-  private onLastFollower(lastFollower: IUserInfo) {
-    log('info', `onLastFollower: ${lastFollower.login}`);
-    this.io.emit('lastFollower', lastFollower);
+  private onLastFollower(lastFollowerEvent: ILastUserEventArg) {
+    log('info', `onLastFollower: ${lastFollowerEvent.userInfo.login}`);
+    this.io.emit('lastFollower', lastFollowerEvent);
   }
 
-  private onLastSubscriber(lastSubscriber: IUserInfo) {
-    log('info', `onLastSubscriber: ${lastSubscriber.login}`);
-    this.io.emit('lastSubscriber', lastSubscriber);
+  private onLastSubscriber(lastSubscriberEvent: ILastUserEventArg) {
+    log('info', `onLastSubscriber: ${lastSubscriberEvent.userInfo.login}`);
+    this.io.emit('lastSubscriber', lastSubscriberEvent);
   }
 
-  private onPlayAudio(soundClipName: string) {
-    log('info', `onPlayAudio: ${soundClipName}`);
-    this.io.emit('playAudio', soundClipName);
+  private onPlayAudio(mediaEvent: IMediaEventArg) {
+    log('info', `onPlayAudio: ${mediaEvent.clipName}`);
+    this.io.emit('playAudio', mediaEvent);
   }
 
   private onStopAudio() {
@@ -158,44 +215,47 @@ export class IOHub {
     this.io.emit('stopAudio');
   }
 
-  private onStreamStart(activeStream: IStream) {
-    log('info', `onStreamStart: ${JSON.stringify(activeStream.id)}`);
-    this.io.emit('streamStart', activeStream);
+  private onStreamStart(streamEvent: IStreamEventArg) {
+    log('info', `onStreamStart: ${JSON.stringify(streamEvent.stream.id)}`);
+    this.io.emit('streamStart', streamEvent);
   }
 
-  private onStreamUpdate(activeStream: IStream) {
-    log('info', `onStreamUpdate: ${JSON.stringify(activeStream.id)}`);
-    this.io.emit('streamUpdate', activeStream);
+  private onStreamUpdate(streamEvent: IStreamEventArg) {
+    log('info', `onStreamUpdate: ${JSON.stringify(streamEvent.stream.id)}`);
+    this.io.emit('streamUpdate', streamEvent);
   }
 
-  private onStreamEnd(activeStream: IStream) {
-    log('info', `onStreamEnd`);
-    this.io.emit('streamEnd', activeStream);
+  private onStreamEnd(streamEvent: IStreamEventArg) {
+    log('info', `onStreamEnd: ${JSON.stringify(streamEvent.stream.id)}`);
+    this.io.emit('streamEnd', streamEvent);
   }
 
-  private onCandleWinner(streamId: string, streamCandle: ICandle) {
-    log('info', `onCandleWinner: ${streamId} - ${JSON.stringify(streamCandle)}`);
-    this.io.emit('candleWinner', streamId, streamCandle);
+  private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
+    log(
+      'info',
+      `onCandleWinner: ${candleWinnerEvent.streamId} - ${candleWinnerEvent.candle.label}`
+    );
+    this.io.emit('candleWinner', candleWinnerEvent);
   }
 
-  private onCandleStop(streamId: string) {
+  private onCandleStop(streamEvent: IStreamEventArg) {
     log('info', 'onCandleStop');
-    this.io.emit('candleStop', streamId);
+    this.io.emit('candleStop', streamEvent);
   }
 
-  private onCandleVote(vote: IVote) {
-    log('info', `onCandleVote:`);
-    this.io.emit('candleVote', vote);
+  private onCandleVote(candleVoteEvent: ICandleVoteEventArg) {
+    log('info', `onCandleVote: ${candleVoteEvent.userInfo.login} - ${candleVoteEvent.candle.label}`);
+    this.io.emit('candleVote', candleVoteEvent);
   }
 
-  private onCandleReset(streamId: string) {
+  private onCandleReset(streamEvent: IStreamEventArg) {
     log('info', 'onCandleReset');
-    this.io.emit('candleReset', streamId);
+    this.io.emit('candleReset', streamEvent);
   }
 
-  private onCandleVoteUpdate(results: ICandleVoteResult[]) {
+  private onCandleVoteUpdate(candleVoteResultEventArg: ICandleVoteResultEventArg) {
     log('info', 'onCandleVoteUpdate');
-    this.io.emit('candleVoteUpdate', results);
+    this.io.emit('candleVoteUpdate', candleVoteResultEventArg);
   }
 
   /**

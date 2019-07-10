@@ -2,9 +2,9 @@
 
 var socket = io('http://localhost:5060');
 
-socket.on('chatMessage', (chatMessage) => {
+socket.on('chatMessage', (chatMessageEventArg) => {
 
-    console.log(JSON.stringify(chatMessage));
+    console.log(JSON.stringify(chatMessageEventArg));
 
     var id = +(new Date());
 
@@ -28,34 +28,34 @@ socket.on('chatMessage', (chatMessage) => {
     var profile = createChatDiv('profile');
 
     var profileImg = document.createElement('img');
-    profileImg.src = chatMessage.userInfo.profile_image_url;
+    profileImg.src = chatMessageEventArg.userInfo.profile_image_url;
 
     profile.append(profileImg);
 
     var bubble = createChatDiv('bubble');
 
     var name = createChatDiv('name');
-    name.innerText = chatMessage.userInfo.display_name || chatMessage.userInfo.login;
+    name.innerText = chatMessageEventArg.userInfo.display_name || chatMessageEventArg.userInfo.login;
 
     var message = createChatDiv('message');
-    message.innerHTML = chatMessage.message;
+    message.innerHTML = chatMessageEventArg.message;
 
     // If this chat message is from the bot then handle it separately from
     // all other skins
-    if (chatMessage.userInfo.login === 'b3_bot') {
+    if (chatMessageEventArg.userInfo.login === 'b3_bot') {
         newChatMessage.classList.add('bot');
         name.innerText = "IO";
     }
 
-    if (chatMessage.user.bits > 0) {
+    if (chatMessageEventArg.user.bits > 0) {
         newChatMessage.classList.add('bits');
         var cheer = createChatDiv('cheer');
-        cheer.innerHTML = 'Cheer for ' + chatMessage.user.bits + ' bits';
+        cheer.innerHTML = 'Cheer for ' + chatMessageEventArg.user.bits + ' bits';
         newChatMessage.append(cheer);
     }
 
-    if (chatMessage.user.mod === true ||
-        (chatMessage.user.badges && chatMessage.user.badges.broadcaster)) {
+    if (chatMessageEventArg.user.mod === true ||
+        (chatMessageEventArg.user.badges && chatMessageEventArg.user.badges.broadcaster)) {
         newChatMessage.classList.add('moderator');
 
         var moderator = createChatDiv('moderator');

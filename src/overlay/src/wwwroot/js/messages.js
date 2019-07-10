@@ -2,28 +2,39 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('newCheer', (user, userInfo, message) => {
-    const displayName = userInfo['display-name'] ? userInfo['display-name'] : userInfo.username;
-    const msg = `${displayName} just cheered ${user.bits} bits`;
-    addAndStart(msg, 'applause', userInfo.profile_image_url, 10);
+socket.on('newCheer', (newCheerEventArg) => {
+    const cheerer = newCheerEventArg.cheerer;
+    const displayName = cheerer.user.display_name || cheerer.user.login;
+    const msg = `${displayName} just cheered ${cheerer.bits} bits`;
+    addAndStart(msg, 'applause', cheerer.user.profile_image_url, 10);
 });
 
-socket.on('newRaid', (username, userInfo, viewers) => {
-    const displayName = userInfo['display-name'] ? userInfo['display-name'] : userInfo.username;
-    const msg = `DEFEND! ${displayName} is raiding with ${viewers} accomplices!`;
-    addAndStart(msg, 'goodbadugly', userInfo.profile_image_url, 10);
+socket.on('newRaid', (newRaidEventArg) => {
+    const raider = newRaidEventArg.raider;
+    const displayName = raider.user.display_name || raider.user.login;
+    const msg = `DEFEND! ${displayName} is raiding with ${raider.viewers} accomplices!`;
+    addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
 });
 
-socket.on('newSubscription', (user, userInfo, isRenewal, wasGift, message) => {
-    // const displayName = userInfo['display-name'] ? userInfo['display-name'] : userInfo.username;
-    // const msg = `DEFEND! ${displayName} is raiding with ${viewers} accomplices!`;
-    // attemptToStart(new queueItem(msg, '', 30));
+socket.on('newSubscription', (newSubscriptionEventArg) => {
+    const subscriber = newSubscriptionEventArg.subscriber;
+    const displayName = subscriber.user.display_name || subscriber.user.login;
+    const cumulativeMonths = subscriber.cumulativeMonths;
+    let msg = '';
+    if (cumulativeMonths > 1) {
+        msg = `${displayName}'s been in the club for ${cumulativeMonths} months! How's that hairline?`;
+    }
+    else {
+        msg = `Welcome to the club ${displayName}!`;
+    }
+    addAndStart(msg, 'hair', subscriber.user.profile_image_url, 10);
 });
 
-socket.on('newFollow', (follower, userInfo) => {
-    const displayName = userInfo['display-name'] ? userInfo['display-name'] : userInfo.username;
+socket.on('newFollow', (newFollowerEventArg) => {
+    const follower = newFollowerEventArg.follower;
+    const displayName = follower.display_name || follower.login;
     const msg = `Welcome ${displayName}! Thanks for following!`;
-    attemptToStart(msg, '', userInfo.profile_image_url, 10);
+    attemptToStart(msg, 'ohmy', follower.profile_image_url, 10);
 });
 
 let messageQueue = [];

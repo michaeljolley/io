@@ -2,6 +2,7 @@ import io from 'socket.io-client';
 
 import { get, log } from './common';
 import { IUserInfo } from './models';
+import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg } from './event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
@@ -50,10 +51,18 @@ export class Chron {
       resp.data[0].from_name
     );
 
-    this.emitMessage('followerCount', followerCount);
+    const followerCountEventArg: IFollowerCountEventArg = {
+      followers: followerCount
+    };
+
+    this.emitMessage('followerCount', followerCountEventArg);
 
     if (lastFollower) {
-      this.emitMessage('lastFollower', lastFollower);
+      const lastFollowerEventArg: ILastUserEventArg = {
+        userInfo: lastFollower
+      };
+
+      this.emitMessage('lastFollower', lastFollowerEventArg);
     }
     return;
   };
@@ -66,9 +75,13 @@ export class Chron {
     if (resp !== undefined) {
       viewerCount = resp.viewer_count !== undefined ? resp.viewer_count : 0;
 
+      const streamEventArg: IStreamEventArg = {
+        stream: this.activeStream
+      };
+
       // stream ended
       if (resp.started_at === undefined && this.activeStream !== undefined) {
-        this.emitMessage('streamEnd', this.activeStream);
+        this.emitMessage('streamEnd', streamEventArg);
         this.activeStream = undefined;
         log('info', `Stream ended: ${this.activeStream.id}`);
       }
@@ -76,12 +89,12 @@ export class Chron {
       // stream started
       if (resp.started_at !== undefined && this.activeStream === undefined) {
         this.activeStream = resp;
-        this.emitMessage('streamStart', this.activeStream);
+        this.emitMessage('streamStart', streamEventArg);
         log('info', `Stream started: ${this.activeStream.id}`);
       }
 
       if (this.activeStream) {
-        this.emitMessage('streamUpdate', this.activeStream);
+        this.emitMessage('streamUpdate', streamEventArg);
         log('info', `Stream update: ${this.activeStream.id}`);
       }
     } else {
@@ -90,22 +103,32 @@ export class Chron {
     }
 
     log('info', `Viewer count: ${viewerCount}`);
-    this.emitMessage('viewerCount', viewerCount);
+
+    const viewCountEventArg: IViewerCountEventArg = {
+      viewers: viewerCount
+    };
+
+    this.emitMessage('viewerCount', viewCountEventArg);
   };
 
   public broadcastLastSubscriber = async (): Promise<any> => {
-    const url = `${this.apiUrl}/subscribers`;
+    const url = `${this.apiUrl}/subscribers/last`;
 
-    const resp = await get(url).then((data: any) => data);
-    const lastRecord = resp.length - 1;
-    const lastSub = resp[lastRecord];
+    const lastSub = await get(url).then((data: any) => data);
+
+    log('info', JSON.stringify(lastSub));
 
     const lastSubscriber: IUserInfo | undefined = await this.getUser(
-      lastSub.user_name
+      lastSub
     );
-
     if (lastSubscriber) {
-      this.emitMessage('lastSubscriber', lastSubscriber);
+      const lastSubEventArg: ILastUserEventArg = {
+        userInfo: lastSubscriber
+      };
+
+      if (lastSubscriber) {
+        this.emitMessage('lastSubscriber', lastSubEventArg);
+      }
     }
 
     return;
@@ -124,7 +147,7 @@ export class Chron {
     });
   };
 
-  private emitMessage = (event: string, ...payload: any[]) => {
+  private emitMessage = (event: string, payload: IBaseEventArg) => {
     if (!this.socket.disconnected) {
       this.socket.emit(event, payload);
     }

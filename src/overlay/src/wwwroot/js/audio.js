@@ -6,10 +6,10 @@ const container = document.getElementById('container');
 
 let avEnabled = true;
 
-socket.on('playAudio', (soundClipName) => {
+socket.on('playAudio', (IMediaEventArg) => {
     if (avEnabled) {
         var audio = document.createElement('audio');
-        audio.src = `${_audioPath}${soundClipName}.mp3`;
+        audio.src = `${_audioPath}${mediaEventArg.clipName}.mp3`;
         audio.id = +(new Date());
         audio.addEventListener('ended', audioStop, false);
 

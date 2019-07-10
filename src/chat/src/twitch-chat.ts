@@ -1,10 +1,17 @@
-import { Client, ChatUserstate, Userstate } from 'tmi.js';
+import {
+  Client,
+  ChatUserstate,
+  Userstate,
+  SubGiftUserstate,
+  SubUserstate
+} from 'tmi.js';
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
 import { ICandle, IUserInfo, ISubscriber, IRaider, ICheer } from './models';
 
 import { config, get, log } from './common';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg } from './event_args';
 import { Emote } from './emote';
 import {
   AVCommands,
@@ -53,11 +60,8 @@ export class TwitchChat {
     this.tmi.on('cheer', this.onCheer);
 
     // Sub related alert events
-    this.tmi.on('anongiftpaidupgrade', this.onAnonymousGiftSubRenew);
-    this.tmi.on('giftpaidupgrade', this.onGiftSubRenew);
     this.tmi.on('resub', this.onResub);
     this.tmi.on('subgift', this.onGiftSub);
-    this.tmi.on('submysterygift', this.onGiftMysterySub);
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on('streamStart', (currentStream: any) => {
@@ -142,7 +146,11 @@ export class TwitchChat {
     await this.getUser(username);
 
     log('info', `${username} has JOINED the channel`);
-    this.emitMessage('userJoined', username);
+    const userJoinedEventArg: IUserJoinedEventArg = {
+      username
+    };
+
+    this.emitMessage('userJoined', userJoinedEventArg);
 
     if (self) {
       log('info', 'This client joined the channel...');
@@ -154,8 +162,12 @@ export class TwitchChat {
   /**
    * When a user leaves the channel
    */
-  private onUserLeft = (channel: string, username: string) => {
-    this.emitMessage('userLeft', username);
+  private onUserLeft = async (channel: string, username: string) => {
+    const userLeftEventArg: IUserLeftEventArg = {
+      username
+    };
+
+    this.emitMessage('userLeft', userLeftEventArg);
 
     log('info', `${username} has LEFT the channel`);
   };
@@ -183,7 +195,12 @@ export class TwitchChat {
         `WARNING!!! ${userDisplayName} is raiding us with ${viewers} accomplices!  DEFEND!!`
       );
 
-      this.emitMessage('newRaid', this.activeStream.id, raider);
+      const newRaidEventArg: INewRaidEventArg = {
+        raider,
+        streamId: this.activeStream.id
+      };
+
+      this.emitMessage('newRaid', newRaidEventArg);
 
       log('info', `${username} has RAIDED the channel with ${viewers} viewers`);
     }
@@ -209,26 +226,14 @@ export class TwitchChat {
         user: userInfo
       };
 
-      this.emitMessage('newCheer', this.activeStream.id, cheerer);
+      const cheerEventArg: INewCheerEventArg = {
+        cheerer,
+        streamId: this.activeStream.id
+      };
+
+      this.emitMessage('newCheer', cheerEventArg);
       log('info', `${user.username} cheered ${bits} bits`);
     }
-  };
-
-  private onGiftSubRenew = async (
-    channel: string,
-    username: string,
-    sender: string,
-    user: Userstate
-  ) => {
-    await this.onAnySub(user, true, '');
-  };
-
-  private onAnonymousGiftSubRenew = async (
-    channel: string,
-    username: string,
-    user: Userstate
-  ) => {
-    await this.onAnySub(user, true, '');
   };
 
   private onGiftSub = async (
@@ -237,19 +242,18 @@ export class TwitchChat {
     streakMonths: number,
     recipient: string,
     methods: any,
-    user: Userstate
+    user: SubGiftUserstate
   ) => {
-    await this.onAnySub(user, true, '');
-  };
+    log('info', JSON.stringify(user));
 
-  private onGiftMysterySub = async (
-    channel: string,
-    username: string,
-    numberOfSubs: number,
-    methods: any,
-    user: Userstate
-  ) => {
-    await this.onAnySub(user, true, '');
+    const recipientName = user['msg-param-recipient-user-name'] || '';
+
+    if (recipientName) {
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(recipientName);
+
+      await this.onAnySub(userInfo, true, '', 1);
+    }
   };
 
   private onResub = async (
@@ -257,10 +261,27 @@ export class TwitchChat {
     username: string,
     streakMonths: number,
     message: string,
-    user: Userstate,
+    user: SubUserstate,
     methods: any
   ) => {
-    await this.onAnySub(user, false, message);
+    log('info', JSON.stringify(user));
+
+    const subscriberName = user.login || '';
+
+    if (subscriberName) {
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(subscriberName);
+      let cumulativeMonths: number = 1;
+      if (user['msg-param-cumulative-months']) {
+        cumulativeMonths = !isNaN(
+          parseInt(user['msg-param-cumulative-months'].toString(), 10)
+        )
+          ? parseInt(user['msg-param-cumulative-months'].toString(), 10)
+          : 0;
+      }
+
+      await this.onAnySub(userInfo, true, '', cumulativeMonths);
+    }
   };
 
   private onSub = async (
@@ -268,30 +289,40 @@ export class TwitchChat {
     username: string,
     methods: any,
     message: string,
-    user: Userstate
+    user: SubUserstate
   ) => {
-    await this.onAnySub(user, false, message);
+    log('info', JSON.stringify(user));
+
+    const subscriberName = user.login || '';
+
+    if (subscriberName) {
+      // Identify user and add to user state if needed
+      const userInfo: IUserInfo = await this.getUser(subscriberName);
+
+      await this.onAnySub(userInfo, true, message, 1);
+    }
   };
 
   private onAnySub = async (
-    user: Userstate,
+    userInfo: IUserInfo,
     wasGift: boolean,
-    message: string
+    message: string,
+    cumulativeMonths: number
   ) => {
     if (this.activeStream) {
-      const username: string = user.username ? user.username : '';
-
-      // Identify user and add to user state if needed
-      const userInfo: IUserInfo = await this.getUser(username);
-
       const subscriber: ISubscriber = {
+        cumulativeMonths,
         user: userInfo,
         wasGift
       };
+      const newSubscriberArg: INewSubscriptionEventArg = {
+        streamId: this.activeStream.id,
+        subscriber
+      };
 
-      this.emitMessage('newSubscription', this.activeStream.id, subscriber);
+      this.emitMessage('newSubscription', newSubscriberArg);
 
-      log('info', `${user.username} subscribed`);
+      log('info', `${userInfo.login} subscribed`);
     }
   };
 
@@ -314,7 +345,13 @@ export class TwitchChat {
     // Identify user and pass along to hub
     const userInfo: IUserInfo = await this.getUser(username);
 
-    this.emitMessage('chatMessage', { user, message, userInfo });
+    const chatMessageArg: IChatMessageEventArg = {
+      message,
+      user,
+      userInfo
+    };
+
+    this.emitMessage('chatMessage', chatMessageArg);
 
     let handledByCommand: boolean = false;
 
@@ -406,7 +443,11 @@ export class TwitchChat {
       });
 
       emoteSet.forEach(emote => {
-        this.emitMessage('emote', emote.emoteUrl);
+        const emoteArg: IEmoteEventArg = {
+          emoteUrl: emote.emoteUrl
+        };
+
+        this.emitMessage('emote', emoteArg);
 
         let emoteMessage = tempMessage.slice(0, emote.start);
         emoteMessage += emote.emoteImageTag;
@@ -426,7 +467,7 @@ export class TwitchChat {
     });
   };
 
-  private emitMessage = (event: string, ...payload: any[]) => {
+  private emitMessage = (event: string, payload: IBaseEventArg) => {
     if (!this.socket.disconnected) {
       this.socket.emit(event, payload);
     }

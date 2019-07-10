@@ -1,18 +1,10 @@
 import io from 'socket.io-client';
-import { log } from './common';
 import _ from 'lodash';
 
-import {
-  IUserInfo,
-  IRaider,
-  ICheer,
-  ISubscriber,
-  ICandle,
-  IStream,
-  ICandleVote,
-  ICandleVoteResult,
-  IVote} from './models';
-  import { CandleDb, StreamDb } from './db';
+import { log } from './common';
+import { IStreamEventArg, INewFollowerEventArg, INewSubscriptionEventArg, INewRaidEventArg, INewCheerEventArg, ICandleWinnerEventArg, ICandleVoteEventArg, ICandleVoteResultEventArg } from './event_args';
+import { CandleDb, StreamDb } from './db';
+import { IStream, ICandleVote, ICandle, ICandleVoteResult, IVote } from './models/index';
 
 export class Logger {
 
@@ -25,72 +17,73 @@ export class Logger {
     this.streamDb = new StreamDb();
     this.candleDb = new CandleDb();
 
-    this.socket.on('streamStart', (currentStream: IStream) => this.onStreamStart(currentStream));
-    this.socket.on('streamUpdate', (currentStream: IStream) => this.onStreamUpdate(currentStream));
-    this.socket.on('streamEnd', (currentStream: IStream) => this.onStreamEnd(currentStream));
+    this.socket.on('streamStart', (streamEvent: IStreamEventArg) => this.onStreamStart(streamEvent));
+    this.socket.on('streamUpdate', (streamEvent: IStreamEventArg) => this.onStreamUpdate(streamEvent));
+    this.socket.on('streamEnd', (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
 
-    this.socket.on('newFollow', (streamId: string, follower: IUserInfo) => this.onNewFollow(streamId, follower));
-    this.socket.on('newSubscription', (streamId: string, subscriber: ISubscriber) => this.onNewSubscription(streamId, subscriber));
-    this.socket.on('newRaid', (streamId: string, raider: IRaider) => this.onNewRaid(streamId, raider));
-    this.socket.on('newCheer', (streamId: string, cheerer: ICheer) => this.onNewCheer(streamId, cheerer));
+    this.socket.on('newFollow', (newFollowerEvent: INewFollowerEventArg) => this.onNewFollow(newFollowerEvent));
+    this.socket.on('newSubscription', (newSubscriberEvent: INewSubscriptionEventArg) => this.onNewSubscription(newSubscriberEvent));
+    this.socket.on('newRaid', (newRaidEvent: INewRaidEventArg) => this.onNewRaid(newRaidEvent));
+    this.socket.on('newCheer', (newCheerEvent: INewCheerEventArg) => this.onNewCheer(newCheerEvent));
 
-    this.socket.on('candleWinner', (streamId: string, streamCandle: ICandle) => this.onCandleWinner(streamId, streamCandle));
-    this.socket.on('candleReset', (streamId: string) => this.onCandleReset(streamId));
-    this.socket.on('candleStop', (streamId: string) => this.onCandleStop(streamId));
-    this.socket.on('candleVote', (vote: IVote) => this.onCandleVote(vote));
+    this.socket.on('candleWinner', (candleWinnerEvent: ICandleWinnerEventArg) => this.onCandleWinner(candleWinnerEvent));
+    this.socket.on('candleReset', (streamEvent: IStreamEventArg) => this.onCandleReset(streamEvent));
+    this.socket.on('candleStop', (streamEvent: IStreamEventArg) => this.onCandleStop(streamEvent));
+    this.socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) => this.onCandleVote(candleVoteEventArg));
   }
 
   public start() {}
 
-  private async onStreamStart(currentStream: IStream) {
-    await this.streamDb.saveStream(currentStream);
+  private async onStreamStart(streamEvent: IStreamEventArg) {
+    await this.streamDb.saveStream(streamEvent.stream);
   }
 
-  private async onStreamEnd(currentStream: IStream) {
+  private async onStreamEnd(streamEvent: IStreamEventArg) {
     // Only need to set the streams ended_at property
-    await this.streamDb.saveStream({ id: currentStream.id, ended_at: new Date().toUTCString() });
+    await this.streamDb.saveStream({ id: streamEvent.stream.id, ended_at: new Date().toUTCString() });
   }
 
-  private async onStreamUpdate(currentStream: IStream) {
+  private async onStreamUpdate(streamEvent: IStreamEventArg) {
     // Only need to update title
-    await this.streamDb.saveStream(currentStream);
+    await this.streamDb.saveStream(streamEvent.stream);
   }
 
-  private onNewFollow(streamId: string, follower: IUserInfo) {
+  private async onNewFollow(newFollowerEvent: INewFollowerEventArg) {
     // We want to record the follower on the current stream
+    await this.streamDb.recordFollower(newFollowerEvent.streamId, newFollowerEvent.follower);
   }
 
-  private async onNewRaid(streamId: string, raider: IRaider) {
+  private async onNewRaid(newRaidEvent: INewRaidEventArg) {
     // We want to record the raider on the current stream
-    await this.streamDb.recordRaid(streamId, raider);
+    await this.streamDb.recordRaid(newRaidEvent.streamId, newRaidEvent.raider);
   }
 
-  private async onNewCheer(streamId: string, cheerer: ICheer) {
+  private async onNewCheer(newCheerEvent: INewCheerEventArg) {
     // We want to record the cheer on the current stream
-    await this.streamDb.recordCheer(streamId, cheerer);
+    await this.streamDb.recordCheer(newCheerEvent.streamId, newCheerEvent.cheerer);
   }
 
-  private async onNewSubscription(streamId: string, subscriber: ISubscriber) {
+  private async onNewSubscription(newSubscriptionEvent: INewSubscriptionEventArg) {
     // We want to record the subcription on the current stream
-    await this.streamDb.recordSubscriber(streamId, subscriber);
+    await this.streamDb.recordSubscriber(newSubscriptionEvent.streamId, newSubscriptionEvent.subscriber);
   }
 
-  private async onCandleWinner(streamId: string, streamCandle: ICandle) {
-    log('info', `onCandleWinner: ${streamId} - ${JSON.stringify(streamCandle)}`);
+  private async onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
+    log('info', `onCandleWinner: ${candleWinnerEvent.streamId} - ${candleWinnerEvent.candle.label}`);
     // Only need to set the streams candle property
-    await this.streamDb.saveStream({ id: streamId, candle: streamCandle });
+    await this.streamDb.saveStream({ id: candleWinnerEvent.streamId, candle: candleWinnerEvent.candle });
   }
 
-  private async onCandleReset(streamId: string) {
-    log('info', `onCandleReset: ${streamId}`);
+  private async onCandleReset(streamEvent: IStreamEventArg) {
+    log('info', `onCandleReset: ${streamEvent.stream.id}`);
     // Only need to set the streams candle property to null
-    await this.streamDb.saveStream({ id: streamId, candle: null, candleVotes: [] });
+    await this.streamDb.saveStream({ id: streamEvent.stream.id, candle: null, candleVotes: [] });
   }
 
-  private async onCandleStop(streamId: string) {
-    log('info', `onCandleStop: ${streamId}`);
+  private async onCandleStop(streamEvent: IStreamEventArg) {
+    log('info', `onCandleStop: ${streamEvent.stream.id}`);
 
-    const stream: IStream | undefined = await this.streamDb.getStream(streamId);
+    const stream: IStream | undefined = await this.streamDb.getStream(streamEvent.stream.id);
 
     if (stream) {
       const votes: ICandleVote[] | undefined = stream.candleVotes;
@@ -107,22 +100,40 @@ export class Logger {
 
         log('info', `winner: ${JSON.stringify(winner)}`);
         if (winner) {
-          this.socket.emit('candleWinner', streamId, winner);
+
+          const candleWinnerEventArg: ICandleWinnerEventArg = {
+            candle: winner,
+            streamId: streamEvent.stream.id
+          };
+
+          this.socket.emit('candleWinner', candleWinnerEventArg);
         }
       }
     }
   }
 
-  private async onCandleVote(vote: IVote) {
+  private async onCandleVote(candleVoteEvent: ICandleVoteEventArg) {
+
+    const vote: IVote = {
+      candle: candleVoteEvent.candle,
+      streamId: candleVoteEvent.streamId,
+      user: candleVoteEvent.userInfo
+    };
+
     await this.streamDb.recordCandleVote(vote);
 
     // tablulate current results & emit
     const candles: ICandle[] = await this.candleDb.getCandles();
-    const stream: IStream | null | undefined = await this.streamDb.getStream(vote.streamId);
+    const stream: IStream | null | undefined = await this.streamDb.getStream(candleVoteEvent.streamId);
 
     if (stream && stream.candleVotes) {
-      const results = tabulateResults(candles, stream.candleVotes);
-      this.socket.emit('candleVoteUpdate', results);
+
+      const candleVoteResultEvent: ICandleVoteResultEventArg = {
+        candles,
+        streamId: stream.id,
+        voteResults: tabulateResults(candles, stream.candleVotes)
+      };
+      this.socket.emit('candleVoteUpdate', candleVoteResultEvent);
     }
   }
 }

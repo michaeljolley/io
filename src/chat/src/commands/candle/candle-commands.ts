@@ -1,8 +1,9 @@
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
 import { CandleDb, StreamDb } from '../../db';
-import { ICandle, IStream, IUserInfo, IVote } from '../../models';
+import { ICandle, IStream, IUserInfo } from '../../models';
 import { isBroadcaster, isMod, log } from '../../common';
+import { ICandleVoteEventArg, IStreamEventArg } from '../../event_args';
 
 let secondsToVote: number = 60;
 let voteActive: boolean = false;
@@ -133,7 +134,11 @@ const stopCandleVoteCommand = async (
     voteActive = false;
     voteTimeout = undefined;
 
-    emitMessageFunc('candleStop', activeStream.id);
+    const streamEventArg: IStreamEventArg = {
+      stream: activeStream
+    };
+
+    emitMessageFunc('candleStop', streamEventArg);
     log('info', `Vote for candle stopped`);
 };
 
@@ -146,7 +151,11 @@ const resetCandleVoteCommand = async (
       voteTimeout = undefined;
     }
 
-    emitMessageFunc('candleReset', activeStream.id);
+    const streamEventArg: IStreamEventArg = {
+      stream: activeStream
+    };
+
+    emitMessageFunc('candleReset', streamEventArg);
     return;
 };
 
@@ -175,12 +184,12 @@ const candleVoteCommand = async (
         return;
       }
 
-      const vote: IVote = {
+      const candleVoteEventArg: ICandleVoteEventArg = {
         candle: candleVote,
         streamId: activeStream.id,
-        user: userInfo
+        userInfo
       };
-      emitMessageFunc('candleVote', vote);
+      emitMessageFunc('candleVote', candleVoteEventArg);
       log('info', `Vote for ${userDisplayName}: ${candleVote.label}`);
 
     }

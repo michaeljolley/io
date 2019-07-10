@@ -58,6 +58,14 @@ export class API {
       res.send(payload);
     });
 
+    // Get last subscribers
+    this.app.get('/subscribers/last', async (req, res) => {
+      log('info', `route: /subscribers/last called`);
+
+      const payload: any = await this.helix.getLastSubscriber();
+      res.send(payload);
+    });
+
     // Get stream info
     this.app.get('/stream', async (req, res) => {
       log('info', `route: /stream called`);

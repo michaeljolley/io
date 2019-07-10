@@ -2,7 +2,7 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('viewerCount', (viewerCount) => {
+socket.on('viewerCount', (viewerCountEventArg) => {
     var counter = document.getElementById('counter');
-    counter.innerText = viewerCount;
+    counter.innerText = viewerCountEventArg.viewers;
 });

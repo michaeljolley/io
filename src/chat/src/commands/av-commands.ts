@@ -3,6 +3,7 @@ import * as path from 'path';
 import { Userstate } from 'tmi.js';
 
 import { log, isMod, isBroadcaster } from '../common';
+import { IMediaEventArg } from '../event_args';
 
 const assetsDir: string = path.join(__dirname, '..', 'assets');
 const soundClipsDir: string = path.join(assetsDir, 'audio', 'clips');
@@ -47,7 +48,10 @@ export const soundByteCommand = (
     emitMessageFunc
   ) {
     // Send the hub command to play audio
-    emitMessageFunc('playAudio', firstWord);
+    const avEventArg: IMediaEventArg = {
+      clipName: firstWord
+    };
+    emitMessageFunc('playAudio', avEventArg);
 
     log('info', `AV-Command: Play - ${firstWord}.mp3`);
 
@@ -96,7 +100,7 @@ export const themeShameCommand = (
 
   const lowerMessage = message.toLocaleLowerCase().trim();
   const words = lowerMessage.split(' ');
-  const shamedThemes: string[] = ['hotdogstand'];
+  const shamedThemes: string[] = ['hotdogstand', 'lasers'];
 
   if (words.length > 1) {
     if (words[0] === '!theme' && shamedThemes.indexOf(words[1]) !== -1) {
@@ -105,10 +109,20 @@ export const themeShameCommand = (
         const username = user["display-name"] ? user["display-name"] : user.username;
 
         // Send the hub command to play shame audio
-        emitMessageFunc('playAudio', 'shame');
+        const avEventArg: IMediaEventArg = {
+          clipName: 'shame'
+        };
+        emitMessageFunc('playAudio', avEventArg);
 
         // Send shame command to chat
-        twitchChatFunc(`HotDog Stand!?! Shame on you @${username}`);
+        switch (words[1]) {
+          case 'hotdogstand':
+            twitchChatFunc(`HotDog Stand!?! Shame on you @${username}`);
+            break;
+          case 'lasers':
+            twitchChatFunc(`Lasers!?! Shame on you @${username}`);
+            break;
+        }
 
         log('info', `themeShameCommand: Play - shame.mp3`);
         return true;

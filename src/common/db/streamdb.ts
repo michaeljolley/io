@@ -8,7 +8,8 @@ import {
   ICandleVote,
   ISubscriber,
   ICheer,
-  IRaider
+  IRaider,
+  IUserInfo
 } from "../models";
 
 export class StreamDb {
@@ -96,7 +97,7 @@ export class StreamDb {
           { id: streamId },
           {
             $push: {
-              subscribers: { user: subscriber.user._id, wasGift: subscriber.wasGift }
+              subscribers: { user: subscriber.user._id, wasGift: subscriber.wasGift, cumulativeMonths: subscriber.cumulativeMonths }
             }
           },
           (err: any, res: any) => {
@@ -104,6 +105,46 @@ export class StreamDb {
               log(
                 "info",
                 `ERROR: recordSubscriber ${JSON.stringify(err)}`
+              );
+              resolve(false);
+            }
+            resolve(true);
+          }
+        )
+      );
+    }
+    return false;
+  };
+
+  public recordFollower = async (
+    streamId: string,
+    follower: IUserInfo
+  ): Promise<boolean> => {
+    log("info", `recordFollower: ${follower.login}`);
+
+    const stream = await this.getStream(streamId);
+
+    if (
+      stream &&
+      (stream.followers == null ||
+        stream.followers.find(
+          (f: IUserInfo) => f._id === follower._id
+        ) === undefined)
+    ) {
+      // record follower
+      return await new Promise((resolve: any) =>
+        StreamModel.updateOne(
+          { id: streamId },
+          {
+            $push: {
+              followers: { user: follower._id }
+            }
+          },
+          (err: any, res: any) => {
+            if (err) {
+              log(
+                "info",
+                `ERROR: recordFollower ${JSON.stringify(err)}`
               );
               resolve(false);
             }
