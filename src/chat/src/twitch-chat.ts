@@ -8,10 +8,10 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { ICandle, IUserInfo, ISubscriber, IRaider, ICheer } from './models';
+import { ICandle, IUserInfo, ISubscriber, IRaider, ICheer, IStream } from './models';
 
 import { config, get, log } from './common';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg } from './event_args';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg } from './event_args';
 import { Emote } from './emote';
 import {
   AVCommands,
@@ -44,7 +44,7 @@ export class TwitchChat {
   public tmi: Client;
   private clientUsername: string = config.twitchClientUsername;
   private socket!: SocketIOClient.Socket;
-  private activeStream: any | undefined;
+  private activeStream: IStream | undefined;
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -64,21 +64,21 @@ export class TwitchChat {
     this.tmi.on('subgift', this.onGiftSub);
     this.tmi.on('subscription', this.onSub);
 
-    this.socket.on('streamStart', (currentStream: any) => {
-      this.activeStream = currentStream;
+    this.socket.on('streamStart', (currentStream: IStreamEventArg) => {
+      this.activeStream = currentStream.stream;
     });
 
-    this.socket.on('streamUpdate', (currentStream: any) => {
-      this.activeStream = currentStream;
+    this.socket.on('streamUpdate', (currentStream: IStreamEventArg) => {
+      this.activeStream = currentStream.stream;
     });
 
     this.socket.on(
       'candleWinner',
-      (streamId: string, streamCandle: ICandle) => {
+      (candleWinner: ICandleWinnerEventArg) => {
         this.sendChatMessage(
           `The vote is over and today's Candle to Code By is ${
-            streamCandle.label
-          }.  You can try it yourself at ${streamCandle.url}`
+            candleWinner.candle.label
+          }.  You can try it yourself at ${candleWinner.candle.url}`
         );
       }
     );
