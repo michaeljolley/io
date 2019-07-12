@@ -6,7 +6,7 @@ const container = document.getElementById('container');
 
 let avEnabled = true;
 
-socket.on('playAudio', (IMediaEventArg) => {
+socket.on('playAudio', (mediaEventArg) => {
     if (avEnabled) {
         var audio = document.createElement('audio');
         audio.src = `${_audioPath}${mediaEventArg.clipName}.mp3`;
@@ -28,7 +28,6 @@ socket.on('stopAudio', () => {
 socket.on('avStateChanged', (isEnabled) => {
     avEnabled = isEnabled;
 });
-
 
 function audioStop(e) {
     e.srcElement.remove();

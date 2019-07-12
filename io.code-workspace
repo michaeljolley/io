@@ -22,6 +22,9 @@
 			"path": "src/overlay"
 		},
 		{
+			"path": "src/stream-notes"
+		},
+		{
 			"path": "src/user"
 		},
 		{

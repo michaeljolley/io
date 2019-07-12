@@ -79,6 +79,15 @@ services:
       - ./assets:/app/dist/wwwroot/assets
     depends_on:
       - hub
+  streamnotes:
+    build:
+      context: .
+      dockerfile: src/stream-notes/Dockerfile
+    image: io/streamnotes
+    restart: always
+    depends_on:
+      - api
+      - hub
   user:
     build:
       context: .
@@ -108,5 +117,7 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
+    depends_on:
+      - mongo
 volumes:
   mongodata:

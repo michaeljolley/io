@@ -8,7 +8,9 @@ const {
   TWITCH_CLIENT_USERNAME,
   TWITCH_CLIENT_USER_ID,
   TWITCH_BOT_USERNAME,
-  TWITCH_BOT_TOKEN
+  TWITCH_BOT_TOKEN,
+  GITHUB_USER,
+  GITHUB_PASSWORD
 } = process.env;
 
 const requireConfigMessage = 'REQUIRED CONFIGURATION WAS NOT PROVIDED';
@@ -42,3 +44,9 @@ export const twitchBotUsername: string =
 
 export const twitchBotToken: string =
   TWITCH_BOT_TOKEN || requireConfigMessage;
+
+export const githubPassword: string =
+  GITHUB_PASSWORD || requireConfigMessage;
+
+export const githubUsername: string =
+  GITHUB_USER || requireConfigMessage;
