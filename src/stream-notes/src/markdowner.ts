@@ -17,12 +17,12 @@ export class Markdowner {
               .then(this.addImage)
               .then(this.addYouTube)
               .then(this.addFold)
-              .then(this.addSegments)
+              .then(this.addSegments) // TODO
               .then(this.addLine)
               .then(this.addCandle)
               .then(this.addLine)
-              .then(this.addGoals)
-              .then(this.addThingsLearned)
+              .then(this.addGoals) // TODO
+              .then(this.addThingsLearned) // TODO
               .then(this.addLine)
               .then(this.addSponsors)
               .then(this.addSubscriptions)

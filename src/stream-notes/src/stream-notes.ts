@@ -33,7 +33,7 @@ export class StreamNotes {
       fs.mkdirSync(__dirname + '/tmp');
     }
 
-    this.socket.on('streamUpdate', (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
+    this.socket.on('streamEnd', (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
   }
 
   /**
@@ -145,7 +145,7 @@ export class StreamNotes {
   private async onStreamEnd(streamEvent: IStreamEventArg) {
 
     // Get the stream from the streamDb (include users/candles/etc)
-    this.activeStream = await this.streamDb.getStream('34865784432'); // streamEvent.stream.id);
+    this.activeStream = await this.streamDb.getStream('34779469936'); // streamEvent.stream.id);
 
     if (this.activeStream) {
 
