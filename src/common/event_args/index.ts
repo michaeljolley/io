@@ -15,6 +15,7 @@ import { INewRaidEventArg } from "./newRaidEventArg";
 import { INewCheerEventArg } from "./newCheerEventArg";
 import { INewFollowerEventArg } from "./newFollowerEventArg";
 import { IMediaEventArg } from "./mediaEventArg";
+import { INewSegmentEventArg } from './newSegmentEventArg';
 
 export {
   IBaseEventArg,
@@ -29,6 +30,7 @@ export {
   INewCheerEventArg,
   INewFollowerEventArg,
   INewRaidEventArg,
+  INewSegmentEventArg,
   INewSubscriptionEventArg,
   IStreamEventArg,
   IUserJoinedEventArg,

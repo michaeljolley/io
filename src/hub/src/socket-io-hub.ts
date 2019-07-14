@@ -19,7 +19,8 @@ import {
   IMediaEventArg,
   ICandleVoteEventArg,
   ICandleWinnerEventArg,
-  ICandleVoteResultEventArg
+  ICandleVoteResultEventArg,
+  INewSegmentEventArg
 } from './event_args';
 
 export class IOHub {
@@ -112,6 +113,7 @@ export class IOHub {
         this.onPlayAudio(mediaEvent)
       );
       socket.on('stopAudio', () => this.onStopAudio());
+      socket.on('newSegment', (segmentEvent: INewSegmentEventArg) => this.onNewSegment(segmentEvent));
 
       /**
        * Candle related events
@@ -203,6 +205,11 @@ export class IOHub {
   private onLastSubscriber(lastSubscriberEvent: ILastUserEventArg) {
     log('info', `onLastSubscriber: ${lastSubscriberEvent.userInfo.login}`);
     this.io.emit('lastSubscriber', lastSubscriberEvent);
+  }
+
+  private onNewSegment(segmentEvent: INewSegmentEventArg) {
+    log('info', `onNewSegment: ${segmentEvent.streamSegment.topic}`);
+    this.io.emit('newSegment', segmentEvent);
   }
 
   private onPlayAudio(mediaEvent: IMediaEventArg) {

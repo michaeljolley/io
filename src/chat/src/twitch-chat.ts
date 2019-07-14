@@ -8,7 +8,7 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { ICandle, IUserInfo, ISubscriber, IRaider, ICheer, IStream } from './models';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from './models';
 
 import { config, get, log } from './common';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg } from './event_args';
@@ -386,8 +386,10 @@ export class TwitchChat {
         handledByCommand = streamCommand(
           originalMessage,
           user,
+          userInfo,
           this.activeStream,
-          this.sendChatMessage
+          this.sendChatMessage,
+          this.emitMessage
         );
         if (handledByCommand) {
           break;

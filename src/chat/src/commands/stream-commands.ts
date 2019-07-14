@@ -1,12 +1,15 @@
 import moment = require('moment');
-import { IStream } from '../models';
+import { IStream, IUserInfo, IStreamSegment } from '../models';
 import { ChatUserstate } from 'tmi.js';
+import { INewSegmentEventArg } from '../event_args/index';
 
 export const uptimeCommand = (
   message: string,
   user: ChatUserstate,
+  userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function
+  twitchChatFunc: Function,
+  emitMessageFunc: Function
 ): boolean => {
 
   if (
@@ -49,8 +52,10 @@ export const uptimeCommand = (
 export const projectCommand = (
   message: string,
   user: ChatUserstate,
+  userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function
+  twitchChatFunc: Function,
+  emitMessageFunc: Function
 ): boolean => {
 
   if (
@@ -74,6 +79,48 @@ export const projectCommand = (
       `${activeStream.title}`
     );
   }
+
+  return true;
+};
+
+export const segmentCommand = (
+  message: string,
+  user: ChatUserstate,
+  userInfo: IUserInfo,
+  activeStream: IStream | undefined,
+  twitchChatFunc: Function,
+  emitMessageFunc: Function
+): boolean => {
+
+  if (
+    message === undefined ||
+    userInfo === undefined ||
+    activeStream === undefined ||
+    message.length === 0 ||
+    emitMessageFunc === undefined
+  ) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!mark') {
+    return false;
+  }
+
+  const newSegment: IStreamSegment = {
+    timestamp: new Date().toISOString(),
+    topic: message.slice(6),
+    user: userInfo
+  };
+
+  const newSegmentEvent: INewSegmentEventArg = {
+    streamId: activeStream.id,
+    streamSegment: newSegment
+  };
+
+  emitMessageFunc('newSegment', newSegmentEvent);
 
   return true;
 };

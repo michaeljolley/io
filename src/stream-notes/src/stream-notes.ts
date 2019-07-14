@@ -145,7 +145,7 @@ export class StreamNotes {
   private async onStreamEnd(streamEvent: IStreamEventArg) {
 
     // Get the stream from the streamDb (include users/candles/etc)
-    this.activeStream = await this.streamDb.getStream('34779469936'); // streamEvent.stream.id);
+    this.activeStream = await this.streamDb.getStream(streamEvent.stream.id);
 
     if (this.activeStream) {
 
@@ -162,6 +162,7 @@ export class StreamNotes {
                   .then(this.push)
                   .catch((err: any) => log('info', `onStreamEnd: ${err}`))
                   .finally(this.cleanUp);
+
     }
   }
 }

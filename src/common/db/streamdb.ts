@@ -9,7 +9,8 @@ import {
   ISubscriber,
   ICheer,
   IRaider,
-  IUserInfo
+  IUserInfo,
+  IStreamSegment
 } from "../models";
 
 export class StreamDb {
@@ -114,6 +115,35 @@ export class StreamDb {
       );
     }
     return false;
+  };
+
+  public recordSegment = async (
+    streamId: string,
+    segment: IStreamSegment
+  ): Promise<boolean> => {
+    log("info", `recordSegment: ${segment.user.login}: ${segment.topic}`);
+
+    // record segment
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            segments: { user: segment.user._id, timestamp: segment.timestamp, topic: segment.topic }
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordSegment ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
   };
 
   public recordFollower = async (
