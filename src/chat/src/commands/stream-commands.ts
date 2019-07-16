@@ -1,15 +1,15 @@
 import moment = require('moment');
 import { IStream, IUserInfo, IStreamSegment } from '../models';
 import { ChatUserstate } from 'tmi.js';
-import { INewSegmentEventArg } from '../event_args/index';
+import { INewSegmentEventArg, IBaseEventArg } from '../event_args/index';
 
 export const uptimeCommand = (
   message: string,
   user: ChatUserstate,
   userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
 
   if (
@@ -54,8 +54,8 @@ export const projectCommand = (
   user: ChatUserstate,
   userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
 
   if (
@@ -88,8 +88,8 @@ export const segmentCommand = (
   user: ChatUserstate,
   userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
 
   if (

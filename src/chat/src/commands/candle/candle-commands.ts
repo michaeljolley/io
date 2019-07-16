@@ -3,7 +3,7 @@ import { ChatUserstate } from 'tmi.js';
 import { CandleDb, StreamDb } from '../../db';
 import { ICandle, IStream, IUserInfo } from '../../models';
 import { isBroadcaster, isMod, log } from '../../common';
-import { ICandleVoteEventArg, IStreamEventArg } from '../../event_args';
+import { ICandleVoteEventArg, IStreamEventArg, IBaseEventArg } from '../../event_args';
 
 let secondsToVote: number = 60;
 let voteActive: boolean = false;
@@ -14,8 +14,8 @@ export const candleCommand = async (
   user: ChatUserstate,
   userInfo: IUserInfo,
   activeStream: IStream | undefined,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ) => {
   if (
     message === undefined ||
@@ -74,7 +74,7 @@ export const candleCommand = async (
 const baseCandleCommand = async (
   activeStream: IStream,
   streamDb: StreamDb,
-  twitchChatFunc: Function) => {
+  twitchChatFunc: (message: string) => void) => {
 
     const stream: IStream | null | undefined = await streamDb.getStream(activeStream.id);
 
@@ -102,8 +102,8 @@ const startCandleVoteCommand = async (
   splitMessage: string[],
   activeStream: IStream,
   candleDb: CandleDb,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function) => {
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void) => {
 
   if (splitMessage.length === 3 && isNaN(parseInt(splitMessage[2], undefined)) === false) {
     secondsToVote = parseInt(splitMessage[2], undefined);
@@ -165,8 +165,8 @@ const candleVoteCommand = async (
   userInfo: IUserInfo,
   activeStream: IStream,
   candleDb: CandleDb,
-  twitchChatFunc: Function,
-  emitMessageFunc: Function) => {
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void) => {
 
     const userDisplayName: string | undefined = user["display-name"] ? user["display-name"] : user.username;
 

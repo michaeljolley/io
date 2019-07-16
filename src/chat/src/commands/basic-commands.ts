@@ -4,7 +4,7 @@ import { isMod, isBroadcaster } from '../common';
 export const websiteCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -30,7 +30,7 @@ export const websiteCommand = (
 export const blogCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -56,7 +56,7 @@ export const blogCommand = (
 export const githubCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -82,7 +82,7 @@ export const githubCommand = (
 export const twitterCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -108,7 +108,7 @@ export const twitterCommand = (
 export const discordCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -134,7 +134,7 @@ export const discordCommand = (
 export const heroinesCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -160,7 +160,7 @@ export const heroinesCommand = (
 export const shoutoutCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (
     message === undefined ||
@@ -192,7 +192,7 @@ export const shoutoutCommand = (
 export const helpCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -207,7 +207,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !blog, !candle, !discord, !github, !heroines, !project, !so {user name}, !team, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !blog, !candle, !discord, !github, !heroines, !mark, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -218,7 +218,7 @@ export const helpCommand = (
 export const youTubeCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
@@ -244,7 +244,7 @@ export const youTubeCommand = (
 export const liveCodersCommand = (
   message: string,
   user: ChatUserstate,
-  twitchChatFunc: Function
+  twitchChatFunc: (message: string) => void
 ): boolean => {
   if (message === undefined || message.length === 0) {
     return false;
