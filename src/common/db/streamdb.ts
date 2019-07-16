@@ -48,6 +48,8 @@ export class StreamDb {
         .populate("subscribers.user")
         .populate("raiders.user")
         .populate("cheers.user")
+        .populate("segments.user")
+        .populate("contributors")
         .exec((err: any, res: any) => {
           if (err) {
             log("info", `ERROR: getStream ${JSON.stringify(err)}`);
@@ -175,6 +177,47 @@ export class StreamDb {
               log(
                 "info",
                 `ERROR: recordFollower ${JSON.stringify(err)}`
+              );
+              resolve(false);
+            }
+            resolve(true);
+          }
+        )
+      );
+    }
+    return false;
+  };
+
+
+  public recordContributor = async (
+    streamId: string,
+    contributor: IUserInfo
+  ): Promise<boolean> => {
+    log("info", `recordContributor: ${contributor.login}`);
+
+    const stream = await this.getStream(streamId);
+
+    if (
+      stream &&
+      (stream.contributors == null ||
+        stream.contributors.find(
+          (f: IUserInfo) => f._id === contributor._id
+        ) === undefined)
+    ) {
+      // record contributor
+      return await new Promise((resolve: any) =>
+        StreamModel.updateOne(
+          { id: streamId },
+          {
+            $push: {
+              contributors: { user: contributor._id }
+            }
+          },
+          (err: any, res: any) => {
+            if (err) {
+              log(
+                "info",
+                `ERROR: recordContributor ${JSON.stringify(err)}`
               );
               resolve(false);
             }

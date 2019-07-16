@@ -16,6 +16,7 @@ import { INewCheerEventArg } from "./newCheerEventArg";
 import { INewFollowerEventArg } from "./newFollowerEventArg";
 import { IMediaEventArg } from "./mediaEventArg";
 import { INewSegmentEventArg } from './newSegmentEventArg';
+import { IThemerEventArg } from './themerEventArg';
 
 export {
   IBaseEventArg,
@@ -33,6 +34,7 @@ export {
   INewSegmentEventArg,
   INewSubscriptionEventArg,
   IStreamEventArg,
+  IThemerEventArg,
   IUserJoinedEventArg,
   IUserLeftEventArg,
   IViewerCountEventArg

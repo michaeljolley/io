@@ -372,6 +372,8 @@ export class TwitchChat {
         handledByCommand = avCommand(
           originalMessage,
           user,
+          userInfo,
+          this.activeStream,
           this.sendChatMessage,
           this.emitMessage
         );

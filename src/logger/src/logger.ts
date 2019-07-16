@@ -2,7 +2,7 @@ import io from 'socket.io-client';
 import _ from 'lodash';
 
 import { log } from './common';
-import { IStreamEventArg, INewFollowerEventArg, INewSubscriptionEventArg, INewRaidEventArg, INewCheerEventArg, ICandleWinnerEventArg, ICandleVoteEventArg, ICandleVoteResultEventArg, INewSegmentEventArg } from './event_args';
+import { IStreamEventArg, INewFollowerEventArg, INewSubscriptionEventArg, INewRaidEventArg, INewCheerEventArg, ICandleWinnerEventArg, ICandleVoteEventArg, ICandleVoteResultEventArg, INewSegmentEventArg, IMediaEventArg, IThemerEventArg } from './event_args';
 import { CandleDb, StreamDb } from './db';
 import { IStream, ICandleVote, ICandle, ICandleVoteResult, IVote } from './models/index';
 
@@ -30,6 +30,9 @@ export class Logger {
     this.socket.on('candleReset', (streamEvent: IStreamEventArg) => this.onCandleReset(streamEvent));
     this.socket.on('candleStop', (streamEvent: IStreamEventArg) => this.onCandleStop(streamEvent));
     this.socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) => this.onCandleVote(candleVoteEventArg));
+
+    this.socket.on('playAudio', (mediaEventArg: IMediaEventArg) => this.onPlayAudio(mediaEventArg));
+    this.socket.on('onTwitchThemer', (themerEventArg: IThemerEventArg) => this.onTwitchThemer(themerEventArg));
 
     this.socket.on('newSegment', (streamSegmentEvent: INewSegmentEventArg) => this.onStreamSegment(streamSegmentEvent));
   }
@@ -68,6 +71,16 @@ export class Logger {
   private async onNewSubscription(newSubscriptionEvent: INewSubscriptionEventArg) {
     // We want to record the subcription on the current stream
     await this.streamDb.recordSubscriber(newSubscriptionEvent.streamId, newSubscriptionEvent.subscriber);
+  }
+
+  private async onPlayAudio(mediaEventArg: IMediaEventArg) {
+    // We want to record the user as a contributor on the current stream
+    await this.streamDb.recordContributor(mediaEventArg.streamId, mediaEventArg.user);
+  }
+
+  private async onTwitchThemer(themerEventArg: IThemerEventArg) {
+    // We want to record the user as a contributor on the current stream
+    await this.streamDb.recordContributor(themerEventArg.streamId, themerEventArg.user);
   }
 
   private async onStreamSegment(streamSegmentEvent: INewSegmentEventArg) {

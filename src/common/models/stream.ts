@@ -28,6 +28,7 @@ export interface IStream extends mongoose.Document {
   subscribers?: ISubscriber[];
   raiders?: IRaider[];
   cheers?: ICheer[];
+  contributors?: IUserInfo[];
 }
 
 export const StreamModel = mongoose.model<IStream>(
@@ -48,6 +49,7 @@ export const StreamModel = mongoose.model<IStream>(
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     subscribers: [SubscriberSchema],
     raiders: [RaiderSchema],
-    cheers: [CheerSchema]
+    cheers: [CheerSchema],
+    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }]
   })
 );

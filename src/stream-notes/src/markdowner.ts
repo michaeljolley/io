@@ -141,9 +141,25 @@ ${this.addLink(this.activeStream.candle.label, this.activeStream.candle.url)}\n\
   }
 
   private addSegments = async (existingContent: string) : Promise<string> => {
-    return existingContent + `### Segments\n
+    this.activeStream = this.activeStream as IStream;
+
+    let response: string = `### Segments\n
 | Timestamp | Topic
-| ---       | ---\n\n`;
+| ---       | ---\n`;
+
+    if (this.activeStream.segments) {
+
+      const startedAt = moment(this.activeStream.started_at);
+
+      for (const segment of this.activeStream.segments) {
+        const segmentTime = moment(segment.timestamp);
+        const timestamp = moment.utc(moment.duration(startedAt.diff(segmentTime)).as('milliseconds')).format('HH:mm:ss');
+
+        response = response + `| ${timestamp} | ${segment.topic} |\n`;
+      }
+    }
+
+    return existingContent + response + `\n`;
   }
 
   private addLine = async (existingContent: string) : Promise<string> => {
