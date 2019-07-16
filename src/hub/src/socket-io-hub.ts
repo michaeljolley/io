@@ -20,7 +20,9 @@ import {
   ICandleVoteEventArg,
   ICandleWinnerEventArg,
   ICandleVoteResultEventArg,
-  INewSegmentEventArg
+  INewSegmentEventArg,
+  IUserEventArg,
+  IThemerEventArg
 } from './event_args';
 
 export class IOHub {
@@ -114,6 +116,8 @@ export class IOHub {
       );
       socket.on('stopAudio', () => this.onStopAudio());
       socket.on('newSegment', (segmentEvent: INewSegmentEventArg) => this.onNewSegment(segmentEvent));
+      socket.on('onTwitchThemer', (themerEvent: IThemerEventArg) => this.onTwitchThemer(themerEvent));
+      socket.on('onModeratorJoined', (userEvent: IUserEventArg) => this.onModeratorJoined(userEvent));
 
       /**
        * Candle related events
@@ -215,6 +219,16 @@ export class IOHub {
   private onPlayAudio(mediaEvent: IMediaEventArg) {
     log('info', `onPlayAudio: ${mediaEvent.clipName}`);
     this.io.emit('playAudio', mediaEvent);
+  }
+
+  private onTwitchThemer(themerEvent: IThemerEventArg) {
+    log('info', `onTwitchThemer: ${themerEvent.clipName}`);
+    this.io.emit('onTwitchThemer', themerEvent);
+  }
+
+  private onModeratorJoined(userEvent: IUserEventArg) {
+    log('info', `onModeratorJoined: ${userEvent.user.login}`);
+    this.io.emit('onModeratorJoined', userEvent);
   }
 
   private onStopAudio() {

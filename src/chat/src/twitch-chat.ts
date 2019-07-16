@@ -11,7 +11,7 @@ import sanitizeHtml from 'sanitize-html';
 import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from './models';
 
 import { config, get, log } from './common';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg } from './event_args';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from './event_args';
 import { Emote } from './emote';
 import {
   AVCommands,
@@ -352,6 +352,14 @@ export class TwitchChat {
     };
 
     this.emitMessage('chatMessage', chatMessageArg);
+
+    if (this.activeStream && user.mod) {
+      const userEvent: IUserEventArg = {
+        streamId: this.activeStream.id,
+        user: userInfo
+      };
+      this.emitMessage('onModeratorJoined', userEvent);
+    }
 
     let handledByCommand: boolean = false;
 

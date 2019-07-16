@@ -2,7 +2,7 @@ import io from 'socket.io-client';
 import _ from 'lodash';
 
 import { log } from './common';
-import { IStreamEventArg, INewFollowerEventArg, INewSubscriptionEventArg, INewRaidEventArg, INewCheerEventArg, ICandleWinnerEventArg, ICandleVoteEventArg, ICandleVoteResultEventArg, INewSegmentEventArg, IMediaEventArg, IThemerEventArg } from './event_args';
+import { IStreamEventArg, INewFollowerEventArg, INewSubscriptionEventArg, INewRaidEventArg, INewCheerEventArg, ICandleWinnerEventArg, ICandleVoteEventArg, ICandleVoteResultEventArg, INewSegmentEventArg, IMediaEventArg, IThemerEventArg, IUserJoinedEventArg, IUserEventArg } from './event_args';
 import { CandleDb, StreamDb } from './db';
 import { IStream, ICandleVote, ICandle, ICandleVoteResult, IVote } from './models/index';
 
@@ -33,6 +33,7 @@ export class Logger {
 
     this.socket.on('playAudio', (mediaEventArg: IMediaEventArg) => this.onPlayAudio(mediaEventArg));
     this.socket.on('onTwitchThemer', (themerEventArg: IThemerEventArg) => this.onTwitchThemer(themerEventArg));
+    this.socket.on('onModeratorJoined', (userEventArg: IUserEventArg) => this.onModeratorJoined(userEventArg));
 
     this.socket.on('newSegment', (streamSegmentEvent: INewSegmentEventArg) => this.onStreamSegment(streamSegmentEvent));
   }
@@ -55,7 +56,7 @@ export class Logger {
 
   private async onNewFollow(newFollowerEvent: INewFollowerEventArg) {
     // We want to record the follower on the current stream
-    await this.streamDb.recordFollower(newFollowerEvent.streamId, newFollowerEvent.follower);
+    await this.streamDb.recordUser(newFollowerEvent.streamId, 'follower', newFollowerEvent.follower);
   }
 
   private async onNewRaid(newRaidEvent: INewRaidEventArg) {
@@ -75,12 +76,17 @@ export class Logger {
 
   private async onPlayAudio(mediaEventArg: IMediaEventArg) {
     // We want to record the user as a contributor on the current stream
-    await this.streamDb.recordContributor(mediaEventArg.streamId, mediaEventArg.user);
+    await this.streamDb.recordUser(mediaEventArg.streamId, 'contributor', mediaEventArg.user);
   }
 
   private async onTwitchThemer(themerEventArg: IThemerEventArg) {
     // We want to record the user as a contributor on the current stream
-    await this.streamDb.recordContributor(themerEventArg.streamId, themerEventArg.user);
+    await this.streamDb.recordUser(themerEventArg.streamId, 'contributor', themerEventArg.user);
+  }
+
+  private async onModeratorJoined(userEventArg: IUserEventArg) {
+    // We want to record the moderator as being with us
+    await this.streamDb.recordUser(userEventArg.streamId, 'moderator', userEventArg.user);
   }
 
   private async onStreamSegment(streamSegmentEvent: INewSegmentEventArg) {

@@ -50,6 +50,7 @@ export class StreamDb {
         .populate("cheers.user")
         .populate("segments.user")
         .populate("contributors")
+        .populate("moderators")
         .exec((err: any, res: any) => {
           if (err) {
             log("info", `ERROR: getStream ${JSON.stringify(err)}`);
@@ -148,76 +149,49 @@ export class StreamDb {
     );
   };
 
-  public recordFollower = async (
+  public recordUser = async (
     streamId: string,
-    follower: IUserInfo
+    type: string,
+    user: IUserInfo
   ): Promise<boolean> => {
-    log("info", `recordFollower: ${follower.login}`);
+    log("info", `recordUser: (${type}) ${user.login}`);
 
     const stream = await this.getStream(streamId);
 
     if (
       stream &&
-      (stream.followers == null ||
-        stream.followers.find(
-          (f: IUserInfo) => f._id === follower._id
+      (stream.get(type) == null ||
+        stream.get(type).find(
+          (f: IUserInfo) => f._id === user._id
         ) === undefined)
     ) {
-      // record follower
+      // record user
+
+      let data: any = {};
+
+      switch (type) {
+        case 'contributor':
+          data = {'contributors': { user: user._id } };
+          break;
+        case 'moderator':
+          data = {'moderators': { user: user._id } };
+          break;
+        case 'follower':
+          data = {'followers': { user: user._id } };
+          break;
+      }
+
       return await new Promise((resolve: any) =>
         StreamModel.updateOne(
           { id: streamId },
           {
-            $push: {
-              followers: { user: follower._id }
-            }
+            $push: data
           },
           (err: any, res: any) => {
             if (err) {
               log(
                 "info",
-                `ERROR: recordFollower ${JSON.stringify(err)}`
-              );
-              resolve(false);
-            }
-            resolve(true);
-          }
-        )
-      );
-    }
-    return false;
-  };
-
-
-  public recordContributor = async (
-    streamId: string,
-    contributor: IUserInfo
-  ): Promise<boolean> => {
-    log("info", `recordContributor: ${contributor.login}`);
-
-    const stream = await this.getStream(streamId);
-
-    if (
-      stream &&
-      (stream.contributors == null ||
-        stream.contributors.find(
-          (f: IUserInfo) => f._id === contributor._id
-        ) === undefined)
-    ) {
-      // record contributor
-      return await new Promise((resolve: any) =>
-        StreamModel.updateOne(
-          { id: streamId },
-          {
-            $push: {
-              contributors: { user: contributor._id }
-            }
-          },
-          (err: any, res: any) => {
-            if (err) {
-              log(
-                "info",
-                `ERROR: recordContributor ${JSON.stringify(err)}`
+                `ERROR: recordUser: ${JSON.stringify(err)}`
               );
               resolve(false);
             }

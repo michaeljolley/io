@@ -24,6 +24,7 @@ export interface IStream extends mongoose.Document {
   goals?: IStreamGoal[];
   notes?: IStreamNote[];
 
+  moderators?: IUserInfo[];
   followers?: IUserInfo[];
   subscribers?: ISubscriber[];
   raiders?: IRaider[];
@@ -46,6 +47,7 @@ export const StreamModel = mongoose.model<IStream>(
     goals: [StreamGoalSchema],
     notes: [StreamNoteSchema],
 
+    moderators: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     subscribers: [SubscriberSchema],
     raiders: [RaiderSchema],

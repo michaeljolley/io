@@ -1,6 +1,7 @@
 import moment from 'moment';
 
-import { IStream } from "./models/index";
+import { IStream, IUserInfo } from "./models/index";
+import { config } from './common';
 
 export class Markdowner {
 
@@ -17,7 +18,7 @@ export class Markdowner {
               .then(this.addImage)
               .then(this.addYouTube)
               .then(this.addFold)
-              .then(this.addSegments) // TODO
+              .then(this.addSegments)
               .then(this.addLine)
               .then(this.addCandle)
               .then(this.addLine)
@@ -28,6 +29,8 @@ export class Markdowner {
               .then(this.addSubscriptions)
               .then(this.addCheers)
               .then(this.addRaiders)
+              .then(this.addModerators)
+              .then(this.addContributors)
               .then(this.addFollowers);
 
     }
@@ -109,6 +112,54 @@ export class Markdowner {
     }
 
     return existingContent;
+  }
+
+  private addModerators = async (existingContent: string) : Promise<string> => {
+    this.activeStream = this.activeStream as IStream;
+
+    if (this.activeStream.moderators) {
+      let response: string = `### Moderators\n\n`;
+
+      for (const mod of this.activeStream.moderators) {
+        const displayName: string = mod.display_name || mod.login;
+        const userLine: string = `- ${this.addLink(displayName, 'https://twitch.tv/' + mod.login)}`;
+        response = response + `${userLine}\n`;
+      }
+      return existingContent + response + `\n`;
+    }
+
+    return existingContent;
+  }
+
+  private addContributors = async (existingContent: string) : Promise<string> => {
+    this.activeStream = this.activeStream as IStream;
+
+    let contributors: IUserInfo[] = [];
+
+    if (this.activeStream.contributors) {
+      contributors.push(...this.activeStream.contributors);
+    }
+
+    if (this.activeStream.candleVotes) {
+      contributors.push(...this.activeStream.candleVotes.map(m => m.user));
+    }
+
+    if (this.activeStream.segments) {
+      contributors.push(...this.activeStream.segments.map(m => m.user));
+    }
+
+    contributors = [...new Set(contributors.filter((f: IUserInfo) =>
+                                        f.login !== config.twitchClientUsername &&
+                                        f.login !== config.twitchBotUsername))];
+
+    let response: string = `### Contributors\n\n`;
+
+    for (const user of contributors) {
+      const displayName: string = user.display_name || user.login;
+      const userLine: string = `- ${this.addLink(displayName, 'https://twitch.tv/' + user.login)}`;
+      response = response + `${userLine}\n`;
+    }
+    return existingContent + response + `\n`;
   }
 
   private  addCandle = async (existingContent: string) : Promise<string> => {
