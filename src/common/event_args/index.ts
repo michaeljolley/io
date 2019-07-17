@@ -16,6 +16,8 @@ import { INewCheerEventArg } from "./newCheerEventArg";
 import { INewFollowerEventArg } from "./newFollowerEventArg";
 import { IMediaEventArg } from "./mediaEventArg";
 import { INewSegmentEventArg } from './newSegmentEventArg';
+import { INewGoalEventArg } from './newGoalEventArg';
+import { INewNoteEventArg } from './newNoteEventArg';
 import { IThemerEventArg } from './themerEventArg';
 import { IUserEventArg } from './userEventArg';
 
@@ -31,6 +33,8 @@ export {
   IMediaEventArg,
   INewCheerEventArg,
   INewFollowerEventArg,
+  INewGoalEventArg,
+  INewNoteEventArg,
   INewRaidEventArg,
   INewSegmentEventArg,
   INewSubscriptionEventArg,

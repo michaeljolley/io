@@ -22,7 +22,9 @@ import {
   ICandleVoteResultEventArg,
   INewSegmentEventArg,
   IUserEventArg,
-  IThemerEventArg
+  IThemerEventArg,
+  INewGoalEventArg,
+  INewNoteEventArg
 } from './event_args';
 
 export class IOHub {
@@ -115,9 +117,21 @@ export class IOHub {
         this.onPlayAudio(mediaEvent)
       );
       socket.on('stopAudio', () => this.onStopAudio());
-      socket.on('newSegment', (segmentEvent: INewSegmentEventArg) => this.onNewSegment(segmentEvent));
-      socket.on('onTwitchThemer', (themerEvent: IThemerEventArg) => this.onTwitchThemer(themerEvent));
-      socket.on('onModeratorJoined', (userEvent: IUserEventArg) => this.onModeratorJoined(userEvent));
+      socket.on('newSegment', (segmentEvent: INewSegmentEventArg) =>
+        this.onNewSegment(segmentEvent)
+      );
+      socket.on('onTwitchThemer', (themerEvent: IThemerEventArg) =>
+        this.onTwitchThemer(themerEvent)
+      );
+      socket.on('onModeratorJoined', (userEvent: IUserEventArg) =>
+        this.onModeratorJoined(userEvent)
+      );
+      socket.on('newNote', (noteEvent: INewNoteEventArg) =>
+        this.newNote(noteEvent)
+      );
+      socket.on('newGoal', (goalEvent: INewGoalEventArg) =>
+        this.newGoal(goalEvent)
+      );
 
       /**
        * Candle related events
@@ -128,12 +142,16 @@ export class IOHub {
       socket.on('candleStop', (streamEvent: IStreamEventArg) =>
         this.onCandleStop(streamEvent)
       );
-      socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) => this.onCandleVote(candleVoteEventArg));
+      socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) =>
+        this.onCandleVote(candleVoteEventArg)
+      );
       socket.on('candleWinner', (candleWinnerEventArg: ICandleWinnerEventArg) =>
         this.onCandleWinner(candleWinnerEventArg)
       );
-      socket.on('candleVoteUpdate', (candleVoteResultEventArg: ICandleVoteResultEventArg) =>
-        this.onCandleVoteUpdate(candleVoteResultEventArg)
+      socket.on(
+        'candleVoteUpdate',
+        (candleVoteResultEventArg: ICandleVoteResultEventArg) =>
+          this.onCandleVoteUpdate(candleVoteResultEventArg)
       );
     });
   }
@@ -222,13 +240,23 @@ export class IOHub {
   }
 
   private onTwitchThemer(themerEvent: IThemerEventArg) {
-    log('info', `onTwitchThemer: ${themerEvent.clipName}`);
+    log('info', `onTwitchThemer: ${themerEvent.user.login}`);
     this.io.emit('onTwitchThemer', themerEvent);
   }
 
   private onModeratorJoined(userEvent: IUserEventArg) {
     log('info', `onModeratorJoined: ${userEvent.user.login}`);
     this.io.emit('onModeratorJoined', userEvent);
+  }
+
+  private newNote(noteEvent: INewNoteEventArg) {
+    log('info', `newNote: ${noteEvent.streamNote.user.login}`);
+    this.io.emit('newNote', noteEvent);
+  }
+
+  private newGoal(goalEvent: INewGoalEventArg) {
+    log('info', `newGoal: ${goalEvent.streamGoal.name}`);
+    this.io.emit('newGoal', goalEvent);
   }
 
   private onStopAudio() {
@@ -254,7 +282,9 @@ export class IOHub {
   private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
     log(
       'info',
-      `onCandleWinner: ${candleWinnerEvent.streamId} - ${candleWinnerEvent.candle.label}`
+      `onCandleWinner: ${candleWinnerEvent.streamId} - ${
+        candleWinnerEvent.candle.label
+      }`
     );
     this.io.emit('candleWinner', candleWinnerEvent);
   }
@@ -265,7 +295,12 @@ export class IOHub {
   }
 
   private onCandleVote(candleVoteEvent: ICandleVoteEventArg) {
-    log('info', `onCandleVote: ${candleVoteEvent.userInfo.login} - ${candleVoteEvent.candle.label}`);
+    log(
+      'info',
+      `onCandleVote: ${candleVoteEvent.userInfo.login} - ${
+        candleVoteEvent.candle.label
+      }`
+    );
     this.io.emit('candleVote', candleVoteEvent);
   }
 
@@ -274,7 +309,9 @@ export class IOHub {
     this.io.emit('candleReset', streamEvent);
   }
 
-  private onCandleVoteUpdate(candleVoteResultEventArg: ICandleVoteResultEventArg) {
+  private onCandleVoteUpdate(
+    candleVoteResultEventArg: ICandleVoteResultEventArg
+  ) {
     log('info', 'onCandleVoteUpdate');
     this.io.emit('candleVoteUpdate', candleVoteResultEventArg);
   }

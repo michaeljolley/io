@@ -10,7 +10,9 @@ import {
   ICheer,
   IRaider,
   IUserInfo,
-  IStreamSegment
+  IStreamSegment,
+  IStreamGoal,
+  IStreamNote
 } from "../models";
 
 export class StreamDb {
@@ -149,6 +151,64 @@ export class StreamDb {
     );
   };
 
+  public recordGoal = async (
+    streamId: string,
+    goal: IStreamGoal
+  ): Promise<boolean> => {
+    log("info", `recordGoal: ${goal.name}`);
+
+    // record goal
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            goals: goal
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordGoal ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
+  };
+
+  public recordNote = async (
+    streamId: string,
+    note: IStreamNote
+  ): Promise<boolean> => {
+    log("info", `recordNote: ${note.user.login}: ${note.name}`);
+
+    // record goal
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            notes: { user: note.user._id, name: note.name }
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordNote ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
+  };
+
   public recordUser = async (
     streamId: string,
     type: string,
@@ -158,26 +218,34 @@ export class StreamDb {
 
     const stream = await this.getStream(streamId);
 
-    if (
-      stream &&
-      (stream.get(type) == null ||
-        stream.get(type).find(
-          (f: IUserInfo) => f._id === user._id
-        ) === undefined)
-    ) {
+    if (stream) {
       // record user
 
       let data: any = {};
 
+      log('info', `recordUser: ${JSON.stringify(stream)}`);
+
       switch (type) {
-        case 'contributor':
-          data = {'contributors': { user: user._id } };
+        case 'contributors':
+          if (stream.contributors &&
+              stream.contributors.find((f: IUserInfo) => f._id == user._id) !== undefined) {
+                return true;
+              }
+          data = {'contributors': user._id };
           break;
-        case 'moderator':
-          data = {'moderators': { user: user._id } };
+        case 'moderators':
+          if (stream.moderators &&
+              stream.moderators.find((f: IUserInfo) => f._id == user._id) !== undefined) {
+                return true;
+              }
+          data = {'moderators': user._id };
           break;
-        case 'follower':
-          data = {'followers': { user: user._id } };
+        case 'followers':
+          if (stream.followers &&
+              stream.followers.find((f: IUserInfo) => f._id == user._id) !== undefined) {
+                return true;
+              }
+          data = {'followers': user._id };
           break;
       }
 

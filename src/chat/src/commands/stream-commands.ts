@@ -1,7 +1,8 @@
 import moment = require('moment');
-import { IStream, IUserInfo, IStreamSegment } from '../models';
+import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '../models';
 import { ChatUserstate } from 'tmi.js';
-import { INewSegmentEventArg, IBaseEventArg } from '../event_args/index';
+import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '../event_args/index';
+import { isBroadcaster } from '../common';
 
 export const uptimeCommand = (
   message: string,
@@ -121,6 +122,48 @@ export const segmentCommand = (
   };
 
   emitMessageFunc('newSegment', newSegmentEvent);
+
+  return true;
+};
+
+export const goalCommand = (
+  message: string,
+  user: ChatUserstate,
+  userInfo: IUserInfo,
+  activeStream: IStream | undefined,
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
+): boolean => {
+
+  if (
+    message === undefined ||
+    userInfo === undefined ||
+    activeStream === undefined ||
+    message.length === 0 ||
+    emitMessageFunc === undefined ||
+    isBroadcaster(user) === false
+  ) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!goal') {
+    return false;
+  }
+
+  const newGoal: IStreamGoal = {
+    accomplished: false,
+    name: message.slice(6)
+  };
+
+  const newStreamGoalEvent: INewGoalEventArg = {
+    streamGoal: newGoal,
+    streamId: activeStream.id
+  };
+
+  emitMessageFunc('newGoal', newStreamGoalEvent);
 
   return true;
 };

@@ -17,6 +17,7 @@ import {
   AVCommands,
   BasicCommands,
   CandleCommands,
+  NoteCommands,
   StreamCommands
 } from './commands';
 
@@ -398,6 +399,23 @@ export class TwitchChat {
           user,
           userInfo,
           this.activeStream,
+          this.sendChatMessage,
+          this.emitMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
+      }
+    }
+
+    if (!handledByCommand) {
+      for (const noteCommand of Object.values(NoteCommands)) {
+        handledByCommand = await noteCommand(
+          originalMessage,
+          user,
+          userInfo,
+          this.activeStream,
+          this.getUser,
           this.sendChatMessage,
           this.emitMessage
         );

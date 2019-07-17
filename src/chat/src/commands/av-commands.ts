@@ -166,7 +166,7 @@ export const stopAudioCommand = (
   userInfo: IUserInfo,
   activeStream: IStream | undefined,
   twitchChatFunc: (message: string) => void,
-  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
+  emitMessageFunc: (event: string, payload: any) => void
 ): boolean => {
 
   if (activeStream) {
@@ -182,7 +182,7 @@ export const stopAudioCommand = (
     }
 
     if (twitchChatFunc) {
-      emitMessageFunc('stopAudio');
+      emitMessageFunc('stopAudio', undefined);
       return true;
     }
   }
