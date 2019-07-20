@@ -177,7 +177,10 @@ export class Markdowner {
 
     const tempContributors: any[] = [];
     contributors = contributors.filter((n: any) => {
-                    return tempContributors.indexOf(n.id) === -1 && tempContributors.push(n.id);
+                    return tempContributors.indexOf(n.id) === -1 &&
+                            n.login !== config.twitchClientUsername &&
+                            n.login !== config.twitchBotUsername &&
+                            tempContributors.push(n.id);
                   });
 
     let response: string = `### Contributors\n\n`;
