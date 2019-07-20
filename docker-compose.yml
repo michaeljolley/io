@@ -99,6 +99,17 @@ services:
     depends_on:
       - api
       - mongo
+  webhooks:
+    build:
+      context: .
+      dockerfile: src/webhooks/Dockerfile
+    image: io/webhooks
+    restart: always
+    ports:
+      - "5005:80"
+    depends_on:
+      - hub
+      - user
   mongo:
     image: mongo:4.0
     restart: always

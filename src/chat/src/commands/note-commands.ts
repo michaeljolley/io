@@ -20,7 +20,7 @@ export const noteCommand = async (
     message.length === 0 ||
     message.split(' ').length < 3 ||
     emitMessageFunc === undefined ||
-    (isBroadcaster(user) === false && isMod(user))
+    (isBroadcaster(user) === false && !isMod(user))
   ) {
     return false;
   }

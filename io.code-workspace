@@ -28,6 +28,9 @@
 			"path": "src/user"
 		},
 		{
+			"path": "src/webhooks"
+		},
+		{
 			"path": "src/common"
 		},
 		{

@@ -10,7 +10,8 @@ const {
   TWITCH_BOT_USERNAME,
   TWITCH_BOT_TOKEN,
   GITHUB_USER,
-  GITHUB_PASSWORD
+  GITHUB_PASSWORD,
+  NGROK_AUTH_TOKEN
 } = process.env;
 
 const requireConfigMessage = 'REQUIRED CONFIGURATION WAS NOT PROVIDED';
@@ -50,3 +51,6 @@ export const githubPassword: string =
 
 export const githubUsername: string =
   GITHUB_USER || requireConfigMessage;
+
+export const ngrokAuthToken: string =
+  NGROK_AUTH_TOKEN || requireConfigMessage;

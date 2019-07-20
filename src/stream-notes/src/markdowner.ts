@@ -175,18 +175,10 @@ export class Markdowner {
       contributors.push(...this.activeStream.notes.map(m => m.user));
     }
 
-    contributors = contributors
-      .map((m: IUserInfo) => m._id)
-      .filter((v: any, i: number, a: any[]) => {
-        return i === a.indexOf(v);
-      })
-      .filter(
-        (f: IUserInfo) =>
-          // tslint:disable-next-line: triple-equals
-          f.login != config.twitchClientUsername &&
-          // tslint:disable-next-line: triple-equals
-          f.login != config.twitchBotUsername
-      );
+    const tempContributors: any[] = [];
+    contributors = contributors.filter((n: any) => {
+                    return tempContributors.indexOf(n.id) === -1 && tempContributors.push(n.id);
+                  });
 
     let response: string = `### Contributors\n\n`;
 
