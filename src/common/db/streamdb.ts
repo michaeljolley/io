@@ -220,10 +220,7 @@ export class StreamDb {
 
     if (stream) {
       // record user
-
       let data: any = {};
-
-      log('info', `recordUser: ${JSON.stringify(stream)}`);
 
       switch (type) {
         case 'contributors':

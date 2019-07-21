@@ -89,6 +89,7 @@ export class Chron {
       // stream started
       if (resp.started_at !== undefined && this.activeStream === undefined) {
         this.activeStream = resp;
+        streamEventArg.stream = this.activeStream;
         this.emitMessage('streamStart', streamEventArg);
         log('info', `Stream started: ${this.activeStream.id}`);
       }

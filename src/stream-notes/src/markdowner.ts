@@ -262,11 +262,10 @@ ${this.addLink(
 
       for (const segment of this.activeStream.segments) {
         const segmentTime = moment(segment.timestamp);
-        const timestamp = moment
-          .utc(moment.duration(startedAt.diff(segmentTime)).as('milliseconds'))
-          .format('HH:mm:ss');
+        const timestamp = moment.duration(segmentTime.diff(startedAt));
+        const stringTimeStamp = `0${timestamp.get('hours')}:${timestamp.get('minutes')}`;
 
-        response = response + `| ${timestamp} | ${segment.topic} |\n`;
+        response = response + `| ${stringTimeStamp} | ${segment.topic} |\n`;
       }
     }
 

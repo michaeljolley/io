@@ -21,6 +21,9 @@ export class WebHook {
     this.socket.on('streamStart', (streamEvent: IStreamEventArg) =>
       this.onStreamStart(streamEvent)
     );
+    this.socket.on('streamUpdate', (streamEvent: IStreamEventArg) =>
+      this.onStreamUpdate(streamEvent)
+    );
     this.socket.on('streamEnd', (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
     );
@@ -28,6 +31,7 @@ export class WebHook {
     // Unsubscribe from Webhooks
     // otherwise it will try to send events to a down app
     process.on('SIGINT', () => {
+      log('info', "I'm going bye-bye");
       this.unregisterWebhooks();
       process.exit(0);
     });
@@ -35,7 +39,6 @@ export class WebHook {
 
   // tslint:disable-next-line: no-empty
   public go() {
-
   }
 
   private onStreamStart(streamEvent: IStreamEventArg) {
@@ -43,6 +46,16 @@ export class WebHook {
     this.activeStream = streamEvent.stream;
 
     this.connectTwitchFollowersWebhook();
+  }
+
+  private onStreamUpdate(streamEvent: IStreamEventArg) {
+    log('info', `onStreamUpdate: ${JSON.stringify(streamEvent.stream.id)}`);
+
+    if (this.activeStream === undefined) {
+      this.activeStream = streamEvent.stream;
+
+      this.connectTwitchFollowersWebhook();
+    }
   }
 
   private onStreamEnd(streamEvent: IStreamEventArg) {
@@ -68,48 +81,55 @@ export class WebHook {
 
   private async connectTwitchFollowersWebhook() {
 
-    const ngrokUrl = await this.ngrok.getUrl();
-    this.twitchFollowerWebhook = new TwitchWebhook({
-      callback: `${ngrokUrl}`,
-      client_id: config.twitchClientId,
-      lease_seconds: 43200, // 12 hours
-      listen: {
-        port: 80
-      }
-    });
+    this.ngrok.getUrl()
+        .then((ngrokUrl: string) => {
+          log('info', `Received ${ngrokUrl} from nGrok`);
 
-    this.twitchFollowerWebhook.on('users/follows', async (event: any) => {
-      log('info', JSON.stringify(event));
+          this.twitchFollowerWebhook = new TwitchWebhook({
+            callback: `${ngrokUrl}`,
+            client_id: config.twitchClientId,
+            lease_seconds: 43200, // 12 hours
+            listen: {
+              port: 80
+            }
+          });
 
-      if (this.activeStream &&
-          event &&
-          event.data &&
-          event.data.length > 0) {
+          this.twitchFollowerWebhook.on('users/follows', async (event: any) => {
+            log('info', JSON.stringify(event));
 
-          const followerUserName: string = event.data[0].from_name || '';
+            if (this.activeStream &&
+                event &&
+                event.data &&
+                event.data.length > 0) {
 
-          const follower: IUserInfo | undefined = await this.getUser(followerUserName);
+                const followerUserName: string = event.data[0].from_name || '';
 
-          if (follower) {
-            const followerEvent: INewFollowerEventArg = {
-              follower,
-              streamId: this.activeStream.id
-            };
+                const follower: IUserInfo | undefined = await this.getUser(followerUserName);
 
-            this.emitMessage('newFollow', followerEvent);
-          }
-      }
-    });
+                if (follower) {
+                  const followerEvent: INewFollowerEventArg = {
+                    follower,
+                    streamId: this.activeStream.id
+                  };
 
-    this.twitchFollowerWebhook.subscribe('users/follows', {
-      first: 1,
-      from_id: config.twitchClientUserId // ID of Twitch Channel
-    });
+                  this.emitMessage('newFollow', followerEvent);
+                }
+            }
+          });
 
-    // renew the subscription when it expires
-    this.twitchFollowerWebhook.on('unsubscibe', (obj: any) => {
-      this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
-    });
+          this.twitchFollowerWebhook.subscribe('users/follows', {
+            first: 1,
+            from_id: config.twitchClientUserId // ID of Twitch Channel
+          });
+
+          // renew the subscription when it expires
+          this.twitchFollowerWebhook.on('unsubscibe', (obj: any) => {
+            this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
+          });
+        })
+        .catch((err: any) => {
+          log('info', err);
+        });
   }
 
   private getUser = async (
