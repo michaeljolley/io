@@ -37,34 +37,33 @@ body {
 }
 
 .candle:nth-child(1) .body {
-  background-color: #6e0696;
+  background-color: rgba(110, 6, 150, .6);
 }
 .candle:nth-child(2) .body {
-  background-color: #a509e3;
+  background-color: rgba(165, 9, 227, .6);
 }
 .candle:nth-child(3) .body {
-  background-color: #8839A8;
+  background-color: rgba(136, 57, 168, .6);
 }
 .candle:nth-child(4) .body {
-  background-color: #B94DE3;
+  background-color: rgba(185, 77, 227, .6);
 }
 .candle:nth-child(5) .body {
-  background-color: #480463;
+  background-color: rgba(72, 4, 99, .6);
 }
 .candle:nth-child(6) .body {
-  background-color: #a509e3;
+  background-color: rgba(165, 9, 227, .6);
 }
 .candle:nth-child(7) .body {
-  background-color: #6e0696;
+  background-color: rgba(110, 6, 150, .6);
 }
 
 .done .candle:not(:first-child) .body {
-  background-color: #444;
+  background-color: rgba(68, 68, 68, .6);
 }
 .done .candle:not(:first-child) .title {
-  color: #555;
+  color: rgba(85, 85, 85, .6);
 }
-
 
 .voter img {
   background: #000;
