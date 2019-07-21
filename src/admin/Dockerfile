@@ -1,4 +1,4 @@
-FROM node AS build
+FROM node:12.6.0-alpine
 
 ARG BUILDVERSION=0.0.0
 
