@@ -33,6 +33,11 @@ export class WebHook {
     });
   }
 
+  // tslint:disable-next-line: no-empty
+  public go() {
+
+  }
+
   private onStreamStart(streamEvent: IStreamEventArg) {
     log('info', `onStreamStart: ${JSON.stringify(streamEvent.stream.id)}`);
     this.activeStream = streamEvent.stream;

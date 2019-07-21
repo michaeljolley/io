@@ -136,6 +136,7 @@ export class Helix {
   }
 
   public async getStream(): Promise<any> {
+    // return this.testStream;
     const queries: string = queryString.stringify({
       user_id: [config.twitchClientUserId],
       first: 1

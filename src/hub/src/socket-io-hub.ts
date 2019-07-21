@@ -139,6 +139,9 @@ export class IOHub {
       socket.on('candleReset', (streamEvent: IStreamEventArg) =>
         this.onCandleReset(streamEvent)
       );
+      socket.on('candleStart', (streamEvent: IStreamEventArg) =>
+        this.onCandleStart(streamEvent)
+      );
       socket.on('candleStop', (streamEvent: IStreamEventArg) =>
         this.onCandleStop(streamEvent)
       );
@@ -287,6 +290,11 @@ export class IOHub {
       }`
     );
     this.io.emit('candleWinner', candleWinnerEvent);
+  }
+
+  private onCandleStart(streamEvent: IStreamEventArg) {
+    log('info', 'onCandleStart');
+    this.io.emit('candleStart', streamEvent);
   }
 
   private onCandleStop(streamEvent: IStreamEventArg) {

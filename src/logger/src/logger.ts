@@ -203,8 +203,8 @@ export class Logger {
     );
     // Only need to set the streams candle property
     await this.streamDb.saveStream({
-      id: candleWinnerEvent.streamId,
-      candle: candleWinnerEvent.candle
+      candle: candleWinnerEvent.candle,
+      id: candleWinnerEvent.streamId
     });
   }
 
@@ -240,7 +240,7 @@ export class Logger {
         log('info', `winner: ${JSON.stringify(winner)}`);
         if (winner) {
           const candleWinnerEventArg: ICandleWinnerEventArg = {
-            candle: winner,
+            candle: winner.candle,
             streamId: streamEvent.stream.id
           };
 
@@ -280,18 +280,23 @@ const tabulateResults = (
   candles: ICandle[],
   votes: ICandleVote[]
 ): ICandleVoteResult[] => {
-  const voteResults: any = _.groupBy(votes, 'candle.name');
+  const voteResults = _.groupBy(votes, 'candle.name');
 
   const results: ICandleVoteResult[] = [];
 
   for (const key of Object.keys(voteResults)) {
-    const candleVoteResult: ICandleVoteResult = candles.find(
+    const candle: any = candles.find(
       (f: any) => f.name === key
-    ) as ICandleVoteResult;
-    if (candleVoteResult) {
+    );
+    if (candle) {
       log('info', `${key}: ${voteResults[key].length}`);
-      candleVoteResult.votes = voteResults[key].length;
-      results.push(candleVoteResult);
+      const voteResult: ICandleVoteResult = {
+        candle,
+        voters: voteResults[key].map(m => m.user),
+        votes: voteResults[key].length
+      };
+
+      results.push(voteResult);
     }
   }
 
