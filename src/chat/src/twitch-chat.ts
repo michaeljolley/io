@@ -76,11 +76,13 @@ export class TwitchChat {
     this.socket.on(
       'candleWinner',
       (candleWinner: ICandleWinnerEventArg) => {
-        this.sendChatMessage(
-          `The vote is over and today's Candle to Code By is ${
-            candleWinner.candle.label
-          }.  You can try it yourself at ${candleWinner.candle.url}`
-        );
+        setTimeout(() => {
+          this.sendChatMessage(
+            `The vote is over and today's Candle to Code By is ${
+              candleWinner.candle.label
+            }.  You can try it yourself at ${candleWinner.candle.url}`
+          );
+        }, 12500);
       }
     );
 
