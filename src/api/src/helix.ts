@@ -113,25 +113,27 @@ export class Helix {
 
     let lastSubscriber: string = '';
 
-    // loop through events and find:
-    // first event with an event_type of subscriptions.notification
-    // or event_type of subscriptions.subscribe and event_data.is_gift === true
-    let i: number = 0;
-    for (i = 0; i < subscriptionEvents.length; i++) {
-      const eventData = subscriptionEvents[i];
-      if (
-        // tslint:disable-next-line: triple-equals
-        eventData.event_type == "subscriptions.notification" ||
-        // tslint:disable-next-line: triple-equals
-        (eventData.event_type == "subscriptions.subscribe" &&
-         eventData.event_data.is_gift === true)
-      ) {
-        lastSubscriber = subscriptionEvents[i].event_data.user_name;
-        break;
+    if (subscriptionEvents) {
+      // loop through events and find:
+      // first event with an event_type of subscriptions.notification
+      // or event_type of subscriptions.subscribe and event_data.is_gift === true
+      let i: number = 0;
+      for (i = 0; i < subscriptionEvents.length; i++) {
+        const eventData = subscriptionEvents[i];
+        if (
+          // tslint:disable-next-line: triple-equals
+          eventData.event_type == "subscriptions.notification" ||
+          // tslint:disable-next-line: triple-equals
+          (eventData.event_type == "subscriptions.subscribe" &&
+          eventData.event_data.is_gift === true)
+        ) {
+          lastSubscriber = subscriptionEvents[i].event_data.user_name;
+          break;
+        }
       }
     }
 
-    log('info', lastSubscriber);
+    log('info', `getLastSubscriber: ${lastSubscriber}`);
     return lastSubscriber;
   }
 
