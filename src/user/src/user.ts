@@ -66,32 +66,34 @@ export class User {
     if (user) {
       log('info', `Retrieved from db: ${username}`);
       this.users.push(user);
-    } else {
-      const url = `${this.usersUrl}${username}`;
-
-      user = await get(url);
-
-      log('info', `Retrieved from api: ${username}`);
-      this.userDb.saveUserInfo(user)
-          .then((success: boolean) => {
-
-            this.userDb.getUserInfo(username)
-                .then((user: IUserInfo | undefined) => {
-                  if (user) {
-                    this.users.push(user);
-                    return user;
-                  }
-                })
-                .catch((err: any) => {
-                  log('info', err);
-                });
-
-          })
-          .catch((err: any) => {
-            log('info', err);
-          });
+      return user;
     }
-    return undefined;
+
+    const url = `${this.usersUrl}${username}`;
+
+    user = await get(url);
+
+    log('info', `Retrieved from api: ${username}`);
+    this.userDb.saveUserInfo(user)
+        .then((success: boolean) => {
+
+          this.userDb.getUserInfo(username)
+              .then((savedUser: IUserInfo | undefined) => {
+                if (savedUser) {
+                  this.users.push(savedUser);
+                  return savedUser;
+                }
+              })
+              .catch((err: any) => {
+                log('info', err);
+                return undefined;
+              });
+
+        })
+        .catch((err: any) => {
+          log('info', err);
+          return undefined;
+        });
   };
 
   /**
