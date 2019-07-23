@@ -29,6 +29,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://c-j.tech"><img src="https://avatars0.githubusercontent.com/u/3969086?v=4" width="100px;" alt="Chris Jones"/><br /><sub><b>Chris Jones</b></sub></a><br /><a href="#ideas-cmjchrisjones" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
   <tr>
+    <td align="center"><a href="https://github.com/Flyken271"><img src="https://avatars0.githubusercontent.com/u/39961800?v=4" width="100px;" alt="Flyken"/><br /><sub><b>Flyken</b></sub></a><br /><a href="#ideas-Flyken271" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/copperbeardy"><img src="https://avatars3.githubusercontent.com/u/4822063?v=4" width="100px;" alt="Davin Davies"/><br /><sub><b>Davin Davies</b></sub></a><br /><a href="#ideas-copperbeardy" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
