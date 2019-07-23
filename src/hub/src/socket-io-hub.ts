@@ -24,7 +24,8 @@ import {
   IUserEventArg,
   IThemerEventArg,
   INewGoalEventArg,
-  INewNoteEventArg
+  INewNoteEventArg,
+  INewAnnouncementEventArg
 } from './event_args';
 
 export class IOHub {
@@ -108,6 +109,11 @@ export class IOHub {
       );
       socket.on('newCheer', (newCheerEvent: INewCheerEventArg) =>
         this.onNewCheer(newCheerEvent)
+      );
+      socket.on(
+        'newAnnouncement',
+        (newAnnouncementEvent: INewAnnouncementEventArg) =>
+          this.onNewAnnouncement(newAnnouncementEvent)
       );
 
       /**
@@ -210,6 +216,11 @@ export class IOHub {
       }`
     );
     this.io.emit('newCheer', cheerEventArg);
+  }
+
+  private onNewAnnouncement(newAnnouncementEvent: INewAnnouncementEventArg) {
+    log('info', `onNewAnnouncement: ${newAnnouncementEvent.message}`);
+    this.io.emit('newAnnouncement', newAnnouncementEvent);
   }
 
   private onFollowerCount(followerCountArg: IFollowerCountEventArg) {

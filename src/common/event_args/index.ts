@@ -20,6 +20,7 @@ import { INewGoalEventArg } from './newGoalEventArg';
 import { INewNoteEventArg } from './newNoteEventArg';
 import { IThemerEventArg } from './themerEventArg';
 import { IUserEventArg } from './userEventArg';
+import { INewAnnouncementEventArg } from './newAnnouncementEventArg';
 
 export {
   IBaseEventArg,
@@ -31,6 +32,7 @@ export {
   IFollowerCountEventArg,
   ILastUserEventArg,
   IMediaEventArg,
+  INewAnnouncementEventArg,
   INewCheerEventArg,
   INewFollowerEventArg,
   INewGoalEventArg,

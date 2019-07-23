@@ -1,8 +1,8 @@
 import io from 'socket.io-client';
 
-import { get, log } from './common';
+import { get, log, config } from './common';
 import { IUserInfo } from './models';
-import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg } from './event_args';
+import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from './event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
@@ -26,6 +26,23 @@ export class Chron {
     setInterval(async () => {
       await this.broadcastFollowers();
     }, 60000);
+
+    // Every  minutes, announce that viewers can use !help to learn more about the commands
+    // available in chat
+    setInterval(async () => {
+      await this.broadcastAnnouncement("New here? You can type '!help' in chat to see what commands are available.");
+    }, 330000);
+
+    // Every  minutes, announce that viewers can use !theme to change the theme of VS Code
+    setInterval(async () => {
+      await this.broadcastAnnouncement("Change my VS Code theme. Type '!theme help' in chat to learn how.");
+    }, 540000);
+
+    // Every  minutes, announce that viewers can use !sfx to find out what sound effects they can control
+    // from chat
+    setInterval(async () => {
+      await this.broadcastAnnouncement("Want to play a sound? Type '!sfx' in chat to see what's available.");
+    }, 720000);
 
     // Every minute get the current viewer count
     setInterval(async () => {
@@ -134,6 +151,20 @@ export class Chron {
 
     return;
   };
+
+  private broadcastAnnouncement = async (message: string) : Promise<any> => {
+
+    const user = await this.getUser(config.twitchBotUsername);
+
+    if (user) {
+      const newAnnouncementEventArg: INewAnnouncementEventArg = {
+        message,
+        user
+      };
+
+      this.emitMessage('newAnnouncement', newAnnouncementEventArg);
+    }
+  }
 
   private getUser = async (
     username: string

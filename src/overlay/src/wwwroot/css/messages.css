@@ -20,14 +20,12 @@ div {
 img {
     width: 24px;
     border: 1px solid #AC85C4;
+    margin-right: 10px;
+    float: left;
 }
 
 .user {
     margin-top: 3px;
-}
-
-.name {
-    margin-left: 5px;
 }
 
 .message {

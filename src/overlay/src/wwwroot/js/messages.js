@@ -2,6 +2,12 @@
 
 const socket = io('http://localhost:5060');
 
+socket.on('newAnnouncement', (newAnnouncementEventArg) => {
+    const user = newAnnouncementEventArg.user;
+    const msg = newAnnouncementEventArg.message;
+    addAndStart(msg, undefined, user.profile_image_url, 10);
+})
+
 socket.on('newCheer', (newCheerEventArg) => {
     const cheerer = newCheerEventArg.cheerer;
     const displayName = cheerer.user.display_name || cheerer.user.login;
