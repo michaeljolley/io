@@ -4,17 +4,31 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./src/overlay .
-COPY ./src/common ./src
+# Copy overlay dependency files
+COPY ./src/overlay/package.json ./src/overlay/package-lock.json ./
 
+# Clean install overlay depdenencies
+RUN npm ci --silent
+
+# Copy common dependency files
+COPY ./src/common/package.json ./src/common/package-lock.json ./
+
+# Clean install common depdenencies
 WORKDIR /app/src
-
-RUN npm install
-
+RUN npm ci --silent
 WORKDIR /app
 
-RUN npm install
+# ^^^^
+# All layers above are cached, the below layers change more often
+# vvvv
 
+# Copy overlay application code
+COPY ./src/overlay .
+
+# Copy common application code
+COPY ./src/common ./src
+
+# Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
 

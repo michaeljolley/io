@@ -4,17 +4,31 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./src/admin .
-COPY ./src/common ./src
+# Copy admin dependency files
+COPY ./src/admin/src/package.json ./src/admin/src/package-lock.json ./
 
+# Clean install admin depdenencies
+RUN npm ci --silent
+
+# Copy common dependency files
+COPY ./src/common/package.json ./src/common/package-lock.json ./
+
+# Clean install common depdenencies
 WORKDIR /app/src
-
-RUN npm install
-
+RUN npm ci --silent
 WORKDIR /app
 
-RUN npm install
+# ^^^^
+# All layers above are cached, the below layers change more often
+# vvvv
 
+# Copy admin application code
+COPY ./src/admin .
+
+# Copy common application code
+COPY ./src/common ./src
+
+# Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
 
