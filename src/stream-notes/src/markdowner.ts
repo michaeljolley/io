@@ -57,9 +57,10 @@ export class Markdowner {
   };
 
   private addRaiders = async (existingContent: string): Promise<string> => {
-    this.activeStream = this.activeStream as IStream;
+    this.activeStream = this.activeStream as IStream | undefined;
 
-    if (this.activeStream.raiders) {
+    if (this.activeStream && this.activeStream.raiders) {
+
       let response: string = `### Raids\n
 | Marauder            | Accomplices |
 | ---                 | ---         |\n`;
@@ -155,45 +156,49 @@ export class Markdowner {
   private addContributors = async (
     existingContent: string
   ): Promise<string> => {
-    this.activeStream = this.activeStream as IStream;
 
-    let contributors: IUserInfo[] = [];
+    if (this.activeStream) {
+      this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.contributors) {
-      contributors.push(...this.activeStream.contributors);
+      let contributors: IUserInfo[] = [];
+
+      if (this.activeStream.contributors) {
+        contributors.push(...this.activeStream.contributors);
+      }
+
+      if (this.activeStream.candleVotes) {
+        contributors.push(...this.activeStream.candleVotes.map(m => m.user));
+      }
+
+      if (this.activeStream.segments) {
+        contributors.push(...this.activeStream.segments.map(m => m.user));
+      }
+
+      if (this.activeStream.notes) {
+        contributors.push(...this.activeStream.notes.map(m => m.user));
+      }
+
+      const tempContributors: any[] = [];
+      contributors = contributors.filter((n: any) => {
+                      return tempContributors.indexOf(n.id) === -1 &&
+                              n.login !== config.twitchClientUsername &&
+                              n.login !== config.twitchBotUsername &&
+                              tempContributors.push(n.id);
+                    });
+
+      let response: string = `### Contributors\n\n`;
+
+      for (const user of contributors) {
+        const displayName: string = user.display_name || user.login;
+        const userLine: string = `- ${this.addLink(
+          displayName,
+          'https://twitch.tv/' + user.login
+        )}`;
+        response = response + `${userLine}\n`;
+      }
+      return existingContent + response + `\n`;
     }
-
-    if (this.activeStream.candleVotes) {
-      contributors.push(...this.activeStream.candleVotes.map(m => m.user));
-    }
-
-    if (this.activeStream.segments) {
-      contributors.push(...this.activeStream.segments.map(m => m.user));
-    }
-
-    if (this.activeStream.notes) {
-      contributors.push(...this.activeStream.notes.map(m => m.user));
-    }
-
-    const tempContributors: any[] = [];
-    contributors = contributors.filter((n: any) => {
-                    return tempContributors.indexOf(n.id) === -1 &&
-                            n.login !== config.twitchClientUsername &&
-                            n.login !== config.twitchBotUsername &&
-                            tempContributors.push(n.id);
-                  });
-
-    let response: string = `### Contributors\n\n`;
-
-    for (const user of contributors) {
-      const displayName: string = user.display_name || user.login;
-      const userLine: string = `- ${this.addLink(
-        displayName,
-        'https://twitch.tv/' + user.login
-      )}`;
-      response = response + `${userLine}\n`;
-    }
-    return existingContent + response + `\n`;
+    return existingContent;
   };
 
   private addCandle = async (existingContent: string): Promise<string> => {
