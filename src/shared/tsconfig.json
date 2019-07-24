@@ -3,13 +3,11 @@
     "target": "es2018",
     "module": "commonjs",
     "skipLibCheck": true,
-    "lib": [
-      "es2015",
-      "dom"
-    ],
+    "lib": ["es2015", "dom"],
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./common",
+    "rootDir": "./src",
+    "outDir": "./dist",
     "composite": true,
     "removeComments": true,
     "strict": true,
@@ -18,10 +16,8 @@
     "baseUrl": "./",
     "paths": {
       "*": ["types/*"]
-      },
-    "types": [
-      "node"
-    ],
+    },
+    "types": ["node"],
     "esModuleInterop": true
   }
 }

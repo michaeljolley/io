@@ -1,8 +1,8 @@
-FROM  io/common
+FROM  io/shared as build
 
 ARG BUILDVERSION=0.0.0
 
-WORKDIR /app
+WORKDIR /app/user
 
 # Copy user dependency files
 COPY ./src/user/package.json ./src/user/package-lock.json ./
@@ -31,6 +31,20 @@ COPY ./src/common ./src
 # Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
+
+# Put together the release image with the just build artifacts
+FROM node:12.6.0-alpine
+
+WORKDIR /app
+
+# Copy dependency files
+COPY ./package.json ./package-lock.json ./
+
+# Clean install production-only depdenencies
+RUN npm ci --silent --only=production
+
+
+COPY --from=build /app/user/dist .
 
 EXPOSE 80
 

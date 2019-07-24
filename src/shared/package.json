@@ -1,8 +1,9 @@
 {
-  "name": "io-common",
+  "name": "io-shared",
   "version": "1.0.0",
-  "description": "",
+  "description": "Shared library of models, event arguments, db access and functions.",
   "main": "index.js",
+  "repository": "github:michaeljolley/io",
   "scripts": {
     "debug": "node --inspect dist/index.js",
     "debug-compile": "node --inspect dist/index.js",

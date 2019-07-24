@@ -8,6 +8,7 @@
       "dom"
     ],
     "declaration": true,
+    "rootDir": "./src",
     "sourceMap": true,
     "outDir": "./dist",
     "composite": true,
@@ -25,6 +26,6 @@
     "esModuleInterop": true
   },
   "references": [
-    { "path": "../common"}
+    { "path": "../shared"}
   ]
 }
