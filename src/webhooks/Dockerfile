@@ -4,17 +4,31 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-COPY ./src/webhooks .
-COPY ./src/common ./src
+# Copy webhooks dependency files
+COPY ./src/webhooks/package.json ./src/webhooks/package-lock.json ./
 
+# Clean install webhook depdenencies
+RUN npm ci --silent
+
+# Copy common dependency files
 WORKDIR /app/src
+COPY ./src/common/package.json ./src/common/package-lock.json ./
 
-RUN npm install
-
+# Clean install common depdenencies
+RUN npm ci --silent
 WORKDIR /app
 
-RUN npm install
+# ^^^^
+# All layers above are cached, the below layers change more often
+# vvvv
 
+# Copy webhooks application code
+COPY ./src/webhooks .
+
+# Copy common application code
+COPY ./src/common ./src
+
+# Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
 
