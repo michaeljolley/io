@@ -11,10 +11,10 @@ COPY ./src/hub/package.json ./src/hub/package-lock.json ./
 RUN npm ci --silent
 
 # Copy common dependencies
-COPY ./src/common/package.json ./src/common/package-lock.json ./src/
+WORKDIR /app/src
+COPY ./src/common/package.json ./src/common/package-lock.json ./
 
 # Clean install common dependencies
-WORKDIR /app/src
 RUN npm ci --silent
 WORKDIR /app
 
