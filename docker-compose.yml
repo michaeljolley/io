@@ -46,6 +46,9 @@ services:
     depends_on:
       - api
       - hub
+  common:
+    build: src/common/Dockerfile
+    image: io/common
   hub:
     build:
       context: .

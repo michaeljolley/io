@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
-  "author": "",
+  "scripts": {
+    "debug": "node --inspect dist/index.js",
+    "debug-compile": "node --inspect dist/index.js",
+    "build": "tsc --build --verbose"
+  },
+  "author": "Michael Jolley <mike@sparcapp.io>",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.0.0",
@@ -23,6 +27,6 @@
     "eslint-config-prettier": "^5.0.0",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   }
 }

@@ -1,4 +1,4 @@
-FROM  io/common
+FROM node:12.6.0-alpine
 
 ARG BUILDVERSION=0.0.0
 
@@ -12,7 +12,3 @@ COPY ./ .
 
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
-
-EXPOSE 80
-
-CMD [ "npm", "start"]
