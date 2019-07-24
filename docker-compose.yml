@@ -9,8 +9,6 @@ services:
     restart: always
     ports:
       - "5090:80"
-    expose:
-      - "5090"
     depends_on:
       - mongo
   api:
@@ -54,8 +52,6 @@ services:
     restart: always
     ports:
       - "5060:80"
-    expose:
-      - "5060"
   logger:
     build:
       context: .
@@ -73,8 +69,6 @@ services:
     restart: always
     ports:
       - "5000:80"
-    expose:
-      - "5000"
     volumes:
       - ./assets:/app/dist/wwwroot/assets
     depends_on:
@@ -123,8 +117,6 @@ services:
     restart: always
     ports:
       - "8081:8081"
-    expose:
-      - "8081"
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
