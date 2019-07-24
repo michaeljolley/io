@@ -6,7 +6,7 @@
     "lib": ["es2015", "dom"],
     "declaration": true,
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./dist",
     "composite": true,
     "removeComments": true,

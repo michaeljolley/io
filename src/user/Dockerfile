@@ -2,7 +2,7 @@ FROM  io/shared as build
 
 ARG BUILDVERSION=0.0.0
 
-WORKDIR /app/user
+WORKDIR /app
 
 # Copy user dependency files
 COPY ./src/user/package.json ./src/user/package-lock.json ./
@@ -43,8 +43,11 @@ COPY ./package.json ./package-lock.json ./
 # Clean install production-only depdenencies
 RUN npm ci --silent --only=production
 
+WORKDIR /app/dist
 
-COPY --from=build /app/user/dist .
+COPY --from=build /app/dist .
+
+WORKDIR /app
 
 EXPOSE 80
 

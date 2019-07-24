@@ -1,9 +1,9 @@
 import express = require('express');
 import { Server } from 'http';
 
-import { get, log } from '../../shared/src/common';
-import { IUserInfo } from '../../shared/src/models';
-import { UserDb } from '../../shared/src/db';
+import { get, log } from './common';
+import { IUserInfo } from './models';
+import { UserDb } from './db';
 
 
 export class User {

@@ -1,36 +1,42 @@
-FROM node:12.6.0-alpine
+FROM  io/shared as build
 
 ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-# Copy stream-notes dependency files
-COPY ./src/stream-notes/package.json ./src/stream-notes/package-lock.json ./
+# Copy user dependency files
+COPY ./package.json ./package-lock.json ./
 
-# Clean install stream-notes depdenencies
+# Clean install user depdenencies
 RUN npm ci --silent
-
-# Copy common dependency files
-WORKDIR /app/src
-COPY ./src/common/package.json ./src/common/package-lock.json ./
-
-# Clean install common depdenencies
-RUN npm ci --silent
-WORKDIR /app
 
 # ^^^^
 # All layers above are cached, the below layers change more often
 # vvvv
 
-# Copy stream-notes application code
-COPY ./src/stream-notes .
-
-# Copy common application code
-COPY ./src/common ./src
+# Copy user application code
+COPY ./ .
 
 # Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
+
+# Put together the release image with the just build artifacts
+FROM node:12.6.0-alpine
+
+WORKDIR /app
+
+# Copy dependency files
+COPY ./package.json ./package-lock.json ./
+
+# Clean install production-only depdenencies
+RUN npm ci --silent --only=production
+
+WORKDIR /app/dist
+
+COPY --from=build /app/dist .
+
+WORKDIR /app
 
 EXPOSE 80
 

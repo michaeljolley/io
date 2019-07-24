@@ -7,11 +7,8 @@
       "es2015",
       "dom"
     ],
-    "declaration": true,
-    "rootDir": "./src",
     "sourceMap": true,
     "outDir": "./dist",
-    "composite": true,
     "removeComments": true,
     "strict": true,
     "noUnusedLocals": true,
@@ -20,12 +17,13 @@
     "paths": {
       "*": ["types/*"]
       },
+    "rootDirs": [
+      "./src",
+      "../shared"
+    ],
     "types": [
       "node"
     ],
     "esModuleInterop": true
-  },
-  "references": [
-    { "path": "../shared"}
-  ]
+  }
 }
