@@ -2,7 +2,7 @@ import express = require('express');
 import { Server } from 'http';
 
 import { Helix } from './helix';
-import { log } from './common';
+import { log } from '@shared/common';
 
 export class API {
   public app: express.Application;
