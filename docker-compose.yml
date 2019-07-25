@@ -1,6 +1,9 @@
 version: '3'
 
 services:
+  shared:
+    build: ./src/shared
+    image: io/shared
   admin:
     build: ./src/admin
     image: io/admin
@@ -9,12 +12,15 @@ services:
       - "5090:80"
     depends_on:
       - mongo
+      - shared
   api:
     build: ./src/api
     image: io/api
     restart: always
     ports:
       - "5001:80"
+    depends_on:
+      - shared
   chat:
     build: ./src/chat
     image: io/chat
@@ -27,6 +33,7 @@ services:
       - hub
       - api
       - mongo
+      - shared
   chron:
     build: ./src/chron
     image: io/chron
@@ -36,15 +43,15 @@ services:
     depends_on:
       - api
       - hub
-  common:
-    build: src/common/Dockerfile
-    image: io/common
+      - shared
   hub:
     build: ./src/hub
     image: io/hub
     restart: always
     ports:
       - "5060:80"
+    depends_on:
+      - shared
   logger:
     build: ./src/logger
     image: io/logger
@@ -52,6 +59,7 @@ services:
     depends_on:
       - hub
       - mongo
+      - shared
   overlay:
     build: ./src/overlay
     image: io/overlay
@@ -62,6 +70,7 @@ services:
       - ./assets:/app/dist/wwwroot/assets
     depends_on:
       - hub
+      - shared
   streamnotes:
     build: ./src/stream-notes
     image: io/streamnotes
@@ -69,6 +78,7 @@ services:
     depends_on:
       - api
       - hub
+      - shared
   user:
     build: ./src/user
     image: io/user
@@ -78,6 +88,7 @@ services:
     depends_on:
       - api
       - mongo
+      - shared
   webhooks:
     build: ./src/webhooks
     image: io/webhooks
@@ -87,6 +98,7 @@ services:
     depends_on:
       - hub
       - user
+      - shared
   mongo:
     image: mongo:4.0
     restart: always
