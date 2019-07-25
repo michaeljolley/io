@@ -9,7 +9,7 @@ import {
   IStreamEventArg
 } from './event_args';
 import { StreamDb } from './db';
-import { IStream } from './models/index';
+import { IStream } from './models';
 import { Markdowner } from './markdowner';
 
 export class StreamNotes {

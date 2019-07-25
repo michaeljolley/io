@@ -1,28 +1,28 @@
 version: '3'
 
 services:
+  shared:
+    build: ./src/shared
+    image: io-shared
   admin:
-    build:
-      context: .
-      dockerfile: src/admin/Dockerfile
+    build: ./src/admin
     image: io-admin
     restart: always
     ports:
       - "5090:80"
     depends_on:
       - mongo
+      - shared
   api:
-    build:
-      context: .
-      dockerfile: src/api/Dockerfile
+    build: ./src/api
     image: io-api
     restart: always
     ports:
       - "5001:80"
+    depends_on:
+      - shared
   chat:
-    build:
-      context: .
-      dockerfile: src/chat/Dockerfile
+    build: ./src/chat
     image: io-chat
     restart: always
     ports:
@@ -33,10 +33,9 @@ services:
       - hub
       - api
       - mongo
+      - shared
   chron:
-    build:
-      context: .
-      dockerfile: src/chron/Dockerfile
+    build: ./src/chron
     image: io-chron
     restart: always
     ports:
@@ -44,27 +43,25 @@ services:
     depends_on:
       - api
       - hub
+      - shared
   hub:
-    build:
-      context: .
-      dockerfile: src/hub/Dockerfile
+    build: ./src/hub
     image: io-hub
     restart: always
     ports:
       - "5060:80"
+    depends_on:
+      - shared
   logger:
-    build:
-      context: .
-      dockerfile: src/logger/Dockerfile
+    build: ./src/logger
     image: io-logger
     restart: always
     depends_on:
       - hub
       - mongo
+      - shared
   overlay:
-    build:
-      context: .
-      dockerfile: src/overlay/Dockerfile
+    build: ./src/overlay
     image: io-overlay
     restart: always
     ports:
@@ -73,19 +70,17 @@ services:
       - ./assets:/app/dist/wwwroot/assets
     depends_on:
       - hub
+      - shared
   streamnotes:
-    build:
-      context: .
-      dockerfile: src/stream-notes/Dockerfile
+    build: ./src/stream-notes
     image: io-streamnotes
     restart: always
     depends_on:
       - api
       - hub
+      - shared
   user:
-    build:
-      context: .
-      dockerfile: src/user/Dockerfile
+    build: ./src/user
     image: io-user
     restart: always
     ports:
@@ -93,10 +88,9 @@ services:
     depends_on:
       - api
       - mongo
+      - shared
   webhooks:
-    build:
-      context: .
-      dockerfile: src/webhooks/Dockerfile
+    build: ./src/webhooks
     image: io-webhooks
     restart: always
     ports:
@@ -104,6 +98,7 @@ services:
     depends_on:
       - hub
       - user
+      - shared
   mongo:
     image: mongo:4.0
     restart: always

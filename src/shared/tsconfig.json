@@ -7,8 +7,10 @@
       "es2015",
       "dom"
     ],
+    "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./common",
+    "composite": true,
     "removeComments": true,
     "strict": true,
     "noUnusedLocals": true,
@@ -17,10 +19,6 @@
     "paths": {
       "*": ["types/*"]
       },
-    "rootDirs": [
-      "./src",
-      "../shared"
-    ],
     "types": [
       "node"
     ],

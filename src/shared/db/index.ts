@@ -6,4 +6,4 @@ export {
   CandleDb,
   StreamDb,
   UserDb
-}
+};

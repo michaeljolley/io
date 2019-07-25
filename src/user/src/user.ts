@@ -5,6 +5,7 @@ import { get, log } from './common';
 import { IUserInfo } from './models';
 import { UserDb } from './db';
 
+
 export class User {
   public app: express.Application;
   private http!: Server;
@@ -12,6 +13,7 @@ export class User {
   private users: any[] = [];
   private usersUrl: string = 'http://api/users/';
   private userDb: UserDb;
+
 
   constructor() {
     this.app = express();
