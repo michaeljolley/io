@@ -1,7 +1,7 @@
 import express = require('express');
 import { Server } from 'http';
 
-import { log } from './common';
+import { log } from '@shared/common';
 
 export class Admin {
   public app: express.Application;

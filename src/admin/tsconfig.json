@@ -1,29 +1,16 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
-    "skipLibCheck": true,
-    "lib": [
-      "es2015",
-      "dom"
-    ],
-    "sourceMap": true,
     "outDir": "./dist",
-    "removeComments": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "moduleResolution": "node",
     "baseUrl": "./",
+    "rootDir": "./src",
     "paths": {
-      "*": ["types/*"]
-      },
-    "rootDirs": [
-      "./src",
-      "../shared"
-    ],
-    "types": [
-      "node"
-    ],
+      "*": ["types/*"],
+      "@shared/*": ["../shared/dist/*"]
+    },
     "esModuleInterop": true
-  }
+  },
+  "references":[
+    {"path":"../shared"}
+  ]
 }
