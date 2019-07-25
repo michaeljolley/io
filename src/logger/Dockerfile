@@ -4,18 +4,19 @@ ARG BUILDVERSION=0.0.0
 
 WORKDIR /app
 
-# Copy user dependency files
+# Copy dependency files
 COPY ./package.json ./package-lock.json ./
 
-# Clean install user depdenencies
+# Clean install depdenencies
 RUN npm ci --silent
 
 # ^^^^
 # All layers above are cached, the below layers change more often
 # vvvv
 
-# Copy user application code
+# Copy application code
 COPY ./ .
+
 
 # Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
@@ -37,7 +38,5 @@ WORKDIR /app/dist
 COPY --from=build /app/dist .
 
 WORKDIR /app
-
-EXPOSE 80
 
 CMD [ "npm", "start"]
