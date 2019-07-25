@@ -9,7 +9,7 @@
     ],
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./common",
     "composite": true,
     "removeComments": true,
     "strict": true,
@@ -23,8 +23,5 @@
       "node"
     ],
     "esModuleInterop": true
-  },
-  "references": [
-    { "path": "../common"}
-  ]
+  }
 }

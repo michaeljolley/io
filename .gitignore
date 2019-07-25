@@ -1,7 +1,7 @@
 # compiled js files
 /src/**/*.js
 /src/**/*.js.map
-/dist/*
+/dist/**/*
 /data/*
 
 !/src/overlay/src/wwwroot/js/*.js

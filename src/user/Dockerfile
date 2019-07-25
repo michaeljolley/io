@@ -1,4 +1,4 @@
-FROM node:12.6.0-alpine
+FROM  io/common
 
 ARG BUILDVERSION=0.0.0
 
