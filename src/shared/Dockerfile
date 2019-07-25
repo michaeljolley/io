@@ -2,7 +2,7 @@ FROM node:12.6.0-alpine
 
 ARG BUILDVERSION=0.0.0
 
-WORKDIR /app/shared
+WORKDIR /app/src
 
 # Copy dependency files
 COPY ./package.json ./package-lock.json ./

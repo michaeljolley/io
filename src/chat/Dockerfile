@@ -1,4 +1,4 @@
-FROM  io/shared as build
+FROM io-shared as build
 
 ARG BUILDVERSION=0.0.0
 
@@ -16,7 +16,6 @@ RUN npm ci --silent
 
 # Copy application code
 COPY ./ .
-
 
 # Build typescript files
 RUN npm version $BUILDVERSION --allow-same-version;
