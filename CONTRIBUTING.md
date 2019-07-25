@@ -17,7 +17,6 @@ might want to ask the contributor if they'd like some help.
 
 Go right ahead!  Just submit a pull request when you're done.
 
-
 ## Pull Requests
 
 We love pull requests from everyone.
