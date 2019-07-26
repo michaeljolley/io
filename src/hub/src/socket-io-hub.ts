@@ -2,7 +2,7 @@ import express = require('express');
 import { Server } from 'http';
 import io from 'socket.io';
 
-import { log } from './common';
+import { log } from '@shared/common';
 import {
   IChatMessageEventArg,
   IEmoteEventArg,
@@ -26,7 +26,7 @@ import {
   INewGoalEventArg,
   INewNoteEventArg,
   INewAnnouncementEventArg
-} from './event_args';
+} from '@shared/event_args';
 
 export class IOHub {
   public app: express.Application;
