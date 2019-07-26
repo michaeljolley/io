@@ -4,9 +4,9 @@ const TwitchWebhook = require('twitch-webhook');
 
 import { NGrok } from './ngrok';
 
-import { config, get, log } from './common';
-import { IBaseEventArg, INewFollowerEventArg, IStreamEventArg } from './event_args';
-import { IUserInfo, IStream } from './models';
+import { config, get, log } from '@shared/common';
+import { IBaseEventArg, INewFollowerEventArg, IStreamEventArg } from '@shared/event_args';
+import { IUserInfo, IStream } from '@shared/models';
 
 export class WebHook {
   private socket!: SocketIOClient.Socket;
