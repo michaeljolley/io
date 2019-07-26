@@ -1,6 +1,23 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ],
+    "declaration": true,
+    "composite": true,
+    "sourceMap": true,
+    "removeComments": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "moduleResolution": "node",
+    "types": [
+      "node"
+    ],
+    "esModuleInterop": true,    
     "outDir": "./dist",
     "baseUrl": "./",
     "rootDir": "./src",

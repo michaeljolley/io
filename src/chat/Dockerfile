@@ -2,7 +2,7 @@ FROM io-shared as build
 
 ARG BUILDVERSION=0.0.0
 
-WORKDIR /app
+WORKDIR /app/chat
 
 # Copy dependency files
 COPY ./package.json ./package-lock.json ./
@@ -24,7 +24,7 @@ RUN npm run build
 # Put together the release image with the just build artifacts
 FROM node:12.6.0-alpine
 
-WORKDIR /app
+WORKDIR /app/chat
 
 # Copy dependency files
 COPY ./package.json ./package-lock.json ./
@@ -32,12 +32,22 @@ COPY ./package.json ./package-lock.json ./
 # Clean install production-only depdenencies
 RUN npm ci --silent --only=production
 
-WORKDIR /app/dist
+WORKDIR /app/shared
 
-COPY --from=build /app/dist .
+# Copy shared dependencies
+COPY --from=build /app/shared/package.json /app/shared/package-lock.json ./
+
+# Clean install production-only dependencies for shared
+RUN npm ci --silent --only=production
 
 WORKDIR /app
 
+# Copy built project and shared files
+COPY --from=build /app/chat/dist ./chat/dist
+COPY --from=build /app/shared/dist ./shared/dist
+
+WORKDIR /app/chat
+
 EXPOSE 80
 
-CMD [ "npm", "start"]
+CMD [ "npm", "start" ]

@@ -14,7 +14,7 @@
     "start": "node dist/index.js",
     "debug": "node --inspect dist/index.js",
     "debug-compile": "npm run copy-assets && node --inspect dist/index.js",
-    "build": "npm run copy-assets && tsc",
+    "build": "npm run copy-assets && tsc -b",
     "copy-assets": "copyfiles -au 1 ./src/wwwroot/**/* ./src/wwwroot/* dist/ && copyfiles -u 3 ./node_modules/socket.io-client/dist/socket.io.js dist/wwwroot/js"
   },
   "author": "Michael Jolley <mike@sparcapp.io>",

@@ -7,11 +7,14 @@
     "url": "https://github.com/MichaelJolley/io"
   },
   "main": "index.js",
+  "_moduleAliases": {
+    "@shared": "../shared/dist"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "debug": "node --inspect dist/index.js",
     "debug-compile": "node --inspect dist/index.js",
-    "build": "tsc"
+    "build": "tsc -b"
   },
   "author": "",
   "license": "MIT",
