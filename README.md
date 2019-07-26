@@ -1,8 +1,30 @@
-# IO
+<p align="center">
+    <img src="https://user-images.githubusercontent.com/1228996/61920397-11dc2d80-af1f-11e9-9695-7263d1e1d0f2.png"/>
+</p>
 
 | master | vNext | Contributors |
 | --- | --- | --- |
 | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors) |
+
+IO is a Twitch chat-bot, overlay & stream note micro-service application.  
+
+## Services
+
+All services use Node.js & TypeScript unless otherwise noted.
+
+| Service           | Description                                                                                                             |
+| ---               | ---                                                                                                                     |
+| io-admin          | Web portal for administering entire system. (Under construction)                                                        |
+| io-api            | Express API used as a proxy between third-party API's and the IO system                                                 |
+| io-chat           | Connects to Twitch chat via IRC and emits various events to the io-hub service                                          |
+| io-chron          | Executes various functions at timed intervals to update other services                                                  |
+| io-hub            | A Socket.io hub that listens and emits events for the application                                                       | 
+| io-logger         | Listens to events emitted from the io-hub and logs to a MongoDB                                                         |
+| io-overlay        | Web pages served by Express that listen to events from the io-hub and render UIs to be displayed on stream              |
+| io-shared         | Contains interfaces, classes and data access logic used by other services                                               |
+| io-streamnotes    | Listens for certain events emitted from the io-hub to generate stream notes for a completed stream and push to GitHub   |
+| io-user           | Express web app that acts as a stateful service for all user (viewer) data used by the application                      |
+| io-webhooks       | Express web app that listens for calls from third-parties and relays events to the io-hub                               |
 
 ## Release Notes
 
