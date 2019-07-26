@@ -6,30 +6,50 @@
 | --- | --- | --- |
 | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors) |
 
-IO is a Twitch chat-bot, overlay & stream note micro-service application.  
+IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
 ## Services
 
 All services use Node.js & TypeScript unless otherwise noted.
 
-| Service           | Description                                                                                                             |
-| ---               | ---                                                                                                                     |
-| io-admin          | Web portal for administering entire system. (Under construction)                                                        |
-| io-api            | Express API used as a proxy between third-party API's and the IO system                                                 |
-| io-chat           | Connects to Twitch chat via IRC and emits various events to the io-hub service                                          |
-| io-chron          | Executes various functions at timed intervals to update other services                                                  |
-| io-hub            | A Socket.io hub that listens and emits events for the application                                                       | 
-| io-logger         | Listens to events emitted from the io-hub and logs to a MongoDB                                                         |
-| io-overlay        | Web pages served by Express that listen to events from the io-hub and render UIs to be displayed on stream              |
-| io-shared         | Contains interfaces, classes and data access logic used by other services                                               |
-| io-streamnotes    | Listens for certain events emitted from the io-hub to generate stream notes for a completed stream and push to GitHub   |
-| io-user           | Express web app that acts as a stateful service for all user (viewer) data used by the application                      |
-| io-webhooks       | Express web app that listens for calls from third-parties and relays events to the io-hub                               |
+| Service        | Description                                                                                                             |
+| ---            | ---                                                                                                                     |
+| admin          | Web portal for administering entire system. (Under construction)                                                        |
+| api            | Express API used as a proxy between third-party API's and the IO system                                                 |
+| chat           | Connects to Twitch chat via IRC and emits various events to the io-hub service                                          |
+| chron          | Executes various functions at timed intervals to update other services                                                  |
+| hub            | A Socket.io hub that listens and emits events for the application                                                       |
+| logger         | Listens to events emitted from the io-hub and logs to a MongoDB                                                         |
+| overlay        | Web pages served by Express that listen to events from the io-hub and render UIs to be displayed on stream              |
+| shared         | Contains interfaces, classes and data access logic used by other services                                               |
+| streamnotes    | Listens for certain events emitted from the io-hub to generate stream notes for a completed stream and push to GitHub   |
+| user           | Express web app that acts as a stateful service for all user (viewer) data used by the application                      |
+| webhooks       | Express web app that listens for calls from third-parties and relays events to the io-hub                               |
+
+## Environment Variables
+
+When running locally, environment variables can be added to each service via a `.env` file in the services root directory.  An example
+(`.env-example`) lives in the root of the repository.  Below is a description of all environment variables and their use.
+
+| Variable                | Purpose                                                                                                     |
+| ---                     | ---                                                                                                         |
+| GITHUB_USER             | Username to authenticate with GitHub. All commits in streamnotes will be created with this user             |
+| GITHUB_PASSWORD         | Password to authenticate with GitHub. All commits will need this.                                           |
+| MONGO_DB_CONN_STRING    | Connection string for MongoDB that will store stream, user & vote data                                      |
+| MONGO_DB_USER           | Username for MongoDB connection                                                                             |
+| MONGO_DB_PASSWORD       | Password for MongoDB connection                                                                             |
+| MONGO_DB_DATABASE       | Database that contains the stream, user & vote data                                                         |
+| NGROK_AUTH_TOKEN        | Used by webhooks service when running the application locally.                                              |
+| TWITCH_CLIENT_ID        | Client Id assigned to an application by Twitch at https://dev.twitch.tv                                     |
+| TWITCH_CLIENT_TOKEN     | Auth token for the streamer's Twitch account                                                                |
+| TWITCH_CLIENT_USERNAME  | Twitch login for the streamer                                                                               |
+| TWITCH_CLIENT_USER_ID   | Twitch user id of the streamer                                                                              |
+| TWITCH_BOT_USERNAME     | Twitch login for the bot.  Can be the same as TWITCH_CLIENT_USERNAME.                                       |
+| TWITCH_BOT_TOKEN        | Twitch Auth token for the bot account.  Can be same as TWITCH_CLIENT_TOKEN                                  |
 
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md)
-
 
 ## Contributing
 
