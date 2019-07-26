@@ -1,9 +1,10 @@
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
-import { CandleDb, StreamDb } from '../../db';
-import { ICandle, IStream, IUserInfo } from '../../models';
-import { isBroadcaster, isMod, log } from '../../common';
-import { ICandleVoteEventArg, IStreamEventArg, IBaseEventArg } from '../../event_args';
+
+import { CandleDb, StreamDb } from '@shared/db';
+import { ICandle, IStream, IUserInfo } from '@shared/models';
+import { isBroadcaster, isMod, log } from '@shared/common';
+import { ICandleVoteEventArg, IStreamEventArg, IBaseEventArg } from '@shared/event_args';
 
 let secondsToVote: number = 60;
 let voteActive: boolean = false;

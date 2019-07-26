@@ -1,8 +1,9 @@
 import moment = require('moment');
-import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '../models';
 import { ChatUserstate } from 'tmi.js';
-import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '../event_args/index';
-import { isBroadcaster } from '../common';
+
+import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '@shared/models';
+import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '@shared/event_args/index';
+import { isBroadcaster } from '@shared/common';
 
 export const uptimeCommand = (
   message: string,

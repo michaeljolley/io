@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Userstate } from 'tmi.js';
 
-import { log, isMod, isBroadcaster } from '../common';
-import { IMediaEventArg, IThemerEventArg, IBaseEventArg } from '../event_args';
-import { IUserInfo, IStream } from '../models/index';
+import { log, isMod, isBroadcaster } from '@shared/common';
+import { IMediaEventArg, IThemerEventArg, IBaseEventArg } from '@shared/event_args';
+import { IUserInfo, IStream } from '@shared/models/index';
 
 const assetsDir: string = path.join(__dirname, '..', 'assets');
 const soundClipsDir: string = path.join(assetsDir, 'audio', 'clips');
