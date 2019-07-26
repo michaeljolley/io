@@ -1,7 +1,8 @@
-import { IStream, IUserInfo, IStreamNote } from '../models';
 import { ChatUserstate } from 'tmi.js';
-import { IBaseEventArg, INewNoteEventArg } from '../event_args/index';
-import { isBroadcaster, isMod } from '../common';
+
+import { IStream, IUserInfo, IStreamNote } from '@shared/models';
+import { IBaseEventArg, INewNoteEventArg } from '@shared/event_args/index';
+import { isBroadcaster, isMod } from '@shared/common';
 
 export const noteCommand = async (
   message: string,

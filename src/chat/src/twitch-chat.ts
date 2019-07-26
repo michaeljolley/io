@@ -8,11 +8,12 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from './models';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
+import { config, get, log } from '@shared/common';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
-import { config, get, log } from './common';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from './event_args';
 import { Emote } from './emote';
+
 import {
   AVCommands,
   BasicCommands,

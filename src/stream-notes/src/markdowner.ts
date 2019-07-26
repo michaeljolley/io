@@ -1,7 +1,7 @@
 import moment from 'moment';
 
-import { IStream, IUserInfo } from './models/index';
-import { config } from './common';
+import { IStream, IUserInfo } from '@shared/models';
+import { config } from '@shared/common';
 
 export class Markdowner {
   private activeStream: IStream | undefined;

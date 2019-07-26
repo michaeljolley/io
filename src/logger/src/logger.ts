@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 import _ from 'lodash';
 
-import { log } from './common';
+import { log } from '@shared/common';
 import {
   IStreamEventArg,
   INewFollowerEventArg,
@@ -17,15 +17,15 @@ import {
   IUserEventArg,
   INewNoteEventArg,
   INewGoalEventArg
-} from './event_args';
-import { CandleDb, StreamDb } from './db';
+} from '@shared/event_args';
+import { CandleDb, StreamDb } from '@shared/db';
 import {
   IStream,
   ICandleVote,
   ICandle,
   ICandleVoteResult,
   IVote
-} from './models/index';
+} from '@shared/models';
 
 export class Logger {
   private socket!: SocketIOClient.Socket;

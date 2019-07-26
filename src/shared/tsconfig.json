@@ -8,20 +8,20 @@
       "dom"
     ],
     "declaration": true,
-    "sourceMap": true,
-    "outDir": "./common",
     "composite": true,
+    "sourceMap": true,
     "removeComments": true,
     "strict": true,
     "noUnusedLocals": true,
     "moduleResolution": "node",
-    "baseUrl": "./",
     "paths": {
       "*": ["types/*"]
       },
     "types": [
       "node"
     ],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "baseUrl": "./"
   }
 }

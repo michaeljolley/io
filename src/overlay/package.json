@@ -7,11 +7,14 @@
     "url": "https://github.com/MichaelJolley/io"
   },
   "main": "index.js",
+  "_moduleAliases": {
+    "@shared": "../shared/dist"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "debug": "node --inspect dist/index.js",
     "debug-compile": "npm run copy-assets && node --inspect dist/index.js",
-    "build": "npm run copy-assets && tsc",
+    "build": "npm run copy-assets && tsc -b",
     "copy-assets": "copyfiles -au 1 ./src/wwwroot/**/* ./src/wwwroot/* dist/ && copyfiles -u 3 ./node_modules/socket.io-client/dist/socket.io.js dist/wwwroot/js"
   },
   "author": "Michael Jolley <mike@sparcapp.io>",
@@ -19,6 +22,7 @@
   "dependencies": {
     "dotenv": "^8.0.0",
     "express": "^4.17.0",
+    "module-alias": "^2.2.0",
     "mongoose": "^5.6.0",
     "restler": "^3.4.0",
     "socket.io-client": "^2.2.0",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
     "@types/express": "^4.16.1",
+    "@types/module-alias": "^2.0.0",
     "@types/node": "^12.0.2",
     "@types/socket.io-client": "^1.4.32",
     "copyfiles": "^2.1.1",

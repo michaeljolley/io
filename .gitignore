@@ -1,8 +1,11 @@
 # compiled js files
 /src/**/*.js
 /src/**/*.js.map
-/dist/
+dist/
 /data/*
+
+# Typescript project references build information
+*.tsbuildinfo
 
 !/src/overlay/src/wwwroot/js/*.js
 

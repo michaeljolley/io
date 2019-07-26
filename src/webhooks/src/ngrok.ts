@@ -1,5 +1,6 @@
 import ngrok from 'ngrok';
-import { config, log } from './common';
+
+import { config, log } from '@shared/common';
 
 export class NGrok {
 
