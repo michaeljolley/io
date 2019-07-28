@@ -36,7 +36,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./assets:/app/dist/assets
+      - ./assets:/app/chat/dist/assets
     depends_on:
       - hub
       - api
@@ -83,7 +83,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./assets:/app/dist/wwwroot/assets
+      - ./assets:/app/overlay/dist/wwwroot/assets
     depends_on:
       - hub
       - shared
