@@ -1,8 +1,6 @@
-FROM node:12.6.0-alpine as build
+FROM node:12.6.0-alpine
 
 ARG BUILDVERSION=0.0.0
-
-WORKDIR /app
 
 WORKDIR /app/shared
 
