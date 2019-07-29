@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Userstate } from 'tmi.js';
 
+import { SocketIOEvents } from '@shared/events';
 import { log, isMod, isBroadcaster } from '@shared/common';
 import { IMediaEventArg, IThemerEventArg, IBaseEventArg } from '@shared/event_args';
 import { IUserInfo, IStream } from '@shared/models/index';
@@ -58,7 +59,7 @@ export const soundByteCommand = (
         streamId: activeStream.id,
         user: userInfo
       };
-      emitMessageFunc('playAudio', avEventArg);
+      emitMessageFunc(SocketIOEvents.PlayAudio, avEventArg);
 
       log('info', `AV-Command: Play - ${firstWord}.mp3`);
 
@@ -99,7 +100,7 @@ export const attentionCommand = (
         streamId: activeStream.id,
         user: userInfo
       };
-      emitMessageFunc('playAudio', avEventArg);
+      emitMessageFunc(SocketIOEvents.PlayAudio, avEventArg);
 
       const displayName = userInfo.display_name || userInfo.login;
 
@@ -182,7 +183,7 @@ export const stopAudioCommand = (
     }
 
     if (twitchChatFunc) {
-      emitMessageFunc('stopAudio', undefined);
+      emitMessageFunc(SocketIOEvents.StopAudio, undefined);
       return true;
     }
   }
@@ -234,7 +235,7 @@ export const themeShameCommand = (
             streamId: activeStream.id,
             user: userInfo
           };
-          emitMessageFunc('playAudio', avEventArg);
+          emitMessageFunc(SocketIOEvents.PlayAudio, avEventArg);
 
           log('info', `themeShameCommand: Play - shame.mp3`);
           return true;
@@ -270,7 +271,7 @@ export const twitchThemerCommand = (
           streamId: activeStream.id,
           user: userInfo
         };
-        emitMessageFunc('onTwitchThemer', themerEventArg);
+        emitMessageFunc(SocketIOEvents.TwitchThemer, themerEventArg);
 
         log('info', `onTwitchThemer: ${userInfo.login}`);
         return true;

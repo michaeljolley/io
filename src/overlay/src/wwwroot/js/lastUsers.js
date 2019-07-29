@@ -2,14 +2,14 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('lastSubscriber', (lastUserEventArg) => {
+socket.on('LastSubscriberUpdated', (lastUserEventArg) => {
     var profileImg = document.getElementById('subscriberProfileImageUrl');
     var userName = document.getElementById('subscriberDisplayName');
     profileImg.src = lastUserEventArg.userInfo.profile_image_url;
     userName.innerText = lastUserEventArg.userInfo.display_name || lastUserEventArg.userInfo.login;
 });
 
-socket.on('lastFollower', (lastUserEventArg) => {
+socket.on('LastFollowerUpdated', (lastUserEventArg) => {
     var profileImg = document.getElementById('followerProfileImageUrl');
     var userName = document.getElementById('followerDisplayName');
     profileImg.src = lastUserEventArg.userInfo.profile_image_url;

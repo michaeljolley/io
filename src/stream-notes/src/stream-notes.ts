@@ -10,12 +10,12 @@ import {
 } from '@shared/event_args';
 import { StreamDb } from '@shared/db';
 import { IStream } from '@shared/models';
+import { SocketIOEvents } from '@shared/events';
 
 import { Markdowner } from './markdowner';
 
 export class StreamNotes {
   private socket!: SocketIOClient.Socket;
-  //private apiUrl: string = 'http://api';
   private gitHubRepoUrl: string = `https://${config.githubUsername}:3Ek%3Ffrexat@github.com/MichaelJolley/bald-bearded-builder.github.io.git`;
   private repoDirectory: string = 'bald-bearded-builder.github.io';
 
@@ -34,7 +34,8 @@ export class StreamNotes {
       fs.mkdirSync(__dirname + '/tmp');
     }
 
-    this.socket.on('streamEnd', (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
+    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
+    this.socket.on(SocketIOEvents.StreamNoteRebuild, (streamEvent: IStreamEventArg) => this.onStreamNoteRebuild(streamEvent));
   }
 
   /**
@@ -144,26 +145,42 @@ export class StreamNotes {
   }
 
   private async onStreamEnd(streamEvent: IStreamEventArg) {
+    if (streamEvent && streamEvent.stream) {
+      this.buildStreamNotes(streamEvent.stream.id);
+    }
+  }
+
+  private async onStreamNoteRebuild(streamEvent: IStreamEventArg) {
+    if (streamEvent && streamEvent.stream) {
+      this.buildStreamNotes(streamEvent.stream.id);
+    }
+  }
+
+  private async buildStreamNotes(streamId: string) {
 
     // Get the stream from the streamDb (include users/candles/etc)
-    this.activeStream = await this.streamDb.getStream(streamEvent.stream.id);
+    this.activeStream = await this.streamDb.getStream(streamId);
 
     if (this.activeStream) {
 
-      this.streamNoteName = moment(this.activeStream.started_at).format('YYYY-MM-DD');
-      this.streamNoteDir = `docs/_posts/${moment(this.activeStream.started_at).format('YYYY/MM')}/`;
+      log('info', `Building stream notes for ${this.activeStream.id}`);
 
-      // Clone our BBB repo
-      await this.clone()
-                  .then(this.configureGit)
-                  .then(this.branch)
-                  .then(this.generateStreamNotesFile)
-                  .then(this.add)
-                  .then(this.commit)
-                  .then(this.push)
-                  .catch((err: any) => log('info', `onStreamEnd: ${err}`))
-                  .finally(this.cleanUp);
+      if (this.activeStream) {
+        this.streamNoteName = moment(this.activeStream.started_at).format('YYYY-MM-DD');
+        this.streamNoteDir = `docs/_posts/${moment(this.activeStream.started_at).format('YYYY/MM')}/`;
 
+        // Clone our BBB repo
+        await this.clone()
+                    .then(this.configureGit)
+                    .then(this.branch)
+                    .then(this.generateStreamNotesFile)
+                    .then(this.add)
+                    .then(this.commit)
+                    .then(this.push)
+                    .catch((err: any) => log('info', `onStreamEnd: ${err}`))
+                    .finally(this.cleanUp);
+
+      }
     }
   }
 }

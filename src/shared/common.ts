@@ -14,7 +14,7 @@ export const isMod = (user: any) : boolean => {
         return true;
       }
   return false;
-}
+};
 
 export const isBroadcaster = (user: any) : boolean => {
   if (user &&
@@ -23,7 +23,7 @@ export const isBroadcaster = (user: any) : boolean => {
         return true;
       }
   return false;
-}
+};
 
 export const log = (level: string, message: string) => {
   const captains: any = console;
@@ -57,4 +57,4 @@ export const get = (url: string) => {
           resolve(data);
       });
   });
-}
+};

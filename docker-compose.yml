@@ -109,18 +109,6 @@ services:
       - api
       - mongo
       - shared
-  webhooks:
-    build: ./src/webhooks
-    image: io-webhooks
-    restart: always
-    ports:
-      - "5005:80"
-    env_file:
-      - .env
-    depends_on:
-      - hub
-      - user
-      - shared
   mongo:
     image: mongo:4.0
     restart: always

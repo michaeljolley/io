@@ -2,7 +2,7 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('lastFollower', (lastUserEventArg) => {
+socket.on('LastFollowerUpdated', (lastUserEventArg) => {
     var profileImg = document.getElementById('profileImageUrl');
     var userName = document.getElementById('displayName');
     profileImg.src = lastUserEventArg.userInfo.profile_image_url;

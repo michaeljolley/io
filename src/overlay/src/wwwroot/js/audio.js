@@ -6,7 +6,7 @@ const container = document.getElementById('container');
 
 let avEnabled = true;
 
-socket.on('playAudio', (mediaEventArg) => {
+socket.on('PlayAudio', (mediaEventArg) => {
     if (avEnabled) {
         var audio = document.createElement('audio');
         audio.src = `${_audioPath}${mediaEventArg.clipName}.mp3`;
@@ -21,7 +21,7 @@ socket.on('playAudio', (mediaEventArg) => {
     }
 });
 
-socket.on('stopAudio', () => {
+socket.on('StopAudio', () => {
     container.innerHTML = '';
 });
 
