@@ -93,8 +93,8 @@ export class IOHub {
       socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
         this.onStreamEnd(streamEvent)
       );
-      socket.on(SocketIOEvents.StreamNoteRebuild, (streamEvent: IStreamEventArg) =>
-      this.onStreamNoteRebuild(streamEvent)
+      socket.on(SocketIOEvents.StreamNoteRebuild, (streamId: string) =>
+      this.onStreamNoteRebuild(streamId)
     );
 
       /**
@@ -297,9 +297,9 @@ export class IOHub {
     this.io.emit(SocketIOEvents.StreamEnded, streamEvent);
   }
 
-  private onStreamNoteRebuild(streamEvent: IStreamEventArg) {
-    log('info', `onStreamNoteRebuild: ${JSON.stringify(streamEvent.stream.id)}`);
-    this.io.emit(SocketIOEvents.StreamNoteRebuild, streamEvent);
+  private onStreamNoteRebuild(streamId: string) {
+    log('info', `onStreamNoteRebuild: ${JSON.stringify(streamId)}`);
+    this.io.emit(SocketIOEvents.StreamNoteRebuild, streamId);
   }
 
   private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {

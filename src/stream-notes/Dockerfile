@@ -22,7 +22,7 @@ RUN npm version $BUILDVERSION --allow-same-version;
 RUN npm run build
 
 # Put together the release image with the just build artifacts
-FROM node:12.6.0-alpine
+FROM node
 
 WORKDIR /app/stream-notes
 

@@ -66,14 +66,15 @@ export class Markdowner {
 | ---                 | ---         |\n`;
 
       for (const raider of this.activeStream.raiders) {
-        const displayName: string =
-          raider.user.display_name || raider.user.login;
-        response =
-          response +
-          `| ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + raider.user.login
+        if (raider.user) {
+          const displayName: string = raider.user.display_name || raider.user.login;
+          response =
+            response +
+            `| ${this.addLink(
+              displayName,
+              'https://twitch.tv/' + raider.user.login
           )} | ${raider.viewers} |\n`;
+        }
       }
       return existingContent + response + `\n`;
     }
@@ -90,14 +91,16 @@ export class Markdowner {
 | ---                 | ---         |\n`;
 
       for (const cheerer of this.activeStream.cheers) {
-        const displayName: string =
-          cheerer.user.display_name || cheerer.user.login;
-        response =
-          response +
-          `| ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + cheerer.user.login
-          )} | ${cheerer.bits} |\n`;
+        if (cheerer.user) {
+          const displayName: string =
+            cheerer.user.display_name || cheerer.user.login;
+          response =
+            response +
+            `| ${this.addLink(
+              displayName,
+              'https://twitch.tv/' + cheerer.user.login
+            )} | ${cheerer.bits} |\n`;
+        }
       }
       return existingContent + response + `\n`;
     }
@@ -140,13 +143,16 @@ export class Markdowner {
       let response: string = `### Moderators\n\n`;
 
       for (const mod of this.activeStream.moderators) {
-        const displayName: string = mod.display_name || mod.login;
-        const userLine: string = `- ${this.addLink(
-          displayName,
-          'https://twitch.tv/' + mod.login
-        )}`;
-        response = response + `${userLine}\n`;
+        if (mod.login != config.twitchBotUsername) {
+          const displayName: string = mod.display_name || mod.login;
+          const userLine: string = `- ${this.addLink(
+            displayName,
+            'https://twitch.tv/' + mod.login
+          )}`;
+          response = response + `${userLine}\n`;
+        }
       }
+
       return existingContent + response + `\n`;
     }
 
