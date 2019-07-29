@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import { ChatUserstate } from 'tmi.js';
 
+import { SocketIOEvents } from '@shared/events';
 import { CandleDb, StreamDb } from '@shared/db';
 import { ICandle, IStream, IUserInfo } from '@shared/models';
 import { isBroadcaster, isMod, log } from '@shared/common';
@@ -139,7 +140,7 @@ const stopCandleVoteCommand = async (
       stream: activeStream
     };
 
-    emitMessageFunc('candleStop', streamEventArg);
+    emitMessageFunc(SocketIOEvents.CandleVoteStop, streamEventArg);
     log('info', `Vote for candle stopped`);
 };
 
@@ -156,7 +157,7 @@ const resetCandleVoteCommand = async (
       stream: activeStream
     };
 
-    emitMessageFunc('candleReset', streamEventArg);
+    emitMessageFunc(SocketIOEvents.CandleReset, streamEventArg);
     return;
 };
 
@@ -190,7 +191,7 @@ const candleVoteCommand = async (
         streamId: activeStream.id,
         userInfo
       };
-      emitMessageFunc('candleVote', candleVoteEventArg);
+      emitMessageFunc(SocketIOEvents.CandleVote, candleVoteEventArg);
       log('info', `Vote for ${userDisplayName}: ${candleVote.label}`);
 
     }

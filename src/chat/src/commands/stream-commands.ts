@@ -1,6 +1,7 @@
 import moment = require('moment');
 import { ChatUserstate } from 'tmi.js';
 
+import { SocketIOEvents } from '@shared/events';
 import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '@shared/models';
 import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '@shared/event_args/index';
 import { isBroadcaster } from '@shared/common';
@@ -122,7 +123,7 @@ export const segmentCommand = (
     streamSegment: newSegment
   };
 
-  emitMessageFunc('newSegment', newSegmentEvent);
+  emitMessageFunc(SocketIOEvents.NewSegment, newSegmentEvent);
 
   return true;
 };
@@ -164,7 +165,7 @@ export const goalCommand = (
     streamId: activeStream.id
   };
 
-  emitMessageFunc('newGoal', newStreamGoalEvent);
+  emitMessageFunc(SocketIOEvents.NewGoal, newStreamGoalEvent);
 
   return true;
 };

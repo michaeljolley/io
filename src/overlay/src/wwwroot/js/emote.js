@@ -5,7 +5,7 @@ const socket = io('http://localhost:5060');
 const emoteQueue = [];
 const container = $('#container');
 
-socket.on('emote', (emoteEventArg) => {
+socket.on('EmoteSent', (emoteEventArg) => {
     emoteQueue.push(emoteEventArg.emoteUrl);
 });
 

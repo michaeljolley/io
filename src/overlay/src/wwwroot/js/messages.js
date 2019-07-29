@@ -2,27 +2,27 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('newAnnouncement', (newAnnouncementEventArg) => {
+socket.on('NewAnnouncement', (newAnnouncementEventArg) => {
     const user = newAnnouncementEventArg.user;
     const msg = newAnnouncementEventArg.message;
     addAndStart(msg, undefined, user.profile_image_url, 10);
 })
 
-socket.on('newCheer', (newCheerEventArg) => {
+socket.on('NewCheer', (newCheerEventArg) => {
     const cheerer = newCheerEventArg.cheerer;
     const displayName = cheerer.user.display_name || cheerer.user.login;
     const msg = `${displayName} just cheered ${cheerer.bits} bits`;
     addAndStart(msg, 'applause', cheerer.user.profile_image_url, 10);
 });
 
-socket.on('newRaid', (newRaidEventArg) => {
+socket.on('NewRaid', (newRaidEventArg) => {
     const raider = newRaidEventArg.raider;
     const displayName = raider.user.display_name || raider.user.login;
     const msg = `DEFEND! ${displayName} is raiding with ${raider.viewers} accomplices!`;
     addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
 });
 
-socket.on('newSubscription', (newSubscriptionEventArg) => {
+socket.on('NewSubscriber', (newSubscriptionEventArg) => {
     const subscriber = newSubscriptionEventArg.subscriber;
     const displayName = subscriber.user.display_name || subscriber.user.login;
     const cumulativeMonths = subscriber.cumulativeMonths;
@@ -36,7 +36,7 @@ socket.on('newSubscription', (newSubscriptionEventArg) => {
     addAndStart(msg, 'hair', subscriber.user.profile_image_url, 10);
 });
 
-socket.on('newFollow', (newFollowerEventArg) => {
+socket.on('NewFollower', (newFollowerEventArg) => {
     const follower = newFollowerEventArg.follower;
     const displayName = follower.display_name || follower.login;
     const msg = `Welcome ${displayName}! Thanks for following!`;

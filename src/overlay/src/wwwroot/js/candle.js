@@ -6,7 +6,7 @@ const emoteQueue = [];
 const candleContent = document.getElementById('candleContent');
 
 
-socket.on('candleWinner', (candleWinnerEventArg) => {
+socket.on('CandleWinner', (candleWinnerEventArg) => {
 
     console.log(`candleWinner: ${JSON.stringify(candleWinnerEventArg)}`);
 
@@ -19,14 +19,14 @@ socket.on('candleWinner', (candleWinnerEventArg) => {
     }, 15000);
 });
 
-socket.on('candleVoteUpdate', (candleVoteResultEventArg) => {
+socket.on('CandleVoteUpdate', (candleVoteResultEventArg) => {
 
     console.log(`candleVoteUpdate: ${JSON.stringify(candleVoteResultEventArg)}`);
 
     clearResults();
 
     // Update the chart based on the votes
-    const voteResults = candleVoteResultEventArg.voteResults;
+    const voteResults = candleVoteResultEventArg.voteResults.sort((a, b) => (a.votes < b.votes) ? 1 : -1);
 
     voteResults.forEach(voteResult => {
         // Find or create new candle div
@@ -48,7 +48,7 @@ socket.on('candleVoteUpdate', (candleVoteResultEventArg) => {
     });
 });
 
-socket.on('candleStart', (streamEventArg) => {
+socket.on('CandleVoteStart', (streamEventArg) => {
 
     console.log(`candleStart: ${JSON.stringify(streamEventArg)}`);
 

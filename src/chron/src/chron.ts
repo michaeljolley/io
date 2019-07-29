@@ -1,5 +1,6 @@
 import io from 'socket.io-client';
 
+import { SocketIOEvents } from '@shared/events';
 import { get, log, config } from '@shared/common';
 import { IUserInfo } from '@shared/models';
 import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
@@ -72,14 +73,14 @@ export class Chron {
       followers: followerCount
     };
 
-    this.emitMessage('followerCount', followerCountEventArg);
+    this.emitMessage(SocketIOEvents.FollowerCountChanged, followerCountEventArg);
 
     if (lastFollower) {
       const lastFollowerEventArg: ILastUserEventArg = {
         userInfo: lastFollower
       };
 
-      this.emitMessage('lastFollower', lastFollowerEventArg);
+      this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
     }
     return;
   };
@@ -98,7 +99,7 @@ export class Chron {
 
       // stream ended
       if (resp.started_at === undefined && this.activeStream !== undefined) {
-        this.emitMessage('streamEnd', streamEventArg);
+        this.emitMessage(SocketIOEvents.StreamEnded, streamEventArg);
         this.activeStream = undefined;
         log('info', `Stream ended: ${this.activeStream.id}`);
       }
@@ -107,12 +108,12 @@ export class Chron {
       if (resp.started_at !== undefined && this.activeStream === undefined) {
         this.activeStream = resp;
         streamEventArg.stream = this.activeStream;
-        this.emitMessage('streamStart', streamEventArg);
+        this.emitMessage(SocketIOEvents.StreamStarted, streamEventArg);
         log('info', `Stream started: ${this.activeStream.id}`);
       }
 
       if (this.activeStream) {
-        this.emitMessage('streamUpdate', streamEventArg);
+        this.emitMessage(SocketIOEvents.StreamUpdated, streamEventArg);
         log('info', `Stream update: ${this.activeStream.id}`);
       }
     } else {
@@ -126,7 +127,7 @@ export class Chron {
       viewers: viewerCount
     };
 
-    this.emitMessage('viewerCount', viewCountEventArg);
+    this.emitMessage(SocketIOEvents.ViewerCountChanged, viewCountEventArg);
   };
 
   public broadcastLastSubscriber = async (): Promise<any> => {
@@ -145,7 +146,7 @@ export class Chron {
       };
 
       if (lastSubscriber) {
-        this.emitMessage('lastSubscriber', lastSubEventArg);
+        this.emitMessage(SocketIOEvents.LastSubscriberUpdated, lastSubEventArg);
       }
     }
 
@@ -162,7 +163,7 @@ export class Chron {
         user
       };
 
-      this.emitMessage('newAnnouncement', newAnnouncementEventArg);
+      this.emitMessage(SocketIOEvents.NewAnnouncement, newAnnouncementEventArg);
     }
   }
 

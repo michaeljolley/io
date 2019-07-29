@@ -2,12 +2,12 @@
 
 const socket = io('http://localhost:5060');
 
-socket.on('followerCount', (followerCountEventArg) => {
+socket.on('FollowerCountChanged', (followerCountEventArg) => {
     var counter = document.getElementById('followerCounter');
     counter.innerText = followerCountEventArg.followers;
 });
 
-socket.on('viewerCount', (viewerCountEventArg) => {
+socket.on('ViewerCountChanged', (viewerCountEventArg) => {
     var counter = document.getElementById('viewerCounter');
     counter.innerText = viewerCountEventArg.viewers;
 });

@@ -1,6 +1,7 @@
 import io from 'socket.io-client';
 import _ from 'lodash';
 
+import { SocketIOEvents } from '@shared/events';
 import { log } from '@shared/common';
 import {
   IStreamEventArg,
@@ -37,60 +38,60 @@ export class Logger {
     this.streamDb = new StreamDb();
     this.candleDb = new CandleDb();
 
-    this.socket.on('streamStart', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.StreamStarted, (streamEvent: IStreamEventArg) =>
       this.onStreamStart(streamEvent)
     );
-    this.socket.on('streamUpdate', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.StreamUpdated, (streamEvent: IStreamEventArg) =>
       this.onStreamUpdate(streamEvent)
     );
-    this.socket.on('streamEnd', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
     );
 
-    this.socket.on('newFollow', (newFollowerEvent: INewFollowerEventArg) =>
+    this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
       this.onNewFollow(newFollowerEvent)
     );
     this.socket.on(
-      'newSubscription',
+      SocketIOEvents.NewSubscriber,
       (newSubscriberEvent: INewSubscriptionEventArg) =>
         this.onNewSubscription(newSubscriberEvent)
     );
-    this.socket.on('newRaid', (newRaidEvent: INewRaidEventArg) =>
+    this.socket.on(SocketIOEvents.NewRaid, (newRaidEvent: INewRaidEventArg) =>
       this.onNewRaid(newRaidEvent)
     );
-    this.socket.on('newCheer', (newCheerEvent: INewCheerEventArg) =>
+    this.socket.on(SocketIOEvents.NewCheer, (newCheerEvent: INewCheerEventArg) =>
       this.onNewCheer(newCheerEvent)
     );
 
-    this.socket.on('candleWinner', (candleWinnerEvent: ICandleWinnerEventArg) =>
+    this.socket.on(SocketIOEvents.CandleWinner, (candleWinnerEvent: ICandleWinnerEventArg) =>
       this.onCandleWinner(candleWinnerEvent)
     );
-    this.socket.on('candleReset', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.CandleReset, (streamEvent: IStreamEventArg) =>
       this.onCandleReset(streamEvent)
     );
-    this.socket.on('candleStop', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.CandleVoteStop, (streamEvent: IStreamEventArg) =>
       this.onCandleStop(streamEvent)
     );
-    this.socket.on('candleVote', (candleVoteEventArg: ICandleVoteEventArg) =>
+    this.socket.on(SocketIOEvents.CandleVote, (candleVoteEventArg: ICandleVoteEventArg) =>
       this.onCandleVote(candleVoteEventArg)
     );
 
-    this.socket.on('playAudio', (mediaEventArg: IMediaEventArg) =>
+    this.socket.on(SocketIOEvents.PlayAudio, (mediaEventArg: IMediaEventArg) =>
       this.onPlayAudio(mediaEventArg)
     );
-    this.socket.on('onTwitchThemer', (themerEventArg: IThemerEventArg) =>
+    this.socket.on(SocketIOEvents.TwitchThemer, (themerEventArg: IThemerEventArg) =>
       this.onTwitchThemer(themerEventArg)
     );
-    this.socket.on('onModeratorJoined', (userEventArg: IUserEventArg) =>
+    this.socket.on(SocketIOEvents.OnModeratorJoined, (userEventArg: IUserEventArg) =>
       this.onModeratorJoined(userEventArg)
     );
-    this.socket.on('newNote', (noteEvent: INewNoteEventArg) =>
+    this.socket.on(SocketIOEvents.NewNote, (noteEvent: INewNoteEventArg) =>
       this.newNote(noteEvent)
     );
-    this.socket.on('newGoal', (goalEvent: INewGoalEventArg) =>
+    this.socket.on(SocketIOEvents.NewGoal, (goalEvent: INewGoalEventArg) =>
       this.newGoal(goalEvent)
     );
-    this.socket.on('newSegment', (streamSegmentEvent: INewSegmentEventArg) =>
+    this.socket.on(SocketIOEvents.NewSegment, (streamSegmentEvent: INewSegmentEventArg) =>
       this.onStreamSegment(streamSegmentEvent)
     );
   }
@@ -244,7 +245,7 @@ export class Logger {
             streamId: streamEvent.stream.id
           };
 
-          this.socket.emit('candleWinner', candleWinnerEventArg);
+          this.socket.emit(SocketIOEvents.CandleWinner, candleWinnerEventArg);
         }
       }
     }
@@ -271,7 +272,7 @@ export class Logger {
         streamId: stream.id,
         voteResults: tabulateResults(candles, stream.candleVotes)
       };
-      this.socket.emit('candleVoteUpdate', candleVoteResultEvent);
+      this.socket.emit(SocketIOEvents.CandleVoteUpdate, candleVoteResultEvent);
     }
   }
 }
