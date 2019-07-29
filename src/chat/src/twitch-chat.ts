@@ -10,6 +10,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
 import { config, get, log } from '@shared/common';
+import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
 import { Emote } from './emote';
@@ -66,16 +67,16 @@ export class TwitchChat {
     this.tmi.on('subgift', this.onGiftSub);
     this.tmi.on('subscription', this.onSub);
 
-    this.socket.on('streamStart', (currentStream: IStreamEventArg) => {
+    this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
     });
 
-    this.socket.on('streamUpdate', (currentStream: IStreamEventArg) => {
+    this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
     });
 
     this.socket.on(
-      'candleWinner',
+      SocketIOEvents.CandleWinner,
       (candleWinner: ICandleWinnerEventArg) => {
         setTimeout(() => {
           this.sendChatMessage(
@@ -87,7 +88,7 @@ export class TwitchChat {
       }
     );
 
-    this.socket.on('streamEnd', () => {
+    this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
     });
   }
@@ -154,7 +155,7 @@ export class TwitchChat {
       username
     };
 
-    this.emitMessage('userJoined', userJoinedEventArg);
+    this.emitMessage(SocketIOEvents.OnUserJoined, userJoinedEventArg);
 
     if (self) {
       log('info', 'This client joined the channel...');
@@ -171,7 +172,7 @@ export class TwitchChat {
       username
     };
 
-    this.emitMessage('userLeft', userLeftEventArg);
+    this.emitMessage(SocketIOEvents.OnUserLeft, userLeftEventArg);
 
     log('info', `${username} has LEFT the channel`);
   };
@@ -204,7 +205,7 @@ export class TwitchChat {
         streamId: this.activeStream.id
       };
 
-      this.emitMessage('newRaid', newRaidEventArg);
+      this.emitMessage(SocketIOEvents.NewRaid, newRaidEventArg);
 
       log('info', `${username} has RAIDED the channel with ${viewers} viewers`);
     }
@@ -235,7 +236,7 @@ export class TwitchChat {
         streamId: this.activeStream.id
       };
 
-      this.emitMessage('newCheer', cheerEventArg);
+      this.emitMessage(SocketIOEvents.NewCheer, cheerEventArg);
       log('info', `${user.username} cheered ${bits} bits`);
     }
   };
@@ -324,7 +325,7 @@ export class TwitchChat {
         subscriber
       };
 
-      this.emitMessage('newSubscription', newSubscriberArg);
+      this.emitMessage(SocketIOEvents.NewSubscriber, newSubscriberArg);
 
       log('info', `${userInfo.login} subscribed`);
     }
@@ -355,14 +356,14 @@ export class TwitchChat {
       userInfo
     };
 
-    this.emitMessage('chatMessage', chatMessageArg);
+    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     if (this.activeStream && user.mod) {
       const userEvent: IUserEventArg = {
         streamId: this.activeStream.id,
         user: userInfo
       };
-      this.emitMessage('onModeratorJoined', userEvent);
+      this.emitMessage(SocketIOEvents.OnModeratorJoined, userEvent);
     }
 
     let handledByCommand: boolean = false;
@@ -480,7 +481,7 @@ export class TwitchChat {
           emoteUrl: emote.emoteUrl
         };
 
-        this.emitMessage('emote', emoteArg);
+        this.emitMessage(SocketIOEvents.EmoteSent, emoteArg);
 
         let emoteMessage = tempMessage.slice(0, emote.start);
         emoteMessage += emote.emoteImageTag;

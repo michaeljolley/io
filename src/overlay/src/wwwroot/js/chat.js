@@ -2,7 +2,7 @@
 
 var socket = io('http://localhost:5060');
 
-socket.on('chatMessage', (chatMessageEventArg) => {
+socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     console.log(JSON.stringify(chatMessageEventArg));
 

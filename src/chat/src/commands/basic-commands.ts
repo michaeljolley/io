@@ -150,7 +150,7 @@ export const heroinesCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `The Heroines of JavaScript cards are created by Vue Vixens and support their scholarship fund. Lauryn (12) & Layla (10) interview a new heroine every other Sunday.  Check our events to catch the next one.  You can learn more at https://github.com/mtheoryx/heroines-of-javascript and https://vuevixens.org`
+      `The Heroines of JavaScript cards are created by Vue Vixens and support their scholarship fund. Lauryn (13) & Layla (10) interview a new heroine every other Sunday.  Check our events to catch the next one.  You can learn more at https://github.com/mtheoryx/heroines-of-javascript and https://vuevixens.org`
     );
     return true;
   }

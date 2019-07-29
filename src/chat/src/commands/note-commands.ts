@@ -1,5 +1,6 @@
 import { ChatUserstate } from 'tmi.js';
 
+import { SocketIOEvents } from '@shared/events';
 import { IStream, IUserInfo, IStreamNote } from '@shared/models';
 import { IBaseEventArg, INewNoteEventArg } from '@shared/event_args/index';
 import { isBroadcaster, isMod } from '@shared/common';
@@ -56,7 +57,7 @@ export const noteCommand = async (
 
   twitchChatFunc(`Thanks for helping ${helperName}! After we finish today you'll see your name in our stream notes at https://baldbeardedbuilder.com`);
 
-  emitMessageFunc('newNote', newNoteEvent);
+  emitMessageFunc(SocketIOEvents.NewNote, newNoteEvent);
 
   return true;
 };
