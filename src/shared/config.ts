@@ -9,8 +9,11 @@ const {
   TWITCH_CLIENT_USER_ID,
   TWITCH_BOT_USERNAME,
   TWITCH_BOT_TOKEN,
-  GITHUB_USER,
-  GITHUB_PASSWORD,
+  GITHUB_EMAIL_ADDRESS,
+  GITHUB_NAME,
+  GITHUB_AUTH_TOKEN,
+  GITHUB_REPO,
+  GITHUB_USERNAME,
   NGROK_AUTH_TOKEN
 } = process.env;
 
@@ -46,11 +49,20 @@ export const twitchBotUsername: string =
 export const twitchBotToken: string =
   TWITCH_BOT_TOKEN || requireConfigMessage;
 
-export const githubPassword: string =
-  GITHUB_PASSWORD || requireConfigMessage;
+export const githubEmailAddress: string =
+  GITHUB_EMAIL_ADDRESS || requireConfigMessage;
+
+export const githubName: string =
+  GITHUB_NAME || requireConfigMessage;
+
+export const githubAuthToken: string =
+  GITHUB_AUTH_TOKEN || requireConfigMessage;
+
+export const githubRepo: string =
+  GITHUB_REPO || requireConfigMessage;
 
 export const githubUsername: string =
-  GITHUB_USER || requireConfigMessage;
+  GITHUB_USERNAME || requireConfigMessage;
 
-export const ngrokAuthToken: string =
+  export const ngrokAuthToken: string =
   NGROK_AUTH_TOKEN || requireConfigMessage;
