@@ -7,25 +7,6 @@ export class UserDb {
     this.connect();
   }
 
-  private connect() {
-    mongoose.connect(config.mongoDBConnectionString, {
-      pass: config.mongoDBPassword,
-      user: config.mongoDBUser,
-      dbName: config.mongoDBDatabase,
-      useCreateIndex: true,
-      useFindAndModify: false,
-      useNewUrlParser: true
-    }, (err) => {
-      if (err) {
-        log('info', `Err: ${JSON.stringify(err)}`);
-        setTimeout(() => this.connect, 2000);
-      }
-      else {
-        log('info', `All good holmes`);
-      }
-    });
-  }
-
   public getUserInfo = async (
     username: string
   ): Promise<IUserInfo | undefined> => {
@@ -59,4 +40,23 @@ export class UserDb {
       )
     );
   };
+
+  private connect() {
+    mongoose.connect(config.mongoDBConnectionString, {
+      dbName: config.mongoDBDatabase,
+      pass: config.mongoDBPassword,
+      useCreateIndex: true,
+      useFindAndModify: false,
+      useNewUrlParser: true,
+      user: config.mongoDBUser,
+    }, (err: unknown) => {
+      if (err) {
+        log('info', `Err: ${JSON.stringify(err)}`);
+        setTimeout(() => this.connect, 2000);
+      }
+      else {
+        log('info', `All good holmes`);
+      }
+    });
+  }
 }

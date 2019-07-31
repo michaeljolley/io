@@ -8,10 +8,10 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, ILiveCodersTeamMember } from '@shared/models';
 import { config, get, log } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg, IRetrievedLiveCodersTeamMembersEventArg } from '@shared/event_args';
 
 import { Emote } from './emote';
 
@@ -43,11 +43,16 @@ const htmlSanitizeOpts = {
   ]
 };
 
+export interface ILiveCodersTeamMemberExt extends ILiveCodersTeamMember {
+  announced?: boolean;
+}
+
 export class TwitchChat {
   public tmi: Client;
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
+  private liveCodersTeamMembers: ILiveCodersTeamMemberExt[] = [];
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -90,6 +95,10 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
+    });
+
+    this.socket.on(SocketIOEvents.RetrievedLiveCodersTeamMembers, (liveCodersTeamMembersEventArg: IRetrievedLiveCodersTeamMembersEventArg) => {
+      this.liveCodersTeamMembers = liveCodersTeamMembersEventArg.liveCodersTeamMembers;
     });
   }
 
@@ -438,6 +447,22 @@ export class TwitchChat {
           this.activeStream,
           this.sendChatMessage,
           this.emitMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
+      }
+    }
+
+    const liveCodersTeamMemberIndex = this.liveCodersTeamMembers.findIndex(member => member.name === user.username);
+    if (liveCodersTeamMemberIndex > -1 && !this.liveCodersTeamMembers[liveCodersTeamMemberIndex].announced) {
+      this.liveCodersTeamMembers[liveCodersTeamMemberIndex].announced = true;
+      log('info', `announcing live coders team member: ${user.username}`);
+      for (const basicCommand of Object.values(BasicCommands)) {
+        handledByCommand = basicCommand(
+          `!so ${user.username}`,
+          user,
+          this.sendChatMessage
         );
         if (handledByCommand) {
           break;

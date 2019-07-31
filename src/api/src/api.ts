@@ -2,17 +2,20 @@ import express = require('express');
 import { Server } from 'http';
 
 import { Helix } from './helix';
+import { Kraken } from './kraken';
 import { log } from '@shared/common';
 
 export class API {
   public app: express.Application;
   private http!: Server;
   private helix: Helix;
+  private kraken: Kraken;
 
   constructor() {
     this.app = express();
     this.http = new Server(this.app);
     this.helix = new Helix();
+    this.kraken = new Kraken();
 
     this.loadRoutes();
   }
@@ -25,6 +28,14 @@ export class API {
    *
    */
   private loadRoutes = (): void => {
+
+    // Get team by name
+    this.app.get('/team/:teamname', async (req, res) => {
+      log('info', `route: /team/:teamname called with name: ${req.params.teamname}`);
+      
+      const payload: any = await this.kraken.getTeamByName(req.params.teamname);
+      res.send(payload);
+    });
 
     // Get user by userId
     this.app.get('/users/id/:userId', async (req, res) => {

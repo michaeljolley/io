@@ -2,8 +2,8 @@ import io from 'socket.io-client';
 
 import { SocketIOEvents } from '@shared/events';
 import { get, log, config } from '@shared/common';
-import { IUserInfo } from '@shared/models';
-import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
+import { IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
+import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg, IRetrievedLiveCodersTeamMembersEventArg } from '@shared/event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
@@ -22,6 +22,11 @@ export class Chron {
     this.broadcastFollowers();
     this.broadcastViewCount();
     this.broadcastLastSubscriber();
+    
+    // Give the chat service time to startup before we retrive the team members
+    setTimeout(async() => {
+      await this.loadLiveTeamMembers();
+    }, 15000);
 
     // Every minute get the latest follower and follower count
     setInterval(async () => {
@@ -56,6 +61,22 @@ export class Chron {
     }, 60000);
 
     log('info', 'Chron is online and running...');
+  }
+
+  public loadLiveTeamMembers = async (): Promise<any> => {
+    const url = `${this.apiUrl}/team/livecoders`;
+
+    const resp: ILiveCodersTeam = await get(url).then((data: any) => data as ILiveCodersTeam);
+
+    const liveCodersTeamMembers: ILiveCodersTeamMember[] = resp.users;
+    
+    if (liveCodersTeamMembers) {
+      const retrievedLiveCodersTeamMembersEventArg: IRetrievedLiveCodersTeamMembersEventArg = {
+        liveCodersTeamMembers
+      };
+
+      this.emitMessage(SocketIOEvents.RetrievedLiveCodersTeamMembers, retrievedLiveCodersTeamMembersEventArg);
+    }
   }
 
   public broadcastFollowers = async (): Promise<any> => {

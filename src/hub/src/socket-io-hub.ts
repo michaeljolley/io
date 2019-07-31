@@ -26,7 +26,8 @@ import {
   IThemerEventArg,
   INewGoalEventArg,
   INewNoteEventArg,
-  INewAnnouncementEventArg
+  INewAnnouncementEventArg,
+  IRetrievedLiveCodersTeamMembersEventArg
 } from '@shared/event_args';
 
 export class IOHub {
@@ -82,6 +83,9 @@ export class IOHub {
       );
       socket.on(SocketIOEvents.LastSubscriberUpdated, (lastUserEvent: ILastUserEventArg) =>
         this.onLastSubscriber(lastUserEvent)
+      );
+      socket.on(SocketIOEvents.RetrievedLiveCodersTeamMembers, (liveCodersTeamMembersEvent: IRetrievedLiveCodersTeamMembersEventArg) =>
+        this.onRetrievedLiveCodersTeamMembers(liveCodersTeamMembersEvent)
       );
 
       /**
@@ -350,6 +354,13 @@ export class IOHub {
   ) {
     log('info', 'onCandleVoteUpdate');
     this.io.emit(SocketIOEvents.CandleVoteUpdate, candleVoteResultEventArg);
+  }
+
+  private onRetrievedLiveCodersTeamMembers(
+    liveCodersTeamMembersEventArg: IRetrievedLiveCodersTeamMembersEventArg
+  ) {
+    log('info', 'onRetrievedLiveCodersTeamMembers');
+    this.io.emit(SocketIOEvents.RetrievedLiveCodersTeamMembers, liveCodersTeamMembersEventArg);
   }
 
   /**

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 export interface IUserInfo extends mongoose.Document {
   id: string;
+  liveCodersTeamMember: boolean;
   login: string;
   display_name: string;
   broadcaster_type: string;
@@ -11,10 +12,11 @@ export interface IUserInfo extends mongoose.Document {
 export const UserInfoModel = mongoose.model<IUserInfo>(
   "UserInfo",
   new mongoose.Schema({
-    id: { type: String, required: true },
-    login: String,
-    display_name: String,
     broadcaster_type: String,
-    profile_image_url: String
+    display_name: String,
+    id: { type: String, required: true },
+    liveCodersTeamMember: Boolean,
+    login: String,
+    profile_image_url: String,
   })
 );

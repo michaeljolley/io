@@ -21,6 +21,7 @@ import { INewNoteEventArg } from './newNoteEventArg';
 import { IThemerEventArg } from './themerEventArg';
 import { IUserEventArg } from './userEventArg';
 import { INewAnnouncementEventArg } from './newAnnouncementEventArg';
+import { IRetrievedLiveCodersTeamMembersEventArg } from './retrievedLiveCodersTeamMembersEventArg';
 
 export {
   IBaseEventArg,
@@ -45,5 +46,6 @@ export {
   IUserEventArg,
   IUserJoinedEventArg,
   IUserLeftEventArg,
-  IViewerCountEventArg
+  IViewerCountEventArg,
+  IRetrievedLiveCodersTeamMembersEventArg
 };
