@@ -45,7 +45,7 @@ const htmlSanitizeOpts = {
 
 export class TwitchChat {
   public tmi: Client;
-  private clientUsername: string = config.twitchClientUsername;
+  private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
 
