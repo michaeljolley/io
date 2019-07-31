@@ -208,7 +208,33 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !blog, !candle, !discord, !github, !heroines, !mark, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !blog, !candle, !discord, !github, !heroines, !mark, !mod, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const modCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!mod') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `Moderators can use the following commands: !note {username} {what they taught us}`
     );
     return true;
   }

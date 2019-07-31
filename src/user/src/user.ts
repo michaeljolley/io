@@ -75,27 +75,11 @@ export class User {
 
     user = await get(url);
 
+    await this.userDb.saveUserInfo(user);
+    user = await this.userDb.getUserInfo(username);
     log('info', `Retrieved from api: ${username}`);
-    this.userDb.saveUserInfo(user)
-        .then((success: boolean) => {
-
-          this.userDb.getUserInfo(username)
-              .then((savedUser: IUserInfo | undefined) => {
-                if (savedUser) {
-                  this.users.push(savedUser);
-                  return savedUser;
-                }
-              })
-              .catch((err: any) => {
-                log('info', err);
-                return undefined;
-              });
-
-        })
-        .catch((err: any) => {
-          log('info', err);
-          return undefined;
-        });
+    this.users.push(user);
+    return user;
   };
 
   /**

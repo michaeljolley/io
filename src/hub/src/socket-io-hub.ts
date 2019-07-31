@@ -64,6 +64,9 @@ export class IOHub {
       socket.on(SocketIOEvents.OnUserJoined, (userEvent: IUserJoinedEventArg) =>
         this.onUserJoinedChannel(userEvent)
       );
+      socket.on(SocketIOEvents.OnRaidStream, (raidEventArg: INewSegmentEventArg) => 
+        this.onRaidStream(raidEventArg)
+      );
 
       /**
        * Chron related events
@@ -295,6 +298,11 @@ export class IOHub {
   private onStreamEnd(streamEvent: IStreamEventArg) {
     log('info', `onStreamEnd: ${JSON.stringify(streamEvent.stream.id)}`);
     this.io.emit(SocketIOEvents.StreamEnded, streamEvent);
+  }
+
+  private onRaidStream(raidEventArg: INewSegmentEventArg) {
+    log('info', `onRaidStream: ${raidEventArg.streamSegment}`);
+    this.io.emit(SocketIOEvents.OnRaidStream, raidEventArg);
   }
 
   private onStreamNoteRebuild(streamId: string) {

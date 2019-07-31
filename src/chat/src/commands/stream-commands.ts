@@ -169,3 +169,47 @@ export const goalCommand = (
 
   return true;
 };
+
+export const raidCommand = (
+  message: string,
+  user: ChatUserstate,
+  userInfo: IUserInfo,
+  activeStream: IStream | undefined,
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
+): boolean => {
+
+  if (
+    message === undefined ||
+    userInfo === undefined ||
+    activeStream === undefined ||
+    message.length === 0 ||
+    emitMessageFunc === undefined ||
+    isBroadcaster(user) === false
+  ) {
+    return false;
+  }
+
+  const lowerMessage: string = message.toLocaleLowerCase().trim();
+  const firstWord: string = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '/raid') {
+    return false;
+  }
+
+  const raidedUsername: string = lowerMessage.split(' ')[1];
+  const streamSegment: IStreamSegment = {
+    timestamp: new Date().toISOString(),
+    topic: `Wrapping up and raid to [${raidedUsername}](https://twitch.tv/${raidedUsername})`,
+    user: userInfo
+  };
+
+  const newStreamRaidEventArg: INewSegmentEventArg = {
+    streamId: activeStream.id,
+    streamSegment
+  };
+
+  emitMessageFunc(SocketIOEvents.OnRaidStream, newStreamRaidEventArg);
+
+  return true;
+};

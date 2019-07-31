@@ -17,7 +17,8 @@ import {
   IThemerEventArg,
   IUserEventArg,
   INewNoteEventArg,
-  INewGoalEventArg
+  INewGoalEventArg,
+  IChatMessageEventArg
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -46,6 +47,10 @@ export class Logger {
     );
     this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
+    );
+
+    this.socket.on(SocketIOEvents.OnRaidStream, (newStreamRaidEvent: INewSegmentEventArg) =>
+      this.onStreamSegment(newStreamRaidEvent)
     );
 
     this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
