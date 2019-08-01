@@ -502,7 +502,7 @@ export class TwitchChat {
   };
 
   private saveUser = async (username: string): Promise<IUserInfo> => {
-    const url = `http://user/update/${username}/false`;
+    const url = `http://user/update/${username}/true`;
 
     return await get(url).then((user: any) => {
       return user;

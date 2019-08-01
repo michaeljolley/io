@@ -6,7 +6,6 @@ export interface IUserInfo extends mongoose.Document {
   id: string;
   login: string;
   profile_image_url: string;
-  lastSeen: string;
   lastUpdated: string;
 }
 
@@ -16,7 +15,6 @@ export const UserInfoModel = mongoose.model<IUserInfo>(
     broadcaster_type: String,
     display_name: String,
     id: { type: String, required: true },
-    lastSeen: String,
     lastUpdated: String,
     login: String,
     profile_image_url: String
