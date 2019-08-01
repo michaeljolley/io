@@ -17,8 +17,7 @@ import {
   IThemerEventArg,
   IUserEventArg,
   INewNoteEventArg,
-  INewGoalEventArg,
-  IChatMessageEventArg
+  INewGoalEventArg
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
