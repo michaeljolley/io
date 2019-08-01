@@ -141,6 +141,10 @@ export class StreamNotes {
     return await new Promise((resolve: any, reject: any) => {
       const markdowner = new Markdowner(this.activeStream);
       markdowner.generateMarkdown().then((content: string) => {
+        if (!fs.existsSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`)) {
+          fs.mkdirSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`);
+        }
+
         fs.writeFileSync(__dirname + `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md`, content);
         log('info', `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md'!`);
         resolve(this.streamNoteName);
