@@ -10,7 +10,7 @@ export class User {
   public app: express.Application;
   private http!: Server;
 
-  private users: any[] = [];
+  private users: any = {};
   private usersUrl: string = 'http://api/users/';
   private userDb: UserDb;
 
@@ -43,6 +43,18 @@ export class User {
       );
       res.send(payload);
     });
+
+    this.app.get('/update/:username', async (req, res) => {
+      log(
+        'info',
+        `route: /update/:username called with username: ${req.params.username}`
+      );
+
+      const payload: IUserInfo | undefined = await this.updateUser(
+        req.params.username
+      );
+      res.send(payload);
+    });
   }
 
   private getUser = async (
@@ -54,9 +66,7 @@ export class User {
 
     username = username.toLocaleLowerCase();
 
-    let user = this.users.find(
-      f => f.login.toLocaleLowerCase() === username
-    );
+    let user = this.users[username];
 
     if (user) {
       log('info', `Retrieved from cache: ${username}`);
@@ -67,7 +77,7 @@ export class User {
 
     if (user) {
       log('info', `Retrieved from db: ${username}`);
-      this.users.push(user);
+      this.users[username] = user;
       return user;
     }
 
@@ -75,12 +85,35 @@ export class User {
 
     user = await get(url);
 
-    await this.userDb.saveUserInfo(user);
-    user = await this.userDb.getUserInfo(username);
+    user = await this.userDb.saveUserInfo(user);
+
     log('info', `Retrieved from api: ${username}`);
-    this.users.push(user);
+
+    this.users[user.login] = user;
     return user;
   };
+
+  private updateUser = async (
+    username: string
+  ): Promise<IUserInfo | undefined> => {
+    if (username == null) {
+      return undefined;
+    }
+
+    username = username.toLocaleLowerCase();
+
+    const url = `${this.usersUrl}${username}`;
+
+    let user: any = await get(url);
+
+    user = await this.userDb.saveUserInfo(user);
+    this.users[user.login] = user;
+
+    log('info', `Updated ${username} from api`);
+
+    return user;
+  };
+
 
   /**
    * Start the Node.js server

@@ -370,7 +370,7 @@ export class TwitchChat {
 
     // Process any commands
     for (const basicCommand of Object.values(BasicCommands)) {
-      handledByCommand = basicCommand(
+      handledByCommand = await basicCommand(
         originalMessage,
         user,
         this.sendChatMessage
