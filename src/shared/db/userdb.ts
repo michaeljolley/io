@@ -24,7 +24,7 @@ export class UserDb {
   };
 
   public saveUserInfo = async (userInfo: IUserInfo): Promise<IUserInfo> => {
-    return await new Promise((resolve: any) =>
+    return await new Promise((resolve: any) => {
       UserInfoModel.findOneAndUpdate(
         { login: userInfo.login },
         userInfo,
@@ -37,8 +37,8 @@ export class UserDb {
           log("info", `saveUserInfo: ${userInfo.login}`);
           resolve(res);
         }
-      )
-    );
+      );
+    });
   };
 
   private connect() {

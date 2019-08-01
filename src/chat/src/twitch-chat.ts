@@ -148,7 +148,7 @@ export class TwitchChat {
     self: boolean
   ) => {
     // Identify user and add to user state if needed
-    await this.getUser(username);
+    await this.saveUser(username);
 
     log('info', `${username} has JOINED the channel`);
     const userJoinedEventArg: IUserJoinedEventArg = {
@@ -495,6 +495,14 @@ export class TwitchChat {
 
   private getUser = async (username: string): Promise<IUserInfo> => {
     const url = `http://user/users/${username}`;
+
+    return await get(url).then((user: any) => {
+      return user;
+    });
+  };
+
+  private saveUser = async (username: string): Promise<IUserInfo> => {
+    const url = `http://user/update/${username}/false`;
 
     return await get(url).then((user: any) => {
       return user;

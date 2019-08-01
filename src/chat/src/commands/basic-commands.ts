@@ -311,7 +311,7 @@ export const updateUserCommand = async (
   }
 
   // Call the user service to update user
-  const url = `http://user/update/${user.username}`;
+  const url = `http://user/update/${user.username}/true`;
 
   await get(url).then((updatedUser: any) => {
     return updatedUser;

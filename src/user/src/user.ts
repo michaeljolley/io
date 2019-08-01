@@ -1,4 +1,5 @@
 import express = require('express');
+import moment from 'moment';
 import { Server } from 'http';
 
 import { get, log } from '@shared/common';
@@ -44,14 +45,17 @@ export class User {
       res.send(payload);
     });
 
-    this.app.get('/update/:username', async (req, res) => {
+    this.app.get('/update/:username/:force', async (req, res) => {
       log(
         'info',
         `route: /update/:username called with username: ${req.params.username}`
       );
 
+      const forceUpdate: boolean = req.params.force !== undefined ? req.params.force : false;
+
       const payload: IUserInfo | undefined = await this.updateUser(
-        req.params.username
+        req.params.username,
+        forceUpdate
       );
       res.send(payload);
     });
@@ -94,7 +98,8 @@ export class User {
   };
 
   private updateUser = async (
-    username: string
+    username: string,
+    forceUpdate: boolean
   ): Promise<IUserInfo | undefined> => {
     if (username == null) {
       return undefined;
@@ -102,9 +107,24 @@ export class User {
 
     username = username.toLocaleLowerCase();
 
+    const existingUser: IUserInfo | undefined = await this.getUser(username);
+
+    if (!forceUpdate &&
+        existingUser &&
+        existingUser.lastUpdated) {
+        const refreshIfBefore: moment.Moment = moment(new Date().setDate(new Date().getDate() -1));
+        const lastUpdated: moment.Moment = moment(new Date(existingUser.lastUpdated));
+        if (!lastUpdated.isBefore(refreshIfBefore)) {
+          return existingUser;
+        }
+    }
+
     const url = `${this.usersUrl}${username}`;
 
     let user: any = await get(url);
+
+    /* set lastUpdated so we don't try and update them again within 24 hours */
+    user.lastUpdated = new Date().toISOString();
 
     user = await this.userDb.saveUserInfo(user);
     this.users[user.login] = user;
