@@ -127,9 +127,16 @@ export class User {
     user.lastUpdated = new Date().toISOString();
 
     user = await this.userDb.saveUserInfo(user);
-    this.users[user.login] = user;
 
-    log('info', `Updated ${username} from api`);
+    //Provide some error handling
+    if (user)
+    {
+      this.users[user.login] = user;
+      log('info', `Updated ${username} from api`);
+    } else {
+      user = this.users[user.login];
+      log('error', `Error while updating ${username} in DB`);
+    }
 
     return user;
   };

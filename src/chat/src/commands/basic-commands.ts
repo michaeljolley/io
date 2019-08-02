@@ -293,29 +293,3 @@ export const liveCodersCommand = (
 
   return false;
 };
-
-export const updateUserCommand = async (
-  message: string,
-  user: ChatUserstate,
-  twitchChatFunc: (message: string) => void
-): Promise<boolean> => {
-  if (message === undefined || message.length === 0) {
-    return false;
-  }
-
-  const lowerMessage = message.toLocaleLowerCase().trim();
-  const firstWord = lowerMessage.split(' ')[0];
-
-  if (firstWord !== '!update') {
-    return false;
-  }
-
-  // Call the user service to update user
-  const url = `http://user/update/${user.username}/true`;
-
-  await get(url).then((updatedUser: any) => {
-    return updatedUser;
-  });
-
-  return true;
-};
