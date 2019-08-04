@@ -133,8 +133,8 @@ export class User {
     {
       this.users[user.login] = user;
       log('info', `Updated ${username} from api`);
-    } else {
-      user = this.users[user.login];
+    } else if (existingUser) {
+      user = this.users[existingUser.login];
       log('error', `Error while updating ${username} in DB`);
     }
 
