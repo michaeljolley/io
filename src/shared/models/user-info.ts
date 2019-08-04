@@ -7,7 +7,7 @@ export interface IUserInfo extends mongoose.Document {
   login: string;
   profile_image_url: string;
   lastUpdated: string;
-}
+};
 
 export const UserInfoModel = mongoose.model<IUserInfo>(
   "UserInfo",
