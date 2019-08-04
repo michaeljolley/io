@@ -382,13 +382,13 @@ export class TwitchChat {
           chatMessageArg.userInfo = updatedUser;
         }
 
-        this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
         break;
       }
     }
 
     //Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
+    
     if (!handledByCommand) {
       for (const basicCommand of Object.values(BasicCommands)) {
         handledByCommand = await basicCommand(
