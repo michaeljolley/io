@@ -45,14 +45,29 @@ export const getTime = () => {
   return { hours, minutes };
 };
 
-export const get = (url: string) => {
+export const get = (url: string, ...headerParams: Array<{ [key: string]: string }>) => {
+  const headers: {[key:string]: string} = {
+    "Authorization": `Bearer ${config.twitchClientToken}`,
+    "Content-Type": "application/json",
+    "Client-ID": config.twitchClientId
+  };
+  // Add or replace existing headers.
+  if (headerParams.length > 0) {
+    headerParams.map(param => {
+      Object.keys(param).forEach(paramKey => {
+        for (const headerKey in headers) {
+          if (headerKey.toLocaleLowerCase() === paramKey.toLocaleLowerCase()) {
+            headers[headerKey] = param[paramKey];
+            return;
+          }
+        }
+        headers[paramKey] = param[paramKey];
+      });
+    });
+  }
   return new Promise((resolve, reject) => {
       restler.get(url, {
-          headers: {
-              "Authorization": `Bearer ${config.twitchClientToken}`,
-              "Content-Type": "application/json",
-              "Client-ID": config.twitchClientId
-          }
+          headers
       }).on("complete", (data: any) => {
           resolve(data);
       });

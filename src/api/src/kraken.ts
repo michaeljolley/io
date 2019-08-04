@@ -1,6 +1,4 @@
-import * as queryString from 'query-string';
-
-import { get, config, log } from '@shared/common';
+import { get, log } from '@shared/common';
 
 // @deprecated
 export class Kraken {
@@ -9,12 +7,11 @@ export class Kraken {
 
   public async getTeamByName(name: string): Promise<any> {
     name = name.toLocaleLowerCase();
-    const queries = queryString.stringify({
-      "Client-ID": config.twitchClientUserId
-    });
-    const url = `${this.teamsUrl}/${name}?${queries}`;
+    const url = `${this.teamsUrl}/${name}`;
 
-    return await get(url).then((data: any) => {
+    // Call the Kraken API using the application/vnd.twitchtv.v5+json 'Accept' header to
+    // tell Twitch we expect a response from the v5 API not v3.
+    return await get(url, {"Accept": "application/vnd.twitchtv.v5+json"}).then((data: any) => {
       log('info', `getTeamByName: ${name}`);
       return data;
     });
