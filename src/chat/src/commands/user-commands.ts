@@ -1,12 +1,14 @@
 import { ChatUserstate } from 'tmi.js';
 
 import { get } from '@shared/common';
+import { IUserInfo } from '@shared/models';
+
 
 export const updateUserCommand = async (
     message: string,
     user: ChatUserstate,
     twitchChatFunc: (message: string) => void
-  ): Promise<boolean> => {
+  ): Promise<IUserInfo | boolean> => {
     if (message === undefined || message.length === 0) {
       return false;
     }
@@ -20,7 +22,7 @@ export const updateUserCommand = async (
   
     // Call the user service to update user
     const url = `http://user/update/${user.username}/true`;
-  
+    
     await get(url).then((updatedUser: any) => {
         if (updatedUser && updatedUser != undefined)
         {
@@ -29,16 +31,14 @@ export const updateUserCommand = async (
                   `User ${user.username} has been successfully updated`
                 );
               }
-              return true;
+              return updatedUser;
         } else {
             if (twitchChatFunc) {
                 twitchChatFunc(
                   `There was an issue while updating ${user.username}`
                 );
               }
-              return true;
         }
     });
-    
     return true;
   };

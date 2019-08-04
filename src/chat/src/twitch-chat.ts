@@ -370,12 +370,18 @@ export class TwitchChat {
     //Process user commands first before emitting message to hub
     //so if the user updates, the update is handled before notification
     for (const userCommand of Object.values(UserCommands)) {
-      handledByCommand = await userCommand(
+      let updatedUser: IUserInfo | boolean = await userCommand(
         originalMessage,
         user,
         this.sendChatMessage
       );
-      if (handledByCommand) {
+      if (updatedUser) {
+        handledByCommand = true;
+
+        if (typeof updatedUser !== "boolean") {
+          chatMessageArg.userInfo = updatedUser;
+        }
+
         this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
         break;
       }
@@ -383,15 +389,16 @@ export class TwitchChat {
 
     //Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
-
-    for (const basicCommand of Object.values(BasicCommands)) {
-      handledByCommand = await basicCommand(
-        originalMessage,
-        user,
-        this.sendChatMessage
-      );
-      if (handledByCommand) {
-        break;
+    if (!handledByCommand) {
+      for (const basicCommand of Object.values(BasicCommands)) {
+        handledByCommand = await basicCommand(
+          originalMessage,
+          user,
+          this.sendChatMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
       }
     }
 
