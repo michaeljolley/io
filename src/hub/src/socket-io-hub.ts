@@ -4,6 +4,7 @@ import io from 'socket.io';
 
 import { SocketIOEvents } from '@shared/events';
 import { log } from '@shared/common';
+import { StreamDb } from '@shared/db';
 import {
   IChatMessageEventArg,
   IEmoteEventArg,
@@ -97,8 +98,14 @@ export class IOHub {
         this.onStreamEnd(streamEvent)
       );
       socket.on(SocketIOEvents.StreamNoteRebuild, (streamId: string) =>
-      this.onStreamNoteRebuild(streamId)
-    );
+        this.onStreamNoteRebuild(streamId)
+      );
+      socket.on(SocketIOEvents.CreditsRoll, (streamId: string) =>
+        this.creditsRoll(streamId)
+      );
+      socket.on(SocketIOEvents.OnCreditsRoll, (streamEvent: IStreamEventArg) =>
+        this.onCreditsRoll(streamEvent)
+      );
 
       /**
        * Alert related events
@@ -308,6 +315,29 @@ export class IOHub {
   private onStreamNoteRebuild(streamId: string) {
     log('info', `onStreamNoteRebuild: ${JSON.stringify(streamId)}`);
     this.io.emit(SocketIOEvents.StreamNoteRebuild, streamId);
+  }
+  
+  private creditsRoll(streamId: string) {
+    log('info', `onCreditsRoll: ${JSON.stringify(streamId)}`);
+
+    const streamDb: StreamDb = new StreamDb();
+    streamDb.getStream(streamId)
+              .then(s => {
+                if (s) {
+                  const streamArg: IStreamEventArg = {
+                    stream: s
+                  };
+                  this.io.emit(SocketIOEvents.CreditsRoll, streamArg);
+                }
+              })
+              .catch((e: any) => {
+                log('info', `${JSON.stringify(e)}`);
+              });
+  }
+  
+  private onCreditsRoll(streamArg: IStreamEventArg) {
+    log('info', `creditsRoll`);
+    this.io.emit(SocketIOEvents.CreditsRoll, streamArg);
   }
 
   private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
