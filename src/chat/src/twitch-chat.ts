@@ -20,7 +20,8 @@ import {
   BasicCommands,
   CandleCommands,
   NoteCommands,
-  StreamCommands
+  StreamCommands,
+  UserCommands
 } from './commands';
 
 const htmlSanitizeOpts = {
@@ -148,7 +149,7 @@ export class TwitchChat {
     self: boolean
   ) => {
     // Identify user and add to user state if needed
-    await this.saveUser(username);
+    await this.updateAndGetUser(username);
 
     log('info', `${username} has JOINED the channel`);
     const userJoinedEventArg: IUserJoinedEventArg = {
@@ -356,8 +357,6 @@ export class TwitchChat {
       userInfo
     };
 
-    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
-
     if (this.activeStream && user.mod) {
       const userEvent: IUserEventArg = {
         streamId: this.activeStream.id,
@@ -368,15 +367,38 @@ export class TwitchChat {
 
     let handledByCommand: boolean = false;
 
-    // Process any commands
-    for (const basicCommand of Object.values(BasicCommands)) {
-      handledByCommand = await basicCommand(
+    //Process user commands first before emitting message to hub
+    //so if the user updates, the update is handled before notification
+    for (const userCommand of Object.values(UserCommands)) {
+      let updatedUser: IUserInfo | boolean = await userCommand(
         originalMessage,
         user,
         this.sendChatMessage
       );
-      if (handledByCommand) {
+      if (updatedUser) {
+        handledByCommand = true;
+
+        if (typeof updatedUser !== "boolean") {
+          chatMessageArg.userInfo = updatedUser;
+        }
+
         break;
+      }
+    }
+
+    //Go ahead and emit message to hub before processing the rest of the commands
+    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
+    
+    if (!handledByCommand) {
+      for (const basicCommand of Object.values(BasicCommands)) {
+        handledByCommand = await basicCommand(
+          originalMessage,
+          user,
+          this.sendChatMessage
+        );
+        if (handledByCommand) {
+          break;
+        }
       }
     }
 
@@ -501,8 +523,8 @@ export class TwitchChat {
     });
   };
 
-  private saveUser = async (username: string): Promise<IUserInfo> => {
-    const url = `http://user/update/${username}/true`;
+  private updateAndGetUser = async (username: string): Promise<IUserInfo> => {
+    const url = `http://user/update/${username}/false`;
 
     return await get(url).then((user: any) => {
       return user;
