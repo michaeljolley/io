@@ -26,6 +26,7 @@ export enum SocketIOEvents {
   NewCheer = 'NewCheer',
   NewAnnouncement = 'NewAnnouncement',
 
+  OnCreditsRoll = 'OnCreditsRoll',
   StreamNoteRebuild = 'StreamNoteRebuild',
 
   /* A/V events */
