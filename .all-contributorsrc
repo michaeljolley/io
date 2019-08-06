@@ -104,6 +104,15 @@
         "userTesting",
         "code"
       ]
+    },
+    {
+      "login": "jtsom",
+      "name": "John Tsombakos",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/13488?v=4",
+      "profile": "https://github.com/jtsom",
+      "contributions": [
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
