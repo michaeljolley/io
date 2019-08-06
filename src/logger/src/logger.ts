@@ -48,6 +48,10 @@ export class Logger {
       this.onStreamEnd(streamEvent)
     );
 
+    this.socket.on(SocketIOEvents.OnRaidStream, (newStreamRaidEvent: INewSegmentEventArg) =>
+      this.onStreamSegment(newStreamRaidEvent)
+    );
+
     this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
       this.onNewFollow(newFollowerEvent)
     );

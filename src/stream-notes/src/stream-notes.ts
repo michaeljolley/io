@@ -16,8 +16,8 @@ import { Markdowner } from './markdowner';
 
 export class StreamNotes {
   private socket!: SocketIOClient.Socket;
-  private gitHubRepoUrl: string = `https://${config.githubUsername}:${config.githubPassword}@github.com/MichaelJolley/bald-bearded-builder.github.io.git`;
-  private repoDirectory: string = 'bald-bearded-builder.github.io';
+  private gitHubRepoUrl: string = `https://${config.githubUsername}:${config.githubAuthToken}@github.com/${config.githubUsername}/${config.githubRepo}.git`;
+  private repoDirectory: string = config.githubRepo;
 
   private streamDb: StreamDb;
   private git: simplegit.SimpleGit = simplegit();
@@ -63,10 +63,11 @@ export class StreamNotes {
   }
 
   private configureGit = async () : Promise<any> => {
+
     return await new Promise((resolve: any, reject: any) => {
 
-      this.git.addConfig('user.name', 'Michael Jolley').then((val: string) => {
-        this.git.addConfig('user.email', 'mike@sparcapp.io').then((val2: string) => {
+      this.git.addConfig('user.name', config.githubName).then((val: string) => {
+        this.git.addConfig('user.email', config.githubEmailAddress).then((val2: string) => {
           log('info', 'git configured');
           resolve(true);
         }).catch((err: any) => {
@@ -83,7 +84,7 @@ export class StreamNotes {
   private clone = async () : Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
       this.git.clone(this.gitHubRepoUrl, __dirname + `/tmp/${this.repoDirectory}`).then((value: string) => {
-        log('info', `Successfully cloned ${this.gitHubRepoUrl}`);
+        log('info', `Successfully cloned ${config.githubUsername}/${config.githubRepo}`);
 
         resolve(value);
       }).catch((err: any) => {
@@ -140,6 +141,10 @@ export class StreamNotes {
     return await new Promise((resolve: any, reject: any) => {
       const markdowner = new Markdowner(this.activeStream);
       markdowner.generateMarkdown().then((content: string) => {
+        if (!fs.existsSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`)) {
+          fs.mkdirSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`);
+        }
+
         fs.writeFileSync(__dirname + `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md`, content);
         log('info', `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md'!`);
         resolve(this.streamNoteName);

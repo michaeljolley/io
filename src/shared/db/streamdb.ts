@@ -20,25 +20,6 @@ export class StreamDb {
     this.connect();
   }
 
-  private connect() {
-    mongoose.connect(config.mongoDBConnectionString, {
-      pass: config.mongoDBPassword,
-      user: config.mongoDBUser,
-      dbName: config.mongoDBDatabase,
-      useCreateIndex: true,
-      useFindAndModify: false,
-      useNewUrlParser: true
-    }, (err) => {
-      if (err) {
-        log('info', `Err: ${JSON.stringify(err)}`);
-        setTimeout(() => this.connect, 2000);
-      }
-      else {
-        log('info', `All good holmes`);
-      }
-    });
-  }
-
   public getStream = async (streamId: string): Promise<IStream | undefined> => {
     return await new Promise((resolve: any) =>
       StreamModel.findOne({ id: streamId })
@@ -399,4 +380,23 @@ export class StreamDb {
       );
     }
   };
+  
+  private connect() {
+    mongoose.connect(config.mongoDBConnectionString, {
+      dbName: config.mongoDBDatabase,
+      pass: config.mongoDBPassword,
+      useCreateIndex: true,
+      useFindAndModify: false,
+      useNewUrlParser: true,
+      user: config.mongoDBUser
+    }, (err) => {
+      if (err) {
+        log('info', `Err: ${JSON.stringify(err)}`);
+        setTimeout(() => this.connect, 2000);
+      }
+      else {
+        log('info', `All good holmes`);
+      }
+    });
+  }
 }

@@ -7,6 +7,7 @@ export enum SocketIOEvents {
   OnUserLeft = 'OnUserLeft',
   EmoteSent = 'EmoteSent',
   OnModeratorJoined = 'OnModeratorJoined',
+  OnRaidStream = 'OnRaidStream',
 
   /* stat changes */
   FollowerCountChanged = 'FollowerCountChanged',
@@ -25,6 +26,8 @@ export enum SocketIOEvents {
   NewCheer = 'NewCheer',
   NewAnnouncement = 'NewAnnouncement',
 
+  CreditsRoll = 'CreditsRoll',
+  OnCreditsRoll = 'OnCreditsRoll',
   StreamNoteRebuild = 'StreamNoteRebuild',
 
   /* A/V events */

@@ -33,8 +33,11 @@ When running locally, environment variables can be added to each service via a `
 
 | Variable                | Purpose                                                                                                     |
 | ---                     | ---                                                                                                         |
-| GITHUB_USER             | Username to authenticate with GitHub. All commits in streamnotes will be created with this user             |
-| GITHUB_PASSWORD         | Password to authenticate with GitHub. All commits will need this.                                           |
+| GITHUB_USERNAME             | Username to use in building the GitHub repo url.             |
+| GITHUB_EMAIL_ADDRESS         | Email address associated with the commit to git.                                           |
+| GITHUB_NAME             | Name of the user associated with the commit to git. |
+| GITHUB_AUTH_TOKEN       | Personal access token from GitHub.  Used to authenticate when generating stream notes. |
+| GITHUB_REPO             | GitHub repository name to commit stream notes to. |
 | MONGO_DB_CONN_STRING    | Connection string for MongoDB that will store stream, user & vote data                                      |
 | MONGO_DB_USER           | Username for MongoDB connection                                                                             |
 | MONGO_DB_PASSWORD       | Password for MongoDB connection                                                                             |
