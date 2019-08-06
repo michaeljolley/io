@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -73,6 +73,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/Flyken271"><img src="https://avatars0.githubusercontent.com/u/39961800?v=4" width="100px;" alt="Flyken"/><br /><sub><b>Flyken</b></sub></a><br /><a href="#ideas-Flyken271" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/copperbeardy"><img src="https://avatars3.githubusercontent.com/u/4822063?v=4" width="100px;" alt="Davin Davies"/><br /><sub><b>Davin Davies</b></sub></a><br /><a href="#ideas-copperbeardy" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/CodemanCodes"><img src="https://avatars3.githubusercontent.com/u/46641880?v=4" width="100px;" alt="CodemanCodes"/><br /><sub><b>CodemanCodes</b></sub></a><br /><a href="#ideas-CodemanCodes" title="Ideas, Planning, & Feedback">🤔</a> <a href="#userTesting-CodemanCodes" title="User Testing">📓</a> <a href="https://github.com/MichaelJolley/io/commits?author=CodemanCodes" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/jtsom"><img src="https://avatars1.githubusercontent.com/u/13488?v=4" width="100px;" alt="John Tsombakos"/><br /><sub><b>John Tsombakos</b></sub></a><br /><a href="https://github.com/MichaelJolley/io/commits?author=jtsom" title="Tests">⚠️</a></td>
   </tr>
 </table>
 
