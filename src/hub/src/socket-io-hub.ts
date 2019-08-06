@@ -65,7 +65,7 @@ export class IOHub {
       socket.on(SocketIOEvents.OnUserJoined, (userEvent: IUserJoinedEventArg) =>
         this.onUserJoinedChannel(userEvent)
       );
-      socket.on(SocketIOEvents.OnRaidStream, (raidEventArg: INewSegmentEventArg) => 
+      socket.on(SocketIOEvents.OnRaidStream, (raidEventArg: INewSegmentEventArg) =>
         this.onRaidStream(raidEventArg)
       );
 
@@ -316,9 +316,9 @@ export class IOHub {
     log('info', `onStreamNoteRebuild: ${JSON.stringify(streamId)}`);
     this.io.emit(SocketIOEvents.StreamNoteRebuild, streamId);
   }
-  
+
   private creditsRoll(streamId: string) {
-    log('info', `onCreditsRoll: ${JSON.stringify(streamId)}`);
+    log('info', `creditsRoll: ${JSON.stringify(streamId)}`);
 
     const streamDb: StreamDb = new StreamDb();
     streamDb.getStream(streamId)
@@ -327,17 +327,17 @@ export class IOHub {
                   const streamArg: IStreamEventArg = {
                     stream: s
                   };
-                  this.io.emit(SocketIOEvents.CreditsRoll, streamArg);
+                  this.io.emit(SocketIOEvents.OnCreditsRoll, streamArg);
                 }
               })
               .catch((e: any) => {
                 log('info', `${JSON.stringify(e)}`);
               });
   }
-  
+
   private onCreditsRoll(streamArg: IStreamEventArg) {
     log('info', `creditsRoll`);
-    this.io.emit(SocketIOEvents.CreditsRoll, streamArg);
+    this.io.emit(SocketIOEvents.OnCreditsRoll, streamArg);
   }
 
   private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {

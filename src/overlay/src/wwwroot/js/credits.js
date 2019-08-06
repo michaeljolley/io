@@ -5,7 +5,7 @@ var socket = io('http://localhost:5060');
 socket.on('OnCreditsRoll', (streamEventArg) => {
 
     /* Clear the body tag to ensure we're starting over */
-    const body = document.getElementsByTagName('body');
+    const body = document.getElementById('bodyYo');
     body.innerText = '';
 
     /* Build a div.marquee with p and p.header and add to body
@@ -15,6 +15,8 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
     * Subscribers = streamEventArg.stream.subscribers
     * Cheerers = streamEventArg.stream.cheers
     */
+
+    let credits = 0;
 
     if (streamEventArg &&
         streamEventArg.stream) {
@@ -34,9 +36,11 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
             const modHeader = addParagraph('Moderators', true);
             marquee.append(modHeader);
 
-            foreach (mod in stream.moderators) {
-                marquee.append(addParagraph(mod.display_name || mod.login, false));
-            }
+            credits += stream.moderators.length;
+
+            stream.moderators.forEach(mod => {
+                marquee.append(addParagraph(mod.display_name || mod.login, false, mod.profile_image_url));
+            });
         }
 
         /* Subscribers */
@@ -44,6 +48,8 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
             stream.subscribers.length > 0) {
             const subHeader = addParagraph('Subscribers', true);
             marquee.append(subHeader);
+
+            credits += stream.subscribers.length;
 
             const tempSubs = [];
             const subscribers = stream.subscribers
@@ -53,9 +59,9 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
                                                     tempSubs.push(n.id);
                                             });
 
-            foreach (sub in subscribers) {
-                marquee.append(addParagraph(sub.display_name || sub.login, false));
-            }
+            subscribers.forEach(sub => {
+                marquee.append(addParagraph(sub.display_name || sub.login, false, sub.profile_image_url));
+            });
         }
 
         /* Cheerers */
@@ -63,6 +69,8 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
             stream.cheers.length > 0) {
             const subHeader = addParagraph('Cheers', true);
             marquee.append(subHeader);
+
+            credits += stream.cheers.length;
 
             const tempCheers = [];
             const cheerers = stream.cheers
@@ -72,10 +80,9 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
                                                     tempCheers.push(n.id);
                                             });
 
-
-            foreach (cheer in cheerers) {
-                marquee.append(addParagraph(cheer.display_name || cheer.login, false));
-            }
+            cheerers.forEach(cheer => {
+                marquee.append(addParagraph(cheer.display_name || cheer.login, false, cheer.profile_image_url));
+            });
         }
 
         /* Raiders */
@@ -83,6 +90,8 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
             stream.raiders.length > 0) {
             const raiderHeader = addParagraph('Raiders', true);
             marquee.append(raiderHeader);
+
+            credits += stream.raiders.length;
 
             const tempRaiders = [];
             const raiders = stream.raiders
@@ -92,10 +101,9 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
                                                     tempRaiders.push(n.id);
                                             });
 
-
-            foreach (raider in raiders) {
-                marquee.append(addParagraph(raider.display_name || raider.login, false));
-            }
+            raiders.forEach(raider => {
+                marquee.append(addParagraph(raider.display_name || raider.login, false, raider.profile_image_url));
+            });
         }
 
         /* Followers */
@@ -104,6 +112,8 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
             const followHeader = addParagraph('Followers', true);
             marquee.append(followHeader);
 
+            credits += stream.followers.length;
+
             const tempFollows = [];
             const followers = stream.followers
                                         .filter((n) => {
@@ -111,24 +121,76 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
                                                     tempFollows.push(n.id);
                                             });
 
-
-            foreach (follow in followers) {
-                marquee.append(addParagraph(follow.display_name || follow.login, false));
-            }
+            followers.forEach(follow => {
+                marquee.append(addParagraph(follow.display_name || follow.login, false, follow.profile_image_url));
+            });
         }
 
+        /* Contributors */
+        if (stream.contributors ||
+            stream.candleVotes ||
+            stream.segments ||
+            stream.notes) {
+            const contributorHeader = addParagraph('Contributors', true);
+            marquee.append(contributorHeader);
+
+            let contributors = [];
+
+            if (stream.contributors) {
+                contributors.push(...stream.contributors);
+            }
+
+            if (stream.candleVotes) {
+                contributors.push(...stream.candleVotes.map(m => m.user));
+            }
+
+            if (stream.segments) {
+                contributors.push(...stream.segments.map(m => m.user));
+            }
+
+            if (stream.notes) {
+                contributors.push(...stream.notes.map(m => m.user));
+            }
+
+            const tempContributors = [];
+            contributors = contributors
+                                        .filter((n) => {
+                                            return tempContributors.indexOf(n.id) === -1 &&
+                                                   tempContributors.push(n.id);
+                                            });
+
+            credits += contributors.length;
+
+            contributors.forEach(contributor => {
+                marquee.append(addParagraph(contributor.display_name || contributor.login, false, contributor.profile_image_url));
+            });
+        }
+
+        /* Based on credits, modify the css animation attribute for .marquee */
+        marquee.setAttribute('style', `animation-duration: ${(credits + 20)}s;`);
+
         /* Based on how many of the above, change the CSS transition time */
-
         body.append(marquee);
-
     }
 });
 
-function addParagraph(title, isHeader) {
-    const p = document.createElement('p');
-    p.innerText = title;
-    if (isHeader) {
-        p.classList.add('header');
+function addParagraph(title, isHeader, profileImageUrl) {
+    if (title != 'B3_Bot' &&
+        title != 'theMichaelJolley') {
+        const p = document.createElement('p');
+        if (isHeader) {
+            p.classList.add('header');
+        }
+        if (profileImageUrl) {
+            const img = document.createElement('img');
+            img.src = profileImageUrl;
+            p.append(img);
+        }
+        const span = document.createElement('span');
+        span.innerText = title;
+        p.append(span);
+
+        return p;
     }
-    return p;
+    return '';
 }
