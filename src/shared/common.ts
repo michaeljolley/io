@@ -45,7 +45,7 @@ export const getTime = () => {
   return { hours, minutes };
 };
 
-export const get = (url: string) => {
+export const get = (url: string) : Promise<any> => {
   return new Promise((resolve, reject) => {
       restler.get(url, {
           headers: {
