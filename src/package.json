@@ -1,0 +1,14 @@
+{
+  "name": "io-services",
+  "version": "2.0.0",
+  "description": "Twitch IO services",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MichaelJolley/io"
+  },
+  "scripts": {
+    "build": "(cd admin; npm run build); (cd api; npm run build); (cd chat; npm run build); (cd chron; npm run build); (cd hub; npm run build); (cd logger; npm run build); (cd overlay; npm run build); (cd stream-notes; npm run build); (cd user; npm run build); (cd webhooks; npm run build); "
+  },
+  "author": "Michael Jolley <mike@sparcapp.io>",
+  "license": "MIT"
+}
