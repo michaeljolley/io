@@ -60,7 +60,7 @@ export class Markdowner {
   private addRaiders = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream | undefined;
 
-    if (this.activeStream && 
+    if (this.activeStream &&
         this.activeStream.raiders &&
         this.activeStream.raiders.length > 0) {
 
@@ -288,9 +288,9 @@ ${this.addLink(
       for (const segment of this.activeStream.segments) {
         const segmentTime: moment.Moment = moment(segment.timestamp);
         const timestamp: moment.Duration = moment.duration(segmentTime.diff(startedAt));
-        const hours: string = timestamp.get('hours') > 9 ? `0${timestamp.get('hours')}` : `${timestamp.get('hours')}`;
-        const minutes: string = timestamp.get('minutes') > 9 ? `0${timestamp.get('minutes')}` : `${timestamp.get('minutes')}`;
-        response = response + `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.seconds}) | ${segment.topic} |\n`;
+        const hours: string = timestamp.get('hours') > 9 ? `${timestamp.get('hours')}` : `0${timestamp.get('hours')}`;
+        const minutes: string = timestamp.get('minutes') > 9 ? `${timestamp.get('minutes')}` : `0${timestamp.get('minutes')}`;
+        response = response + `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.asSeconds()}) | ${segment.topic} |\n`;
       }
     }
 
@@ -340,7 +340,7 @@ image:
 description: ""
 comments: true
 tags: [twitch, stream]
-replay: 
+replay:
 ---\n\n`;
   };
 }

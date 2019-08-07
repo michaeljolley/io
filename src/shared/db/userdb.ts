@@ -23,33 +23,33 @@ export class UserDb {
     );
   };
 
-  public saveUserInfo = async (userInfo: IUserInfo): Promise<boolean> => {
-    return await new Promise((resolve: any) =>
+  public saveUserInfo = async (userInfo: IUserInfo): Promise<IUserInfo> => {
+    return await new Promise((resolve: any) => {
       UserInfoModel.findOneAndUpdate(
         { login: userInfo.login },
         userInfo,
-        { upsert: true },
+        { upsert: true, new: true },
         (err: any, res: any) => {
           if (err) {
             log("info", `Error: saveUserInfo: ${JSON.stringify(err)}`);
-            resolve(false);
+            resolve(undefined);
           }
           log("info", `saveUserInfo: ${userInfo.login}`);
-          resolve(true);
+          resolve(res);
         }
-      )
-    );
+      );
+    });
   };
 
   private connect() {
     mongoose.connect(config.mongoDBConnectionString, {
-      dbName: config.mongoDBDatabase,
       pass: config.mongoDBPassword,
+      user: config.mongoDBUser,
+      dbName: config.mongoDBDatabase,
       useCreateIndex: true,
       useFindAndModify: false,
-      useNewUrlParser: true,
-      user: config.mongoDBUser,
-    }, (err: unknown) => {
+      useNewUrlParser: true
+    }, (err) => {
       if (err) {
         log('info', `Err: ${JSON.stringify(err)}`);
         setTimeout(() => this.connect, 2000);
