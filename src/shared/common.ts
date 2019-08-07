@@ -45,7 +45,7 @@ export const getTime = () => {
   return { hours, minutes };
 };
 
-export const get = (url: string, ...headerParams: Array<{ [key: string]: string }>) => {
+const buildHeaders = (...headerParams: Array<{ [key: string]: string }>) => {
   const headers: {[key:string]: string} = {
     "Authorization": `Bearer ${config.twitchClientToken}`,
     "Content-Type": "application/json",
@@ -65,11 +65,27 @@ export const get = (url: string, ...headerParams: Array<{ [key: string]: string 
       });
     });
   }
+  return headers;
+}
+
+export const get = (url: string, ...headerParams: Array<{ [key: string]: string }>) => {
+  const headers = buildHeaders(...headerParams);
   return new Promise((resolve, reject) => {
       restler.get(url, {
           headers
       }).on("complete", (data: any) => {
           resolve(data);
       });
+  });
+};
+
+export const post = (url: string, data: any, ...headerParams: Array<{ [key: string]: string }>) => {
+  const headers = buildHeaders(...headerParams);
+  return new Promise((resolve, reject) => {
+    restler.postJson(url, data, {
+      headers
+    }).on("complete", (data: any) => {
+      resolve(data);
+    });
   });
 };

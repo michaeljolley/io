@@ -1,9 +1,9 @@
 import io from 'socket.io-client';
 
 import { SocketIOEvents } from '@shared/events';
-import { get, log, config } from '@shared/common';
+import { get, post, log, config } from '@shared/common';
 import { IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
-import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg, IRetrievedLiveCodersTeamMembersEventArg } from '@shared/event_args';
+import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
@@ -22,11 +22,12 @@ export class Chron {
     this.broadcastFollowers();
     this.broadcastViewCount();
     this.broadcastLastSubscriber();
+    this.loadLiveTeamMembers();
     
-    // Give the chat service time to startup before we retrive the team members
-    setTimeout(async() => {
+    // Every week update the live coders team members;
+    setInterval(async() => {
       await this.loadLiveTeamMembers();
-    }, 15000);
+    }, 604800000);
 
     // Every minute get the latest follower and follower count
     setInterval(async () => {
@@ -71,11 +72,7 @@ export class Chron {
     const liveCodersTeamMembers: ILiveCodersTeamMember[] = resp.users;
     
     if (liveCodersTeamMembers) {
-      const retrievedLiveCodersTeamMembersEventArg: IRetrievedLiveCodersTeamMembersEventArg = {
-        liveCodersTeamMembers
-      };
-
-      this.emitMessage(SocketIOEvents.RetrievedLiveCodersTeamMembers, retrievedLiveCodersTeamMembersEventArg);
+      await this.updateLiveCoders(liveCodersTeamMembers.map(member => member.name));
     }
   }
 
@@ -187,6 +184,13 @@ export class Chron {
       this.emitMessage(SocketIOEvents.NewAnnouncement, newAnnouncementEventArg);
     }
   }
+
+  private updateLiveCoders = async (
+    usernames: string[]
+  ): Promise<void> => {
+    const url = `http://user/livecoders`;
+    await post(url, usernames);
+  };
 
   private getUser = async (
     username: string
