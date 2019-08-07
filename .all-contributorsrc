@@ -131,6 +131,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jedelfraisse",
+      "name": "Jonathan Delfraisse",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/2048024?v=4",
+      "profile": "https://github.com/jedelfraisse",
+      "contributions": [
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
