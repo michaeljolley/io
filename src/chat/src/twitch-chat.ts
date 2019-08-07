@@ -9,7 +9,7 @@ import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
 import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
-import { config, get, log } from '@shared/common';
+import { config, get, log, isMod, isBroadcaster } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
@@ -48,6 +48,8 @@ export class TwitchChat {
   private clientUsername: string = config.twitchClientUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
+  private lastAVCommandTime = new Date();
+  private avCommandThrottle = +config.avCommandThrottleInSeconds;
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -380,7 +382,8 @@ export class TwitchChat {
       }
     }
 
-    if (!handledByCommand) {
+    if (!handledByCommand &&
+       !this.isCommandThrottled( this.lastAVCommandTime, this.avCommandThrottle, user)) {
       for (const avCommand of Object.values(AVCommands)) {
         handledByCommand = avCommand(
           originalMessage,
@@ -391,6 +394,7 @@ export class TwitchChat {
           this.emitMessage
         );
         if (handledByCommand) {
+          this.lastAVCommandTime = new Date();
           break;
         }
       }
@@ -506,4 +510,20 @@ export class TwitchChat {
       this.socket.emit(event, payload);
     }
   };
+
+  private isCommandThrottled = (lastAVCommandTime: Date, commandThrottleInSeconds: number, user: any): boolean => {
+    const timeDifference = new Date().getTime() - lastAVCommandTime.getTime();
+    if (timeDifference >= (commandThrottleInSeconds * 1000) || this.shouldOverrideThrottle(user)) {
+      return false;
+    }
+    return true;
+  };
+
+  private shouldOverrideThrottle = (user: any): boolean => {
+    if (isMod(user) || isBroadcaster(user))
+    {
+      return true;
+    }
+    return false;
+  }
 }
