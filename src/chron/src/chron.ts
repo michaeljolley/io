@@ -64,23 +64,25 @@ export class Chron {
     const resp = await get(url).then((data: any) => data);
 
     const followerCount: number = resp.total;
-
-    const lastFollower: IUserInfo | undefined = await this.getUser(
-      resp.data[0].from_name
-    );
-
+      
     const followerCountEventArg: IFollowerCountEventArg = {
       followers: followerCount
     };
 
     this.emitMessage(SocketIOEvents.FollowerCountChanged, followerCountEventArg);
 
-    if (lastFollower) {
-      const lastFollowerEventArg: ILastUserEventArg = {
-        userInfo: lastFollower
-      };
+    if (resp.total > 0 && resp.data[0].from_name) {
+      const lastFollower: IUserInfo | undefined = await this.getUser(
+        resp.data[0].from_name
+      );
 
-      this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
+      if (lastFollower) {
+        const lastFollowerEventArg: ILastUserEventArg = {
+          userInfo: lastFollower
+        };
+  
+        this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
+      }
     }
     return;
   };
