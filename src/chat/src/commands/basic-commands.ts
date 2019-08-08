@@ -163,6 +163,13 @@ export const shoutoutCommand = (
   user: ChatUserstate | undefined,
   twitchChatFunc: (message: string) => void
 ): boolean => {
+  /*
+  * 1. We have to have a message to parse in order to do a shout-out.
+  * 2. Only mods & broadcasters can shout-out.  So we have to have the user object to
+  *    evaluate whether they are a mod or broadcaster
+  * 3. If user is undefined we've specifically called this method from the bot so we want
+  *    to exit the if statement below and continue the !so.
+  */
   if (
     message === undefined ||
     message.length === 0 ||

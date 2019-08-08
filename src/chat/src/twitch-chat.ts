@@ -389,7 +389,7 @@ export class TwitchChat {
 
     //Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
-    
+
     if (!handledByCommand) {
       for (const basicCommand of Object.values(BasicCommands)) {
         handledByCommand = await basicCommand(
@@ -468,7 +468,11 @@ export class TwitchChat {
       }
     }
 
-    if (userInfo.liveCodersTeamMember && this.announcedTeamMembers.find(login => login !== userInfo.login)) {
+    // If the user sending this chat message is a member of the Live Coders team and we haven't
+    // given them a !so yet, do so.
+    if (userInfo.liveCodersTeamMember &&
+        this.announcedTeamMembers.find(login => login === userInfo.login) === undefined) {
+
       if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
         this.announcedTeamMembers.push(userInfo.login);
       }
