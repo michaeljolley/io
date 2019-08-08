@@ -160,13 +160,13 @@ export const heroinesCommand = (
 
 export const shoutoutCommand = (
   message: string,
-  user: ChatUserstate,
+  user: ChatUserstate | undefined,
   twitchChatFunc: (message: string) => void
 ): boolean => {
   if (
     message === undefined ||
     message.length === 0 ||
-    (!isMod(user) && !isBroadcaster(user))
+    (user && !isMod(user) && !isBroadcaster(user))
   ) {
     return false;
   }

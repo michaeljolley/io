@@ -1,8 +1,8 @@
 import io from 'socket.io-client';
 
 import { SocketIOEvents } from '@shared/events';
-import { get, log, config } from '@shared/common';
-import { IUserInfo } from '@shared/models';
+import { get, post, log, config } from '@shared/common';
+import { IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
 import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
 
 export class Chron {
@@ -22,6 +22,12 @@ export class Chron {
     this.broadcastFollowers();
     this.broadcastViewCount();
     this.broadcastLastSubscriber();
+    this.loadLiveTeamMembers();
+    
+    // Every week update the live coders team members;
+    setInterval(async() => {
+      await this.loadLiveTeamMembers();
+    }, 604800000);
 
     // Every minute get the latest follower and follower count
     setInterval(async () => {
@@ -58,29 +64,43 @@ export class Chron {
     log('info', 'Chron is online and running...');
   }
 
+  public loadLiveTeamMembers = async (): Promise<any> => {
+    const url = `${this.apiUrl}/team/livecoders`;
+
+    const resp: ILiveCodersTeam = await get(url).then((data: any) => data as ILiveCodersTeam);
+
+    const liveCodersTeamMembers: ILiveCodersTeamMember[] = resp.users;
+    
+    if (liveCodersTeamMembers) {
+      await this.updateLiveCoders(liveCodersTeamMembers.map(member => member.name));
+    }
+  }
+
   public broadcastFollowers = async (): Promise<any> => {
     const url = `${this.apiUrl}/followers`;
 
     const resp = await get(url).then((data: any) => data);
 
     const followerCount: number = resp.total;
-
-    const lastFollower: IUserInfo | undefined = await this.getUser(
-      resp.data[0].from_name
-    );
-
+      
     const followerCountEventArg: IFollowerCountEventArg = {
       followers: followerCount
     };
 
     this.emitMessage(SocketIOEvents.FollowerCountChanged, followerCountEventArg);
 
-    if (lastFollower) {
-      const lastFollowerEventArg: ILastUserEventArg = {
-        userInfo: lastFollower
-      };
+    if (resp.total > 0 && resp.data[0].from_name) {
+      const lastFollower: IUserInfo | undefined = await this.getUser(
+        resp.data[0].from_name
+      );
 
-      this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
+      if (lastFollower) {
+        const lastFollowerEventArg: ILastUserEventArg = {
+          userInfo: lastFollower
+        };
+  
+        this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
+      }
     }
     return;
   };
@@ -166,6 +186,13 @@ export class Chron {
       this.emitMessage(SocketIOEvents.NewAnnouncement, newAnnouncementEventArg);
     }
   }
+
+  private updateLiveCoders = async (
+    usernames: string[]
+  ): Promise<void> => {
+    const url = `http://user/livecoders`;
+    await post(url, usernames);
+  };
 
   private getUser = async (
     username: string

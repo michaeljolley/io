@@ -39,6 +39,7 @@ export enum SocketIOEvents {
   NewGoal = 'NewGoal',
   NewSegment = 'NewSegment',
   TwitchThemer = 'TwitchThemer',
+  RetrievedLiveCodersTeamMembers = 'RetrievedLiveCodersTeamMembers',
 
 
   /* candle events */

@@ -46,11 +46,12 @@ const htmlSanitizeOpts = {
 
 export class TwitchChat {
   public tmi: Client;
-  private clientUsername: string = config.twitchClientUsername;
+  private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
   private lastAVCommandTime = new Date();
   private avCommandThrottle = +config.avCommandThrottleInSeconds;
+  private announcedTeamMembers: string[] = [];
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -468,6 +469,12 @@ export class TwitchChat {
         if (handledByCommand) {
           break;
         }
+      }
+    }
+
+    if (userInfo.liveCodersTeamMember && this.announcedTeamMembers.find(login => login !== userInfo.login)) {
+      if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
+        this.announcedTeamMembers.push(userInfo.login);
       }
     }
   };
