@@ -39,12 +39,14 @@ export class Helix {
     });
   }
 
-  public async getUserByUsername(username: string): Promise<any> {
-    const queries = queryString.stringify({ login: [username] });
+  public async getUsersByUsername(username: string | string[]): Promise<any> {
+    if (!Array.isArray(username)) {
+      username = [username];
+    }
+    const queries = queryString.stringify({ login: username });
     const url = `${this.usersUrl}?${queries}`;
-
-    return await get(url).then((data: any) => {
-      return data.data[0];
+    return await get(url).then((body: any) => {
+      return body.data.length > 1 ? body.data : body.data[0];
     });
   }
 

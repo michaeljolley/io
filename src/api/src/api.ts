@@ -1,18 +1,22 @@
-import express = require('express');
+import * as express from 'express';
 import { Server } from 'http';
 
 import { Helix } from './helix';
+import { Kraken } from './kraken';
 import { log } from '@shared/common';
+import { IUserInfo } from '@shared/models';
 
 export class API {
   public app: express.Application;
   private http!: Server;
   private helix: Helix;
+  private kraken: Kraken;
 
   constructor() {
-    this.app = express();
+    this.app = express.default().use(express.json());
     this.http = new Server(this.app);
     this.helix = new Helix();
+    this.kraken = new Kraken();
 
     this.loadRoutes();
   }
@@ -26,6 +30,14 @@ export class API {
    */
   private loadRoutes = (): void => {
 
+    // Get team by name
+    this.app.get('/team/:teamname', async (req, res) => {
+      log('info', `route: /team/:teamname called with name: ${req.params.teamname}`);
+      
+      const payload: any = await this.kraken.getTeamByName(req.params.teamname);
+      res.send(payload);
+    });
+
     // Get user by userId
     this.app.get('/users/id/:userId', async (req, res) => {
       log('info', `route: /users/id/:userId called with userId: ${req.params.userId}`);
@@ -38,7 +50,23 @@ export class API {
     this.app.get('/users/:username', async (req, res) => {
       log('info', `route: /users/:username called with username: ${req.params.username}`);
 
-      const payload: any = await this.helix.getUserByUsername(req.params.username);
+      const payload: any = await this.helix.getUsersByUsername(req.params.username);
+      res.send(payload);
+    });
+
+    // Get user(s) by payload of usernames
+    this.app.post('/users', async (req, res) => {
+      if (!req.body) {
+        log('info', `route: /users no payload available`);
+        return;
+      }
+      log('info', `route: /users ${JSON.stringify(req.body)}`);
+      const payload: IUserInfo[] = [];
+      for (let i = 0; i < req.body.length; i += 100) {
+        const usernames: string[] = req.body.slice(i, 100);
+        const users = await this.helix.getUsersByUsername(usernames);
+        payload.push(...users);
+      }
       res.send(payload);
     });
 
