@@ -47,10 +47,11 @@ const htmlSanitizeOpts = {
 
 export class TwitchChat {
   public tmi: Client;
-  private clientUsername: string = config.twitchClientUsername;
+  private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
   private projectSettings: IProjectSettings | undefined;
+  private announcedTeamMembers: string[] = [];
 
   constructor() {
     this.tmi = Client(this.setTwitchChatOptions());
@@ -391,7 +392,7 @@ export class TwitchChat {
 
     //Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
-    
+
     if (!handledByCommand) {
       for (const basicCommand of Object.values(BasicCommands)) {
         handledByCommand = await basicCommand(
@@ -488,6 +489,16 @@ export class TwitchChat {
           }
           break;
         }
+      }
+    }
+    
+    // If the user sending this chat message is a member of the Live Coders team and we haven't
+    // given them a !so yet, do so.
+    if (userInfo.liveCodersTeamMember &&
+        this.announcedTeamMembers.find(login => login === userInfo.login) === undefined) {
+
+      if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
+        this.announcedTeamMembers.push(userInfo.login);
       }
     }
   };

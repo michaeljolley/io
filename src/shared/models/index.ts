@@ -11,6 +11,7 @@ import { IStreamSegment, StreamSegmentSchema } from './stream-segment';
 import { ISubscriber } from './subscriber';
 import { IUserInfo, UserInfoModel } from './user-info';
 import { IVote } from './vote';
+import { ILiveCodersTeamMember, ILiveCodersTeam } from './live-coders-team';
 
 export {
   CandleModel,
@@ -34,5 +35,7 @@ export {
   StreamGoalSchema,
   StreamNoteSchema,
   StreamSegmentSchema,
-  UserInfoModel
+  UserInfoModel,
+  ILiveCodersTeamMember,
+  ILiveCodersTeam
 };

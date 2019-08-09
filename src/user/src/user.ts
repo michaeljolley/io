@@ -1,8 +1,8 @@
-import express = require('express');
 import moment from 'moment';
+import * as express from 'express';
 import { Server } from 'http';
 
-import { get, log } from '@shared/common';
+import { get, post, log } from '@shared/common';
 import { IUserInfo } from '@shared/models';
 import { UserDb } from '@shared/db';
 
@@ -17,7 +17,7 @@ export class User {
 
 
   constructor() {
-    this.app = express();
+    this.app = express.default().use(express.json());
     this.http = new Server(this.app);
     this.userDb = new UserDb();
 
@@ -58,6 +58,35 @@ export class User {
         forceUpdate
       );
       res.send(payload);
+    });
+
+    this.app.post('/livecoders', async (req, res) => {
+      if (!req.body) {
+        log(
+          'info',
+          `route: /livecoders called with empty payload. Aborting...`
+        )
+        return;
+      }
+      log(
+        'info',
+        `route: /livecoders ${JSON.stringify(req.body)}`
+      )
+      this.liveCodersUpdates(req.body);
+    });
+  }
+
+  private liveCodersUpdates = async(
+    usernames: string[]
+  ): Promise<void> => {
+    const url = `${this.usersUrl}`;
+    const users = await post(url, usernames) as IUserInfo[];
+    users.forEach(async user => {
+      user.liveCodersTeamMember = true;
+      const savedUser = await this.userDb.saveUserInfo(user);
+      if (savedUser) {
+        this.users[savedUser.login] = savedUser;
+      }
     });
   }
 
