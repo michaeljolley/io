@@ -107,6 +107,28 @@ export class API {
 
     //Github endpoints
 
+    //Get list of repos and issues
+    this.app.get('/repos/full', async (req, res) => {
+      log('info', `route: /repos/full called`);
+
+      const payload: any = await this.github.getRepos();
+      if (payload.status === 200 && payload.data.length > 0) {
+        for (let repo of payload.data) {
+          if (repo && repo.name !== undefined) {
+            repo.issues = [];
+            let issues: any = await this.github.getIssuesForRepo(repo.name);
+            for (let issue of issues.data)
+            {
+              if (issue.pull_request === undefined) {
+                repo.issues.push({number: issue.number, id: issue.id, title: issue.title});
+              }
+            }
+          }
+        }
+      }
+      res.send(payload);
+    });
+
     //Get list of repos
     this.app.get('/repos', async (req, res) => {
       log('info', `route: /repos called`);
@@ -114,7 +136,7 @@ export class API {
       const payload: any = await this.github.getRepos();
       res.send(payload);
     });
-
+    
     //Get issues for repo
     this.app.get('/repos/:repo/issues', async (req, res) => {
       log('info', `route: /issues called with repo - ${req.params.repo}`);
@@ -129,6 +151,15 @@ export class API {
 
       const payload: any = await this.github.createComment(
         req.body.repo, req.params.issue, req.body.comment);
+
+      res.send(payload);
+    });
+
+    this.app.post('/issues/new', async (req, res) => {
+      log('info', `route: /issues/new called with title: ${req.body.title}`);
+
+      const payload: any = await this.github.createIssue(
+        req.body.repo, req.body.comment);
 
       res.send(payload);
     });

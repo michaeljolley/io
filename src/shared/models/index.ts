@@ -2,7 +2,7 @@ import { ICandle, CandleModel } from './candle';
 import { ICandleVote, CandleVoteSchema } from './candle-vote';
 import { ICandleVoteResult } from './candle-vote-result';
 import { ICheer, CheerSchema } from './cheer';
-import { IProjectSettings } from './project-settings';
+import { IProjectSettings, IRepository, IIssue } from './project-settings';
 import { IRaider, RaiderSchema } from './raider';
 import { IStream, StreamModel } from './stream';
 import { IStreamGoal, StreamGoalSchema } from './stream-goal';
@@ -22,6 +22,8 @@ export {
   ICandleVoteResult,
   ICheer,
   IProjectSettings,
+  IRepository,
+  IIssue,
   IRaider,
   IStream,
   IStreamGoal,

@@ -50,7 +50,7 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
-  private projectSettings: IProjectSettings | undefined;
+  private projectSettings: IProjectSettings = {};
   private announcedTeamMembers: string[] = [];
 
   constructor() {
@@ -73,6 +73,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
+      this.projectSettings = {};
     });
 
     this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
@@ -94,7 +95,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
-      this.projectSettings = undefined;
+      this.projectSettings = {};
     });
   }
 
