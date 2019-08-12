@@ -49,7 +49,7 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
-  private lastAVCommandTime = new Date();
+  private avCommandHistory: { [userLogin: string] : Date } = {};
   private avCommandThrottle = +config.avCommandThrottleInSeconds;
   private announcedTeamMembers: string[] = [];
 
@@ -406,7 +406,7 @@ export class TwitchChat {
     }
 
     if (!handledByCommand &&
-      !this.isCommandThrottled( this.lastAVCommandTime, this.avCommandThrottle, user)) {
+      !this.isCommandThrottled( this.avCommandHistory, this.avCommandThrottle, user)) {
       for (const avCommand of Object.values(AVCommands)) {
         handledByCommand = avCommand(
           originalMessage,
@@ -416,8 +416,8 @@ export class TwitchChat {
           this.sendChatMessage,
           this.emitMessage
         );
-        if (handledByCommand) {
-          this.lastAVCommandTime = new Date();
+        if (handledByCommand && (!isMod(user) && !isBroadcaster(user))) {
+          this.avCommandHistory[userInfo.login] = new Date();
           break;
         }
       }
@@ -548,12 +548,14 @@ export class TwitchChat {
     }
   };
 
-  private isCommandThrottled = (lastAVCommandTime: Date, commandThrottleInSeconds: number, user: any): boolean => {
-    const timeDifference = new Date().getTime() - lastAVCommandTime.getTime();
-    if (timeDifference >= (commandThrottleInSeconds * 1000) || this.shouldOverrideThrottle(user)) {
-      return false;
+  private isCommandThrottled = (avCommandHistory: {[userLogin: string] : Date}, commandThrottleInSeconds: number, user: any): boolean => {
+    if (avCommandHistory[user.username] && !this.shouldOverrideThrottle(user)) {
+      const timeDifference = new Date().getTime() - avCommandHistory[user.username].getTime();
+      if (timeDifference < (commandThrottleInSeconds * 1000)) {
+        return true;
+      }
     }
-    return true;
+    return false;
   };
 
   private shouldOverrideThrottle = (user: any): boolean => {
