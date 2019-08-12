@@ -50,7 +50,7 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
-  private projectSettings: IProjectSettings = {};
+  private projectSettings: IProjectSettings = {repositories: undefined};
   private announcedTeamMembers: string[] = [];
 
   constructor() {
@@ -72,9 +72,18 @@ export class TwitchChat {
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
+      log('info', "Stream started");
       this.activeStream = currentStream.stream;
-      this.projectSettings = {};
-    });
+
+      // Go ahead and grab up to date repository information when the stream starts
+      const url = "http://api/repos/full";
+      get(url).then((response: any) => {
+          if (response.status === 200) {
+            log('info', 'Repos have been updated');
+            this.projectSettings.repositories = response.data;
+          }
+        })
+      });
 
     this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
@@ -95,7 +104,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
-      this.projectSettings = {};
+      this.projectSettings = {repositories: undefined};
     });
   }
 

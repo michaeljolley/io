@@ -155,11 +155,12 @@ export class API {
       res.send(payload);
     });
 
+    //Create new issue
     this.app.post('/issues/new', async (req, res) => {
       log('info', `route: /issues/new called with title: ${req.body.title}`);
 
       const payload: any = await this.github.createIssue(
-        req.body.repo, req.body.comment);
+        req.body.repo, req.body.comment, req.body.title);
 
       res.send(payload);
     });

@@ -36,11 +36,11 @@ export class Github {
     });
   }
 
-  public async createIssue(repo: string, comment: string): Promise<any> {
+  public async createIssue(repo: string, comment: string, title: string): Promise<any> {
     return this.octokit.issues.create({
       owner: this.githubUsername,
       repo: repo,
-      title: "Add contributor",
+      title: title,
       body: comment
     });
   }

@@ -2,7 +2,7 @@ export interface IProjectSettings {
   repo?: string,
   issue?: IIssue,
   currentWork?: string,
-  repositories?: IRepository[]
+  repositories: IRepository[] | undefined
 }
 
 export interface IRepository {
