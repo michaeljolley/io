@@ -1,12 +1,6 @@
 version: '3.7'
 
-services:
-  # shared:
-  #   build: ./services/shared
-  #   image: io-shared
-  #   env_file:
-  #     - .env
-  
+services:  
   admin:
     build:
       context: ./services
@@ -53,6 +47,7 @@ services:
     restart: always
     command: npm run debug-compile
     volumes:
+      - ./assets:/app/chat/dist/assets
       - /app/shared/node_modules
       - ./services/shared:/app/shared
       - /app/chat/node_modules
@@ -62,8 +57,6 @@ services:
       - "9222:9229"
     env_file:
       - .env
-    volumes:
-      - ./assets:/app/chat/dist/assets
     depends_on:
       - hub
       - api
