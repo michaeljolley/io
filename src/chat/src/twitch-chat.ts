@@ -9,7 +9,7 @@ import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
 import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
-import { config, get, log } from '@shared/common';
+import { config, get, log, isMod, isBroadcaster } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
@@ -51,6 +51,8 @@ export class TwitchChat {
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
   private projectSettings: IProjectSettings = {repositories: undefined};
+  private avCommandHistory: { [userLogin: string] : Date } = {};
+  private avCommandThrottle = +config.avCommandThrottleInSeconds;
   private announcedTeamMembers: string[] = [];
 
   constructor() {
@@ -416,7 +418,8 @@ export class TwitchChat {
       }
     }
 
-    if (!handledByCommand) {
+    if (!handledByCommand &&
+      !this.isCommandThrottled( this.avCommandHistory, this.avCommandThrottle, user)) {
       for (const avCommand of Object.values(AVCommands)) {
         handledByCommand = avCommand(
           originalMessage,
@@ -426,7 +429,8 @@ export class TwitchChat {
           this.sendChatMessage,
           this.emitMessage
         );
-        if (handledByCommand) {
+        if (handledByCommand && (!isMod(user) && !isBroadcaster(user))) {
+          this.avCommandHistory[userInfo.login] = new Date();
           break;
         }
       }
@@ -581,4 +585,22 @@ export class TwitchChat {
       this.socket.emit(event, payload);
     }
   };
+
+  private isCommandThrottled = (avCommandHistory: {[userLogin: string] : Date}, commandThrottleInSeconds: number, user: any): boolean => {
+    if (avCommandHistory[user.username] && !this.shouldOverrideThrottle(user)) {
+      const timeDifference = new Date().getTime() - avCommandHistory[user.username].getTime();
+      if (timeDifference < (commandThrottleInSeconds * 1000)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  private shouldOverrideThrottle = (user: any): boolean => {
+    if (isMod(user) || isBroadcaster(user))
+    {
+      return true;
+    }
+    return false;
+  }
 }

@@ -3,8 +3,14 @@
 const socket = io('http://localhost:5060');
 const _audioPath = '/assets/audio/clips/';
 const container = document.getElementById('container');
+const playNext = new CustomEvent('playNext', {
+  bubbles: true
+});
 
 let avEnabled = true;
+let audioQueue = [];
+
+container.addEventListener('playNext', playQueue, false);
 
 socket.on('PlayAudio', (mediaEventArg) => {
     if (avEnabled) {
@@ -13,22 +19,38 @@ socket.on('PlayAudio', (mediaEventArg) => {
         audio.id = +(new Date());
         audio.addEventListener('ended', audioStop, false);
 
-        container.appendChild(audio);
-
-        var playPromise = audio.play().catch(error => {
-            throw error;
-        });
+        if (container.childElementCount > 0) {
+            audioQueue.push(audio);
+            
+        } else {
+            container.appendChild(audio);
+            let playPromise = audio.play().catch(error => {
+                throw error;
+            });
+        }
     }
 });
 
 socket.on('StopAudio', () => {
     container.innerHTML = '';
+    audioQueue = [];
 });
 
 socket.on('avStateChanged', (isEnabled) => {
     avEnabled = isEnabled;
 });
 
+function playQueue() {
+    if (audioQueue.length > 0) {
+        let audio = audioQueue.shift();
+        container.appendChild(audio);
+        let playPromise = audio.play().catch(error => {
+            throw error;
+        });
+    }
+}
+
 function audioStop(e) {
+    e.srcElement.dispatchEvent(playNext);
     e.srcElement.remove();
 }

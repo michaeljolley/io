@@ -14,7 +14,8 @@ const {
   GITHUB_AUTH_TOKEN,
   GITHUB_REPO,
   GITHUB_USERNAME,
-  NGROK_AUTH_TOKEN
+  NGROK_AUTH_TOKEN,
+  AV_COMMAND_THROTTLE_SECONDS
 } = process.env;
 
 const requireConfigMessage = 'REQUIRED CONFIGURATION WAS NOT PROVIDED';
@@ -64,5 +65,8 @@ export const githubRepo: string =
 export const githubUsername: string =
   GITHUB_USERNAME || requireConfigMessage;
 
-  export const ngrokAuthToken: string =
+export const ngrokAuthToken: string =
   NGROK_AUTH_TOKEN || requireConfigMessage;
+
+export const avCommandThrottleInSeconds: string =
+  AV_COMMAND_THROTTLE_SECONDS  || '5';
