@@ -104,6 +104,42 @@
         "userTesting",
         "code"
       ]
+    },
+    {
+      "login": "jtsom",
+      "name": "John Tsombakos",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/13488?v=4",
+      "profile": "https://github.com/jtsom",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
+      "login": "chancesm",
+      "name": "Chance Murray",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/20172166?v=4",
+      "profile": "http://murrayit.org",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "electrichavoc",
+      "name": "ElectricHavoc",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3020276?v=4",
+      "profile": "http://electrichavoc.tv",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jedelfraisse",
+      "name": "Jonathan Delfraisse",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/2048024?v=4",
+      "profile": "https://github.com/jedelfraisse",
+      "contributions": [
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
