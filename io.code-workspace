@@ -1,41 +1,157 @@
 {
 	"folders": [
 		{
-			"path": "src/admin"
+			"path": "services/admin"
 		},
 		{
-			"path": "src/api"
+			"path": "services/api"
 		},
 		{
-			"path": "src/chat"
+			"path": "services/chat"
 		},
 		{
-			"path": "src/chron"
+			"path": "services/chron"
 		},
 		{
-			"path": "src/hub"
+			"path": "services/hub"
 		},
 		{
-			"path": "src/logger"
+			"path": "services/logger"
 		},
 		{
-			"path": "src/overlay"
+			"path": "services/overlay"
 		},
 		{
-			"path": "src/stream-notes"
+			"path": "services/stream-notes"
 		},
 		{
-			"path": "src/user"
+			"path": "services/user"
 		},
 		{
-			"path": "src/webhooks"
+			"path": "services/webhooks"
 		},
 		{
-			"path": "src/shared"
+			"path": "services/shared"
 		},
 		{
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {},
+	"launch":{
+		"configurations": [
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Admin",
+				"port": 9220,
+				"restart": true,
+				"localRoot": "${workspaceFolder:admin}",
+				"remoteRoot": "/app/admin"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: API",
+				"port": 9221,
+				"restart": true,
+				"localRoot": "${workspaceFolder:api}",
+				"remoteRoot": "/app/api"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Chat",
+				"port": 9222,
+				"restart": true,
+				"localRoot": "${workspaceFolder:chat}",
+				"remoteRoot": "/app/chat"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Chron",
+				"port": 9223,
+				"restart": true,
+				"localRoot": "${workspaceFolder:chron}",
+				"remoteRoot": "/app/chron"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Hub",
+				"port": 9224,
+				"restart": true,
+				"localRoot": "${workspaceFolder:hub}",
+				"remoteRoot": "/app/hub"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Logger",
+				"port": 9225,
+				"restart": true,
+				"localRoot": "${workspaceFolder:logger}",
+				"remoteRoot": "/app/logger"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Overlay",
+				"port": 9226,
+				"restart": true,
+				"localRoot": "${workspaceFolder:overlay}",
+				"remoteRoot": "/app/overlay"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Stream-Notes",
+				"port": 9227,
+				"restart": true,
+				"localRoot": "${workspaceFolder:stream-notes}",
+				"remoteRoot": "/app/streamnotes"
+			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: User",
+				"port": 9228,
+				"restart": true,
+				"localRoot": "${workspaceFolder:user}",
+				"remoteRoot": "/app/user"
+			},
+		],
+		"compounds": [
+			{
+				"name": "Attach: All",
+				"configurations": [
+					"Attach: API",
+					"Attach: Admin",
+					"Attach: Chat",
+					"Attach: Chron",
+					"Attach: Hub",
+					"Attach: Logger",
+					"Attach: Overlay",
+					"Attach: Stream-Notes",
+					"Attach: User"
+				]
+			},
+			{
+				"name": "Attach: Chat+Deps",
+				"configurations": [
+					"Attach: Chat",
+					"Attach: Hub"
+				]
+			},
+			{
+				"name": "Attach: Chron+Deps",
+				"configurations": [
+					"Attach: Chron",
+					"Attach: API",
+					"Attach: Hub"
+				]
+			}
+		]
+	}
 }

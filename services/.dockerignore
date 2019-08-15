@@ -1,0 +1,15 @@
+**/.vscode/
+**/dist/
+**/node_modules/
+
+**/.env
+**/.dockerignore
+**/.gitignore
+**/.all-contributorsrc
+**/Dockerfile
+**/docker-compose.yml
+**/README.md
+**/LICENSE
+**/CHANGELOG.md
+**/CONTRIBUTING.md
+**/CODE_OF_CONDUCT.md
