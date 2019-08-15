@@ -1,7 +1,7 @@
 {
-  "name": "io-webhooks",
+  "name": "io-streamnotes",
   "version": "2.0.0",
-  "description": "Twitch chat client",
+  "description": "Stream note generator",
   "repository": {
     "type": "git",
     "url": "https://github.com/MichaelJolley/io"
@@ -12,30 +12,30 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "debug": "node --inspect dist/index.js",
-    "debug-compile": "node --inspect dist/index.js",
+    "debug": "node --inspect=0.0.0.0:9229 dist/index.js",
+    "debug-compile": "tsc -b && node --inspect=0.0.0.0:9229 dist/index.js",
     "build": "tsc -b"
   },
-  "author": "Michael Jolley <mike@sparcapp.io>",
+  "author": "",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.0.0",
-    "express": "^4.17.0",
     "module-alias": "^2.2.0",
+    "moment": "^2.24.0",
     "mongoose": "^5.6.0",
-    "ngrok": "^3.2.3",
-    "query-string": "^6.5.0",
     "restler": "^3.4.0",
+    "rimraf": "^2.6.3",
+    "simple-git": "^1.120.0",
     "socket.io-client": "^2.2.0",
-    "ts-node": "^8.1.1",
-    "twitch-webhook": "^1.2.4"
+    "ts-node": "^8.1.0"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
-    "@types/express": "^4.16.1",
     "@types/module-alias": "^2.0.0",
+    "@types/moment": "^2.13.0",
     "@types/node": "^12.0.2",
     "@types/restler": "^3.1.5",
+    "@types/rimraf": "^2.0.2",
     "@types/socket.io-client": "^1.4.32",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.3.0",
