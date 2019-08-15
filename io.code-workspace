@@ -22,6 +22,9 @@
 			"path": "services/overlay"
 		},
 		{
+			"path": "services/repo"
+		},
+		{
 			"path": "services/stream-notes"
 		},
 		{
@@ -106,6 +109,15 @@
 			{
 				"type": "node",
 				"request": "attach",
+				"name": "Attach: Repo",
+				"port": 9226,
+				"restart": true,
+				"localRoot": "${workspaceFolder:repo}",
+				"remoteRoot": "/app/repo"
+			},
+			{
+				"type": "node",
+				"request": "attach",
 				"name": "Attach: Stream-Notes",
 				"port": 9227,
 				"restart": true,
@@ -133,6 +145,7 @@
 					"Attach: Hub",
 					"Attach: Logger",
 					"Attach: Overlay",
+					"Attach: Repo",
 					"Attach: Stream-Notes",
 					"Attach: User"
 				]

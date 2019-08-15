@@ -1,49 +1,24 @@
-import { IBaseEventArg } from './baseEventArg';
-import { IChatMessageEventArg } from "./chatMessageEventArg";
-import { ICandleVoteEventArg } from './candleVoteEventArg';
-import { ICandleVoteResultEventArg } from './candleVoteResultEventArg';
-import { ICandleWinnerEventArg } from './candleWinnerEventArg';
-import { IEmoteEventArg } from "./emoteEventArg";
-import { INewSubscriptionEventArg } from "./newSubscriptionEventArg";
-import { IUserJoinedEventArg } from "./userJoinedEventArg";
-import { IUserLeftEventArg } from "./userLeftEventArg";
-import { IViewerCountEventArg } from "./viewerCountEventArg";
-import { IFollowerCountEventArg } from "./followerCountEventArg";
-import { ILastUserEventArg } from "./lastUserEventArg";
-import { IStreamEventArg } from "./streamEventArg";
-import { INewRaidEventArg } from "./newRaidEventArg";
-import { INewCheerEventArg } from "./newCheerEventArg";
-import { INewFollowerEventArg } from "./newFollowerEventArg";
-import { IMediaEventArg } from "./mediaEventArg";
-import { INewSegmentEventArg } from './newSegmentEventArg';
-import { INewGoalEventArg } from './newGoalEventArg';
-import { INewNoteEventArg } from './newNoteEventArg';
-import { IThemerEventArg } from './themerEventArg';
-import { IUserEventArg } from './userEventArg';
-import { INewAnnouncementEventArg } from './newAnnouncementEventArg';
-
-export {
-  IBaseEventArg,
-  ICandleVoteEventArg,
-  ICandleVoteResultEventArg,
-  ICandleWinnerEventArg,
-  IChatMessageEventArg,
-  IEmoteEventArg,
-  IFollowerCountEventArg,
-  ILastUserEventArg,
-  IMediaEventArg,
-  INewAnnouncementEventArg,
-  INewCheerEventArg,
-  INewFollowerEventArg,
-  INewGoalEventArg,
-  INewNoteEventArg,
-  INewRaidEventArg,
-  INewSegmentEventArg,
-  INewSubscriptionEventArg,
-  IStreamEventArg,
-  IThemerEventArg,
-  IUserEventArg,
-  IUserJoinedEventArg,
-  IUserLeftEventArg,
-  IViewerCountEventArg
-};
+export { IBaseEventArg } from './baseEventArg';
+export { IChatMessageEventArg } from "./chatMessageEventArg";
+export { ICandleVoteEventArg } from './candleVoteEventArg';
+export { ICandleVoteResultEventArg } from './candleVoteResultEventArg';
+export { ICandleWinnerEventArg } from './candleWinnerEventArg';
+export { IEmoteEventArg } from "./emoteEventArg";
+export { INewSubscriptionEventArg } from "./newSubscriptionEventArg";
+export { IUserJoinedEventArg } from "./userJoinedEventArg";
+export { IUserLeftEventArg } from "./userLeftEventArg";
+export { IViewerCountEventArg } from "./viewerCountEventArg";
+export { IFollowerCountEventArg } from "./followerCountEventArg";
+export { ILastUserEventArg } from "./lastUserEventArg";
+export { IStreamEventArg } from "./streamEventArg";
+export { INewRaidEventArg } from "./newRaidEventArg";
+export { INewCheerEventArg } from "./newCheerEventArg";
+export { INewFollowerEventArg } from "./newFollowerEventArg";
+export { IMediaEventArg } from "./mediaEventArg";
+export { INewSegmentEventArg } from './newSegmentEventArg';
+export { INewGoalEventArg } from './newGoalEventArg';
+export { INewNoteEventArg } from './newNoteEventArg';
+export { IThemerEventArg } from './themerEventArg';
+export { IStreamRepoChangedEventArg } from './streamRepoChangedEventArg';
+export { IUserEventArg } from './userEventArg';
+export { INewAnnouncementEventArg } from './newAnnouncementEventArg';

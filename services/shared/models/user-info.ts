@@ -8,6 +8,8 @@ export interface IUserInfo extends mongoose.Document {
   login: string;
   profile_image_url: string;
   lastUpdated: string;
+  githubHandle: string;
+  twitterHandle: string;
 };
 
 export const UserInfoModel = mongoose.model<IUserInfo>(
@@ -19,6 +21,8 @@ export const UserInfoModel = mongoose.model<IUserInfo>(
     lastUpdated: String,
     login: String,
     profile_image_url: String,
-    liveCodersTeamMember: Boolean
+    liveCodersTeamMember: Boolean,
+    githubHandle: String,
+    twitterHandle: String
   })
 );

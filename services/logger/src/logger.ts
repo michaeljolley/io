@@ -16,6 +16,7 @@ import {
   IMediaEventArg,
   IThemerEventArg,
   IUserEventArg,
+  IStreamRepoChangedEventArg,
   INewNoteEventArg,
   INewGoalEventArg
 } from '@shared/event_args';
@@ -50,6 +51,10 @@ export class Logger {
 
     this.socket.on(SocketIOEvents.OnRaidStream, (newStreamRaidEvent: INewSegmentEventArg) =>
       this.onStreamSegment(newStreamRaidEvent)
+    );
+
+    this.socket.on(SocketIOEvents.StreamRepoChanged, (streamRepoChangedEvent: IStreamRepoChangedEventArg) =>
+      this.onStreamRepoChanged(streamRepoChangedEvent)
     );
 
     this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
@@ -157,6 +162,14 @@ export class Logger {
       mediaEventArg.streamId,
       'contributors',
       mediaEventArg.user
+    );
+  }
+
+  private async onStreamRepoChanged(streamRepoChangedEvent: IStreamRepoChangedEventArg) {
+    // We want to record the repo on the current stream
+    await this.streamDb.recordRepo(
+      streamRepoChangedEvent.stream.id,
+      streamRepoChangedEvent.repo
     );
   }
 

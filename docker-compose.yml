@@ -1,6 +1,6 @@
 version: '3.7'
 
-services:  
+services:
   admin:
     build:
       context: ./services
@@ -20,9 +20,9 @@ services:
       - .env
     depends_on:
       - mongo
-  
+
   api:
-    build: 
+    build:
       context: ./services
       dockerfile: api.dockerfile
     image: io-api
@@ -40,7 +40,7 @@ services:
       - .env
 
   chat:
-    build: 
+    build:
       context: ./services
       dockerfile: chat.dockerfile
     image: io-chat
@@ -84,7 +84,7 @@ services:
       - hub
 
   hub:
-    build: 
+    build:
       context: ./services
       dockerfile: hub.dockerfile
     image: io-hub
@@ -102,7 +102,7 @@ services:
       - .env
 
   logger:
-    build: 
+    build:
       context: ./services
       dockerfile: logger.dockerfile
     image: io-logger
@@ -113,7 +113,7 @@ services:
       - ./services/shared:/app/shared
       - /app/logger/node_modules
       - ./services/logger:/app/logger
-    ports:  
+    ports:
       - "9225:9229"
     env_file:
       - .env
@@ -122,13 +122,13 @@ services:
       - mongo
 
   overlay:
-    build: 
+    build:
       context: ./services
       dockerfile: overlay.dockerfile
     image: io-overlay
     restart: always
     ports:
-      - "5000:80"      
+      - "5000:80"
       - "9226:9229"
     env_file:
       - .env
@@ -143,7 +143,7 @@ services:
       - hub
 
   streamnotes:
-    build: 
+    build:
       context: ./services
       dockerfile: stream-notes.dockerfile
     image: io-streamnotes
@@ -154,7 +154,7 @@ services:
       - ./services/shared:/app/shared
       - /app/streamnotes/node_modules
       - ./services/streamnotes:/app/streamnotes
-    ports:      
+    ports:
       - "9227:9229"
     env_file:
       - .env
@@ -163,7 +163,7 @@ services:
       - hub
 
   user:
-    build: 
+    build:
       context: ./services
       dockerfile: user.dockerfile
     image: io-user
@@ -175,13 +175,33 @@ services:
       - /app/user/node_modules
       - ./services/user:/app/user
     ports:
-      - "5070:80"      
+      - "5070:80"
       - "9228:9229"
     env_file:
       - .env
     depends_on:
       - api
       - mongo
+
+  repo:
+    build:
+      context: ./services
+      dockerfile: repo.dockerfile
+    image: io-repo
+    restart: always
+    command: npm run debug-compile
+    volumes:
+      - /app/shared/node_modules
+      - ./services/shared:/app/shared
+      - /app/repo/node_modules
+      - ./services/repo:/app/repo
+    ports:
+      - "9229:9229"
+    env_file:
+      - .env
+    depends_on:
+      - api
+
 
   mongo:
     image: mongo:4.0

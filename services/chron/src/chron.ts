@@ -2,12 +2,13 @@ import io from 'socket.io-client';
 
 import { SocketIOEvents } from '@shared/events';
 import { get, post, log, config } from '@shared/common';
-import { IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
+import { IGitHubRepo, IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
 import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
   private apiUrl: string = 'http://api';
+  private repoUrl: string = `${this.apiUrl}/repos/`;
 
   private activeStream: any | undefined;
 
@@ -23,7 +24,13 @@ export class Chron {
     this.broadcastViewCount();
     this.broadcastLastSubscriber();
     this.loadLiveTeamMembers();
-    
+    this.refreshRepos();
+
+    // Every day update our repos
+    setInterval(async () => {
+      await this.refreshRepos();
+    }, 86400000);
+
     // Every week update the live coders team members;
     setInterval(async() => {
       await this.loadLiveTeamMembers();
@@ -64,13 +71,21 @@ export class Chron {
     log('info', 'Chron is online and running...');
   }
 
+  private refreshRepos = async (): Promise<void> => {
+    const resp: IGitHubRepo[] = await get(this.repoUrl).then((data: any) => data as IGitHubRepo[]);
+    if (resp.length > 0) {
+      const url = `http://repo/refresh`;
+      await post(url, resp);
+    }
+  }
+
   public loadLiveTeamMembers = async (): Promise<any> => {
     const url = `${this.apiUrl}/team/livecoders`;
 
     const resp: ILiveCodersTeam = await get(url).then((data: any) => data as ILiveCodersTeam);
 
     const liveCodersTeamMembers: ILiveCodersTeamMember[] = resp.users;
-    
+
     if (liveCodersTeamMembers) {
       await this.updateLiveCoders(liveCodersTeamMembers.map(member => member.name));
     }
@@ -82,7 +97,7 @@ export class Chron {
     const resp = await get(url).then((data: any) => data);
 
     const followerCount: number = resp.total;
-      
+
     const followerCountEventArg: IFollowerCountEventArg = {
       followers: followerCount
     };
@@ -98,7 +113,7 @@ export class Chron {
         const lastFollowerEventArg: ILastUserEventArg = {
           userInfo: lastFollower
         };
-  
+
         this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
       }
     }
