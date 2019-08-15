@@ -140,6 +140,15 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "bravecobra",
+      "name": "bravecobra",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/391353?v=4",
+      "profile": "http://www.bravecobra.com",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
