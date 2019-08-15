@@ -2,6 +2,7 @@ import * as express from 'express';
 import { Server } from 'http';
 
 import { Helix } from './helix';
+import { Github } from './github';
 import { Kraken } from './kraken';
 import { log } from '@shared/common';
 import { IUserInfo } from '@shared/models';
@@ -10,12 +11,14 @@ export class API {
   public app: express.Application;
   private http!: Server;
   private helix: Helix;
+  private github: Github;
   private kraken: Kraken;
 
   constructor() {
     this.app = express.default().use(express.json());
     this.http = new Server(this.app);
     this.helix = new Helix();
+    this.github = new Github();
     this.kraken = new Kraken();
 
     this.loadRoutes();
@@ -99,6 +102,66 @@ export class API {
       log('info', `route: /stream called`);
 
       const payload: any = await this.helix.getStream();
+      res.send(payload);
+    });
+
+    //Github endpoints
+
+    //Get list of repos and issues
+    this.app.get('/repos/full', async (req, res) => {
+      log('info', `route: /repos/full called`);
+
+      const payload: any = await this.github.getRepos();
+      if (payload.status === 200 && payload.data.length > 0) {
+        for (let repo of payload.data) {
+          if (repo && repo.name !== undefined) {
+            repo.issues = [];
+            let issues: any = await this.github.getIssuesForRepo(repo.name);
+            for (let issue of issues.data)
+            {
+              if (issue.pull_request === undefined) {
+                repo.issues.push({number: issue.number, id: issue.id, title: issue.title});
+              }
+            }
+          }
+        }
+      }
+      res.send(payload);
+    });
+
+    //Get list of repos
+    this.app.get('/repos', async (req, res) => {
+      log('info', `route: /repos called`);
+
+      const payload: any = await this.github.getRepos();
+      res.send(payload);
+    });
+    
+    //Get issues for repo
+    this.app.get('/repos/:repo/issues', async (req, res) => {
+      log('info', `route: /issues called with repo - ${req.params.repo}`);
+
+      const payload: any = await this.github.getIssuesForRepo(req.params.repo);
+      res.send(payload);
+    });
+
+    //Create comment on issue
+    this.app.post('/issues/:issue/comment', async (req, res) => {
+      log('info', `route: /issues called with issue - ${req.params.issue}`);
+
+      const payload: any = await this.github.createComment(
+        req.body.repo, req.params.issue, req.body.comment);
+
+      res.send(payload);
+    });
+
+    //Create new issue
+    this.app.post('/issues/new', async (req, res) => {
+      log('info', `route: /issues/new called with title: ${req.body.title}`);
+
+      const payload: any = await this.github.createIssue(
+        req.body.repo, req.body.comment, req.body.title);
+
       res.send(payload);
     });
   }

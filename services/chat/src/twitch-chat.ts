@@ -8,7 +8,7 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
 import { config, get, log, isMod, isBroadcaster } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
@@ -21,7 +21,8 @@ import {
   CandleCommands,
   NoteCommands,
   StreamCommands,
-  UserCommands
+  UserCommands,
+  GithubCommands
 } from './commands';
 
 const htmlSanitizeOpts = {
@@ -49,6 +50,7 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
+  private projectSettings: IProjectSettings = {repositories: undefined};
   private avCommandHistory: { [userLogin: string] : Date } = {};
   private avCommandThrottle = +config.avCommandThrottleInSeconds;
   private announcedTeamMembers: string[] = [];
@@ -72,8 +74,18 @@ export class TwitchChat {
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
+      log('info', "Stream started");
       this.activeStream = currentStream.stream;
-    });
+
+      // Go ahead and grab up to date repository information when the stream starts
+      const url = "http://api/repos/full";
+      get(url).then((response: any) => {
+          if (response.status === 200) {
+            log('info', 'Repos have been updated');
+            this.projectSettings.repositories = response.data;
+          }
+        })
+      });
 
     this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
@@ -94,6 +106,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
+      this.projectSettings = {repositories: undefined};
     });
   }
 
@@ -472,6 +485,27 @@ export class TwitchChat {
       }
     }
 
+    if (!handledByCommand) {
+      for (const githubCommand of Object.values(GithubCommands)) {
+        let result = await githubCommand(
+          originalMessage,
+          user,
+          userInfo,
+          this.projectSettings,
+          this.sendChatMessage,
+          this.emitMessage
+        );
+        if (result) {
+          handledByCommand = true;
+
+          if (typeof(result) !== "boolean") {
+            this.projectSettings = result;
+          }
+          break;
+        }
+      }
+    }
+    
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.
     if (userInfo.liveCodersTeamMember &&

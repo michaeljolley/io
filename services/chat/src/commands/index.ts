@@ -4,5 +4,7 @@ import * as CandleCommands from './candle/candle-commands';
 import * as StreamCommands from './stream-commands';
 import * as NoteCommands from './note-commands';
 import * as UserCommands from './user-commands';
+import * as GithubCommands from './github-commands';
 
-export { AVCommands, BasicCommands, CandleCommands, NoteCommands, StreamCommands, UserCommands };
+export { AVCommands, BasicCommands, CandleCommands,
+   NoteCommands, StreamCommands, UserCommands, GithubCommands };
