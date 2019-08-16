@@ -7,7 +7,7 @@ services:
       dockerfile: admin.dockerfile
     image: io-admin
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -27,7 +27,7 @@ services:
       dockerfile: api.dockerfile
     image: io-api
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -45,7 +45,7 @@ services:
       dockerfile: chat.dockerfile
     image: io-chat
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - ./assets:/app/chat/dist/assets
       - /app/shared/node_modules
@@ -68,7 +68,7 @@ services:
       dockerfile: chron.dockerfile
     image: io-chron
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -89,7 +89,7 @@ services:
       dockerfile: hub.dockerfile
     image: io-hub
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -107,7 +107,7 @@ services:
       dockerfile: logger.dockerfile
     image: io-logger
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -132,7 +132,7 @@ services:
       - "9226:9229"
     env_file:
       - .env
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - ./assets:/app/overlay/dist/wwwroot/assets
       - /app/shared/node_modules
@@ -148,7 +148,7 @@ services:
       dockerfile: stream-notes.dockerfile
     image: io-streamnotes
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -168,7 +168,7 @@ services:
       dockerfile: user.dockerfile
     image: io-user
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared

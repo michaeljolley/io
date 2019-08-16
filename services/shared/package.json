@@ -5,8 +5,6 @@
   "main": "index.js",
   "repository": "github:michaeljolley/io",
   "scripts": {
-    "debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "debug-compile": "node --inspect=0.0.0.0:9229 dist/index.js",
     "build": "tsc --build --verbose"
   },
   "author": "Michael Jolley <mike@sparcapp.io>",
