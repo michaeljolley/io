@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -80,6 +80,9 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="http://murrayit.org"><img src="https://avatars0.githubusercontent.com/u/20172166?v=4" width="100px;" alt="Chance Murray"/><br /><sub><b>Chance Murray</b></sub></a><br /><a href="https://github.com/MichaelJolley/io/commits?author=chancesm" title="Code">💻</a></td>
     <td align="center"><a href="http://electrichavoc.tv"><img src="https://avatars1.githubusercontent.com/u/3020276?v=4" width="100px;" alt="ElectricHavoc"/><br /><sub><b>ElectricHavoc</b></sub></a><br /><a href="https://github.com/MichaelJolley/io/commits?author=electrichavoc" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/jedelfraisse"><img src="https://avatars0.githubusercontent.com/u/2048024?v=4" width="100px;" alt="Jonathan Delfraisse"/><br /><sub><b>Jonathan Delfraisse</b></sub></a><br /><a href="https://github.com/MichaelJolley/io/commits?author=jedelfraisse" title="Tests">⚠️</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="http://www.bravecobra.com"><img src="https://avatars3.githubusercontent.com/u/391353?v=4" width="100px;" alt="bravecobra"/><br /><sub><b>bravecobra</b></sub></a><br /><a href="#ideas-bravecobra" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
