@@ -19,6 +19,14 @@ export class Github {
     });
   }
 
+  public async getReposForUser(user: string, type: any = "owner", sort: any = "updated"): Promise<any> {
+    return this.octokit.repos.listForUser({
+      username: user,
+      type: type,
+      sort: sort
+    });
+  }
+
   public async getIssuesForRepo(repo: string): Promise<any> {
     return this.octokit.issues.listForRepo({
       owner: this.githubUsername,
