@@ -15,7 +15,7 @@ export class API {
   private kraken: Kraken;
 
   constructor() {
-    this.app = express.default().use(express.json());
+    this.app = express.default().use(express.json({limit: '50mb'}));
     this.http = new Server(this.app);
     this.helix = new Helix();
     this.github = new Github();
@@ -135,6 +135,17 @@ export class API {
 
       const payload: any = await this.github.getRepos();
       res.send(payload);
+    });
+
+    //Get list of repos for user
+    this.app.get('/repos/:username', async (req, res) => {
+      log('info', `route: /repos called`);
+      if (req.params.username) {
+        const payload: any = await this.github.getReposForUser(req.params.username);
+        res.send(payload);
+      } else {
+        res.status(404).send("username parameter is required");
+      }
     });
     
     //Get issues for repo

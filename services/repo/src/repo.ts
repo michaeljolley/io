@@ -14,7 +14,7 @@ export class Repo {
   private repoDb: RepoDb;
 
   constructor() {
-    this.app = express.default().use(express.json());
+    this.app = express.default().use(express.json({limit: '50mb'}));
     this.http = new Server(this.app);
     this.repoDb = new RepoDb();
 
