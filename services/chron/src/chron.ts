@@ -72,7 +72,7 @@ export class Chron {
   }
 
   private refreshRepos = async (): Promise<void> => {
-    const resp: IGitHubRepo[] = await get(this.repoUrl).then((data: any) => data as IGitHubRepo[]);
+    const resp: IGitHubRepo[] = await get(this.repoUrl).then((response: any) => response.data as IGitHubRepo[]);
     if (resp.length > 0) {
       const url = `http://repo/refresh`;
       await post(url, resp);

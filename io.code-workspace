@@ -110,7 +110,7 @@
 				"type": "node",
 				"request": "attach",
 				"name": "Attach: Repo",
-				"port": 9226,
+				"port": 9229,
 				"restart": true,
 				"localRoot": "${workspaceFolder:repo}",
 				"remoteRoot": "/app/repo"
