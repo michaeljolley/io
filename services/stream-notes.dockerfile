@@ -1,5 +1,7 @@
 FROM node:12.6.0-alpine
 
+RUN apk --no-cache add git
+
 WORKDIR /app/shared
 
 COPY ./shared/package*.json ./

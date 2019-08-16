@@ -29,7 +29,7 @@ export class Chron {
     // Every day update our repos
     setInterval(async () => {
       await this.refreshRepos();
-    }, 86400000);
+    }, 3600000);
 
     // Every week update the live coders team members;
     setInterval(async() => {
@@ -71,7 +71,7 @@ export class Chron {
     log('info', 'Chron is online and running...');
   }
 
-  private refreshRepos = async (): Promise<void> => {
+  public refreshRepos = async (): Promise<void> => {
     const resp: IGitHubRepo[] = await get(this.repoUrl).then((response: any) => response.data as IGitHubRepo[]);
     if (resp.length > 0) {
       const url = `http://repo/refresh`;

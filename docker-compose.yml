@@ -152,8 +152,8 @@ services:
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
-      - /app/streamnotes/node_modules
-      - ./services/streamnotes:/app/streamnotes
+      - /app/stream-notes/node_modules
+      - ./services/stream-notes:/app/stream-notes
     ports:
       - "9227:9229"
     env_file:

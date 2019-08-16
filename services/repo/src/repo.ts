@@ -47,22 +47,22 @@ export class Repo {
         log(
           'info',
           `route: /refresh called with empty payload. Aborting...`
-        )
+        );
         return;
       }
       log(
         'info',
-        `route: /refresh ${JSON.stringify(req.body)}`
-      )
+        `route: /refresh called`
+      );
       this.updateRepos(req.body);
     });
   }
 
   private updateRepos = async (reposToUpdate: IGitHubRepo[]) : Promise<void> => {
     if (reposToUpdate === undefined
-        || reposToUpdate.length == 0) {
+        || reposToUpdate.length === 0) {
         return;
-    };
+    }
 
     for (const repo of reposToUpdate) {
       repo.full_name = repo.full_name.toLocaleLowerCase();
