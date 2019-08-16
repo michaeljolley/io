@@ -9,6 +9,7 @@ import { ICheer, CheerSchema } from "./cheer";
 import { IUserInfo } from "./user-info";
 import { ISubscriber, SubscriberSchema } from "./subscriber";
 import { IRaider, RaiderSchema } from "./raider";
+import { IGitHubRepo } from "./github-repo";
 
 export interface IStream extends mongoose.Document {
   id: string;
@@ -23,6 +24,8 @@ export interface IStream extends mongoose.Document {
   segments?: IStreamSegment[];
   goals?: IStreamGoal[];
   notes?: IStreamNote[];
+
+  githubRepos?: IGitHubRepo[];
 
   moderators?: IUserInfo[];
   followers?: IUserInfo[];
@@ -46,6 +49,8 @@ export const StreamModel = mongoose.model<IStream>(
     segments: [StreamSegmentSchema],
     goals: [StreamGoalSchema],
     notes: [StreamNoteSchema],
+
+    githubRepos: [{ type: mongoose.Schema.Types.ObjectId, ref: "GitHubRepo" }],
 
     moderators: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],

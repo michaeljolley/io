@@ -1,7 +1,5 @@
 FROM node:12.6.0-alpine
 
-RUN apk --no-cache add git
-
 WORKDIR /app/shared
 
 COPY ./shared/package*.json ./
@@ -11,12 +9,12 @@ COPY ./shared/ ./
 RUN npm version $BUILDVERSION --allow-same-version \
     && npm run build
 
-WORKDIR /app/stream-notes
+WORKDIR /app/repo
 
-COPY ./stream-notes/package*.json ./
+COPY ./repo/package*.json ./
 RUN npm ci --silent
 
-COPY ./stream-notes/ ./
+COPY ./repo/ ./
 RUN npm version $BUILDVERSION --allow-same-version \
     && npm run build
 

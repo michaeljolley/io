@@ -21,6 +21,7 @@ export class Markdowner {
         .then(this.addCandle)
         .then(this.addLine)
         .then(this.addGoals)
+        .then(this.addGitHubRepos)
         .then(this.addThingsLearned)
         .then(this.addLine)
         .then(this.addSponsors)
@@ -314,6 +315,28 @@ ${this.addLink(
     }
 
     return existingContent + response + `\n`;
+  };
+
+  private addGitHubRepos = async (existingContent: string): Promise<string> => {
+    this.activeStream = this.activeStream as IStream;
+
+    if (this.activeStream.githubRepos &&
+        this.activeStream.githubRepos.length > 0) {
+      let response: string = `### Repos\n\n`;
+
+      for (const repo of this.activeStream.githubRepos) {
+
+        const repoLine: string = `- ${this.addLink(
+          repo.full_name,
+          `https://github.com/${repo.full_name}`
+        )}`;
+        response = response + `${repoLine}\n`;
+      }
+
+      return existingContent + response + `\n`;
+    }
+
+    return existingContent;
   };
 
   private addSponsors = async (existingContent: string): Promise<string> => {
