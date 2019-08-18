@@ -27,7 +27,8 @@ import {
   IThemerEventArg,
   INewGoalEventArg,
   INewNoteEventArg,
-  INewAnnouncementEventArg
+  INewAnnouncementEventArg,
+  IUserProfileUpdateEventArg
 } from '@shared/event_args';
 
 export class IOHub {
@@ -152,6 +153,9 @@ export class IOHub {
       socket.on(SocketIOEvents.NewGoal, (goalEvent: INewGoalEventArg) =>
         this.newGoal(goalEvent)
       );
+      socket.on(SocketIOEvents.UserProfileUpdated, (profileUpdate: IUserProfileUpdateEventArg) =>
+        this.profileUpdate(profileUpdate)
+      );
 
       /**
        * Candle related events
@@ -250,6 +254,11 @@ export class IOHub {
   private onLastFollower(lastFollowerEvent: ILastUserEventArg) {
     log('info', `onLastFollower: ${lastFollowerEvent.userInfo.login}`);
     this.io.emit(SocketIOEvents.LastFollowerUpdated, lastFollowerEvent);
+  }
+
+  private profileUpdate(profileUpdate: IUserProfileUpdateEventArg) {
+    log('info', `profileUpdated: ${profileUpdate.userInfo.login}`);
+    this.io.emit(SocketIOEvents.UserProfileUpdated, profileUpdate);
   }
 
   private onLastSubscriber(lastSubscriberEvent: ILastUserEventArg) {

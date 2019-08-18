@@ -22,3 +22,4 @@ export { IThemerEventArg } from './themerEventArg';
 export { IStreamRepoChangedEventArg } from './streamRepoChangedEventArg';
 export { IUserEventArg } from './userEventArg';
 export { INewAnnouncementEventArg } from './newAnnouncementEventArg';
+export { IUserProfileUpdateEventArg } from './userProfileUpdateEventArg';

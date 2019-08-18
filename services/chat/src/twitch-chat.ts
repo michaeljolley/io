@@ -389,7 +389,9 @@ export class TwitchChat {
       let updatedUser: IUserInfo | boolean = await userCommand(
         originalMessage,
         user,
-        this.sendChatMessage
+        userInfo,
+        this.sendChatMessage,
+        this.emitMessage
       );
       if (updatedUser) {
         handledByCommand = true;
@@ -505,7 +507,7 @@ export class TwitchChat {
         }
       }
     }
-    
+
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.
     if (userInfo.liveCodersTeamMember &&
