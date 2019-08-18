@@ -50,4 +50,4 @@ WORKDIR /app/stream-notes
 
 EXPOSE 80
 
-CMD [ "npm", "start" ]
+CMD [ "node", "dist/index.js" ]
