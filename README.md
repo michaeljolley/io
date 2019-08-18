@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-16-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -83,6 +83,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="http://www.bravecobra.com"><img src="https://avatars3.githubusercontent.com/u/391353?v=4" width="100px;" alt="bravecobra"/><br /><sub><b>bravecobra</b></sub></a><br /><a href="#ideas-bravecobra" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/theancientcoder"><img src="https://avatars0.githubusercontent.com/u/46498193?v=4" width="100px;" alt="Ancient Coder"/><br /><sub><b>Ancient Coder</b></sub></a><br /><a href="#ideas-theancientcoder" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
