@@ -6,6 +6,7 @@ services:
       context: ./services
       dockerfile: admin.dockerfile
     image: io-admin
+    container_name: io-admin
     init: true
     restart: always
     command: npm run debug
@@ -27,6 +28,7 @@ services:
       context: ./services
       dockerfile: api.dockerfile
     image: io-api
+    container_name: io-api
     init: true
     restart: always
     command: npm run debug
@@ -46,6 +48,7 @@ services:
       context: ./services
       dockerfile: chat.dockerfile
     image: io-chat
+    container_name: io-chat
     init: true
     restart: always
     command: npm run debug
@@ -70,6 +73,7 @@ services:
       context: ./services
       dockerfile: chron.dockerfile
     image: io-chron
+    container_name: io-chron
     init: true
     restart: always
     command: npm run debug
@@ -92,6 +96,7 @@ services:
       context: ./services
       dockerfile: hub.dockerfile
     image: io-hub
+    container_name: io-hub
     init: true
     restart: always
     command: npm run debug
@@ -111,6 +116,7 @@ services:
       context: ./services
       dockerfile: logger.dockerfile
     image: io-logger
+    container_name: io-logger
     init: true
     restart: always
     command: npm run debug
@@ -132,6 +138,7 @@ services:
       context: ./services
       dockerfile: overlay.dockerfile
     image: io-overlay
+    container_name: io-overlay
     init: true
     restart: always
     ports:
@@ -154,6 +161,7 @@ services:
       context: ./services
       dockerfile: stream-notes.dockerfile
     image: io-streamnotes
+    container_name: io-streamnotes
     init: true
     restart: always
     command: npm run debug
@@ -175,6 +183,7 @@ services:
       context: ./services
       dockerfile: user.dockerfile
     image: io-user
+    container_name: io-user
     init: true
     restart: always
     command: npm run debug
@@ -197,6 +206,7 @@ services:
       context: ./services
       dockerfile: repo.dockerfile
     image: io-repo
+    container_name: io-repo
     init: true
     restart: always
     command: npm run debug-compile
@@ -215,6 +225,7 @@ services:
 
   mongo:
     image: mongo:4.0
+    container_name: mongo-db
     restart: always
     volumes:
       - "mongodata:/data/db"
@@ -224,6 +235,7 @@ services:
 
   mongoex:
     image: mongo-express
+    container_name: mongo-express
     restart: always
     ports:
       - "8081:8081"
