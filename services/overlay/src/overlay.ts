@@ -16,6 +16,7 @@ export class Overlay {
 
   public start() {
     this.listen();
+
   }
 
   /**

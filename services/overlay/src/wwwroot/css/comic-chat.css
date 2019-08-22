@@ -1,0 +1,180 @@
+﻿
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+}
+
+.wrapper {
+    display: table-cell;
+    vertical-align: bottom;
+    height: 95vh;
+    position: absolute;
+    right: 0;
+    width: 300px;
+}
+
+  .strip {
+    max-height: 95vh;
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+
+  .box {
+    width: 300px;
+    height: 200px;
+    margin: 10px 10px 0 0;
+    background: linear-gradient(90deg, #fff 2px, transparent 1%) center, linear-gradient(#fff 2px, transparent 1%) center, #c0c0c0;
+    background-size: 4px 4px;
+    position: absolute;
+    overflow: hidden;
+    border: solid #111;
+    border-width: 3px 3px 5px 5px;
+    border-radius:4% 95% 6% 95%/95% 4% 92% 5%;
+    transform: rotate(-2deg);
+
+    bottom: 0;
+    right: 0;
+    display: none;
+  }
+
+  .bubble {
+    position: relative;
+    padding: 50px 15px;
+    margin: 1em 0 3em;
+    border: 10px solid #5a8f00;
+    text-align: center;
+    color: #333;
+    background: #fff;
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    border-radius: 20px;
+  }
+
+  .bubble:before {
+    content: "";
+    position: absolute;
+    z-index: 10;
+    bottom: -40px;
+    left: 50px;
+    width: 50px;
+    height: 30px;
+    border-style: solid;
+    border-width: 0 10px 10px 0;
+    border-color: #5a8f00;
+    background: transparent;
+    -webkit-border-bottom-right-radius: 80px 50px;
+    -moz-border-radius-bottomright: 80px 50px;
+    border-bottom-right-radius: 80px 50px;
+    display: block;
+  }
+
+  .bubble:after {
+    content: "";
+    position: absolute;
+    z-index: 10;
+    bottom: -40px;
+    left: 50px;
+    width: 20px;
+    height: 30px;
+    border-style: solid;
+    border-width: 0 10px 10px 0;
+    border-color: #5a8f00;
+    background: transparent;
+    -webkit-border-bottom-right-radius: 40px 50px;
+    -moz-border-radius-bottomright: 40px 50px;
+    border-bottom-right-radius: 40px 50px;
+    display: block;
+  }
+
+  .character-strip {
+    height: 100px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+  }
+  .character-strip .character {
+    display: inline-block;
+    width: 112.5px;
+    margin: 0 15px;
+  }
+  .character-strip .character:not(:first-child) img {
+    transform: rotateY(180deg);
+  }
+  .character-strip .character .head, .character-strip .character .body {
+    text-align: center;
+  }
+  .character-strip .character .head img {
+    position: relative;
+    z-index: 10;
+  }
+  .character-strip .character .body img {
+    position: relative;
+    z-index: 5;
+    margin-top: -20%;
+  }
+  .character-strip .character img {
+    width: 45%;
+  }
+
+
+  .cbbl {
+    position: relative;
+    display: inline-block;
+    margin: 10px 15px 29px 10px;
+    text-align: center;
+    font-weight: 700;
+    background-color: #fff;
+    color: #000;
+    padding: 5px;
+    box-shadow: 0 -3px #fff, 0 -6px #000, 3px 0 #fff, 3px -3px #000, 6px 0 #000,
+      0 3px #fff, 0 6px #000, -3px 0 #fff, -3px 3px #000, -6px 0 #000,
+      -3px -3px #000, 3px 3px #000, 3px 9px #888, 6px 6px #888, 9px 3px #888;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  .cbbl::before,
+  .cbbl::after {
+    content: "";
+    display: block;
+    position: absolute;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    left: 20%;
+  }
+  .cbbl::after {
+    background: #fff;
+    width: 9px;
+    height: 3px;
+    bottom: -14px;
+
+    margin-left: 0;
+    margin-right: 16px;
+    box-shadow: 3px 0 #000, -3px 0 #000, -3px 3px #fff, 0px 3px #000,
+      -6px 3px #000, -3px 6px #000, -6px 6px #000, -3px 9px #888, 0 6px #888,
+      3px 3px #888, 6px 0px #888;
+  }
+
+  .cbbl::before {
+    width: 15px;
+    height: 8px;
+    background: #fff;
+    bottom: -11px;
+    border-left: 3px solid #000;
+    border-right: 3px solid #000;
+  }
+
+  .cbbl.-right::before,
+  .cbbl.-right::after {
+    left: auto;
+    right: 20%;
+  }
+  .cbbl.-right::after {
+    margin-left: 6px;
+
+    box-shadow: 3px 0 #000, -3px 0 #000, -3px 3px #fff, 0px 3px #000,
+      -6px 3px #000, -3px 6px #000, -6px 6px #000, -3px 9px #888, 0 6px #888,
+      3px 3px #888, 6px 0px #888;
+  }
