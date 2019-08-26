@@ -6,6 +6,11 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     console.log(JSON.stringify(chatMessageEventArg));
 
+    if (chatMessageEventArg.userInfo &&
+        chatMessageEventArg.userInfo.login == 'b3_bot') {
+            return;
+        }
+
     var strip = document.getElementsByClassName('strip')[0];
 
     var id = +(new Date());
@@ -29,22 +34,17 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     var characterStrip = createChatDiv('character-strip');
 
-    var character = createChatDiv('character');
-
-    var head = createChatDiv('head');
-    var headImg = document.createElement('img');
-    headImg.src = '/assets/images/characters/tiki/head-tiki.png';
-    head.append(headImg);
-
-    var body = createChatDiv('body');
-    var bodyImg = document.createElement('img');
-    bodyImg.src = '/assets/images/characters/tiki/body-tiki.png';
-    body.append(bodyImg);
-
-    character.append(head);
-    character.append(body);
+    var character = createCharacter('tiki');
 
     characterStrip.append(character);
+
+    if (chatMessageEventArg.mentions &&
+        chatMessageEventArg.mentions.length > 0) {
+        var mentions = chatMessageEventArg.mentions;
+        for (let user of mentions) {
+            characterStrip.append(createCharacter('tiki'));
+        }
+    }
 
     box.append(cbbl);
     box.append(characterStrip);
@@ -68,6 +68,26 @@ function createChatDiv(cssClass) {
     var newDiv = document.createElement('div');
     newDiv.classList.add(cssClass);
     return newDiv;
+}
+
+function createCharacter(character) {
+    var characterDiv = createChatDiv('character');
+
+    var head = createChatDiv('head');
+    var headImg = document.createElement('img');
+    headImg.src = `/assets/images/characters/${character}/head-${character}.png`;
+    head.append(headImg);
+
+
+    var body = createChatDiv('body');
+    var bodyImg = document.createElement('img');
+    bodyImg.src = `/assets/images/characters/${character}/body-${character}.png`;
+    body.append(bodyImg);
+
+    characterDiv.append(head);
+    characterDiv.append(body);
+
+    return characterDiv;
 }
 
 function calcPositions() {

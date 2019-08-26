@@ -30,3 +30,6 @@ img {
 #follower, #subscriber {
     position: absolute;
 }
+#follower {
+    display: hidden;
+}

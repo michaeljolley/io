@@ -367,7 +367,10 @@ export class TwitchChat {
     // Identify user and pass along to hub
     const userInfo: IUserInfo = await this.getUser(username);
 
+    const mentions: IUserInfo[] = await this.identifyMentions(message);
+
     const chatMessageArg: IChatMessageEventArg = {
+      mentions,
       message,
       user,
       userInfo
@@ -565,6 +568,26 @@ export class TwitchChat {
 
     return tempMessage;
   };
+
+  private identifyMentions = async (message: string): Promise<IUserInfo[]> => {
+
+    const mentions: IUserInfo[] = [];
+    const usernameRegEx: RegExp = /@[a-z]*[0-9]*/ig;
+
+    const usernames = message.match(usernameRegEx);
+
+    if (usernames) {
+      for (const user of usernames) {
+        const cleanuser = user.replace('@','');
+        const userInfo: IUserInfo | undefined = await this.getUser(cleanuser);
+        if (userInfo) {
+          mentions.push(userInfo);
+        }
+      }
+    }
+
+    return mentions;
+  }
 
   private getUser = async (username: string): Promise<IUserInfo> => {
     const url = `http://user/users/${username}`;
