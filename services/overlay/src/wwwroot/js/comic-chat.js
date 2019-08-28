@@ -6,10 +6,76 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     console.log(JSON.stringify(chatMessageEventArg));
 
-    if (chatMessageEventArg.userInfo &&
+    if (chatMessageEventArg.originalMessage &&
+        chatMessageEventArg.originalMessage.length > 0 &&
+        chatMessageEventArg.userInfo &&
         chatMessageEventArg.userInfo.login == 'b3_bot') {
             return;
         }
+
+    // split the chatMessageEventArg.message roughly at 80 characters each and for
+    // each call createChatMessage(chatMessageEventArg, message)
+    const words = chatMessageEventArg.originalMessage.split(' ');
+    let tempMessage = '';
+    let notFirst = false;
+
+    for (let i = 0; i < words.length; i++) {
+
+        if ((tempMessage + words[i]).length <= 80) {
+            tempMessage += (tempMessage.length === 0 ? '' : ' ') + words[i];
+        } else {
+            tempMessage += '...';
+
+            createChatMessage(chatMessageEventArg, tempMessage);
+            if (!notFirst) {
+                notFirst = true;
+            }
+            tempMessage = `...${words[i]}`;
+        }
+    }
+
+    if (tempMessage.length > 0) {
+        createChatMessage(chatMessageEventArg, tempMessage);
+    }
+
+});
+
+function replaceEmotes(user, message) {
+    let tempMessage = message;
+
+    // If the message has emotes, modify message to include img tags to the emote
+    if (user.emotes) {
+        let emoteSet = [];
+
+        for (const emote of Object.keys(user.emotes)) {
+            const emoteLocations = user.emotes[emote];
+            emoteLocations.forEach(location => {
+            emoteSet.push(new Emote(emote, location));
+            });
+        }
+
+        // Order the emotes descending so we can iterate
+        // through them with indexes
+        emoteSet = emoteSet.sort((a, b) => {
+            return b.end - a.end;
+        });
+
+        emoteSet.forEach(emote => {
+            const emoteArg = {
+                emoteUrl: emote.emoteUrl
+            };
+
+            let emoteMessage = tempMessage.slice(0, emote.start);
+            emoteMessage += emote.emoteImageTag;
+            emoteMessage += tempMessage.slice(emote.end + 1, tempMessage.length);
+            tempMessage = emoteMessage;
+        });
+      }
+
+    return tempMessage;
+}
+
+function createChatMessage(chatMessageEventArg, message) {
 
     var strip = document.getElementsByClassName('strip')[0];
 
@@ -27,11 +93,13 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
     */
 
     var box = createChatDiv('box');
+    var boxStyle = Math.floor(Math.random() * 3) + 1;
+
+    box.classList.add(`box${boxStyle}`);
+
     box.id = 'msg' + id.toString();
 
-    var cbbl = createChatDiv('cbbl');
-    cbbl.innerHTML = chatMessageEventArg.message;
-
+    var bubble = createBubbleDiv(message);
     var characterStrip = createChatDiv('character-strip');
 
     var character = createCharacter('tiki');
@@ -46,7 +114,7 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
         }
     }
 
-    box.append(cbbl);
+    box.append(bubble);
     box.append(characterStrip);
 
     $('#msg' + id).hide();
@@ -62,12 +130,26 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
             $('#msg' + id).remove();
         });
     }, 50000, id);
-});
+}
 
 function createChatDiv(cssClass) {
     var newDiv = document.createElement('div');
     newDiv.classList.add(cssClass);
     return newDiv;
+}
+
+function createBubbleDiv(message) {
+
+    var cbbl = createChatDiv('bubble');
+    var msg = createChatDiv('message');
+    var arrow = createChatDiv('arrow');
+
+    msg.innerHTML = message;
+
+    cbbl.appendChild(msg);
+    cbbl.appendChild(arrow);
+
+    return cbbl;
 }
 
 function createCharacter(character) {

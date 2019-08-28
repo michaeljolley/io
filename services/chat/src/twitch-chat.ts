@@ -358,6 +358,8 @@ export class TwitchChat {
   ): Promise<any> => {
     const originalMessage = message;
 
+    const cleanMessage = sanitizeHtml(message, htmlSanitizeOpts);
+
     // Parse chat for any commands & update
     // message for display in overlays
     message = this.processChatMessage(message, user);
@@ -372,6 +374,7 @@ export class TwitchChat {
     const chatMessageArg: IChatMessageEventArg = {
       mentions,
       message,
+      originalMessage: cleanMessage,
       user,
       userInfo
     };

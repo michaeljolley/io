@@ -31,63 +31,58 @@ html, body {
     position: absolute;
     overflow: hidden;
     border: solid #111;
-    border-width: 3px 3px 5px 5px;
-    border-radius:4% 95% 6% 95%/95% 4% 92% 5%;
-    transform: rotate(-2deg);
 
     bottom: 0;
     right: 0;
     display: none;
   }
 
-  .bubble {
-    position: relative;
-    padding: 50px 15px;
-    margin: 1em 0 3em;
-    border: 10px solid #5a8f00;
+	.box.box1 {
+		border-width: 3px 4px 3px 5px;
+		border-radius:95% 4% 92% 5%/4% 95% 6% 95%;
+		transform: rotate(2deg);
+	}
+
+	.box.box2 {
+		border-width: 3px 3px 5px 5px;
+		border-radius:4% 95% 6% 95%/95% 4% 92% 5%;
+		transform: rotate(-1deg);
+	}
+
+	.box.box3 {
+		border-width: 5px 3px 3px 5px;
+		border-radius:95% 4% 97% 5%/4% 94% 3% 95%;
+		transform: rotate(2deg);
+	}
+
+	.bubble .message {
+		margin: 10px;
+		padding: 16px;
+		background-color: #fff;
+    border: solid #111;
     text-align: center;
-    color: #333;
-    background: #fff;
-    -webkit-border-radius: 20px;
-    -moz-border-radius: 20px;
-    border-radius: 20px;
-  }
 
-  .bubble:before {
-    content: "";
-    position: absolute;
-    z-index: 10;
-    bottom: -40px;
-    left: 50px;
-    width: 50px;
-    height: 30px;
-    border-style: solid;
-    border-width: 0 10px 10px 0;
-    border-color: #5a8f00;
-    background: transparent;
-    -webkit-border-bottom-right-radius: 80px 50px;
-    -moz-border-radius-bottomright: 80px 50px;
-    border-bottom-right-radius: 80px 50px;
-    display: block;
-  }
+		border-width: 2px 1px 2px 1px;
+		border-radius: 35% 35% 42% 45%/54% 35% 66% 35%;
+		transform: rotate(1deg);
+	}
 
-  .bubble:after {
-    content: "";
-    position: absolute;
-    z-index: 10;
-    bottom: -40px;
-    left: 50px;
-    width: 20px;
-    height: 30px;
-    border-style: solid;
-    border-width: 0 10px 10px 0;
-    border-color: #5a8f00;
-    background: transparent;
-    -webkit-border-bottom-right-radius: 40px 50px;
-    -moz-border-radius-bottomright: 40px 50px;
-    border-bottom-right-radius: 40px 50px;
-    display: block;
-  }
+	.bubble .arrow {
+		height: 20px;
+		width: 15px;
+		background: #fff;
+		display: block;
+		position: absolute;
+		transition: all 0.3s ease;
+		box-sizing: border-box;
+		left: 40%;
+		margin-top: -13px;
+
+		border: solid #111;
+		border-width: 0px 1px 3px 1px;
+		border-radius: 10% 23% 100% 25%;
+		transform: rotate(10deg);
+	}
 
   .character-strip {
     height: 100px;
@@ -117,64 +112,4 @@ html, body {
   }
   .character-strip .character img {
     width: 45%;
-  }
-
-
-  .cbbl {
-    position: relative;
-    display: inline-block;
-    margin: 10px 15px 29px 10px;
-    text-align: center;
-    font-weight: 700;
-    background-color: #fff;
-    color: #000;
-    padding: 5px;
-    box-shadow: 0 -3px #fff, 0 -6px #000, 3px 0 #fff, 3px -3px #000, 6px 0 #000,
-      0 3px #fff, 0 6px #000, -3px 0 #fff, -3px 3px #000, -6px 0 #000,
-      -3px -3px #000, 3px 3px #000, 3px 9px #888, 6px 6px #888, 9px 3px #888;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-  }
-  .cbbl::before,
-  .cbbl::after {
-    content: "";
-    display: block;
-    position: absolute;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    left: 20%;
-  }
-  .cbbl::after {
-    background: #fff;
-    width: 9px;
-    height: 3px;
-    bottom: -14px;
-
-    margin-left: 0;
-    margin-right: 16px;
-    box-shadow: 3px 0 #000, -3px 0 #000, -3px 3px #fff, 0px 3px #000,
-      -6px 3px #000, -3px 6px #000, -6px 6px #000, -3px 9px #888, 0 6px #888,
-      3px 3px #888, 6px 0px #888;
-  }
-
-  .cbbl::before {
-    width: 15px;
-    height: 8px;
-    background: #fff;
-    bottom: -11px;
-    border-left: 3px solid #000;
-    border-right: 3px solid #000;
-  }
-
-  .cbbl.-right::before,
-  .cbbl.-right::after {
-    left: auto;
-    right: 20%;
-  }
-  .cbbl.-right::after {
-    margin-left: 6px;
-
-    box-shadow: 3px 0 #000, -3px 0 #000, -3px 3px #fff, 0px 3px #000,
-      -6px 3px #000, -3px 6px #000, -6px 6px #000, -3px 9px #888, 0 6px #888,
-      3px 3px #888, 6px 0px #888;
   }
