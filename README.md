@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-17-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-18-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -85,6 +85,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="http://www.bravecobra.com"><img src="https://avatars3.githubusercontent.com/u/391353?v=4" width="100px;" alt="bravecobra"/><br /><sub><b>bravecobra</b></sub></a><br /><a href="#ideas-bravecobra" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/theancientcoder"><img src="https://avatars0.githubusercontent.com/u/46498193?v=4" width="100px;" alt="Ancient Coder"/><br /><sub><b>Ancient Coder</b></sub></a><br /><a href="#ideas-theancientcoder" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/deathpax"><img src="https://avatars3.githubusercontent.com/u/1409098?v=4" width="100px;" alt="deathpax"/><br /><sub><b>deathpax</b></sub></a><br /><a href="#ideas-deathpax" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/solenberg"><img src="https://avatars3.githubusercontent.com/u/1253016?v=4" width="100px;" alt="R.James Solenberg"/><br /><sub><b>R.James Solenberg</b></sub></a><br /><a href="#ideas-solenberg" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
