@@ -1,6 +1,8 @@
 import { ChatUserstate } from 'tmi.js';
+import fs from 'fs';
+import * as path from 'path';
 
-import { get } from '@shared/common';
+import { genericComicAvatars, get } from '@shared/common';
 import { IUserInfo } from '@shared/models';
 import { IBaseEventArg, IUserProfileUpdateEventArg } from '@shared/event_args';
 import { SocketIOEvents } from '@shared/events';
@@ -89,6 +91,54 @@ export const profileCommand = async (
   };
 
   emitMessageFunc(SocketIOEvents.UserProfileUpdated, profileUpdateEventArg);
+
+  return true;
+};
+
+export const avatarCommand = async (
+  message: string,
+  user: ChatUserstate,
+  userInfo: IUserInfo,
+  twitchChatFunc: (message: string) => void,
+  emitMessageFunc: (event: string, payload: IBaseEventArg) => void
+): Promise<IUserInfo | boolean> => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const params = lowerMessage.split(' ');
+  const firstWord = params[0];
+
+  if (firstWord !== '!avatar' ||
+     params.length < 2) {
+    return false;
+  }
+
+  const secondWord = params[1].toLocaleLowerCase();
+  const genericAvatars: string[] = genericComicAvatars;
+
+  let saveUser: boolean = false;
+
+  if (genericAvatars.filter(f => f === secondWord) !== undefined) {
+    userInfo.comicAvatar = secondWord;
+    saveUser = true;
+  } else {
+    if (secondWord === userInfo.login &&
+        fs.existsSync(path.join(__dirname, '..', `/assets/images/characters/${secondWord}`))
+      ) {
+      userInfo.comicAvatar = secondWord;
+      saveUser = true;
+    }
+  }
+
+  if (saveUser) {
+    const profileUpdateEventArg: IUserProfileUpdateEventArg = {
+      userInfo
+    };
+
+    emitMessageFunc(SocketIOEvents.UserProfileUpdated, profileUpdateEventArg);
+  }
 
   return true;
 };

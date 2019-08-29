@@ -9,7 +9,7 @@ import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
 import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
-import { config, get, log, isMod, isBroadcaster } from '@shared/common';
+import { genericComicAvatars, config, get, log, isMod, isBroadcaster } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
@@ -586,7 +586,7 @@ export class TwitchChat {
   };
 
   private randomComicAvatar = () => {
-    const genericAvatars: string[] = ['tiki', 'armando'];
+    const genericAvatars: string[] = genericComicAvatars;
     return genericAvatars[Math.floor(Math.random() * genericAvatars.length)];
   }
 
