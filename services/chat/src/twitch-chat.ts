@@ -371,6 +371,18 @@ export class TwitchChat {
 
     const mentions: IUserInfo[] = await this.identifyMentions(message);
 
+    // Get a random comicAvatar if it isn't already specified
+    if (userInfo.comicAvatar === undefined) {
+      userInfo.comicAvatar = this.randomComicAvatar();
+    }
+
+    // Get a random comicAvatar for each mention if not specified
+    for (const mention of mentions) {
+      if (mention.comicAvatar === undefined) {
+        mention.comicAvatar = this.randomComicAvatar();
+      }
+    }
+
     const chatMessageArg: IChatMessageEventArg = {
       mentions,
       message,
@@ -516,7 +528,8 @@ export class TwitchChat {
 
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.
-    if (userInfo.liveCodersTeamMember &&
+    if (userInfo.login != config.twitchClientUsername &&
+        userInfo.liveCodersTeamMember &&
         this.announcedTeamMembers.find(login => login === userInfo.login) === undefined) {
 
       if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
@@ -571,6 +584,11 @@ export class TwitchChat {
 
     return tempMessage;
   };
+
+  private randomComicAvatar = () => {
+    const genericAvatars: string[] = ['tiki', 'armando'];
+    return genericAvatars[Math.floor(Math.random() * genericAvatars.length)];
+  }
 
   private identifyMentions = async (message: string): Promise<IUserInfo[]> => {
 

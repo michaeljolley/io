@@ -5,7 +5,6 @@ import { IUserInfo } from '@shared/models';
 import { IBaseEventArg, IUserProfileUpdateEventArg } from '@shared/event_args';
 import { SocketIOEvents } from '@shared/events';
 
-
 export const updateUserCommand = async (
     message: string,
     user: ChatUserstate,

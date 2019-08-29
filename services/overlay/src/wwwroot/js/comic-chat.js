@@ -102,7 +102,7 @@ function createChatMessage(chatMessageEventArg, message) {
     var bubble = createBubbleDiv(message);
     var characterStrip = createChatDiv('character-strip');
 
-    var character = createCharacter('tiki');
+    var character = createCharacter(chatMessageEventArg.userInfo.comicAvatar || 'tiki');
 
     characterStrip.append(character);
 
@@ -110,7 +110,7 @@ function createChatMessage(chatMessageEventArg, message) {
         chatMessageEventArg.mentions.length > 0) {
         var mentions = chatMessageEventArg.mentions;
         for (let user of mentions) {
-            characterStrip.append(createCharacter('tiki'));
+            characterStrip.append(createCharacter(user.comicAvatar || 'tiki'));
         }
     }
 
