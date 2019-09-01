@@ -10,6 +10,7 @@ import { IUserInfo } from "./user-info";
 import { ISubscriber, SubscriberSchema } from "./subscriber";
 import { IRaider, RaiderSchema } from "./raider";
 import { IGitHubRepo } from "./github-repo";
+import { ChatMessageSchema, IChatMessage } from "./chat-message";
 
 export interface IStream extends mongoose.Document {
   id: string;
@@ -33,16 +34,18 @@ export interface IStream extends mongoose.Document {
   raiders?: IRaider[];
   cheers?: ICheer[];
   contributors?: IUserInfo[];
+  chatMessages?: IChatMessage[];
 }
 
 export const StreamModel = mongoose.model<IStream>(
   "Stream",
   new mongoose.Schema({
     id: { type: String, unique: true, required: true },
-    title: { type: String, required: true },
     started_at: { type: String, required: true },
     ended_at: String,
+    title: { type: String, required: true },
     replayLink: String,
+
     candle: { type: mongoose.Schema.Types.ObjectId, ref: "Candle" },
     candleVotes: [CandleVoteSchema],
 
@@ -57,6 +60,7 @@ export const StreamModel = mongoose.model<IStream>(
     subscribers: [SubscriberSchema],
     raiders: [RaiderSchema],
     cheers: [CheerSchema],
-    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }]
+    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
+    chatMessages: [ChatMessageSchema]
   })
 );

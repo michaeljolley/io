@@ -18,7 +18,8 @@ import {
   IUserEventArg,
   IStreamRepoChangedEventArg,
   INewNoteEventArg,
-  INewGoalEventArg
+  INewGoalEventArg,
+ // IChatMessageEventArg
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -71,6 +72,9 @@ export class Logger {
     this.socket.on(SocketIOEvents.NewCheer, (newCheerEvent: INewCheerEventArg) =>
       this.onNewCheer(newCheerEvent)
     );
+    // this.socket.on(SocketIOEvents.OnChatMessage, (chatMessageEvent: IChatMessageEventArg) =>
+    //   this.onChatMessage(chatMessageEvent)
+    // );
 
     this.socket.on(SocketIOEvents.CandleWinner, (candleWinnerEvent: ICandleWinnerEventArg) =>
       this.onCandleWinner(candleWinnerEvent)
