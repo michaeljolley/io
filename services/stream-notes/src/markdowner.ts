@@ -210,11 +210,8 @@ export class Markdowner {
 
         for (const user of contributors) {
           const displayName: string = user.display_name || user.login;
-          const userLine: string = `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + user.login
-          )}`;
-          response = response + `${userLine}\n`;
+          const userLine: string = `<p class="user"><img src="${user.profile_image_url}"/><span>${displayName}</span>`;
+          response = response + `${userLine}</p>\n`;
         }
         return existingContent + response + `\n`;
       }
