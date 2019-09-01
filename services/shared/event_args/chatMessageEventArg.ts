@@ -6,6 +6,7 @@ export interface IChatMessageEventArg extends IBaseEventArg {
   mentions: IUserInfo[];
   message: string;
   originalMessage: string;
+  streamId: string;
   user: Userstate;
-  userInfo: IUserInfo
+  userInfo: IUserInfo;
 }

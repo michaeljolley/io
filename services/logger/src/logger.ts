@@ -19,7 +19,7 @@ import {
   IStreamRepoChangedEventArg,
   INewNoteEventArg,
   INewGoalEventArg,
- // IChatMessageEventArg
+  IChatMessageEventArg,
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -27,7 +27,8 @@ import {
   ICandleVote,
   ICandle,
   ICandleVoteResult,
-  IVote
+  IChatMessage,
+  IVote,
 } from '@shared/models';
 
 export class Logger {
@@ -72,9 +73,9 @@ export class Logger {
     this.socket.on(SocketIOEvents.NewCheer, (newCheerEvent: INewCheerEventArg) =>
       this.onNewCheer(newCheerEvent)
     );
-    // this.socket.on(SocketIOEvents.OnChatMessage, (chatMessageEvent: IChatMessageEventArg) =>
-    //   this.onChatMessage(chatMessageEvent)
-    // );
+    this.socket.on(SocketIOEvents.OnChatMessage, (chatMessageEvent: IChatMessageEventArg) =>
+      this.onChatMessage(chatMessageEvent)
+    );
 
     this.socket.on(SocketIOEvents.CandleWinner, (candleWinnerEvent: ICandleWinnerEventArg) =>
       this.onCandleWinner(candleWinnerEvent)
@@ -134,6 +135,21 @@ export class Logger {
       newFollowerEvent.streamId,
       'followers',
       newFollowerEvent.follower
+    );
+  }
+
+  private async onChatMessage(chatMessageEvent: IChatMessageEventArg) {
+    // We want to record the follower on the current stream
+
+    const chatMessage: IChatMessage = {
+      message: chatMessageEvent.message,
+      timestamp: new Date(),
+      user: chatMessageEvent.userInfo
+    };
+
+    await this.streamDb.recordChatMessage(
+      chatMessageEvent.streamId,
+      chatMessage
     );
   }
 

@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import { ICandleVote, IStream, IStreamNote, IStreamSegment, IUserInfo } from '@shared/models';
+import { ICandleVote, IStream, IStreamNote, IStreamSegment, IUserInfo, IChatMessage } from '@shared/models';
 import { config } from '@shared/common';
 
 export class Markdowner {
@@ -191,6 +191,10 @@ export class Markdowner {
 
       if (this.activeStream.notes) {
         contributors.push(...this.activeStream.notes.map((m: IStreamNote) => m.user));
+      }
+
+      if (this.activeStream.chatMessages) {
+        contributors.push(...this.activeStream.chatMessages.map((m: IChatMessage) => m.user));
       }
 
       const tempContributors: any[] = [];

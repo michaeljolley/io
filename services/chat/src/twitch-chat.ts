@@ -356,6 +356,11 @@ export class TwitchChat {
     user: ChatUserstate,
     message: string
   ): Promise<any> => {
+
+    if (this.activeStream === undefined) {
+      return false;
+    }
+
     const originalMessage = message;
 
     const cleanMessage = sanitizeHtml(message, htmlSanitizeOpts);
@@ -387,6 +392,7 @@ export class TwitchChat {
       mentions,
       message,
       originalMessage: cleanMessage,
+      streamId: this.activeStream.id,
       user,
       userInfo
     };
@@ -401,8 +407,8 @@ export class TwitchChat {
 
     let handledByCommand: boolean = false;
 
-    //Process user commands first before emitting message to hub
-    //so if the user updates, the update is handled before notification
+    // Process user commands first before emitting message to hub
+    // so if the user updates, the update is handled before notification
     for (const userCommand of Object.values(UserCommands)) {
       let updatedUser: IUserInfo | boolean = await userCommand(
         originalMessage,
@@ -422,7 +428,7 @@ export class TwitchChat {
       }
     }
 
-    //Go ahead and emit message to hub before processing the rest of the commands
+    // Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     if (!handledByCommand) {

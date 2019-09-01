@@ -37,6 +37,7 @@ export class StreamDb {
         .populate("contributors")
         .populate("githubRepos")
         .populate("moderators")
+        .populate("chatMessages.user")
         .exec((err: any, res: any) => {
           if (err) {
             log("info", `ERROR: getStream ${JSON.stringify(err)}`);
