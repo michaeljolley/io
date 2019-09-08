@@ -251,36 +251,24 @@ ${this.addLink(
   };
 
   private generateUserTable = (users: IUserInfo[]) : string => {
-    let table: string = `<table class="user">\n  <tbody>\n`;
+    let table: string = `<div class="users">\n`;
 
-    let col: number = 0;
     for (const user of users) {
-      table += (col === 0 ? "    <tr>\n" : "");
 
-      table += "      <td>\n";
-      table += `        <img class="profile" src="${user.profile_image_url}"/>\n`;
-      table += `        <span>${user.display_name || user.login}<br/>\n`;
-      table += `        <a href="https://twitch.tv/${user.login}" target="_blank"><i class="fab fa-twitch" aria-hidden="true"></i></a>`;
+      table += `  <div class="user">\n`;
+      table += `    <img class="profile" src="${user.profile_image_url}"/>\n`;
+      table += `    <span>${user.display_name || user.login}<br/>\n`;
+      table += `      <a href="https://twitch.tv/${user.login}" target="_blank"><i class="fab fa-twitch" aria-hidden="true"></i></a>`;
       if (user.twitterHandle) {
         table += `<a href="https://twitter.com/${user.twitterHandle}" target="_blank"><i class="fab fa-twitter" aria-hidden="true"></i></a>`;
       }
       if (user.githubHandle) {
         table += `<a href="https://github.com/${user.githubHandle}" target="_blank"><i class="fab fa-github" aria-hidden="true"></i></a>`;
       }
-      table += "\n        </span>\n      </td>\n";
-      table += (col === 3 ? "    </tr>\n" : "");
-      col++;
-
-      if (col === 4) {
-        col = 0;
-      }
+      table += "\n  </div>\n";
     }
 
-    if (table.substr(table.length - 7).includes("</tr>") === false) {
-      table += "    </tr>\n";
-    }
-
-    table += "  </tbody>\n</table>\n";
+    table += "\n</div>\n";
 
     return table;
   }
@@ -327,7 +315,7 @@ ${this.addLink(
   };
 
   private addLink = (label: string, url: string): string => {
-    return `[${label}](${url})`;
+    return `<a href="${url}" target="_blank">${label}</a>`;
   };
 
   private addMeta = async (): Promise<string> => {
