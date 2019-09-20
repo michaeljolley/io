@@ -44,7 +44,7 @@ export const candleCommand = async (
   
   if(splitMessage[0].toLocaleLowerCase() === '!vote' && voteActive === false) {
     twitchChatFunc(
-      'Candle voting is not active right now.'
+      `Candle voting is not active right now.`
     );
     return true;
   }
