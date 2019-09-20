@@ -29,7 +29,7 @@ export const candleCommand = async (
   }
   const splitMessage = message.trim().split(' ');
   
-  const candleCommands = ['!candle', '!vote'];
+  const candleCommands: string[] = ['!candle', '!vote'];
   if (candleCommands.indexOf(splitMessage[0].toLocaleLowerCase()) === -1) {
     return false;
   }  
