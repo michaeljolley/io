@@ -132,7 +132,7 @@ const startCandleVoteCommand = async (
         stopCandleVoteCommand(activeStream, emitMessageFunc);
       }, secondsToVote * 1000);
 
-    twitchChatFunc(`Voting is open for our Candle to Code By. Send !candle {candle name} to vote.  Available choices are: ${availableCandles}`);
+    twitchChatFunc(`Voting is open for our Candle to Code By. Send [!candle|!vote] {candle name} to vote.  Available choices are: ${availableCandles}`);
     log('info', `Vote for candle started`);
   }
 };
