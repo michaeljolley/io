@@ -1,6 +1,7 @@
 export { ICandle, CandleModel } from './candle';
 export { ICandleVote, CandleVoteSchema } from './candle-vote';
 export { ICandleVoteResult } from './candle-vote-result';
+export { IChatMessage } from './chat-message';
 export { ICheer, CheerSchema } from './cheer';
 export { IGitHubRepo, GitHubRepoModel } from './github-repo';
 export { IProjectSettings, IRepository, IIssue } from './project-settings';

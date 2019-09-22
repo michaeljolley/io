@@ -10,12 +10,14 @@ export interface IUserInfo extends mongoose.Document {
   lastUpdated: string;
   githubHandle: string;
   twitterHandle: string;
+  comicAvatar: string;
 }
 
 export const UserInfoModel = mongoose.model<IUserInfo>(
   "UserInfo",
   new mongoose.Schema({
     broadcaster_type: String,
+    comicAvatar: String,
     display_name: String,
     githubHandle: String,
     id: { type: String, required: true },

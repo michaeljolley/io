@@ -152,6 +152,10 @@ socket.on('OnCreditsRoll', (streamEventArg) => {
                 contributors.push(...stream.notes.map(m => m.user));
             }
 
+            if (stream.chatMessages) {
+                contributors.push(...stream.chatMessages.map(m => m.user));
+            }
+
             const tempContributors = [];
             contributors = contributors
                                         .filter((n) => {

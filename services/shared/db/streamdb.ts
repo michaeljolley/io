@@ -13,7 +13,8 @@ import {
   IUserInfo,
   IStreamSegment,
   IStreamGoal,
-  IStreamNote
+  IStreamNote,
+  IChatMessage
 } from "../models";
 
 export class StreamDb {
@@ -36,6 +37,7 @@ export class StreamDb {
         .populate("contributors")
         .populate("githubRepos")
         .populate("moderators")
+        .populate("chatMessages.user")
         .exec((err: any, res: any) => {
           if (err) {
             log("info", `ERROR: getStream ${JSON.stringify(err)}`);
@@ -223,6 +225,35 @@ export class StreamDb {
             log(
               "info",
               `ERROR: recordNote ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
+  };
+
+  public recordChatMessage = async (
+    streamId: string,
+    chatMessage: IChatMessage
+  ): Promise<boolean> => {
+    log("info", `recordChatMessage: ${chatMessage.user}: ${chatMessage.message}`);
+
+    // record goal
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            chatMessages: { user: chatMessage.user._id, message: chatMessage.message, timestamp: chatMessage.timestamp }
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordChatMessage ${JSON.stringify(err)}`
             );
             resolve(false);
           }
