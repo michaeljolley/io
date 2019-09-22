@@ -183,7 +183,7 @@ export class StreamNotes {
 
       if (this.activeStream) {
         this.streamNoteName = moment(this.activeStream.started_at).format('YYYY-MM-DD');
-        this.streamNoteDir = `docs/_posts/${moment(this.activeStream.started_at).format('YYYY/MM')}/`;
+        this.streamNoteDir = `_streams/${moment(this.activeStream.started_at).format('YYYY/MM')}/`;
 
         // Clone our BBB repo
         await this.initGit()

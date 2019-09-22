@@ -1,13 +1,17 @@
 import moment from 'moment';
+import io from 'socket.io-client';
 import * as express from 'express';
 import { Server } from 'http';
 
 import { get, post, log } from '@shared/common';
 import { IUserInfo } from '@shared/models';
 import { UserDb } from '@shared/db';
+import { SocketIOEvents } from '@shared/events';
+import { IUserProfileUpdateEventArg } from '@shared/event_args';
 
 
 export class User {
+  private socket!: SocketIOClient.Socket;
   public app: express.Application;
   private http!: Server;
 
@@ -17,6 +21,7 @@ export class User {
 
 
   constructor() {
+    this.socket = io('http://hub');
     this.app = express.default().use(express.json());
     this.http = new Server(this.app);
     this.userDb = new UserDb();
@@ -26,6 +31,8 @@ export class User {
 
   public start() {
     this.listen();
+
+    this.socket.on(SocketIOEvents.UserProfileUpdated, (profileUpdateEventArg: IUserProfileUpdateEventArg) => this.onProfileUpdate(profileUpdateEventArg));
   }
 
   /**
@@ -65,7 +72,7 @@ export class User {
         log(
           'info',
           `route: /livecoders called with empty payload. Aborting...`
-        )
+        );
         return;
       }
       log(
@@ -157,7 +164,7 @@ export class User {
 
     user = await this.userDb.saveUserInfo(user);
 
-    //Provide some error handling
+    // Provide some error handling
     if (user)
     {
       this.users[user.login] = user;
@@ -170,6 +177,24 @@ export class User {
     return user;
   };
 
+  private async onProfileUpdate(profileUpdateEventArg: IUserProfileUpdateEventArg) : Promise<void> {
+    log('info', `onProfileUpdate: ${profileUpdateEventArg.userInfo.login}`);
+
+    const userInfo = profileUpdateEventArg.userInfo;
+
+    if (userInfo) {
+      const user = await this.userDb.saveUserInfo(userInfo);
+
+      // Provide some error handling
+      if (user)
+      {
+        this.users[user.login] = user;
+        log('info', `Updated ${user.login} from profile`);
+      } else {
+        log('error', `Error while updating profile for ${userInfo.login} in DB`);
+      }
+    }
+  }
 
   /**
    * Start the Node.js server

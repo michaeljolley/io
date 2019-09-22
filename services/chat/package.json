@@ -12,14 +12,16 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "debug-compile": "tsc -b && node --inspect=0.0.0.0:9229 dist/index.js",
+    "debug:pkg": "nodemon -L --watch package.json --exec 'npm i'",
+    "debug:app": "nodemon -L -e js,ts,htm --watch src --exec 'npm run build && node --inspect=0.0.0.0:9229 dist/index.js'",
+    "debug": "npm-run-all --parallel debug:pkg debug:app",
     "build": "tsc -b"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.0.0",
+    "fuzzy-search": "^3.0.1",
     "lodash": "^4.17.13",
     "module-alias": "^2.2.0",
     "moment": "^2.24.0",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
+    "@types/fuzzy-search": "^2.1.0",
     "@types/lodash": "^4.14.134",
     "@types/module-alias": "^2.0.0",
     "@types/moment": "^2.13.0",
@@ -45,6 +48,8 @@
     "@types/tmi.js": "^1.4.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.3.0",
+    "nodemon": "^1.19.1",
+    "npm-run-all": "^4.1.5",
     "tslint": "^5.16.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.4.5"

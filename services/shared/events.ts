@@ -26,6 +26,8 @@ export enum SocketIOEvents {
   NewCheer = 'NewCheer',
   NewAnnouncement = 'NewAnnouncement',
 
+  StreamRepoChanged = 'StreamRepoChanged',
+
   CreditsRoll = 'CreditsRoll',
   OnCreditsRoll = 'OnCreditsRoll',
   StreamNoteRebuild = 'StreamNoteRebuild',
@@ -40,7 +42,7 @@ export enum SocketIOEvents {
   NewSegment = 'NewSegment',
   TwitchThemer = 'TwitchThemer',
   RetrievedLiveCodersTeamMembers = 'RetrievedLiveCodersTeamMembers',
-
+  UserProfileUpdated = 'UserProfileUpdated',
 
   /* candle events */
   CandleReset = 'CandleReset',

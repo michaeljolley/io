@@ -193,7 +193,7 @@ export const raidCommand = (
   const lowerMessage: string = message.toLocaleLowerCase().trim();
   const firstWord: string = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '/raid') {
+  if (firstWord !== '!raid') {
     return false;
   }
 

@@ -1,13 +1,15 @@
 version: '3.7'
 
-services:  
+services:
   admin:
     build:
       context: ./services
       dockerfile: admin.dockerfile
     image: io-admin
+    container_name: io-admin
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -20,14 +22,16 @@ services:
       - .env
     depends_on:
       - mongo
-  
+
   api:
-    build: 
+    build:
       context: ./services
       dockerfile: api.dockerfile
     image: io-api
+    container_name: io-api
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -40,12 +44,14 @@ services:
       - .env
 
   chat:
-    build: 
+    build:
       context: ./services
       dockerfile: chat.dockerfile
     image: io-chat
+    container_name: io-chat
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - ./assets:/app/chat/dist/assets
       - /app/shared/node_modules
@@ -67,8 +73,10 @@ services:
       context: ./services
       dockerfile: chron.dockerfile
     image: io-chron
+    container_name: io-chron
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -84,12 +92,14 @@ services:
       - hub
 
   hub:
-    build: 
+    build:
       context: ./services
       dockerfile: hub.dockerfile
     image: io-hub
+    container_name: io-hub
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
@@ -102,18 +112,20 @@ services:
       - .env
 
   logger:
-    build: 
+    build:
       context: ./services
       dockerfile: logger.dockerfile
     image: io-logger
+    container_name: io-logger
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
       - /app/logger/node_modules
       - ./services/logger:/app/logger
-    ports:  
+    ports:
       - "9225:9229"
     env_file:
       - .env
@@ -122,17 +134,19 @@ services:
       - mongo
 
   overlay:
-    build: 
+    build:
       context: ./services
       dockerfile: overlay.dockerfile
     image: io-overlay
+    container_name: io-overlay
+    init: true
     restart: always
     ports:
-      - "5000:80"      
+      - "5000:80"
       - "9226:9229"
     env_file:
       - .env
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - ./assets:/app/overlay/dist/wwwroot/assets
       - /app/shared/node_modules
@@ -143,18 +157,20 @@ services:
       - hub
 
   streamnotes:
-    build: 
+    build:
       context: ./services
       dockerfile: stream-notes.dockerfile
     image: io-streamnotes
+    container_name: io-streamnotes
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
-      - /app/streamnotes/node_modules
-      - ./services/streamnotes:/app/streamnotes
-    ports:      
+      - /app/stream-notes/node_modules
+      - ./services/stream-notes:/app/stream-notes
+    ports:
       - "9227:9229"
     env_file:
       - .env
@@ -163,19 +179,21 @@ services:
       - hub
 
   user:
-    build: 
+    build:
       context: ./services
       dockerfile: user.dockerfile
     image: io-user
+    container_name: io-user
+    init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
       - /app/shared/node_modules
       - ./services/shared:/app/shared
       - /app/user/node_modules
       - ./services/user:/app/user
     ports:
-      - "5070:80"      
+      - "5070:80"
       - "9228:9229"
     env_file:
       - .env
@@ -183,8 +201,31 @@ services:
       - api
       - mongo
 
+  repo:
+    build:
+      context: ./services
+      dockerfile: repo.dockerfile
+    image: io-repo
+    container_name: io-repo
+    init: true
+    restart: always
+    command: npm run debug-compile
+    volumes:
+      - /app/shared/node_modules
+      - ./services/shared:/app/shared
+      - /app/repo/node_modules
+      - ./services/repo:/app/repo
+    ports:
+      - "9229:9229"
+    env_file:
+      - .env
+    depends_on:
+      - api
+
+
   mongo:
     image: mongo:4.0
+    container_name: mongo-db
     restart: always
     volumes:
       - "mongodata:/data/db"
@@ -194,6 +235,7 @@ services:
 
   mongoex:
     image: mongo-express
+    container_name: mongo-express
     restart: always
     ports:
       - "8081:8081"

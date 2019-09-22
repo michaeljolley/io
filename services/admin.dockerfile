@@ -7,7 +7,7 @@ RUN npm ci --silent
 
 COPY ./shared/ ./
 RUN npm version $BUILDVERSION --allow-same-version \
-    && npm run build
+  && npm run build
 
 WORKDIR /app/admin
 
@@ -16,7 +16,7 @@ RUN npm ci --silent
 
 COPY ./admin/ ./
 RUN npm version $BUILDVERSION --allow-same-version \
-    && npm run build
+  && npm run build
 
 EXPOSE 80
-CMD [ "npm", "start" ]
+CMD [ "node", "dist/index.js" ]

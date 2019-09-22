@@ -16,8 +16,10 @@ import {
   IMediaEventArg,
   IThemerEventArg,
   IUserEventArg,
+  IStreamRepoChangedEventArg,
   INewNoteEventArg,
-  INewGoalEventArg
+  INewGoalEventArg,
+  IChatMessageEventArg,
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -25,7 +27,8 @@ import {
   ICandleVote,
   ICandle,
   ICandleVoteResult,
-  IVote
+  IChatMessage,
+  IVote,
 } from '@shared/models';
 
 export class Logger {
@@ -52,6 +55,10 @@ export class Logger {
       this.onStreamSegment(newStreamRaidEvent)
     );
 
+    this.socket.on(SocketIOEvents.StreamRepoChanged, (streamRepoChangedEvent: IStreamRepoChangedEventArg) =>
+      this.onStreamRepoChanged(streamRepoChangedEvent)
+    );
+
     this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
       this.onNewFollow(newFollowerEvent)
     );
@@ -65,6 +72,9 @@ export class Logger {
     );
     this.socket.on(SocketIOEvents.NewCheer, (newCheerEvent: INewCheerEventArg) =>
       this.onNewCheer(newCheerEvent)
+    );
+    this.socket.on(SocketIOEvents.OnChatMessage, (chatMessageEvent: IChatMessageEventArg) =>
+      this.onChatMessage(chatMessageEvent)
     );
 
     this.socket.on(SocketIOEvents.CandleWinner, (candleWinnerEvent: ICandleWinnerEventArg) =>
@@ -128,6 +138,21 @@ export class Logger {
     );
   }
 
+  private async onChatMessage(chatMessageEvent: IChatMessageEventArg) {
+    // We want to record the follower on the current stream
+
+    const chatMessage: IChatMessage = {
+      message: chatMessageEvent.message,
+      timestamp: new Date(),
+      user: chatMessageEvent.userInfo
+    };
+
+    await this.streamDb.recordChatMessage(
+      chatMessageEvent.streamId,
+      chatMessage
+    );
+  }
+
   private async onNewRaid(newRaidEvent: INewRaidEventArg) {
     // We want to record the raider on the current stream
     await this.streamDb.recordRaid(newRaidEvent.streamId, newRaidEvent.raider);
@@ -157,6 +182,14 @@ export class Logger {
       mediaEventArg.streamId,
       'contributors',
       mediaEventArg.user
+    );
+  }
+
+  private async onStreamRepoChanged(streamRepoChangedEvent: IStreamRepoChangedEventArg) {
+    // We want to record the repo on the current stream
+    await this.streamDb.recordRepo(
+      streamRepoChangedEvent.stream.id,
+      streamRepoChangedEvent.repo
     );
   }
 

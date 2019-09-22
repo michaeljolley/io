@@ -9,6 +9,8 @@ import { ICheer, CheerSchema } from "./cheer";
 import { IUserInfo } from "./user-info";
 import { ISubscriber, SubscriberSchema } from "./subscriber";
 import { IRaider, RaiderSchema } from "./raider";
+import { IGitHubRepo } from "./github-repo";
+import { ChatMessageSchema, IChatMessage } from "./chat-message";
 
 export interface IStream extends mongoose.Document {
   id: string;
@@ -24,22 +26,26 @@ export interface IStream extends mongoose.Document {
   goals?: IStreamGoal[];
   notes?: IStreamNote[];
 
+  githubRepos?: IGitHubRepo[];
+
   moderators?: IUserInfo[];
   followers?: IUserInfo[];
   subscribers?: ISubscriber[];
   raiders?: IRaider[];
   cheers?: ICheer[];
   contributors?: IUserInfo[];
+  chatMessages?: IChatMessage[];
 }
 
 export const StreamModel = mongoose.model<IStream>(
   "Stream",
   new mongoose.Schema({
     id: { type: String, unique: true, required: true },
-    title: { type: String, required: true },
     started_at: { type: String, required: true },
     ended_at: String,
+    title: { type: String, required: true },
     replayLink: String,
+
     candle: { type: mongoose.Schema.Types.ObjectId, ref: "Candle" },
     candleVotes: [CandleVoteSchema],
 
@@ -47,11 +53,14 @@ export const StreamModel = mongoose.model<IStream>(
     goals: [StreamGoalSchema],
     notes: [StreamNoteSchema],
 
+    githubRepos: [{ type: mongoose.Schema.Types.ObjectId, ref: "GitHubRepo" }],
+
     moderators: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
     subscribers: [SubscriberSchema],
     raiders: [RaiderSchema],
     cheers: [CheerSchema],
-    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }]
+    contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: "UserInfo" }],
+    chatMessages: [ChatMessageSchema]
   })
 );

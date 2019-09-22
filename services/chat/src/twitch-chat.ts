@@ -8,8 +8,8 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream } from '@shared/models';
-import { config, get, log, isMod, isBroadcaster } from '@shared/common';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
+import { genericComicAvatars, config, get, log, isMod, isBroadcaster } from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
 import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
 
@@ -21,7 +21,8 @@ import {
   CandleCommands,
   NoteCommands,
   StreamCommands,
-  UserCommands
+  UserCommands,
+  GithubCommands
 } from './commands';
 
 const htmlSanitizeOpts = {
@@ -49,6 +50,7 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
+  private projectSettings: IProjectSettings = {repositories: undefined};
   private avCommandHistory: { [userLogin: string] : Date } = {};
   private avCommandThrottle = +config.avCommandThrottleInSeconds;
   private announcedTeamMembers: string[] = [];
@@ -72,8 +74,18 @@ export class TwitchChat {
     this.tmi.on('subscription', this.onSub);
 
     this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
+      log('info', "Stream started");
       this.activeStream = currentStream.stream;
-    });
+
+      // Go ahead and grab up to date repository information when the stream starts
+      const url = "http://api/repos/full";
+      get(url).then((response: any) => {
+          if (response.status === 200) {
+            log('info', 'Repos have been updated');
+            this.projectSettings.repositories = response.data;
+          }
+        })
+      });
 
     this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
       this.activeStream = currentStream.stream;
@@ -94,6 +106,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
+      this.projectSettings = {repositories: undefined};
     });
   }
 
@@ -343,7 +356,14 @@ export class TwitchChat {
     user: ChatUserstate,
     message: string
   ): Promise<any> => {
+
+    if (this.activeStream === undefined) {
+      return false;
+    }
+
     const originalMessage = message;
+
+    const cleanMessage = sanitizeHtml(message, htmlSanitizeOpts);
 
     // Parse chat for any commands & update
     // message for display in overlays
@@ -354,8 +374,25 @@ export class TwitchChat {
     // Identify user and pass along to hub
     const userInfo: IUserInfo = await this.getUser(username);
 
+    const mentions: IUserInfo[] = await this.identifyMentions(message);
+
+    // Get a random comicAvatar if it isn't already specified
+    if (userInfo.comicAvatar === undefined) {
+      userInfo.comicAvatar = this.randomComicAvatar();
+    }
+
+    // Get a random comicAvatar for each mention if not specified
+    for (const mention of mentions) {
+      if (mention.comicAvatar === undefined) {
+        mention.comicAvatar = this.randomComicAvatar();
+      }
+    }
+
     const chatMessageArg: IChatMessageEventArg = {
+      mentions,
       message,
+      originalMessage: cleanMessage,
+      streamId: this.activeStream.id,
       user,
       userInfo
     };
@@ -370,13 +407,15 @@ export class TwitchChat {
 
     let handledByCommand: boolean = false;
 
-    //Process user commands first before emitting message to hub
-    //so if the user updates, the update is handled before notification
+    // Process user commands first before emitting message to hub
+    // so if the user updates, the update is handled before notification
     for (const userCommand of Object.values(UserCommands)) {
       let updatedUser: IUserInfo | boolean = await userCommand(
         originalMessage,
         user,
-        this.sendChatMessage
+        userInfo,
+        this.sendChatMessage,
+        this.emitMessage
       );
       if (updatedUser) {
         handledByCommand = true;
@@ -389,7 +428,7 @@ export class TwitchChat {
       }
     }
 
-    //Go ahead and emit message to hub before processing the rest of the commands
+    // Go ahead and emit message to hub before processing the rest of the commands
     this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     if (!handledByCommand) {
@@ -472,9 +511,31 @@ export class TwitchChat {
       }
     }
 
+    if (!handledByCommand) {
+      for (const githubCommand of Object.values(GithubCommands)) {
+        let result = await githubCommand(
+          originalMessage,
+          user,
+          userInfo,
+          this.projectSettings,
+          this.sendChatMessage,
+          this.emitMessage
+        );
+        if (result) {
+          handledByCommand = true;
+
+          if (typeof(result) !== "boolean") {
+            this.projectSettings = result;
+          }
+          break;
+        }
+      }
+    }
+
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.
-    if (userInfo.liveCodersTeamMember &&
+    if (userInfo.login != config.twitchClientUsername &&
+        userInfo.liveCodersTeamMember &&
         this.announcedTeamMembers.find(login => login === userInfo.login) === undefined) {
 
       if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
@@ -529,6 +590,31 @@ export class TwitchChat {
 
     return tempMessage;
   };
+
+  private randomComicAvatar = () => {
+    const genericAvatars: string[] = genericComicAvatars;
+    return genericAvatars[Math.floor(Math.random() * genericAvatars.length)];
+  }
+
+  private identifyMentions = async (message: string): Promise<IUserInfo[]> => {
+
+    const mentions: IUserInfo[] = [];
+    const usernameRegEx: RegExp = /@[a-z]*[0-9]*/ig;
+
+    const usernames = message.match(usernameRegEx);
+
+    if (usernames) {
+      for (const user of usernames) {
+        const cleanuser = user.replace('@','');
+        const userInfo: IUserInfo | undefined = await this.getUser(cleanuser);
+        if (userInfo) {
+          mentions.push(userInfo);
+        }
+      }
+    }
+
+    return mentions;
+  }
 
   private getUser = async (username: string): Promise<IUserInfo> => {
     const url = `http://user/users/${username}`;

@@ -12,8 +12,9 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "debug-compile": "tsc -b && node --inspect=0.0.0.0:9229 dist/index.js",
+    "debug:pkg": "nodemon -L --watch package.json --exec 'npm i'",
+    "debug:app": "nodemon -L -e js,ts,htm --watch src --exec 'npm run build && node --inspect=0.0.0.0:9229 dist/index.js'",
+    "debug": "npm-run-all --parallel debug:pkg debug:app",
     "build": "tsc -b"
   },
   "author": "Michael Jolley <mike@sparcapp.io>",
@@ -40,6 +41,8 @@
     "@types/socket.io-client": "^1.4.32",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.3.0",
+    "nodemon": "^1.19.1",
+    "npm-run-all": "^4.1.5",
     "tslint": "^5.16.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.4.5"

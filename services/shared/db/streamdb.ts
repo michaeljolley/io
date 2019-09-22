@@ -7,12 +7,14 @@ import {
   IVote,
   ICandleVote,
   ISubscriber,
+  IGitHubRepo,
   ICheer,
   IRaider,
   IUserInfo,
   IStreamSegment,
   IStreamGoal,
-  IStreamNote
+  IStreamNote,
+  IChatMessage
 } from "../models";
 
 export class StreamDb {
@@ -33,7 +35,9 @@ export class StreamDb {
         .populate("cheers.user")
         .populate("segments.user")
         .populate("contributors")
+        .populate("githubRepos")
         .populate("moderators")
+        .populate("chatMessages.user")
         .exec((err: any, res: any) => {
           if (err) {
             log("info", `ERROR: getStream ${JSON.stringify(err)}`);
@@ -92,6 +96,46 @@ export class StreamDb {
               log(
                 "info",
                 `ERROR: recordSubscriber ${JSON.stringify(err)}`
+              );
+              resolve(false);
+            }
+            resolve(true);
+          }
+        )
+      );
+    }
+    return false;
+  };
+
+  public recordRepo = async (
+    streamId: string,
+    githubRepo: IGitHubRepo
+  ): Promise<boolean> => {
+    log("info", `recordRepo: ${githubRepo.full_name}`);
+
+    const stream = await this.getStream(streamId);
+
+    if (
+      stream &&
+      (stream.githubRepos == null ||
+        stream.githubRepos.find(
+          (f: IGitHubRepo) => f.id === githubRepo.id
+        ) === undefined)
+    ) {
+      // record subscriber
+      return await new Promise((resolve: any) =>
+        StreamModel.updateOne(
+          { id: streamId },
+          {
+            $push: {
+              githubRepos: githubRepo._id
+            }
+          },
+          (err: any, res: any) => {
+            if (err) {
+              log(
+                "info",
+                `ERROR: recordRepo ${JSON.stringify(err)}`
               );
               resolve(false);
             }
@@ -181,6 +225,35 @@ export class StreamDb {
             log(
               "info",
               `ERROR: recordNote ${JSON.stringify(err)}`
+            );
+            resolve(false);
+          }
+          resolve(true);
+        }
+      )
+    );
+  };
+
+  public recordChatMessage = async (
+    streamId: string,
+    chatMessage: IChatMessage
+  ): Promise<boolean> => {
+    log("info", `recordChatMessage: ${chatMessage.user}: ${chatMessage.message}`);
+
+    // record goal
+    return await new Promise((resolve: any) =>
+      StreamModel.updateOne(
+        { id: streamId },
+        {
+          $push: {
+            chatMessages: { user: chatMessage.user._id, message: chatMessage.message, timestamp: chatMessage.timestamp }
+          }
+        },
+        (err: any, res: any) => {
+          if (err) {
+            log(
+              "info",
+              `ERROR: recordChatMessage ${JSON.stringify(err)}`
             );
             resolve(false);
           }
@@ -380,7 +453,7 @@ export class StreamDb {
       );
     }
   };
-  
+
   private connect() {
     mongoose.connect(config.mongoDBConnectionString, {
       dbName: config.mongoDBDatabase,
