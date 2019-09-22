@@ -207,10 +207,6 @@ ${this.addLink(
     return existingContent + response;
   };
 
-  private addImage = async (existingContent: string): Promise<string> => {
-    return existingContent + '<img src="{{page.image}}"/>\n\n';
-  };
-
   private addYouTube = async (existingContent: string): Promise<string> => {
     return (
       existingContent +
