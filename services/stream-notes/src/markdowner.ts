@@ -13,7 +13,6 @@ export class Markdowner {
   public async generateMarkdown(): Promise<string> {
     if (this.activeStream) {
       return this.addMeta()
-        .then(this.addImage)
         .then(this.addYouTube)
         .then(this.addFold)
         .then(this.addSegments)
@@ -265,7 +264,7 @@ ${this.addLink(
       if (user.githubHandle) {
         table += `<a href="https://github.com/${user.githubHandle}" target="_blank"><i class="fab fa-github" aria-hidden="true"></i></a>`;
       }
-      table += "\n  </div>\n";
+      table += "</span>\n  </div>\n";
     }
 
     table += "\n</div>\n";
