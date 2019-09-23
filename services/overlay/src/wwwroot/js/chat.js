@@ -6,6 +6,13 @@ socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     console.log(JSON.stringify(chatMessageEventArg));
 
+    if (chatMessageEventArg.originalMessage &&
+        chatMessageEventArg.originalMessage.length > 0 &&
+        chatMessageEventArg.userInfo &&
+        chatMessageEventArg.userInfo.login == 'b3_bot') {
+            return;
+        }
+
     var id = +(new Date());
 
     /*
