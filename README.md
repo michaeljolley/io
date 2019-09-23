@@ -26,17 +26,6 @@ All services use Node.js & TypeScript unless otherwise noted.
 | user           | Express web app that acts as a stateful service for all user (viewer) data used by the application                      |
 | webhooks       | Express web app that listens for calls from third-parties and relays events to the io-hub                               |
 
-## Custom Comic Chat Avatars
-
-One of the fun capabilities of IO is a reproduction of Microsoft Comic Chat from the late 90's. We welcome anyone to submit a pull request
-with a custom avatar for their Twitch account.
-
-The requirements for an avatar are pretty specific.  You need two images: head-{twitchHandle}.png &amp; body-{twitchHandle}.png.  Both should
-be transparent PNGs.
-
-We've created a place to test your images at codesandbox.  You can reach it at [https://codesandbox.io/s/quizzical-mendeleev-0gwnq](https://codesandbox.io/s/quizzical-mendeleev-0gwnq). Follow the instructions there to get your body & head images just right and then submit
-a pull request adding them to the /assets/images/characters/{your twitch handle} path.
-
 ## Environment Variables
 
 When running locally, environment variables can be added to each service via a `.env` file in the services root directory.  An example
@@ -60,6 +49,17 @@ When running locally, environment variables can be added to each service via a `
 | TWITCH_CLIENT_USER_ID   | Twitch user id of the streamer                                                                              |
 | TWITCH_BOT_USERNAME     | Twitch login for the bot.  Can be the same as TWITCH_CLIENT_USERNAME.                                       |
 | TWITCH_BOT_TOKEN        | Twitch Auth token for the bot account.  Can be same as TWITCH_CLIENT_TOKEN                                  |
+
+## Custom Comic Chat Avatars
+
+One of the fun capabilities of IO is a reproduction of Microsoft Comic Chat from the late 90's. We welcome anyone to submit a pull request
+with a custom avatar for their Twitch account.
+
+The requirements for an avatar are pretty specific.  You need two images: head-{twitchHandle}.png &amp; body-{twitchHandle}.png.  Both should
+be transparent PNGs.
+
+We've created a place to test your images at codesandbox.  You can reach it at [https://codesandbox.io/s/quizzical-mendeleev-0gwnq](https://codesandbox.io/s/quizzical-mendeleev-0gwnq). Follow the instructions there to get your body & head images just right and then submit
+a pull request adding them to the /assets/images/characters/{your twitch handle} path.
 
 ## Release Notes
 
