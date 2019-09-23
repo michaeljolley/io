@@ -28,10 +28,11 @@ export const candleCommand = async (
     return false;
   }
   const splitMessage = message.trim().split(' ');
-
-  if (splitMessage[0].toLocaleLowerCase() !== '!candle') {
+  
+  const candleCommands: string[] = ['!candle', '!vote'];
+  if (candleCommands.indexOf(splitMessage[0].toLocaleLowerCase()) === -1) {
     return false;
-  }
+  }  
 
   if (activeStream === undefined ||
     activeStream.started_at === undefined) {
@@ -40,7 +41,14 @@ export const candleCommand = async (
     );
     return true;
   }
-
+  
+  if(splitMessage[0].toLocaleLowerCase() === '!vote' && voteActive === false) {
+    twitchChatFunc(
+      `Candle voting is not active right now.`
+    );
+    return true;
+  }
+  
   // base !candle command
   if (splitMessage.length === 1) {
     const streamDb: StreamDb = new StreamDb();
@@ -124,7 +132,7 @@ const startCandleVoteCommand = async (
         stopCandleVoteCommand(activeStream, emitMessageFunc);
       }, secondsToVote * 1000);
 
-    twitchChatFunc(`Voting is open for our Candle to Code By. Send !candle {candle name} to vote.  Available choices are: ${availableCandles}`);
+    twitchChatFunc(`Voting is open for our Candle to Code By. Send [!candle|!vote] {candle name} to vote.  Available choices are: ${availableCandles}`);
     log('info', `Vote for candle started`);
   }
 };
