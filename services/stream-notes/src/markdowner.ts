@@ -16,13 +16,10 @@ export class Markdowner {
         .then(this.addYouTube)
         .then(this.addFold)
         .then(this.addSegments)
-        .then(this.addLine)
         .then(this.addCandle)
-        .then(this.addLine)
         .then(this.addGoals)
         .then(this.addGitHubRepos)
         .then(this.addThingsLearned)
-        .then(this.addLine)
         .then(this.addSponsors)
         .then(this.addSubscriptions)
         .then(this.addCheers)
@@ -210,7 +207,7 @@ ${this.addLink(
   private addYouTube = async (existingContent: string): Promise<string> => {
     return (
       existingContent +
-      `## Stream Replay Link\n
+      `### Stream Replay Link\n
 [{{page.replay}}]({{page.replay}})\n\n`
     );
   };
@@ -241,10 +238,6 @@ ${this.addLink(
     return existingContent + response + `\n`;
   };
 
-  private addLine = async (existingContent: string): Promise<string> => {
-    return existingContent + `---\n\n`;
-  };
-
   private generateUserTable = (users: IUserInfo[]) : string => {
     let table: string = `<div class="users">\n`;
 
@@ -263,7 +256,7 @@ ${this.addLink(
       table += "</span>\n  </div>\n";
     }
 
-    table += "\n</div>\n";
+    table += "</div>\n";
 
     return table;
   }
