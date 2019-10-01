@@ -301,3 +301,29 @@ export const fontCommand = (
 
   return false;
 };
+
+export const awesumRepoCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!awesumRepo') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `The Awesum repository can be found at https://github.com/appar-io/awesum`
+    );
+    return true;
+  }
+
+  return false;
+};
