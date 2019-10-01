@@ -222,6 +222,28 @@ services:
     depends_on:
       - api
 
+  webhooks:
+    build:
+      context: ./services
+      dockerfile: webhooks.dockerfile
+    image: io-webhooks
+    container_name: io-webhooks
+    init: true
+    restart: always
+    command: npm run debug
+    volumes:
+      - /app/shared/node_modules
+      - ./services/shared:/app/shared
+      - /app/webhooks/node_modules
+      - ./services/webhooks:/app/webhooks
+    ports:
+      - "9230:9229"
+      - "8800:8800"
+    env_file:
+      - .env
+    depends_on:
+      - api
+      - hub
 
   mongo:
     image: mongo:4.0

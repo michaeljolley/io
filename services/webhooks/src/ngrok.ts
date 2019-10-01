@@ -1,21 +1,18 @@
 import ngrok from 'ngrok';
 
-import { config, log } from '@shared/common';
+import { config } from '@shared/common';
 
 export class NGrok {
 
   public async getUrl(): Promise<string> {
-    return await new Promise((resolve: any) => {
-        ngrok.connect({
-          addr: 80,
-          authtoken: config.ngrokAuthToken
-        })
-        .then((url: string) => resolve(url))
-        .catch((err: any) => {
-          log('info', err);
-          resolve('');
-        });
-      });
+    return new Promise((resolve: any, reject: any) => {
+      ngrok.connect({
+        addr: 8800,
+        authtoken: config.ngrokAuthToken
+      })
+      .then((ngrokUrl: string) => resolve(ngrokUrl))
+      .catch((err: any) => reject(err));
+    });
   }
 
   public async releaseUrl(url: string): Promise<void> {

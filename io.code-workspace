@@ -133,6 +133,15 @@
 				"localRoot": "${workspaceFolder:user}",
 				"remoteRoot": "/app/user"
 			},
+			{
+				"type": "node",
+				"request": "attach",
+				"name": "Attach: Webhooks",
+				"port": 9230,
+				"restart": true,
+				"localRoot": "${workspaceFolder:webhooks}",
+				"remoteRoot": "/app/webhooks"
+			},
 		],
 		"compounds": [
 			{
@@ -147,7 +156,8 @@
 					"Attach: Overlay",
 					"Attach: Repo",
 					"Attach: Stream-Notes",
-					"Attach: User"
+					"Attach: User",
+					"Attach: Webhooks"
 				]
 			},
 			{
