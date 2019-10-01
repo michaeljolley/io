@@ -190,7 +190,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !blog, !candle, !discord, !font, !github, !heroines, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !blog, !candle, !discord, !font, !github, !heroines, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -295,6 +295,32 @@ export const fontCommand = (
   if (twitchChatFunc) {
     twitchChatFunc(
       `Mike is using the Fira Code font.  You can find it at https://github.com/tonsky/FiraCode`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const raidCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!raid') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid`
     );
     return true;
   }
