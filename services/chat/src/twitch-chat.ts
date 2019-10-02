@@ -255,6 +255,10 @@ export class TwitchChat {
 
       this.emitMessage(SocketIOEvents.NewCheer, cheerEventArg);
       log('info', `${user.username} cheered ${bits} bits`);
+
+      // const chatUserState: ChatUserstate = user;
+
+      // this.onChatMessage(channel, chatUserState, message);
     }
   };
 
@@ -302,7 +306,7 @@ export class TwitchChat {
           : 0;
       }
 
-      await this.onAnySub(userInfo, true, '', cumulativeMonths);
+      await this.onAnySub(userInfo, false, '', cumulativeMonths);
     }
   };
 
@@ -321,7 +325,7 @@ export class TwitchChat {
       // Identify user and add to user state if needed
       const userInfo: IUserInfo = await this.getUser(subscriberName);
 
-      await this.onAnySub(userInfo, true, message, 1);
+      await this.onAnySub(userInfo, false, message, 1);
     }
   };
 

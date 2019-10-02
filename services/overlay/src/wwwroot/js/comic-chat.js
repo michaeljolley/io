@@ -160,7 +160,6 @@ function createCharacter(character) {
     headImg.src = `/assets/images/characters/${character}/head-${character}.png`;
     head.append(headImg);
 
-
     var body = createChatDiv('body');
     var bodyImg = document.createElement('img');
     bodyImg.src = `/assets/images/characters/${character}/body-${character}.png`;
