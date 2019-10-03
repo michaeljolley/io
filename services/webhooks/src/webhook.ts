@@ -2,9 +2,9 @@ import io from 'socket.io-client';
 // tslint:disable-next-line: no-var-requires
 const TwitchWebhook = require('twitch-webhook');
 
-import { config,  log,  } from '@shared/common';
-import { IStreamEventArg,  } from '@shared/event_args';
-import { IStream,  } from '@shared/models';
+import { config,  log, get  } from '@shared/common';
+import { IStreamEventArg, INewFollowerEventArg, IBaseEventArg } from '@shared/event_args';
+import { IStream, IUserInfo  } from '@shared/models';
 import { SocketIOEvents } from '@shared/events';
 import { NGrok } from './ngrok';
 
@@ -27,8 +27,6 @@ export class WebHook {
     this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
     );
-
-    this.socket.on(SocketIOEvents.OnChatMessage, this.twitchFollowerWebhook);
 
     // Unsubscribe from Webhooks
     // otherwise it will try to send events to a down app
@@ -105,9 +103,7 @@ export class WebHook {
             }
           });
 
-          this.twitchFollowerWebhook.on('users/follows', async (payload: any) => {
-            log('info',JSON.stringify(payload));
-          });
+          this.twitchFollowerWebhook.on('users/follows', this.handleFollow);
 
           this.twitchFollowerWebhook.subscribe('users/follows', {
             first: 1,
@@ -122,49 +118,49 @@ export class WebHook {
       .catch((err: any) => {
         log('info', err);
       });
+  } 
+
+  private handleFollow = async (payload: any) : Promise<void> => {
+    log('info', JSON.stringify(payload));
+
+    const event = payload.event;
+
+    if (this.activeStream &&
+        event &&
+        event.data &&
+        event.data.length > 0) {
+
+        const followerUserName: string = event.data[0].from_name || '';
+
+        const follower: IUserInfo | undefined = await this.getUser(followerUserName);
+
+        if (follower) {
+          const followerEvent: INewFollowerEventArg = {
+            follower,
+            streamId: this.activeStream.id
+          };
+
+          this.emitMessage(SocketIOEvents.NewFollower, followerEvent);
+        }
+    }
   }
 
-  // private handleFollow = async (payload: any) : Promise<void> => {
-  //   log('info', JSON.stringify(payload));
+  private getUser = async (
+    username: string
+  ): Promise<IUserInfo | undefined> => {
+    const url = `http://user/users/${username}`;
 
-  //   const event = payload.event;
+    return await get(url).then((user: any) => {
+      if (user) {
+        return user;
+      }
+      return undefined;
+    });
+  };
 
-  //   if (this.activeStream &&
-  //       event &&
-  //       event.data &&
-  //       event.data.length > 0) {
-
-  //       const followerUserName: string = event.data[0].from_name || '';
-
-  //       const follower: IUserInfo | undefined = await this.getUser(followerUserName);
-
-  //       if (follower) {
-  //         const followerEvent: INewFollowerEventArg = {
-  //           follower,
-  //           streamId: this.activeStream.id
-  //         };
-
-  //         this.emitMessage('newFollow', followerEvent);
-  //       }
-  //   }
-  // }
-
-  // private getUser = async (
-  //   username: string
-  // ): Promise<IUserInfo | undefined> => {
-  //   const url = `http://user/users/${username}`;
-
-  //   return await get(url).then((user: any) => {
-  //     if (user) {
-  //       return user;
-  //     }
-  //     return undefined;
-  //   });
-  // };
-
-  // private emitMessage = (event: string, payload: IBaseEventArg) => {
-  //   if (!this.socket.disconnected) {
-  //     this.socket.emit(event, payload);
-  //   }
-  // };
+  private emitMessage = (event: string, payload: IBaseEventArg) => {
+    if (!this.socket.disconnected) {
+      this.socket.emit(event, payload);
+    }
+  };
 }

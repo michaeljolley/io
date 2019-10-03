@@ -41,7 +41,7 @@ socket.on('NewFollower', (newFollowerEventArg) => {
     const follower = newFollowerEventArg.follower;
     const displayName = follower.display_name || follower.login;
     const msg = `Welcome ${displayName}! Thanks for following!`;
-    attemptToStart(msg, 'ohmy', follower.profile_image_url, 10);
+    addAndStart(msg, 'ohmy', follower.profile_image_url, 10);
 });
 
 let messageQueue = [];

@@ -9,7 +9,6 @@ import { UserDb } from '@shared/db';
 import { SocketIOEvents } from '@shared/events';
 import { IUserProfileUpdateEventArg } from '@shared/event_args';
 
-
 export class User {
   private socket!: SocketIOClient.Socket;
   public app: express.Application;
