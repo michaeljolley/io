@@ -37,6 +37,15 @@ export class WebHook {
       this.unregisterWebhooks();
       process.exit(0);
     });
+
+    // Whever NODEMON restarts our node process
+    // We need to kill NGROK otherwise the inspect web doesn't shutdown
+    process.on('SIGUSR2', () => {
+      log('info', "I'm reloading!");
+      this.unregisterWebhooks();
+      this.ngrok.kill();
+      process.exit(0);
+    });
   }
 
   // tslint:disable-next-line: no-empty

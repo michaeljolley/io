@@ -8,7 +8,9 @@ export class NGrok {
     return new Promise((resolve: any, reject: any) => {
       ngrok.connect({
         addr: 8800,
-        authtoken: config.ngrokAuthToken
+        authtoken: config.ngrokAuthToken,
+        bind_tls: false,
+        proto: 'http'
       })
       .then((ngrokUrl: string) => resolve(ngrokUrl))
       .catch((err: any) => reject(err));
@@ -16,6 +18,10 @@ export class NGrok {
   }
 
   public async releaseUrl(url: string): Promise<void> {
-    return await ngrok.disconnect(url);
+    await ngrok.disconnect(url);
+  }
+
+  public async kill(): Promise<void> {
+    await ngrok.kill();
   }
 }
