@@ -25,8 +25,8 @@ export class Markdowner {
         .then(this.addCheers)
         .then(this.addRaiders)
         .then(this.addModerators)
-        .then(this.addContributors)
-        .then(this.addFollowers);
+        .then(this.addFollowers)
+        .then(this.addContributors);
     } else {
       return '';
     }
@@ -264,16 +264,16 @@ ${this.addLink(
   private addGoals = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    let response: string = `### Goals\n\n`;
-
     if (this.activeStream.goals) {
+      let response: string = `### Goals\n\n`;
 
       for (const goal of this.activeStream.goals) {
         response = response + `- [${(goal.accomplished ? 'x' : ' ')}] ${goal.name}\n`;
       }
+      return existingContent + response + `\n`;
     }
 
-    return existingContent + response + `\n`;
+    return existingContent;
   };
 
   private addGitHubRepos = async (existingContent: string): Promise<string> => {
