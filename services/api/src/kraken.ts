@@ -1,4 +1,4 @@
-import { get, log } from '@shared/common';
+import { get, log } from 'io-shared/common';
 
 // @deprecated
 export class Kraken {

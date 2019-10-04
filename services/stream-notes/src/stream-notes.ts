@@ -4,13 +4,13 @@ import moment from 'moment';
 import rimraf from 'rimraf';
 import simplegit from 'simple-git/promise';
 
-import { config, log } from '@shared/common';
+import { config, log } from 'io-shared/common';
 import {
   IStreamEventArg
-} from '@shared/event_args';
-import { StreamDb } from '@shared/db';
-import { IStream } from '@shared/models';
-import { SocketIOEvents } from '@shared/events';
+} from 'io-shared/event_args';
+import { StreamDb } from 'io-shared/db';
+import { IStream } from 'io-shared/models';
+import { SocketIOEvents } from 'io-shared/events';
 
 import { Markdowner } from './markdowner';
 

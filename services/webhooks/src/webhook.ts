@@ -2,10 +2,10 @@ import io from 'socket.io-client';
 // tslint:disable-next-line: no-var-requires
 const TwitchWebhook = require('twitch-webhook');
 
-import { config,  log, get  } from '@shared/common';
-import { IStreamEventArg, INewFollowerEventArg, IBaseEventArg } from '@shared/event_args';
-import { IStream, IUserInfo  } from '@shared/models';
-import { SocketIOEvents } from '@shared/events';
+import { config,  log, get } from 'io-shared/common';
+import { IStreamEventArg, INewFollowerEventArg, IBaseEventArg } from 'io-shared/event_args';
+import { IStream, IUserInfo  } from 'io-shared/models';
+import { SocketIOEvents } from 'io-shared/events';
 import { NGrok } from './ngrok';
 
 export class WebHook {

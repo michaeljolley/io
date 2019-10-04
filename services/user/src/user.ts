@@ -3,11 +3,11 @@ import io from 'socket.io-client';
 import * as express from 'express';
 import { Server } from 'http';
 
-import { get, post, log } from '@shared/common';
-import { IUserInfo } from '@shared/models';
-import { UserDb } from '@shared/db';
-import { SocketIOEvents } from '@shared/events';
-import { IUserProfileUpdateEventArg } from '@shared/event_args';
+import { get, post, log } from 'io-shared/common';
+import { IUserInfo } from 'io-shared/models';
+import { UserDb } from 'io-shared/db';
+import { SocketIOEvents } from 'io-shared/events';
+import { IUserProfileUpdateEventArg } from 'io-shared/event_args';
 
 export class User {
   private socket!: SocketIOClient.Socket;
@@ -57,7 +57,7 @@ export class User {
         `route: /update/:username called with username: ${req.params.username}`
       );
 
-      const forceUpdate: boolean = req.params.force !== undefined ? req.params.force : false;
+      const forceUpdate: boolean = req.params.force !== undefined && req.params.force !== 'force' && req.params.force != '0';
 
       const payload: IUserInfo | undefined = await this.updateUser(
         req.params.username,

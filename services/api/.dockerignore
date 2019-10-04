@@ -1,3 +1,5 @@
-node_modules
+dist/
+node_modules/
 npm-debug.log
 tsconfig.tsbuildinfo
+package-lock.json

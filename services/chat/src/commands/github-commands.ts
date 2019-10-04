@@ -1,9 +1,9 @@
 import { ChatUserstate } from 'tmi.js';
 import FuzzySearch from 'fuzzy-search';
 
-import { IUserInfo, IProjectSettings, IRepository, IIssue } from '@shared/models';
-import { IBaseEventArg } from '@shared/event_args/index';
-import { isBroadcaster, isMod, get, post } from '@shared/common';
+import { IUserInfo, IProjectSettings, IRepository, IIssue } from 'io-shared/models';
+import { IBaseEventArg } from 'io-shared/event_args/index';
+import { isBroadcaster, isMod, get, post } from 'io-shared/common';
 
 // !repo : prints to chat current working issue
 // !repo <repoName> : searches for repo including <repoName>, 

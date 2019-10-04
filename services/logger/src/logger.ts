@@ -1,8 +1,8 @@
 import io from 'socket.io-client';
 import _ from 'lodash';
 
-import { SocketIOEvents } from '@shared/events';
-import { log } from '@shared/common';
+import { SocketIOEvents } from 'io-shared/events';
+import { log } from 'io-shared/common';
 import {
   IStreamEventArg,
   INewFollowerEventArg,
@@ -20,8 +20,8 @@ import {
   INewNoteEventArg,
   INewGoalEventArg,
   IChatMessageEventArg,
-} from '@shared/event_args';
-import { CandleDb, StreamDb } from '@shared/db';
+} from 'io-shared/event_args';
+import { CandleDb, StreamDb } from 'io-shared/db';
 import {
   IStream,
   ICandleVote,
@@ -29,7 +29,7 @@ import {
   ICandleVoteResult,
   IChatMessage,
   IVote,
-} from '@shared/models';
+} from 'io-shared/models';
 
 export class Logger {
   private socket!: SocketIOClient.Socket;

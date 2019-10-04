@@ -1,10 +1,10 @@
 import moment = require('moment');
 import { ChatUserstate } from 'tmi.js';
 
-import { SocketIOEvents } from '@shared/events';
-import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '@shared/models';
-import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '@shared/event_args/index';
-import { isBroadcaster } from '@shared/common';
+import { SocketIOEvents } from 'io-shared/events';
+import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from 'io-shared/models';
+import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from 'io-shared/event_args/index';
+import { isBroadcaster } from 'io-shared/common';
 
 export const uptimeCommand = (
   message: string,

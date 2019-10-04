@@ -1,6 +1,6 @@
 import { ChatUserstate } from 'tmi.js';
 
-import { isMod, isBroadcaster } from '@shared/common';
+import { isMod, isBroadcaster } from 'io-shared/common';
 
 export const blogCommand = (
   message: string,

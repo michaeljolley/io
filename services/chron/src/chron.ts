@@ -1,9 +1,9 @@
 import io from 'socket.io-client';
 
-import { SocketIOEvents } from '@shared/events';
-import { get, post, log, config } from '@shared/common';
-import { IGitHubRepo, IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
-import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
+import { SocketIOEvents } from 'io-shared/events';
+import { get, post, log, config } from 'io-shared/common';
+import { IGitHubRepo, IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from 'io-shared/models';
+import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from 'io-shared/event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;

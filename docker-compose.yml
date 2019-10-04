@@ -1,18 +1,26 @@
 version: '3.7'
 
 services:
+  shared:
+    build: ./services/shared
+    image: io-shared
+    container_name: io-shared
+    volumes:
+      - /app/shared/node_modules
+      - ./services/shared:/app/shared
+    env_file:
+      - .env
+
   admin:
     build:
-      context: ./services
-      dockerfile: admin.dockerfile
+      context: ./services/admin
+      target: build
     image: io-admin
     container_name: io-admin
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/admin/node_modules
       - ./services/admin:/app/admin
     ports:
@@ -21,20 +29,19 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - mongo
 
   api:
     build:
-      context: ./services
-      dockerfile: api.dockerfile
+      context: ./services/api
+      target: build
     image: io-api
     container_name: io-api
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/api/node_modules
       - ./services/api:/app/api
     ports:
@@ -42,11 +49,13 @@ services:
       - "9221:9229"
     env_file:
       - .env
+    depends_on:
+      - shared
 
   chat:
     build:
-      context: ./services
-      dockerfile: chat.dockerfile
+      context: ./services/chat
+      target: build
     image: io-chat
     container_name: io-chat
     init: true
@@ -54,8 +63,6 @@ services:
     command: npm run debug
     volumes:
       - ./assets:/app/chat/dist/assets
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/chat/node_modules
       - ./services/chat:/app/chat
     ports:
@@ -64,22 +71,21 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - hub
       - api
       - mongo
 
   chron:
     build:
-      context: ./services
-      dockerfile: chron.dockerfile
+      context: ./services/chron
+      target: build
     image: io-chron
     container_name: io-chron
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/chron/node_modules
       - ./services/chron:/app/chron
     ports:
@@ -88,21 +94,20 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - api
       - hub
 
   hub:
     build:
-      context: ./services
-      dockerfile: hub.dockerfile
+      context: ./services/hub
+      target: build
     image: io-hub
     container_name: io-hub
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/hub/node_modules
       - ./services/hub:/app/hub
     ports:
@@ -110,19 +115,19 @@ services:
       - "9224:9229"
     env_file:
       - .env
+    depends_on:
+      - shared
 
   logger:
     build:
-      context: ./services
-      dockerfile: logger.dockerfile
+      context: ./services/logger
+      target: build
     image: io-logger
     container_name: io-logger
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/logger/node_modules
       - ./services/logger:/app/logger
     ports:
@@ -130,13 +135,14 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - hub
       - mongo
 
   overlay:
     build:
-      context: ./services
-      dockerfile: overlay.dockerfile
+      context: ./services/overlay
+      target: build
     image: io-overlay
     container_name: io-overlay
     init: true
@@ -149,25 +155,22 @@ services:
     command: npm run debug
     volumes:
       - ./assets:/app/overlay/dist/wwwroot/assets
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/overlay/node_modules
       - ./services/overlay:/app/overlay
     depends_on:
+      - shared
       - hub
 
   streamnotes:
     build:
-      context: ./services
-      dockerfile: stream-notes.dockerfile
+      context: ./services/stream-notes
+      target: build
     image: io-streamnotes
     container_name: io-streamnotes
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/stream-notes/node_modules
       - ./services/stream-notes:/app/stream-notes
     ports:
@@ -175,21 +178,20 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - api
       - hub
 
   user:
     build:
-      context: ./services
-      dockerfile: user.dockerfile
+      context: ./services/user
+      target: build
     image: io-user
     container_name: io-user
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/user/node_modules
       - ./services/user:/app/user
     ports:
@@ -198,21 +200,20 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - api
       - mongo
 
   repo:
     build:
-      context: ./services
-      dockerfile: repo.dockerfile
+      context: ./services/repo
+      target: build
     image: io-repo
     container_name: io-repo
     init: true
     restart: always
-    command: npm run debug-compile
+    command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/repo/node_modules
       - ./services/repo:/app/repo
     ports:
@@ -220,20 +221,20 @@ services:
     env_file:
       - .env
     depends_on:
+      - shared
       - api
+      - mongo
 
   webhooks:
     build:
-      context: ./services
-      dockerfile: webhooks.dockerfile
+      context: ./services/webhooks
+      target: build
     image: io-webhooks
     container_name: io-webhooks
     init: true
     restart: always
     command: npm run debug
     volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
       - /app/webhooks/node_modules
       - ./services/webhooks:/app/webhooks
     ports:
@@ -245,6 +246,7 @@ services:
     environment:
       - NGROK_ARCH=linuxia32
     depends_on:
+      - shared
       - api
       - hub
 

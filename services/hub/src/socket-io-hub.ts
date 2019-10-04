@@ -2,10 +2,10 @@ import express = require('express');
 import { Server } from 'http';
 import io from 'socket.io';
 
-import { SocketIOEvents } from '@shared/events';
-import { log } from '@shared/common';
-import { StreamDb } from '@shared/db';
-import { 
+import { SocketIOEvents } from 'io-shared/events';
+import { log } from 'io-shared/common';
+import { StreamDb } from 'io-shared/db';
+import {
   IChatMessageEventArg,
   IEmoteEventArg,
   IUserLeftEventArg,
@@ -29,7 +29,7 @@ import {
   INewNoteEventArg,
   INewAnnouncementEventArg,
   IUserProfileUpdateEventArg
-} from '@shared/event_args';
+} from 'io-shared/event_args';
 
 export class IOHub {
   public app: express.Application;
@@ -331,7 +331,7 @@ export class IOHub {
 
     const streamDb: StreamDb = new StreamDb();
     streamDb.getStream(streamId)
-              .then(s => {
+              .then((s: any) => {
                 if (s) {
                   const streamArg: IStreamEventArg = {
                     stream: s

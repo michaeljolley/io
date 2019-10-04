@@ -1,6 +1,6 @@
 import ngrok from 'ngrok';
 
-import { config } from '@shared/common';
+import { config, log } from 'io-shared/common';
 
 export class NGrok {
 
@@ -10,7 +10,8 @@ export class NGrok {
         addr: 8800,
         authtoken: config.ngrokAuthToken,
         bind_tls: false,
-        proto: 'http'
+        proto: 'http',
+        onLogEvent: (data: string) => log('info', data)
       })
       .then((ngrokUrl: string) => resolve(ngrokUrl))
       .catch((err: any) => reject(err));

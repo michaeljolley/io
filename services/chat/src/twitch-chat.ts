@@ -8,10 +8,10 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
-import { genericComicAvatars, config, get, log, isMod, isBroadcaster } from '@shared/common';
-import { SocketIOEvents } from '@shared/events';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
+import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from 'io-shared/models';
+import { genericComicAvatars, config, get, log, isMod, isBroadcaster } from 'io-shared/common';
+import { SocketIOEvents } from 'io-shared/events';
+import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from 'io-shared/event_args';
 
 import { Emote } from './emote';
 

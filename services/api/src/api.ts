@@ -4,8 +4,8 @@ import { Server } from 'http';
 import { Helix } from './helix';
 import { Github } from './github';
 import { Kraken } from './kraken';
-import { log } from '@shared/common';
-import { IUserInfo } from '@shared/models';
+import { log } from 'io-shared/common';
+import { IUserInfo } from 'io-shared/models';
 
 export class API {
   public app: express.Application;
