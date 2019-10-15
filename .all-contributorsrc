@@ -195,6 +195,15 @@
         "ideas",
         "code"
       ]
+    },
+    {
+      "login": "hugodahl",
+      "name": "Hugo Dahl",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/757374?v=4",
+      "profile": "http://code-jedi.com/blog",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
