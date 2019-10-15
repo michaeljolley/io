@@ -9,4 +9,5 @@ export interface IChatMessageEventArg extends IBaseEventArg {
   streamId: string;
   user: Userstate;
   userInfo: IUserInfo;
+  hasCommand: boolean;
 }

@@ -398,7 +398,8 @@ export class TwitchChat {
       originalMessage: cleanMessage,
       streamId: this.activeStream.id,
       user,
-      userInfo
+      userInfo,
+      hasCommand: false
     };
 
     if (this.activeStream && user.mod) {
@@ -431,9 +432,6 @@ export class TwitchChat {
         break;
       }
     }
-
-    // Go ahead and emit message to hub before processing the rest of the commands
-    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     if (!handledByCommand) {
       for (const basicCommand of Object.values(BasicCommands)) {
@@ -535,6 +533,11 @@ export class TwitchChat {
         }
       }
     }
+    
+    chatMessageArg.hasCommand = handledByCommand;
+
+    // Go ahead and emit message to hub before processing the rest of the commands
+    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.

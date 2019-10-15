@@ -5,6 +5,10 @@ var socket = io('http://localhost:5060');
 socket.on('OnChatMessage', (chatMessageEventArg) => {
 
     console.log(JSON.stringify(chatMessageEventArg));
+    
+    if (chatMessageEventArg.hasCommand) {
+        return;
+    }
 
     if (chatMessageEventArg.originalMessage &&
         chatMessageEventArg.originalMessage.length > 0 &&
