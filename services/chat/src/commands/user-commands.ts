@@ -127,7 +127,7 @@ export const avatarCommand = async (
     return false;
   }
 
-  const lowerMessage = message.toLocaleLowerCase().trim();
+const lowerMessage = message.toLocaleLowerCase().trim();
   const params = lowerMessage.split(' ');
   const firstWord = params[0];
 
@@ -136,12 +136,20 @@ export const avatarCommand = async (
     return false;
   } 
 
-  const secondWord = params[1].toLocaleLowerCase();
+  const secondWord: string = params[1].toLocaleLowerCase();
   const genericAvatars: string[] = genericComicAvatars;
+
+  if (secondWord === 'help') {
+    let message: string = `You can change your comic chat avatar by sending "!avatar {character}".  Available character names are: `;
+
+    message = `${message}${genericAvatars.join(', ')}`
+    twitchChatFunc(message);
+    return true;
+  }
 
   let saveUser: boolean = false;
 
-  if (genericAvatars.filter(f => f === secondWord) !== undefined) {
+  if (genericAvatars.find(f => f === secondWord) !== undefined) {
     userInfo.comicAvatar = secondWord;
     saveUser = true;
   } else {
