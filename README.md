@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-23-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-24-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -104,6 +104,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="http://code-jedi.com/blog"><img src="https://avatars1.githubusercontent.com/u/757374?v=4" width="100px;" alt="Hugo Dahl"/><br /><sub><b>Hugo Dahl</b></sub></a><br /><a href="#ideas-hugodahl" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="http://timmykokke.com"><img src="https://avatars1.githubusercontent.com/u/2283621?v=4" width="100px;" alt="Timmy Kokke"/><br /><sub><b>Timmy Kokke</b></sub></a><br /><a href="#content-sorskoot" title="Content">🖋</a></td>
+    <td align="center"><a href="https://www.geekyboy.com"><img src="https://avatars0.githubusercontent.com/u/284451?v=4" width="100px;" alt="Adam Culp"/><br /><sub><b>Adam Culp</b></sub></a><br /><a href="#ideas-adamculp" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 

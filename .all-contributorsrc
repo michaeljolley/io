@@ -223,6 +223,15 @@
       "contributions": [
         "content"
       ]
+    },
+    {
+      "login": "adamculp",
+      "name": "Adam Culp",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/284451?v=4",
+      "profile": "https://www.geekyboy.com",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
