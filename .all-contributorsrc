@@ -214,6 +214,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "sorskoot",
+      "name": "Timmy Kokke",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2283621?v=4",
+      "profile": "http://timmykokke.com",
+      "contributions": [
+        "content"
+      ]
     }
   ],
   "contributorsPerLine": 7,
