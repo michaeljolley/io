@@ -1,7 +1,7 @@
-import { IUserInfo, ICandle } from ".";
+import { IUserInfo, ICandle } from '.';
 
 export interface IVote {
-  streamId: string;
+  streamDate: string;
   user: IUserInfo;
   candle: ICandle;
 }

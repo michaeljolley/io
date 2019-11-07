@@ -5,7 +5,7 @@ import io from 'socket.io';
 import { SocketIOEvents } from '@shared/events';
 import { log } from '@shared/common';
 import { StreamDb } from '@shared/db';
-import { 
+import {
   IChatMessageEventArg,
   IEmoteEventArg,
   IUserLeftEventArg,
@@ -24,6 +24,7 @@ import {
   ICandleVoteResultEventArg,
   INewSegmentEventArg,
   IUserEventArg,
+  IGoalUpdatedEventArg,
   IThemerEventArg,
   INewGoalEventArg,
   INewNoteEventArg,
@@ -56,34 +57,46 @@ export class IOHub {
       /**
        * Chat related events
        */
-      socket.on(SocketIOEvents.OnChatMessage, (chatMessageArg: IChatMessageEventArg) =>
-        this.onChatMessage(chatMessageArg)
+      socket.on(
+        SocketIOEvents.OnChatMessage,
+        (chatMessageArg: IChatMessageEventArg) =>
+          this.onChatMessage(chatMessageArg)
       );
-      socket.on(SocketIOEvents.EmoteSent, (emoteArg: IEmoteEventArg) => this.onEmote(emoteArg));
+      socket.on(SocketIOEvents.EmoteSent, (emoteArg: IEmoteEventArg) =>
+        this.onEmote(emoteArg)
+      );
       socket.on(SocketIOEvents.OnUserLeft, (userEvent: IUserLeftEventArg) =>
         this.onUserLeftChannel(userEvent)
       );
       socket.on(SocketIOEvents.OnUserJoined, (userEvent: IUserJoinedEventArg) =>
         this.onUserJoinedChannel(userEvent)
       );
-      socket.on(SocketIOEvents.OnRaidStream, (raidEventArg: INewSegmentEventArg) =>
-        this.onRaidStream(raidEventArg)
+      socket.on(
+        SocketIOEvents.OnRaidStream,
+        (raidEventArg: INewSegmentEventArg) => this.onRaidStream(raidEventArg)
       );
 
       /**
        * Chron related events
        */
-      socket.on(SocketIOEvents.FollowerCountChanged, (followerCountEvent: IFollowerCountEventArg) =>
-        this.onFollowerCount(followerCountEvent)
+      socket.on(
+        SocketIOEvents.FollowerCountChanged,
+        (followerCountEvent: IFollowerCountEventArg) =>
+          this.onFollowerCount(followerCountEvent)
       );
-      socket.on(SocketIOEvents.ViewerCountChanged, (viewerCountEvent: IViewerCountEventArg) =>
-        this.onViewerCount(viewerCountEvent)
+      socket.on(
+        SocketIOEvents.ViewerCountChanged,
+        (viewerCountEvent: IViewerCountEventArg) =>
+          this.onViewerCount(viewerCountEvent)
       );
-      socket.on(SocketIOEvents.LastFollowerUpdated, (lastUserEvent: ILastUserEventArg) =>
-        this.onLastFollower(lastUserEvent)
+      socket.on(
+        SocketIOEvents.LastFollowerUpdated,
+        (lastUserEvent: ILastUserEventArg) => this.onLastFollower(lastUserEvent)
       );
-      socket.on(SocketIOEvents.LastSubscriberUpdated, (lastUserEvent: ILastUserEventArg) =>
-        this.onLastSubscriber(lastUserEvent)
+      socket.on(
+        SocketIOEvents.LastSubscriberUpdated,
+        (lastUserEvent: ILastUserEventArg) =>
+          this.onLastSubscriber(lastUserEvent)
       );
 
       /**
@@ -98,11 +111,11 @@ export class IOHub {
       socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
         this.onStreamEnd(streamEvent)
       );
-      socket.on(SocketIOEvents.StreamNoteRebuild, (streamId: string) =>
-        this.onStreamNoteRebuild(streamId)
+      socket.on(SocketIOEvents.StreamNoteRebuild, (streamDate: string) =>
+        this.onStreamNoteRebuild(streamDate)
       );
-      socket.on(SocketIOEvents.CreditsRoll, (streamId: string) =>
-        this.creditsRoll(streamId)
+      socket.on(SocketIOEvents.CreditsRoll, (streamDate: string) =>
+        this.creditsRoll(streamDate)
       );
       socket.on(SocketIOEvents.OnCreditsRoll, (streamEvent: IStreamEventArg) =>
         this.onCreditsRoll(streamEvent)
@@ -111,8 +124,10 @@ export class IOHub {
       /**
        * Alert related events
        */
-      socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
-        this.onNewFollow(newFollowerEvent)
+      socket.on(
+        SocketIOEvents.NewFollower,
+        (newFollowerEvent: INewFollowerEventArg) =>
+          this.onNewFollow(newFollowerEvent)
       );
       socket.on(
         SocketIOEvents.NewSubscriber,
@@ -138,8 +153,9 @@ export class IOHub {
         this.onPlayAudio(mediaEvent)
       );
       socket.on(SocketIOEvents.StopAudio, () => this.onStopAudio());
-      socket.on(SocketIOEvents.NewSegment, (segmentEvent: INewSegmentEventArg) =>
-        this.onNewSegment(segmentEvent)
+      socket.on(
+        SocketIOEvents.NewSegment,
+        (segmentEvent: INewSegmentEventArg) => this.onNewSegment(segmentEvent)
       );
       socket.on(SocketIOEvents.TwitchThemer, (themerEvent: IThemerEventArg) =>
         this.onTwitchThemer(themerEvent)
@@ -153,8 +169,13 @@ export class IOHub {
       socket.on(SocketIOEvents.NewGoal, (goalEvent: INewGoalEventArg) =>
         this.newGoal(goalEvent)
       );
-      socket.on(SocketIOEvents.UserProfileUpdated, (profileUpdate: IUserProfileUpdateEventArg) =>
-        this.profileUpdate(profileUpdate)
+      socket.on(SocketIOEvents.GoalUpdated, (goalEvent: IGoalUpdatedEventArg) =>
+        this.updatedGoal(goalEvent)
+      );
+      socket.on(
+        SocketIOEvents.UserProfileUpdated,
+        (profileUpdate: IUserProfileUpdateEventArg) =>
+          this.profileUpdate(profileUpdate)
       );
 
       /**
@@ -163,17 +184,22 @@ export class IOHub {
       socket.on(SocketIOEvents.CandleReset, (streamEvent: IStreamEventArg) =>
         this.onCandleReset(streamEvent)
       );
-      socket.on(SocketIOEvents.CandleVoteStart, (streamEvent: IStreamEventArg) =>
-        this.onCandleStart(streamEvent)
+      socket.on(
+        SocketIOEvents.CandleVoteStart,
+        (streamEvent: IStreamEventArg) => this.onCandleStart(streamEvent)
       );
       socket.on(SocketIOEvents.CandleVoteStop, (streamEvent: IStreamEventArg) =>
         this.onCandleStop(streamEvent)
       );
-      socket.on(SocketIOEvents.CandleVote, (candleVoteEventArg: ICandleVoteEventArg) =>
-        this.onCandleVote(candleVoteEventArg)
+      socket.on(
+        SocketIOEvents.CandleVote,
+        (candleVoteEventArg: ICandleVoteEventArg) =>
+          this.onCandleVote(candleVoteEventArg)
       );
-      socket.on(SocketIOEvents.CandleWinner, (candleWinnerEventArg: ICandleWinnerEventArg) =>
-        this.onCandleWinner(candleWinnerEventArg)
+      socket.on(
+        SocketIOEvents.CandleWinner,
+        (candleWinnerEventArg: ICandleWinnerEventArg) =>
+          this.onCandleWinner(candleWinnerEventArg)
       );
       socket.on(
         SocketIOEvents.CandleVoteUpdate,
@@ -219,9 +245,7 @@ export class IOHub {
   private onNewRaid(raidEventArg: INewRaidEventArg) {
     log(
       'info',
-      `onNewRaid: ${raidEventArg.raider.user.login}: ${
-        raidEventArg.raider.viewers
-      }`
+      `onNewRaid: ${raidEventArg.raider.user.login}: ${raidEventArg.raider.viewers}`
     );
     this.io.emit(SocketIOEvents.NewRaid, raidEventArg);
   }
@@ -229,9 +253,7 @@ export class IOHub {
   private onNewCheer(cheerEventArg: INewCheerEventArg) {
     log(
       'info',
-      `onNewCheer: ${cheerEventArg.cheerer.user.login} - ${
-        cheerEventArg.cheerer.bits
-      }`
+      `onNewCheer: ${cheerEventArg.cheerer.user.login} - ${cheerEventArg.cheerer.bits}`
     );
     this.io.emit(SocketIOEvents.NewCheer, cheerEventArg);
   }
@@ -296,23 +318,37 @@ export class IOHub {
     this.io.emit(SocketIOEvents.NewGoal, goalEvent);
   }
 
+  private updatedGoal(goalEvent: IGoalUpdatedEventArg) {
+    log('info', `updatedGoal: ${goalEvent.streamGoal.name}`);
+    this.io.emit(SocketIOEvents.GoalUpdated, goalEvent);
+  }
+
   private onStopAudio() {
     log('info', `onStopAudio`);
     this.io.emit(SocketIOEvents.StopAudio);
   }
 
   private onStreamStart(streamEvent: IStreamEventArg) {
-    log('info', `onStreamStart: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamStart: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.io.emit(SocketIOEvents.StreamStarted, streamEvent);
   }
 
   private onStreamUpdate(streamEvent: IStreamEventArg) {
-    log('info', `onStreamUpdate: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamUpdate: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.io.emit(SocketIOEvents.StreamUpdated, streamEvent);
   }
 
   private onStreamEnd(streamEvent: IStreamEventArg) {
-    log('info', `onStreamEnd: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamEnd: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.io.emit(SocketIOEvents.StreamEnded, streamEvent);
   }
 
@@ -321,27 +357,28 @@ export class IOHub {
     this.io.emit(SocketIOEvents.OnRaidStream, raidEventArg);
   }
 
-  private onStreamNoteRebuild(streamId: string) {
-    log('info', `onStreamNoteRebuild: ${JSON.stringify(streamId)}`);
-    this.io.emit(SocketIOEvents.StreamNoteRebuild, streamId);
+  private onStreamNoteRebuild(streamDate: string) {
+    log('info', `onStreamNoteRebuild: ${JSON.stringify(streamDate)}`);
+    this.io.emit(SocketIOEvents.StreamNoteRebuild, streamDate);
   }
 
-  private creditsRoll(streamId: string) {
-    log('info', `creditsRoll: ${JSON.stringify(streamId)}`);
+  private creditsRoll(streamDate: string) {
+    log('info', `creditsRoll: ${JSON.stringify(streamDate)}`);
 
     const streamDb: StreamDb = new StreamDb();
-    streamDb.getStream(streamId)
-              .then(s => {
-                if (s) {
-                  const streamArg: IStreamEventArg = {
-                    stream: s
-                  };
-                  this.io.emit(SocketIOEvents.OnCreditsRoll, streamArg);
-                }
-              })
-              .catch((e: any) => {
-                log('info', `${JSON.stringify(e)}`);
-              });
+    streamDb
+      .getStream(streamDate)
+      .then(s => {
+        if (s) {
+          const streamArg: IStreamEventArg = {
+            stream: s
+          };
+          this.io.emit(SocketIOEvents.OnCreditsRoll, streamArg);
+        }
+      })
+      .catch((e: any) => {
+        log('info', `${JSON.stringify(e)}`);
+      });
   }
 
   private onCreditsRoll(streamArg: IStreamEventArg) {
@@ -352,9 +389,7 @@ export class IOHub {
   private onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
     log(
       'info',
-      `onCandleWinner: ${candleWinnerEvent.streamId} - ${
-        candleWinnerEvent.candle.label
-      }`
+      `onCandleWinner: ${candleWinnerEvent.streamDate} - ${candleWinnerEvent.candle.label}`
     );
     this.io.emit(SocketIOEvents.CandleWinner, candleWinnerEvent);
   }
@@ -372,9 +407,7 @@ export class IOHub {
   private onCandleVote(candleVoteEvent: ICandleVoteEventArg) {
     log(
       'info',
-      `onCandleVote: ${candleVoteEvent.userInfo.login} - ${
-        candleVoteEvent.candle.label
-      }`
+      `onCandleVote: ${candleVoteEvent.userInfo.login} - ${candleVoteEvent.candle.label}`
     );
     this.io.emit(SocketIOEvents.CandleVote, candleVoteEvent);
   }

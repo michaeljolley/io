@@ -1,7 +1,7 @@
-import { IStreamSegment } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { IStreamSegment } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface INewSegmentEventArg extends IBaseEventArg {
-  streamId: string;
+  streamDate: string;
   streamSegment: IStreamSegment;
 }

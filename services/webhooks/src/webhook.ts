@@ -2,9 +2,13 @@ import io from 'socket.io-client';
 // tslint:disable-next-line: no-var-requires
 const TwitchWebhook = require('twitch-webhook');
 
-import { config,  log, get  } from '@shared/common';
-import { IStreamEventArg, INewFollowerEventArg, IBaseEventArg } from '@shared/event_args';
-import { IStream, IUserInfo  } from '@shared/models';
+import { config, log, get } from '@shared/common';
+import {
+  IStreamEventArg,
+  INewFollowerEventArg,
+  IBaseEventArg
+} from '@shared/event_args';
+import { IStream, IUserInfo } from '@shared/models';
 import { SocketIOEvents } from '@shared/events';
 import { NGrok } from './ngrok';
 
@@ -18,11 +22,13 @@ export class WebHook {
     this.socket = io('http://hub');
     this.ngrok = new NGrok();
 
-    this.socket.on(SocketIOEvents.StreamStarted, (streamEvent: IStreamEventArg) =>
-      this.onStreamStart(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamStarted,
+      (streamEvent: IStreamEventArg) => this.onStreamStart(streamEvent)
     );
-    this.socket.on(SocketIOEvents.StreamUpdated, (streamEvent: IStreamEventArg) =>
-      this.onStreamUpdate(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamUpdated,
+      (streamEvent: IStreamEventArg) => this.onStreamUpdate(streamEvent)
     );
     this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
@@ -47,18 +53,23 @@ export class WebHook {
   }
 
   // tslint:disable-next-line: no-empty
-  public go() {
-  }
+  public go() {}
 
   private onStreamStart(streamEvent: IStreamEventArg) {
-    log('info', `onStreamStart: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamStart: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.activeStream = streamEvent.stream;
 
     this.connectTwitchFollowersWebhook();
   }
 
   private onStreamUpdate(streamEvent: IStreamEventArg) {
-    log('info', `onStreamUpdate: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamUpdate: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
 
     if (this.activeStream === undefined) {
       this.activeStream = streamEvent.stream;
@@ -68,7 +79,10 @@ export class WebHook {
   }
 
   private onStreamEnd(streamEvent: IStreamEventArg) {
-    log('info', `onStreamEnd: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamEnd: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.activeStream = undefined;
     // TODO: End all webhook subscriptions
     if (this.twitchFollowerWebhook) {
@@ -89,61 +103,59 @@ export class WebHook {
   }
 
   private connectTwitchFollowersWebhook() {
-
-      this.ngrok.getUrl()
+    this.ngrok
+      .getUrl()
       .then((ngrokUrl: string) => {
-          log('info', ngrokUrl);
+        log('info', ngrokUrl);
 
-          this.twitchFollowerWebhook = new TwitchWebhook({
-            callback: `${ngrokUrl}`,
-            client_id: config.twitchClientId,
-            lease_seconds: 43200, // 12 hours
-            listen: {
-              port: 8800
-            }
-          });
+        this.twitchFollowerWebhook = new TwitchWebhook({
+          callback: `${ngrokUrl}`,
+          client_id: config.twitchClientId,
+          lease_seconds: 43200, // 12 hours
+          listen: {
+            port: 8800
+          }
+        });
 
-          this.twitchFollowerWebhook.on('users/follows', this.handleFollow);
+        this.twitchFollowerWebhook.on('users/follows', this.handleFollow);
 
-          this.twitchFollowerWebhook.subscribe('users/follows', {
-            first: 1,
-            to_id: config.twitchClientUserId // ID of Twitch Channel
-          });
+        this.twitchFollowerWebhook.subscribe('users/follows', {
+          first: 1,
+          to_id: config.twitchClientUserId // ID of Twitch Channel
+        });
 
-          // renew the subscription when it expires
-          this.twitchFollowerWebhook.on('unsubscribe', (obj: any) => {
-            this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
-          });
-        })
+        // renew the subscription when it expires
+        this.twitchFollowerWebhook.on('unsubscribe', (obj: any) => {
+          this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
+        });
+      })
       .catch((err: any) => {
         log('info', err);
       });
-  } 
+  }
 
-  private handleFollow = async (payload: any) : Promise<void> => {
+  private handleFollow = async (payload: any): Promise<void> => {
     log('info', JSON.stringify(payload));
 
     const event = payload.event;
 
-    if (this.activeStream &&
-        event &&
-        event.data &&
-        event.data.length > 0) {
+    if (this.activeStream && event && event.data && event.data.length > 0) {
+      const followerUserName: string = event.data[0].from_name || '';
 
-        const followerUserName: string = event.data[0].from_name || '';
+      const follower: IUserInfo | undefined = await this.getUser(
+        followerUserName
+      );
 
-        const follower: IUserInfo | undefined = await this.getUser(followerUserName);
+      if (follower) {
+        const followerEvent: INewFollowerEventArg = {
+          follower,
+          streamDate: this.activeStream.streamDate
+        };
 
-        if (follower) {
-          const followerEvent: INewFollowerEventArg = {
-            follower,
-            streamId: this.activeStream.id
-          };
-
-          this.emitMessage(SocketIOEvents.NewFollower, followerEvent);
-        }
+        this.emitMessage(SocketIOEvents.NewFollower, followerEvent);
+      }
     }
-  }
+  };
 
   private getUser = async (
     username: string

@@ -40,7 +40,14 @@
 			"path": "."
 		}
 	],
-	"settings": {},
+	"settings": {
+		"cSpell.words": [
+			"chat",
+			"github",
+			"repos",
+			"userstate"
+		]
+	},
 	"launch":{
 		"configurations": [
 			{

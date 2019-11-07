@@ -1,7 +1,7 @@
-import { IStreamNote } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { IStreamNote } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface INewNoteEventArg extends IBaseEventArg {
-  streamId: string;
+  streamDate: string;
   streamNote: IStreamNote;
 }

@@ -14,7 +14,6 @@ export const noteCommand = async (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): Promise<boolean> => {
-
   if (
     message === undefined ||
     userInfo === undefined ||
@@ -36,10 +35,14 @@ export const noteCommand = async (
     return false;
   }
 
-  const helpingUser: IUserInfo = await getUserFunc(contributorUsername.replace('@', ''));
+  const helpingUser: IUserInfo = await getUserFunc(
+    contributorUsername.replace('@', '')
+  );
 
   if (helpingUser === undefined) {
-    twitchChatFunc(`Yo ${userInfo.login}! I can't find a user named ${contributorUsername}`);
+    twitchChatFunc(
+      `Yo ${userInfo.login}! I can't find a user named ${contributorUsername}`
+    );
     return true;
   }
 
@@ -49,13 +52,15 @@ export const noteCommand = async (
   };
 
   const newNoteEvent: INewNoteEventArg = {
-    streamId: activeStream.id,
+    streamDate: activeStream.streamDate,
     streamNote: newNote
   };
 
   const helperName: string = helpingUser.display_name || helpingUser.login;
 
-  twitchChatFunc(`Thanks for helping ${helperName}! After we finish today you'll see your name in our stream notes at https://baldbeardedbuilder.com`);
+  twitchChatFunc(
+    `Thanks for helping ${helperName}! After we finish today you'll see your name in our stream notes at https://baldbeardedbuilder.com`
+  );
 
   emitMessageFunc(SocketIOEvents.NewNote, newNoteEvent);
 

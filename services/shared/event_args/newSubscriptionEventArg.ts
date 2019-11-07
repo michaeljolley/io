@@ -1,7 +1,7 @@
-import { ISubscriber } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { ISubscriber } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface INewSubscriptionEventArg extends IBaseEventArg {
-  streamId: string;
+  streamDate: string;
   subscriber: ISubscriber;
 }
