@@ -1,9 +1,9 @@
 import * as express from 'express';
 import { Server } from 'http';
 
-import { log } from '@shared/common';
-import { IGitHubRepo } from '@shared/models';
-import { RepoDb } from '@shared/db';
+import { log } from 'io-shared/common';
+import { IGitHubRepo } from 'io-shared/models';
+import { RepoDb } from 'io-shared/db';
 
 
 export class Repo {

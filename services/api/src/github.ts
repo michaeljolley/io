@@ -1,5 +1,5 @@
 import Octokit from '@octokit/rest';
-import { config, log } from '@shared/common';
+import { config, log } from 'io-shared/common';
 
 export class Github {
   private octokit: Octokit;

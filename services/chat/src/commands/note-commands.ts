@@ -1,9 +1,9 @@
 import { ChatUserstate } from 'tmi.js';
 
-import { SocketIOEvents } from '@shared/events';
-import { IStream, IUserInfo, IStreamNote } from '@shared/models';
-import { IBaseEventArg, INewNoteEventArg } from '@shared/event_args/index';
-import { isBroadcaster, isMod } from '@shared/common';
+import { SocketIOEvents } from 'io-shared/events';
+import { IStream, IUserInfo, IStreamNote } from 'io-shared/models';
+import { IBaseEventArg, INewNoteEventArg } from 'io-shared/event_args/index';
+import { isBroadcaster, isMod } from 'io-shared/common';
 
 export const noteCommand = async (
   message: string,

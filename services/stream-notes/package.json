@@ -7,21 +7,16 @@
     "url": "https://github.com/MichaelJolley/io"
   },
   "main": "index.js",
-  "_moduleAliases": {
-    "@shared": "../shared/dist"
-  },
   "scripts": {
+    "postinstall": "npm link ../shared/dist",
     "start": "node dist/index.js",
-    "debug:pkg": "nodemon -L --watch package.json --exec 'npm i'",
-    "debug:app": "nodemon -L -e js,ts,htm --watch src --exec 'npm run build && node --inspect=0.0.0.0:9229 dist/index.js'",
-    "debug": "npm-run-all --parallel debug:pkg debug:app",
+    "debug": "nodemon -L -e js,ts,htm --watch src --exec 'npm run build && node --inspect=0.0.0.0:9229 dist/index.js'",
     "build": "tsc -b"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.0.0",
-    "module-alias": "^2.2.0",
     "moment": "^2.24.0",
     "mongoose": "^5.6.0",
     "restler": "^3.4.0",

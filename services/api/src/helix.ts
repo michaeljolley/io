@@ -1,6 +1,6 @@
 import * as queryString from 'query-string';
 
-import { get, config, log } from '@shared/common';
+import { get, config, log } from 'io-shared/common';
 
 export class Helix {
   private baseHelixUrl: string = 'https://api.twitch.tv/helix';

@@ -7,21 +7,17 @@
     "url": "https://github.com/MichaelJolley/io"
   },
   "main": "index.js",
-  "_moduleAliases": {
-    "@shared": "../shared/dist"
-  },
   "scripts": {
+    "postinstall": "npm link ../shared/dist",
     "start": "node dist/index.js",
-    "debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-    "debug-compile": "tsc -b && node --inspect=0.0.0.0:9229 dist/index.js",
-    "build": "tsc --build --verbose"
+    "debug": "nodemon -L -e js,ts,htm --watch src --exec 'npm run build && node --inspect=0.0.0.0:9229 dist/index.js'",
+    "build": "tsc --build"
   },
   "author": "Michael Jolley <mike@sparcapp.io>",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.0.0",
     "express": "^4.17.0",
-    "module-alias": "^2.2.0",
     "moment": "^2.24.0",
     "mongoose": "^5.6.0",
     "query-string": "^6.5.0",
@@ -38,6 +34,7 @@
     "@types/restler": "^3.1.5",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.3.0",
+    "nodemon": "^1.19.3",
     "tslint": "^5.16.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.5.3"

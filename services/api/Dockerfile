@@ -5,10 +5,11 @@ ARG BUILDVERSION=0.0.0
 WORKDIR /app/api
 
 # Copy dependency files
-COPY ./package.json ./package-lock.json ./
+COPY ./package.json ./
 
 # Clean install depdenencies
-RUN npm ci --silent
+RUN npm i --silent \
+  && npm link ../shared/dist
 
 # ^^^^
 # All layers above are cached, the below layers change more often
@@ -24,29 +25,21 @@ RUN npm run build
 # Put together the release image with the just build artifacts
 FROM node:12.6.0-alpine
 
+WORKDIR /app/shared/dist
+
+# Copy shared dependencies
+COPY --from=build /app/shared/dist ./
+
 WORKDIR /app/api
 
 # Copy dependency files
-COPY ./package.json ./package-lock.json ./
+COPY --from=build /app/api/package*.json ./
 
 # Clean install production-only depdenencies
-RUN npm ci --silent --only=production
+RUN npm ci --silent --only=production \
+  && npm link ../shared/dist
 
-WORKDIR /app/shared
-
-# Copy shared dependencies
-COPY --from=build /app/shared/package.json /app/shared/package-lock.json ./
-
-# Clean install production-only dependencies for shared
-RUN npm ci --silent --only=production
-
-WORKDIR /app
-
-# Copy built project and shared files
 COPY --from=build /app/api/dist ./api/dist
-COPY --from=build /app/shared/dist ./shared/dist
-
-WORKDIR /app/api
 
 EXPOSE 80
 

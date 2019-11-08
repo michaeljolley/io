@@ -20,13 +20,6 @@
     "esModuleInterop": true,    
     "outDir": "./dist",
     "baseUrl": "./",
-    "rootDir": "./src",
-    "paths": {
-      "*": ["types/*"],
-      "@shared/*": ["../shared/dist/*"]
-    }
-  },
-  "references": [
-    {"path": "../shared"}
-  ]
+    "rootDir": "./src"
+  }
 }

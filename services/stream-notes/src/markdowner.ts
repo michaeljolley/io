@@ -1,7 +1,7 @@
 import moment from 'moment';
 
-import { ICandleVote, IStream, IStreamNote, IStreamSegment, IUserInfo, IChatMessage } from '@shared/models';
-import { config } from '@shared/common';
+import { ICandleVote, IStream, IStreamNote, IStreamSegment, IUserInfo, IChatMessage } from 'io-shared/models';
+import { config } from 'io-shared/common';
 
 export class Markdowner {
   private activeStream: IStream | undefined;

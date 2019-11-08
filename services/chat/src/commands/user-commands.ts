@@ -2,10 +2,10 @@ import { ChatUserstate } from 'tmi.js';
 import fs from 'fs';
 import * as path from 'path';
 
-import { genericComicAvatars, get } from '@shared/common';
-import { IUserInfo } from '@shared/models';
-import { IBaseEventArg, IUserProfileUpdateEventArg } from '@shared/event_args';
-import { SocketIOEvents } from '@shared/events';
+import { genericComicAvatars, get } from 'io-shared/common';
+import { IUserInfo } from 'io-shared/models';
+import { IBaseEventArg, IUserProfileUpdateEventArg } from 'io-shared/event_args';
+import { SocketIOEvents } from 'io-shared/events';
 
 export const updateUserCommand = async (
     message: string,

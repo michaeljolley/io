@@ -1,6 +1,6 @@
 ﻿"use strict";
 
-var socket = io('http://localhost:5060');
+var socket = io(`//${location.hostname}:5060`);
 
 socket.on('OnChatMessage', (chatMessageEventArg) => {
 
