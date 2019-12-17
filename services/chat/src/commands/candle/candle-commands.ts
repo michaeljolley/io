@@ -36,7 +36,7 @@ export const candleCommand = async (
   if (activeStream === undefined ||
     activeStream.started_at === undefined) {
     twitchChatFunc(
-      `We're not streaming right now so I'm not keeping track of the candle @theMichaelJolley is burning.`
+      `We're not streaming right now so I'm not keeping track of the candle @BaldBeardedBuilder is burning.`
     );
     return true;
   }
@@ -89,7 +89,7 @@ const baseCandleCommand = async (
         }
         else {
           twitchChatFunc(
-            `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @theMichaelJolley.`
+            `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @BaldBeardedBuilder.`
           );
         }
     }
