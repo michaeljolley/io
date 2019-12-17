@@ -1,6 +1,13 @@
 import moment from 'moment';
 
-import { ICandleVote, IStream, IStreamNote, IStreamSegment, IUserInfo } from '@shared/models';
+import {
+  ICandleVote,
+  IStream,
+  IStreamNote,
+  IStreamSegment,
+  IUserInfo,
+  IChatMessage
+} from '@shared/models';
 import { config } from '@shared/common';
 
 export class Markdowner {
@@ -13,24 +20,20 @@ export class Markdowner {
   public async generateMarkdown(): Promise<string> {
     if (this.activeStream) {
       return this.addMeta()
-        .then(this.addImage)
         .then(this.addYouTube)
         .then(this.addFold)
         .then(this.addSegments)
-        .then(this.addLine)
         .then(this.addCandle)
-        .then(this.addLine)
         .then(this.addGoals)
         .then(this.addGitHubRepos)
         .then(this.addThingsLearned)
-        .then(this.addLine)
         .then(this.addSponsors)
         .then(this.addSubscriptions)
         .then(this.addCheers)
         .then(this.addRaiders)
         .then(this.addModerators)
-        .then(this.addContributors)
-        .then(this.addFollowers);
+        .then(this.addFollowers)
+        .then(this.addContributors);
     } else {
       return '';
     }
@@ -39,19 +42,11 @@ export class Markdowner {
   private addFollowers = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.followers &&
-        this.activeStream.followers.length > 0) {
+    if (this.activeStream.followers && this.activeStream.followers.length > 0) {
       let response: string = `### Followers\n\n`;
 
-      for (const follower of this.activeStream.followers) {
-        const displayName: string = follower.display_name || follower.login;
-        response =
-          response +
-          `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + follower.login
-          )}\n`;
-      }
+      response = response + this.generateUserTable(this.activeStream.followers);
+
       return existingContent + response + `\n`;
     }
 
@@ -61,25 +56,17 @@ export class Markdowner {
   private addRaiders = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream | undefined;
 
-    if (this.activeStream &&
-        this.activeStream.raiders &&
-        this.activeStream.raiders.length > 0) {
+    if (
+      this.activeStream &&
+      this.activeStream.raiders &&
+      this.activeStream.raiders.length > 0
+    ) {
+      let response: string = `### Raids\n\n`;
 
-      let response: string = `### Raids\n
-| Marauder            | Accomplices |
-| ---                 | ---         |\n`;
+      response =
+        response +
+        this.generateUserTable(this.activeStream.raiders.map(m => m.user));
 
-      for (const raider of this.activeStream.raiders) {
-        if (raider.user) {
-          const displayName: string = raider.user.display_name || raider.user.login;
-          response =
-            response +
-            `| ${this.addLink(
-              displayName,
-              'https://twitch.tv/' + raider.user.login
-          )} | ${raider.viewers} |\n`;
-        }
-      }
       return existingContent + response + `\n`;
     }
 
@@ -89,24 +76,13 @@ export class Markdowner {
   private addCheers = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.cheers &&
-        this.activeStream.cheers.length > 0) {
-      let response: string = `### Cheers\n
-| Compadre            | Bits        |
-| ---                 | ---         |\n`;
+    if (this.activeStream.cheers && this.activeStream.cheers.length > 0) {
+      let response: string = `### Cheers\n\n`;
 
-      for (const cheerer of this.activeStream.cheers) {
-        if (cheerer.user) {
-          const displayName: string =
-            cheerer.user.display_name || cheerer.user.login;
-          response =
-            response +
-            `| ${this.addLink(
-              displayName,
-              'https://twitch.tv/' + cheerer.user.login
-            )} | ${cheerer.bits} |\n`;
-        }
-      }
+      response =
+        response +
+        this.generateUserTable(this.activeStream.cheers.map(m => m.user));
+
       return existingContent + response + `\n`;
     }
 
@@ -118,26 +94,16 @@ export class Markdowner {
   ): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.subscribers &&
-        this.activeStream.subscribers.length > 0) {
+    if (
+      this.activeStream.subscribers &&
+      this.activeStream.subscribers.length > 0
+    ) {
       let response: string = `### Subscribers\n\n`;
 
-      for (const sub of this.activeStream.subscribers) {
-        if (sub.user) {
-          const displayName: string = sub.user.display_name || sub.user.login;
-          let subLine: string = `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + sub.user.login
-          )}`;
-          if (sub.cumulativeMonths > 1) {
-            subLine = subLine + ` (${sub.cumulativeMonths} mo)`;
-          }
-          if (sub.wasGift) {
-            subLine = subLine + ' `Gifted`';
-          }
-          response = response + `${subLine}\n`;
-        }
-      }
+      response =
+        response +
+        this.generateUserTable(this.activeStream.subscribers.map(m => m.user));
+
       return existingContent + response + `\n`;
     }
 
@@ -147,20 +113,19 @@ export class Markdowner {
   private addModerators = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.moderators &&
-        this.activeStream.moderators.length > 0) {
+    if (
+      this.activeStream.moderators &&
+      this.activeStream.moderators.length > 0
+    ) {
       let response: string = `### Moderators\n\n`;
 
-      for (const mod of this.activeStream.moderators) {
-        if (mod.login != config.twitchBotUsername) {
-          const displayName: string = mod.display_name || mod.login;
-          const userLine: string = `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + mod.login
-          )}`;
-          response = response + `${userLine}\n`;
-        }
-      }
+      const mods = this.activeStream.moderators.filter(
+        f =>
+          f.login != config.twitchClientUsername &&
+          f.login != config.twitchBotUsername
+      );
+
+      response = response + this.generateUserTable(mods);
 
       return existingContent + response + `\n`;
     }
@@ -171,7 +136,6 @@ export class Markdowner {
   private addContributors = async (
     existingContent: string
   ): Promise<string> => {
-
     if (this.activeStream) {
       this.activeStream = this.activeStream as IStream;
 
@@ -182,36 +146,44 @@ export class Markdowner {
       }
 
       if (this.activeStream.candleVotes) {
-        contributors.push(...this.activeStream.candleVotes.map((m: ICandleVote) => m.user));
+        contributors.push(
+          ...this.activeStream.candleVotes.map((m: ICandleVote) => m.user)
+        );
       }
 
       if (this.activeStream.segments) {
-        contributors.push(...this.activeStream.segments.map((m: IStreamSegment) => m.user));
+        contributors.push(
+          ...this.activeStream.segments.map((m: IStreamSegment) => m.user)
+        );
       }
 
       if (this.activeStream.notes) {
-        contributors.push(...this.activeStream.notes.map((m: IStreamNote) => m.user));
+        contributors.push(
+          ...this.activeStream.notes.map((m: IStreamNote) => m.user)
+        );
+      }
+
+      if (this.activeStream.chatMessages) {
+        contributors.push(
+          ...this.activeStream.chatMessages.map((m: IChatMessage) => m.user)
+        );
       }
 
       const tempContributors: any[] = [];
       contributors = contributors.filter((n: any) => {
-                      return tempContributors.indexOf(n.id) === -1 &&
-                              n.login !== config.twitchClientUsername &&
-                              n.login !== config.twitchBotUsername &&
-                              tempContributors.push(n.id);
-                    });
+        return (
+          tempContributors.indexOf(n.id) === -1 &&
+          n.login !== config.twitchClientUsername &&
+          n.login !== config.twitchBotUsername &&
+          tempContributors.push(n.id)
+        );
+      });
 
       if (contributors.length > 0) {
         let response: string = `### Contributors\n\n`;
 
-        for (const user of contributors) {
-          const displayName: string = user.display_name || user.login;
-          const userLine: string = `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + user.login
-          )}`;
-          response = response + `${userLine}\n`;
-        }
+        response = response + this.generateUserTable(contributors);
+
         return existingContent + response + `\n`;
       }
     }
@@ -242,16 +214,17 @@ ${this.addLink(
 
     let response: string = '';
 
-    if (this.activeStream.notes &&
-        this.activeStream.notes.length > 0) {
+    if (this.activeStream.notes && this.activeStream.notes.length > 0) {
       response = `### Things We Learned\n\n`;
       for (const note of this.activeStream.notes) {
         if (note.user) {
           const displayName = note.user.display_name || note.user.login;
-          response = response + `- ${this.addLink(
-            displayName,
-            'https://twitch.tv/' + note.user.login
-          )}: ${note.name} \n`;
+          response =
+            response +
+            `- ${this.addLink(
+              displayName,
+              'https://twitch.tv/' + note.user.login
+            )}: ${note.name} \n`;
         }
       }
       return existingContent + response + `\n`;
@@ -260,14 +233,10 @@ ${this.addLink(
     return existingContent + response;
   };
 
-  private addImage = async (existingContent: string): Promise<string> => {
-    return existingContent + '<img src="{{page.image}}"/>\n\n';
-  };
-
   private addYouTube = async (existingContent: string): Promise<string> => {
     return (
       existingContent +
-      `## Stream Replay Link\n
+      `### Stream Replay Link\n
 [{{page.replay}}]({{page.replay}})\n\n`
     );
   };
@@ -288,44 +257,76 @@ ${this.addLink(
 
       for (const segment of this.activeStream.segments) {
         const segmentTime: moment.Moment = moment(segment.timestamp);
-        const timestamp: moment.Duration = moment.duration(segmentTime.diff(startedAt));
-        const hours: string = timestamp.get('hours') > 9 ? `${timestamp.get('hours')}` : `0${timestamp.get('hours')}`;
-        const minutes: string = timestamp.get('minutes') > 9 ? `${timestamp.get('minutes')}` : `0${timestamp.get('minutes')}`;
-        response = response + `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.asSeconds()}) | ${segment.topic} |\n`;
+        const timestamp: moment.Duration = moment.duration(
+          segmentTime.diff(startedAt)
+        );
+        const hours: string =
+          timestamp.get('hours') > 9
+            ? `${timestamp.get('hours')}`
+            : `0${timestamp.get('hours')}`;
+        const minutes: string =
+          timestamp.get('minutes') > 9
+            ? `${timestamp.get('minutes')}`
+            : `0${timestamp.get('minutes')}`;
+        response =
+          response +
+          `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.asSeconds()}) | ${
+            segment.topic
+          } |\n`;
       }
     }
 
     return existingContent + response + `\n`;
   };
 
-  private addLine = async (existingContent: string): Promise<string> => {
-    return existingContent + `---\n\n`;
+  private generateUserTable = (users: IUserInfo[]): string => {
+    let table: string = `<div class="users">\n`;
+
+    for (const user of users) {
+      table += `  <div class="user">\n`;
+      table += `    <img class="profile" src="${user.profile_image_url}"/>\n`;
+      table += `    <span>${user.display_name || user.login}<br/>\n`;
+      table += `      <a href="https://twitch.tv/${user.login}" target="_blank"><i class="fab fa-twitch" aria-hidden="true"></i></a>`;
+      if (user.twitterHandle) {
+        table += `<a href="https://twitter.com/${user.twitterHandle}" target="_blank"><i class="fab fa-twitter" aria-hidden="true"></i></a>`;
+      }
+      if (user.githubHandle) {
+        table += `<a href="https://github.com/${user.githubHandle}" target="_blank"><i class="fab fa-github" aria-hidden="true"></i></a>`;
+      }
+      table += '</span>\n  </div>\n';
+    }
+
+    table += '</div>\n';
+
+    return table;
   };
 
   private addGoals = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    let response: string = `### Goals\n\n`;
-
     if (this.activeStream.goals) {
+      let response: string = `### Goals\n\n`;
 
       for (const goal of this.activeStream.goals) {
-        response = response + `- [${(goal.accomplished ? 'x' : ' ')}] ${goal.name}\n`;
+        response =
+          response + `- [${goal.accomplished ? 'x' : ' '}] ${goal.name}\n`;
       }
+      return existingContent + response + `\n`;
     }
 
-    return existingContent + response + `\n`;
+    return existingContent;
   };
 
   private addGitHubRepos = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.githubRepos &&
-        this.activeStream.githubRepos.length > 0) {
+    if (
+      this.activeStream.githubRepos &&
+      this.activeStream.githubRepos.length > 0
+    ) {
       let response: string = `### Repos\n\n`;
 
       for (const repo of this.activeStream.githubRepos) {
-
         const repoLine: string = `- ${this.addLink(
           repo.full_name,
           `https://github.com/${repo.full_name}`
@@ -344,7 +345,7 @@ ${this.addLink(
   };
 
   private addLink = (label: string, url: string): string => {
-    return `[${label}](${url})`;
+    return `<a href="${url}" target="_blank">${label}</a>`;
   };
 
   private addMeta = async (): Promise<string> => {

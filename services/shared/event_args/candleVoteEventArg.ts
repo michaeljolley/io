@@ -1,8 +1,8 @@
-import { IUserInfo, ICandle } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { IUserInfo, ICandle } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface ICandleVoteEventArg extends IBaseEventArg {
   candle: ICandle;
-  streamId: string;
+  streamDate: string;
   userInfo: IUserInfo;
 }

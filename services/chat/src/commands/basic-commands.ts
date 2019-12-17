@@ -2,32 +2,6 @@ import { ChatUserstate } from 'tmi.js';
 
 import { isMod, isBroadcaster } from '@shared/common';
 
-export const websiteCommand = (
-  message: string,
-  user: ChatUserstate,
-  twitchChatFunc: (message: string) => void
-): boolean => {
-  if (message === undefined || message.length === 0) {
-    return false;
-  }
-
-  const lowerMessage = message.toLocaleLowerCase().trim();
-  const firstWord = lowerMessage.split(' ')[0];
-
-  if (firstWord !== '!website') {
-    return false;
-  }
-
-  if (twitchChatFunc) {
-    twitchChatFunc(
-      `Our show notes & replays can be found at https://baldbeardedbuilder.com`
-    );
-    return true;
-  }
-
-  return false;
-};
-
 export const blogCommand = (
   message: string,
   user: ChatUserstate,
@@ -40,13 +14,14 @@ export const blogCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!blog') {
+  if (firstWord !== '!blog' &&
+      firstWord !== '!website') {
     return false;
   }
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `Mike's personal blog can be found at https://michaeljolley.com`
+      `Mike's blog and our stream notes can be found at https://michaeljolley.com`
     );
     return true;
   }
@@ -215,7 +190,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !blog, !candle, !discord, !font, !github, !heroines, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -320,6 +295,33 @@ export const fontCommand = (
   if (twitchChatFunc) {
     twitchChatFunc(
       `Mike is using the Fira Code font.  You can find it at https://github.com/tonsky/FiraCode`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+
+export const keyboardCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!keyboard') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `Mike is using the MassDrop ALT mechanical keyboard.  You can find it at https://drop.com/buy/massdrop-alt-mechanical-keyboard`
     );
     return true;
   }

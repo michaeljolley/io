@@ -4,7 +4,7 @@
 
 | master | vNext | Contributors |
 | --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-15-orange.svg?style=flat-square)](#contributors) |
+| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors) |
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -50,6 +50,17 @@ When running locally, environment variables can be added to each service via a `
 | TWITCH_BOT_USERNAME     | Twitch login for the bot.  Can be the same as TWITCH_CLIENT_USERNAME.                                       |
 | TWITCH_BOT_TOKEN        | Twitch Auth token for the bot account.  Can be same as TWITCH_CLIENT_TOKEN                                  |
 
+## Custom Comic Chat Avatars
+
+One of the fun capabilities of IO is a reproduction of Microsoft Comic Chat from the late 90's. We welcome anyone to submit a pull request
+with a custom avatar for their Twitch account.
+
+The requirements for an avatar are pretty specific.  You need two images: head-{twitchHandle}.png &amp; body-{twitchHandle}.png.  Both should
+be transparent PNGs.
+
+We've created a place to test your images at codesandbox.  You can reach it at [https://codesandbox.io/s/quizzical-mendeleev-0gwnq](https://codesandbox.io/s/quizzical-mendeleev-0gwnq). Follow the instructions there to get your body & head images just right and then submit
+a pull request adding them to the /assets/images/characters/{your twitch handle} path.
+
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md)
@@ -83,6 +94,18 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="http://www.bravecobra.com"><img src="https://avatars3.githubusercontent.com/u/391353?v=4" width="100px;" alt="bravecobra"/><br /><sub><b>bravecobra</b></sub></a><br /><a href="#ideas-bravecobra" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/theancientcoder"><img src="https://avatars0.githubusercontent.com/u/46498193?v=4" width="100px;" alt="Ancient Coder"/><br /><sub><b>Ancient Coder</b></sub></a><br /><a href="#ideas-theancientcoder" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/deathpax"><img src="https://avatars3.githubusercontent.com/u/1409098?v=4" width="100px;" alt="deathpax"/><br /><sub><b>deathpax</b></sub></a><br /><a href="#ideas-deathpax" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/solenberg"><img src="https://avatars3.githubusercontent.com/u/1253016?v=4" width="100px;" alt="R.James Solenberg"/><br /><sub><b>R.James Solenberg</b></sub></a><br /><a href="#ideas-solenberg" title="Ideas, Planning, & Feedback">🤔</a> <a href="#content-solenberg" title="Content">🖋</a></td>
+    <td align="center"><a href="https://www.clarkio.com"><img src="https://avatars2.githubusercontent.com/u/6265396?v=4" width="100px;" alt="Brian Clark"/><br /><sub><b>Brian Clark</b></sub></a><br /><a href="#content-clarkio" title="Content">🖋</a></td>
+    <td align="center"><a href="https://github.com/mholloway24"><img src="https://avatars2.githubusercontent.com/u/40776983?v=4" width="100px;" alt="Mike Holloway"/><br /><sub><b>Mike Holloway</b></sub></a><br /><a href="#ideas-mholloway24" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/MichaelJolley/io/commits?author=mholloway24" title="Code">💻</a></td>
+    <td align="center"><a href="http://ToeFrog.github.io"><img src="https://avatars0.githubusercontent.com/u/1122675?v=4" width="100px;" alt="Chris Gargotta"/><br /><sub><b>Chris Gargotta</b></sub></a><br /><a href="https://github.com/MichaelJolley/io/commits?author=ToeFrog" title="Code">💻</a> <a href="#ideas-ToeFrog" title="Ideas, Planning, & Feedback">🤔</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="http://code-jedi.com/blog"><img src="https://avatars1.githubusercontent.com/u/757374?v=4" width="100px;" alt="Hugo Dahl"/><br /><sub><b>Hugo Dahl</b></sub></a><br /><a href="#ideas-hugodahl" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="http://timmykokke.com"><img src="https://avatars1.githubusercontent.com/u/2283621?v=4" width="100px;" alt="Timmy Kokke"/><br /><sub><b>Timmy Kokke</b></sub></a><br /><a href="#content-sorskoot" title="Content">🖋</a></td>
+    <td align="center"><a href="https://www.geekyboy.com"><img src="https://avatars0.githubusercontent.com/u/284451?v=4" width="100px;" alt="Adam Culp"/><br /><sub><b>Adam Culp</b></sub></a><br /><a href="#ideas-adamculp" title="Ideas, Planning, & Feedback">🤔</a></td>
+    <td align="center"><a href="https://github.com/smabuk"><img src="https://avatars2.githubusercontent.com/u/2011834?v=4" width="100px;" alt="Simon Brookes"/><br /><sub><b>Simon Brookes</b></sub></a><br /><a href="#ideas-smabuk" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 

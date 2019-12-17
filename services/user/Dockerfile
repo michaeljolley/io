@@ -50,4 +50,4 @@ WORKDIR /app/user
 
 EXPOSE 80
 
-CMD [ "npm", "start" ]
+CMD [ "node", "dist/index.js" ]

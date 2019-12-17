@@ -1,8 +1,8 @@
-import { ICandle, ICandleVoteResult } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { ICandle, ICandleVoteResult } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface ICandleVoteResultEventArg extends IBaseEventArg {
   voteResults: ICandleVoteResult[];
   candles: ICandle[];
-  streamId: string;
+  streamDate: string;
 }

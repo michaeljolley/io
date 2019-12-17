@@ -7,7 +7,7 @@ export class Overlay {
   public app: express.Application;
   private http!: Server;
 
-  constructor() {
+  constructor() {  
     this.app = express();
     this.app.use(express.static('dist/wwwroot'));
 
@@ -16,6 +16,7 @@ export class Overlay {
 
   public start() {
     this.listen();
+
   }
 
   /**

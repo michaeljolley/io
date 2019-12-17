@@ -2,29 +2,35 @@ import io from 'socket.io-client';
 // tslint:disable-next-line: no-var-requires
 const TwitchWebhook = require('twitch-webhook');
 
+import { config, log, get } from '@shared/common';
+import {
+  IStreamEventArg,
+  INewFollowerEventArg,
+  IBaseEventArg
+} from '@shared/event_args';
+import { IStream, IUserInfo } from '@shared/models';
+import { SocketIOEvents } from '@shared/events';
 import { NGrok } from './ngrok';
-
-import { config, get, log } from '@shared/common';
-import { IBaseEventArg, INewFollowerEventArg, IStreamEventArg } from '@shared/event_args';
-import { IUserInfo, IStream } from '@shared/models';
 
 export class WebHook {
   private socket!: SocketIOClient.Socket;
-  private ngrok: NGrok;
   private activeStream: IStream | undefined;
   private twitchFollowerWebhook: any;
+  private ngrok: NGrok;
 
   constructor() {
     this.socket = io('http://hub');
     this.ngrok = new NGrok();
 
-    this.socket.on('streamStart', (streamEvent: IStreamEventArg) =>
-      this.onStreamStart(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamStarted,
+      (streamEvent: IStreamEventArg) => this.onStreamStart(streamEvent)
     );
-    this.socket.on('streamUpdate', (streamEvent: IStreamEventArg) =>
-      this.onStreamUpdate(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamUpdated,
+      (streamEvent: IStreamEventArg) => this.onStreamUpdate(streamEvent)
     );
-    this.socket.on('streamEnd', (streamEvent: IStreamEventArg) =>
+    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
     );
 
@@ -35,21 +41,35 @@ export class WebHook {
       this.unregisterWebhooks();
       process.exit(0);
     });
+
+    // Whever NODEMON restarts our node process
+    // We need to kill NGROK otherwise the inspect web doesn't shutdown
+    process.on('SIGUSR2', () => {
+      log('info', "I'm reloading!");
+      this.unregisterWebhooks();
+      this.ngrok.kill();
+      process.exit(0);
+    });
   }
 
   // tslint:disable-next-line: no-empty
-  public go() {
-  }
+  public go() {}
 
   private onStreamStart(streamEvent: IStreamEventArg) {
-    log('info', `onStreamStart: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamStart: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.activeStream = streamEvent.stream;
 
     this.connectTwitchFollowersWebhook();
   }
 
   private onStreamUpdate(streamEvent: IStreamEventArg) {
-    log('info', `onStreamUpdate: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamUpdate: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
 
     if (this.activeStream === undefined) {
       this.activeStream = streamEvent.stream;
@@ -59,7 +79,10 @@ export class WebHook {
   }
 
   private onStreamEnd(streamEvent: IStreamEventArg) {
-    log('info', `onStreamEnd: ${JSON.stringify(streamEvent.stream.id)}`);
+    log(
+      'info',
+      `onStreamEnd: ${JSON.stringify(streamEvent.stream.streamDate)}`
+    );
     this.activeStream = undefined;
     // TODO: End all webhook subscriptions
     if (this.twitchFollowerWebhook) {
@@ -79,58 +102,60 @@ export class WebHook {
     }
   }
 
-  private async connectTwitchFollowersWebhook() {
+  private connectTwitchFollowersWebhook() {
+    this.ngrok
+      .getUrl()
+      .then((ngrokUrl: string) => {
+        log('info', ngrokUrl);
 
-    this.ngrok.getUrl()
-        .then((ngrokUrl: string) => {
-          log('info', `Received ${ngrokUrl} from nGrok`);
-
-          this.twitchFollowerWebhook = new TwitchWebhook({
-            callback: `${ngrokUrl}`,
-            client_id: config.twitchClientId,
-            lease_seconds: 43200, // 12 hours
-            listen: {
-              port: 80
-            }
-          });
-
-          this.twitchFollowerWebhook.on('users/follows', async (event: any) => {
-            log('info', JSON.stringify(event));
-
-            if (this.activeStream &&
-                event &&
-                event.data &&
-                event.data.length > 0) {
-
-                const followerUserName: string = event.data[0].from_name || '';
-
-                const follower: IUserInfo | undefined = await this.getUser(followerUserName);
-
-                if (follower) {
-                  const followerEvent: INewFollowerEventArg = {
-                    follower,
-                    streamId: this.activeStream.id
-                  };
-
-                  this.emitMessage('newFollow', followerEvent);
-                }
-            }
-          });
-
-          this.twitchFollowerWebhook.subscribe('users/follows', {
-            first: 1,
-            from_id: config.twitchClientUserId // ID of Twitch Channel
-          });
-
-          // renew the subscription when it expires
-          this.twitchFollowerWebhook.on('unsubscibe', (obj: any) => {
-            this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
-          });
-        })
-        .catch((err: any) => {
-          log('info', err);
+        this.twitchFollowerWebhook = new TwitchWebhook({
+          callback: `${ngrokUrl}`,
+          client_id: config.twitchClientId,
+          lease_seconds: 43200, // 12 hours
+          listen: {
+            port: 8800
+          }
         });
+
+        this.twitchFollowerWebhook.on('users/follows', this.handleFollow);
+
+        this.twitchFollowerWebhook.subscribe('users/follows', {
+          first: 1,
+          to_id: config.twitchClientUserId // ID of Twitch Channel
+        });
+
+        // renew the subscription when it expires
+        this.twitchFollowerWebhook.on('unsubscribe', (obj: any) => {
+          this.twitchFollowerWebhook.subscribe(obj['hub.topic']);
+        });
+      })
+      .catch((err: any) => {
+        log('info', err);
+      });
   }
+
+  private handleFollow = async (payload: any): Promise<void> => {
+    log('info', JSON.stringify(payload));
+
+    const event = payload.event;
+
+    if (this.activeStream && event && event.data && event.data.length > 0) {
+      const followerUserName: string = event.data[0].from_name || '';
+
+      const follower: IUserInfo | undefined = await this.getUser(
+        followerUserName
+      );
+
+      if (follower) {
+        const followerEvent: INewFollowerEventArg = {
+          follower,
+          streamDate: this.activeStream.streamDate
+        };
+
+        this.emitMessage(SocketIOEvents.NewFollower, followerEvent);
+      }
+    }
+  };
 
   private getUser = async (
     username: string

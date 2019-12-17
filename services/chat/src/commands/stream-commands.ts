@@ -2,8 +2,17 @@ import moment = require('moment');
 import { ChatUserstate } from 'tmi.js';
 
 import { SocketIOEvents } from '@shared/events';
-import { IStream, IUserInfo, IStreamSegment, IStreamGoal } from '@shared/models';
-import { INewSegmentEventArg, IBaseEventArg, INewGoalEventArg } from '@shared/event_args/index';
+import {
+  IStream,
+  IUserInfo,
+  IStreamSegment,
+  IStreamGoal
+} from '@shared/models';
+import {
+  INewSegmentEventArg,
+  IBaseEventArg,
+  INewGoalEventArg
+} from '@shared/event_args/index';
 import { isBroadcaster } from '@shared/common';
 
 export const uptimeCommand = (
@@ -14,7 +23,6 @@ export const uptimeCommand = (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
-
   if (
     message === undefined ||
     activeStream === undefined ||
@@ -40,13 +48,14 @@ export const uptimeCommand = (
     response = `${duration.hours()} hours`;
   }
   if (duration.minutes() !== 0) {
-    response = response + ((response.length === 0 ? '' : ' and ')) + `${duration.minutes()} minutes.  Will the madness never end!?!`;
+    response =
+      response +
+      (response.length === 0 ? '' : ' and ') +
+      `${duration.minutes()} minutes.  Will the madness never end!?!`;
   }
 
   if (twitchChatFunc) {
-    twitchChatFunc(
-      `We've been streaming for ${response}.`
-    );
+    twitchChatFunc(`We've been streaming for ${response}.`);
   }
 
   return true;
@@ -60,7 +69,6 @@ export const projectCommand = (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
-
   if (
     message === undefined ||
     activeStream === undefined ||
@@ -78,9 +86,7 @@ export const projectCommand = (
   }
 
   if (twitchChatFunc) {
-    twitchChatFunc(
-      `${activeStream.title}`
-    );
+    twitchChatFunc(`${activeStream.title}`);
   }
 
   return true;
@@ -94,7 +100,6 @@ export const segmentCommand = (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
-
   if (
     message === undefined ||
     userInfo === undefined ||
@@ -119,7 +124,7 @@ export const segmentCommand = (
   };
 
   const newSegmentEvent: INewSegmentEventArg = {
-    streamId: activeStream.id,
+    streamDate: activeStream.streamDate,
     streamSegment: newSegment
   };
 
@@ -136,7 +141,6 @@ export const goalCommand = (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
-
   if (
     message === undefined ||
     userInfo === undefined ||
@@ -162,7 +166,7 @@ export const goalCommand = (
 
   const newStreamGoalEvent: INewGoalEventArg = {
     streamGoal: newGoal,
-    streamId: activeStream.id
+    streamDate: activeStream.streamDate
   };
 
   emitMessageFunc(SocketIOEvents.NewGoal, newStreamGoalEvent);
@@ -178,7 +182,6 @@ export const raidCommand = (
   twitchChatFunc: (message: string) => void,
   emitMessageFunc: (event: string, payload: IBaseEventArg) => void
 ): boolean => {
-
   if (
     message === undefined ||
     userInfo === undefined ||
@@ -205,7 +208,7 @@ export const raidCommand = (
   };
 
   const newStreamRaidEventArg: INewSegmentEventArg = {
-    streamId: activeStream.id,
+    streamDate: activeStream.streamDate,
     streamSegment
   };
 

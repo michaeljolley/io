@@ -5,9 +5,7 @@ import rimraf from 'rimraf';
 import simplegit from 'simple-git/promise';
 
 import { config, log } from '@shared/common';
-import {
-  IStreamEventArg
-} from '@shared/event_args';
+import { IStreamEventArg } from '@shared/event_args';
 import { StreamDb } from '@shared/db';
 import { IStream } from '@shared/models';
 import { SocketIOEvents } from '@shared/events';
@@ -34,8 +32,12 @@ export class StreamNotes {
       fs.mkdirSync(__dirname + '/tmp');
     }
 
-    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) => this.onStreamEnd(streamEvent));
-    this.socket.on(SocketIOEvents.StreamNoteRebuild, (streamId: string) => this.onStreamNoteRebuild(streamId));
+    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
+      this.onStreamEnd(streamEvent)
+    );
+    this.socket.on(SocketIOEvents.StreamNoteRebuild, (streamDate: string) =>
+      this.onStreamNoteRebuild(streamDate)
+    );
   }
 
   /**
@@ -45,9 +47,8 @@ export class StreamNotes {
     log('info', 'Stream Notes is online and running...');
   }
 
-  private initGit = async () : Promise<any> => {
+  private initGit = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
-
       if (fs.existsSync(`${__dirname}/tmp/${this.repoDirectory}`)) {
         rimraf.sync(`${__dirname}/tmp/${this.repoDirectory}`);
       }
@@ -60,97 +61,132 @@ export class StreamNotes {
 
       resolve(true);
     });
-  }
+  };
 
-  private configureGit = async () : Promise<any> => {
-
+  private configureGit = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
-
-      this.git.addConfig('user.name', config.githubName).then((val: string) => {
-        this.git.addConfig('user.email', config.githubEmailAddress).then((val2: string) => {
-          log('info', 'git configured');
-          resolve(true);
-        }).catch((err: any) => {
+      this.git
+        .addConfig('user.name', config.githubName)
+        .then((val: string) => {
+          this.git
+            .addConfig('user.email', config.githubEmailAddress)
+            .then((val2: string) => {
+              log('info', 'git configured');
+              resolve(true);
+            })
+            .catch((err: any) => {
+              log('info', `configureGet: ERR: ${err}`);
+              reject(err);
+            });
+        })
+        .catch((err: any) => {
           log('info', `configureGet: ERR: ${err}`);
           reject(err);
         });
-      }).catch((err: any) => {
-        log('info', `configureGet: ERR: ${err}`);
-        reject(err);
-      });
     });
-  }
+  };
 
-  private clone = async () : Promise<any> => {
+  private clone = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
-      this.git.clone(this.gitHubRepoUrl, __dirname + `/tmp/${this.repoDirectory}`).then((value: string) => {
-        log('info', `Successfully cloned ${config.githubUsername}/${config.githubRepo}`);
+      this.git
+        .clone(this.gitHubRepoUrl, __dirname + `/tmp/${this.repoDirectory}`)
+        .then((value: string) => {
+          log(
+            'info',
+            `Successfully cloned ${config.githubUsername}/${config.githubRepo}`
+          );
 
-        resolve(value);
-      }).catch((err: any) => {
-        reject(err);
-      });
+          resolve(value);
+        })
+        .catch((err: any) => {
+          reject(err);
+        });
     });
-  }
+  };
 
-  private branch = async () : Promise<any> => {
+  private branch = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
-      this.git.checkoutLocalBranch(this.streamNoteName).then(() => {
-        log('info', `Successfully checked out ${this.streamNoteName}`);
-        resolve(this.streamNoteName);
-      }).catch((err: any) => {
-        reject(err);
-      })
+      this.git
+        .checkoutLocalBranch(this.streamNoteName)
+        .then(() => {
+          log('info', `Successfully checked out ${this.streamNoteName}`);
+          resolve(this.streamNoteName);
+        })
+        .catch((err: any) => {
+          reject(err);
+        })
     );
-  }
+  };
 
-  private add = async () : Promise<any> => {
+  private add = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
-      this.git.add('./*').then(() => {
-        log('info', `Successfully added file ${this.streamNoteName}.md`);
-        resolve(this.streamNoteName);
-      }).catch((err: any) => {
-        reject(err);
-      })
+      this.git
+        .add('./*')
+        .then(() => {
+          log('info', `Successfully added file ${this.streamNoteName}.md`);
+          resolve(this.streamNoteName);
+        })
+        .catch((err: any) => {
+          reject(err);
+        })
     );
-  }
+  };
 
-  private commit = async () : Promise<any> => {
+  private commit = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
-      this.git.commit(`Adding stream notes for ${this.streamNoteName}`).then(() => {
-        log('info', `Successfully committed file ${this.streamNoteName}.md`);
-        resolve(this.streamNoteName);
-      }).catch((err: any) => {
-        reject(err);
-      })
+      this.git
+        .commit(`Adding stream notes for ${this.streamNoteName}`)
+        .then(() => {
+          log('info', `Successfully committed file ${this.streamNoteName}.md`);
+          resolve(this.streamNoteName);
+        })
+        .catch((err: any) => {
+          reject(err);
+        })
     );
-  }
+  };
 
-  private push = async () : Promise<any> => {
+  private push = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
-      this.git.push(this.gitHubRepoUrl, this.streamNoteName).then(() => {
-        log('info', `Successfully pushed branch: ${this.streamNoteName}`);
-        resolve(this.streamNoteName);
-      }).catch((err: any) => {
-        reject(err);
-      })
+      this.git
+        .push(this.gitHubRepoUrl, this.streamNoteName)
+        .then(() => {
+          log('info', `Successfully pushed branch: ${this.streamNoteName}`);
+          resolve(this.streamNoteName);
+        })
+        .catch((err: any) => {
+          reject(err);
+        })
     );
-  }
+  };
 
-  private generateStreamNotesFile = async () : Promise<any> => {
+  private generateStreamNotesFile = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
       const markdowner = new Markdowner(this.activeStream);
       markdowner.generateMarkdown().then((content: string) => {
-        if (!fs.existsSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`)) {
-          fs.mkdirSync(`${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`);
+        if (
+          !fs.existsSync(
+            `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
+          )
+        ) {
+          fs.mkdirSync(
+            `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
+          );
         }
 
-        fs.writeFileSync(__dirname + `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md`, content);
-        log('info', `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md'!`);
+        fs.writeFileSync(
+          __dirname +
+            `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md`,
+          content
+        );
+        log(
+          'info',
+          `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md'!`
+        );
         resolve(this.streamNoteName);
       });
     });
-  }
+  };
 
   private cleanUp = () => {
     this.activeStream = undefined;
@@ -158,45 +194,46 @@ export class StreamNotes {
     this.streamNoteDir = '';
 
     rimraf.sync(__dirname + `/tmp/${this.repoDirectory}`);
-  }
+  };
 
   private async onStreamEnd(streamEvent: IStreamEventArg) {
     if (streamEvent && streamEvent.stream) {
-      this.buildStreamNotes(streamEvent.stream.id);
+      this.buildStreamNotes(streamEvent.stream.streamDate);
     }
   }
 
-  private async onStreamNoteRebuild(streamId: string) {
-    if (streamId) {
-      this.buildStreamNotes(streamId);
+  private async onStreamNoteRebuild(streamDate: string) {
+    if (streamDate) {
+      this.buildStreamNotes(streamDate);
     }
   }
 
-  private async buildStreamNotes(streamId: string) {
-
+  private async buildStreamNotes(streamDate: string) {
     // Get the stream from the streamDb (include users/candles/etc)
-    this.activeStream = await this.streamDb.getStream(streamId);
+    this.activeStream = await this.streamDb.getStream(streamDate);
 
     if (this.activeStream) {
-
-      log('info', `Building stream notes for ${this.activeStream.id}`);
+      log('info', `Building stream notes for ${this.activeStream.streamDate}`);
 
       if (this.activeStream) {
-        this.streamNoteName = moment(this.activeStream.started_at).format('YYYY-MM-DD');
-        this.streamNoteDir = `docs/_posts/${moment(this.activeStream.started_at).format('YYYY/MM')}/`;
+        this.streamNoteName = moment(this.activeStream.started_at).format(
+          'YYYY-MM-DD'
+        );
+        this.streamNoteDir = `_streams/${moment(
+          this.activeStream.started_at
+        ).format('YYYY/MM')}/`;
 
         // Clone our BBB repo
         await this.initGit()
-                    .then(this.clone)
-                    .then(this.configureGit)
-                    .then(this.branch)
-                    .then(this.generateStreamNotesFile)
-                    .then(this.add)
-                    .then(this.commit)
-                    .then(this.push)
-                    .catch((err: any) => log('info', `buildStreamNotes: ${err}`))
-                    .finally(this.cleanUp);
-
+          .then(this.clone)
+          .then(this.configureGit)
+          .then(this.branch)
+          .then(this.generateStreamNotesFile)
+          .then(this.add)
+          .then(this.commit)
+          .then(this.push)
+          .catch((err: any) => log('info', `buildStreamNotes: ${err}`))
+          .finally(this.cleanUp);
       }
     }
   }

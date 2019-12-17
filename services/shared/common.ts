@@ -7,6 +7,11 @@ import * as config from './config';
 
 export { config };
 
+export const genericComicAvatars = [
+  'tiki',
+  'armando'
+];
+
 export const isMod = (user: any) : boolean => {
   if (user &&
       user.badges &&

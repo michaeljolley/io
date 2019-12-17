@@ -18,7 +18,8 @@ import {
   IUserEventArg,
   IStreamRepoChangedEventArg,
   INewNoteEventArg,
-  INewGoalEventArg
+  INewGoalEventArg,
+  IChatMessageEventArg
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -26,6 +27,7 @@ import {
   ICandleVote,
   ICandle,
   ICandleVoteResult,
+  IChatMessage,
   IVote
 } from '@shared/models';
 
@@ -39,26 +41,34 @@ export class Logger {
     this.streamDb = new StreamDb();
     this.candleDb = new CandleDb();
 
-    this.socket.on(SocketIOEvents.StreamStarted, (streamEvent: IStreamEventArg) =>
-      this.onStreamStart(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamStarted,
+      (streamEvent: IStreamEventArg) => this.onStreamStart(streamEvent)
     );
-    this.socket.on(SocketIOEvents.StreamUpdated, (streamEvent: IStreamEventArg) =>
-      this.onStreamUpdate(streamEvent)
+    this.socket.on(
+      SocketIOEvents.StreamUpdated,
+      (streamEvent: IStreamEventArg) => this.onStreamUpdate(streamEvent)
     );
     this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
       this.onStreamEnd(streamEvent)
     );
 
-    this.socket.on(SocketIOEvents.OnRaidStream, (newStreamRaidEvent: INewSegmentEventArg) =>
-      this.onStreamSegment(newStreamRaidEvent)
+    this.socket.on(
+      SocketIOEvents.OnRaidStream,
+      (newStreamRaidEvent: INewSegmentEventArg) =>
+        this.onStreamSegment(newStreamRaidEvent)
     );
 
-    this.socket.on(SocketIOEvents.StreamRepoChanged, (streamRepoChangedEvent: IStreamRepoChangedEventArg) =>
-      this.onStreamRepoChanged(streamRepoChangedEvent)
+    this.socket.on(
+      SocketIOEvents.StreamRepoChanged,
+      (streamRepoChangedEvent: IStreamRepoChangedEventArg) =>
+        this.onStreamRepoChanged(streamRepoChangedEvent)
     );
 
-    this.socket.on(SocketIOEvents.NewFollower, (newFollowerEvent: INewFollowerEventArg) =>
-      this.onNewFollow(newFollowerEvent)
+    this.socket.on(
+      SocketIOEvents.NewFollower,
+      (newFollowerEvent: INewFollowerEventArg) =>
+        this.onNewFollow(newFollowerEvent)
     );
     this.socket.on(
       SocketIOEvents.NewSubscriber,
@@ -68,31 +78,44 @@ export class Logger {
     this.socket.on(SocketIOEvents.NewRaid, (newRaidEvent: INewRaidEventArg) =>
       this.onNewRaid(newRaidEvent)
     );
-    this.socket.on(SocketIOEvents.NewCheer, (newCheerEvent: INewCheerEventArg) =>
-      this.onNewCheer(newCheerEvent)
+    this.socket.on(
+      SocketIOEvents.NewCheer,
+      (newCheerEvent: INewCheerEventArg) => this.onNewCheer(newCheerEvent)
+    );
+    this.socket.on(
+      SocketIOEvents.OnChatMessage,
+      (chatMessageEvent: IChatMessageEventArg) =>
+        this.onChatMessage(chatMessageEvent)
     );
 
-    this.socket.on(SocketIOEvents.CandleWinner, (candleWinnerEvent: ICandleWinnerEventArg) =>
-      this.onCandleWinner(candleWinnerEvent)
+    this.socket.on(
+      SocketIOEvents.CandleWinner,
+      (candleWinnerEvent: ICandleWinnerEventArg) =>
+        this.onCandleWinner(candleWinnerEvent)
     );
     this.socket.on(SocketIOEvents.CandleReset, (streamEvent: IStreamEventArg) =>
       this.onCandleReset(streamEvent)
     );
-    this.socket.on(SocketIOEvents.CandleVoteStop, (streamEvent: IStreamEventArg) =>
-      this.onCandleStop(streamEvent)
+    this.socket.on(
+      SocketIOEvents.CandleVoteStop,
+      (streamEvent: IStreamEventArg) => this.onCandleStop(streamEvent)
     );
-    this.socket.on(SocketIOEvents.CandleVote, (candleVoteEventArg: ICandleVoteEventArg) =>
-      this.onCandleVote(candleVoteEventArg)
+    this.socket.on(
+      SocketIOEvents.CandleVote,
+      (candleVoteEventArg: ICandleVoteEventArg) =>
+        this.onCandleVote(candleVoteEventArg)
     );
 
     this.socket.on(SocketIOEvents.PlayAudio, (mediaEventArg: IMediaEventArg) =>
       this.onPlayAudio(mediaEventArg)
     );
-    this.socket.on(SocketIOEvents.TwitchThemer, (themerEventArg: IThemerEventArg) =>
-      this.onTwitchThemer(themerEventArg)
+    this.socket.on(
+      SocketIOEvents.TwitchThemer,
+      (themerEventArg: IThemerEventArg) => this.onTwitchThemer(themerEventArg)
     );
-    this.socket.on(SocketIOEvents.OnModeratorJoined, (userEventArg: IUserEventArg) =>
-      this.onModeratorJoined(userEventArg)
+    this.socket.on(
+      SocketIOEvents.OnModeratorJoined,
+      (userEventArg: IUserEventArg) => this.onModeratorJoined(userEventArg)
     );
     this.socket.on(SocketIOEvents.NewNote, (noteEvent: INewNoteEventArg) =>
       this.newNote(noteEvent)
@@ -100,8 +123,10 @@ export class Logger {
     this.socket.on(SocketIOEvents.NewGoal, (goalEvent: INewGoalEventArg) =>
       this.newGoal(goalEvent)
     );
-    this.socket.on(SocketIOEvents.NewSegment, (streamSegmentEvent: INewSegmentEventArg) =>
-      this.onStreamSegment(streamSegmentEvent)
+    this.socket.on(
+      SocketIOEvents.NewSegment,
+      (streamSegmentEvent: INewSegmentEventArg) =>
+        this.onStreamSegment(streamSegmentEvent)
     );
   }
 
@@ -115,7 +140,7 @@ export class Logger {
     // Only need to set the streams ended_at property
     await this.streamDb.saveStream({
       ended_at: new Date().toISOString(),
-      id: streamEvent.stream.id
+      streamDate: streamEvent.stream.streamDate
     });
   }
 
@@ -127,21 +152,39 @@ export class Logger {
   private async onNewFollow(newFollowerEvent: INewFollowerEventArg) {
     // We want to record the follower on the current stream
     await this.streamDb.recordUser(
-      newFollowerEvent.streamId,
+      newFollowerEvent.streamDate,
       'followers',
       newFollowerEvent.follower
     );
   }
 
+  private async onChatMessage(chatMessageEvent: IChatMessageEventArg) {
+    // We want to record the follower on the current stream
+
+    const chatMessage: IChatMessage = {
+      message: chatMessageEvent.message,
+      timestamp: new Date(),
+      user: chatMessageEvent.userInfo
+    };
+
+    await this.streamDb.recordChatMessage(
+      chatMessageEvent.streamDate,
+      chatMessage
+    );
+  }
+
   private async onNewRaid(newRaidEvent: INewRaidEventArg) {
     // We want to record the raider on the current stream
-    await this.streamDb.recordRaid(newRaidEvent.streamId, newRaidEvent.raider);
+    await this.streamDb.recordRaid(
+      newRaidEvent.streamDate,
+      newRaidEvent.raider
+    );
   }
 
   private async onNewCheer(newCheerEvent: INewCheerEventArg) {
     // We want to record the cheer on the current stream
     await this.streamDb.recordCheer(
-      newCheerEvent.streamId,
+      newCheerEvent.streamDate,
       newCheerEvent.cheerer
     );
   }
@@ -151,7 +194,7 @@ export class Logger {
   ) {
     // We want to record the subcription on the current stream
     await this.streamDb.recordSubscriber(
-      newSubscriptionEvent.streamId,
+      newSubscriptionEvent.streamDate,
       newSubscriptionEvent.subscriber
     );
   }
@@ -159,16 +202,18 @@ export class Logger {
   private async onPlayAudio(mediaEventArg: IMediaEventArg) {
     // We want to record the user as a contributor on the current stream
     await this.streamDb.recordUser(
-      mediaEventArg.streamId,
+      mediaEventArg.streamDate,
       'contributors',
       mediaEventArg.user
     );
   }
 
-  private async onStreamRepoChanged(streamRepoChangedEvent: IStreamRepoChangedEventArg) {
+  private async onStreamRepoChanged(
+    streamRepoChangedEvent: IStreamRepoChangedEventArg
+  ) {
     // We want to record the repo on the current stream
     await this.streamDb.recordRepo(
-      streamRepoChangedEvent.stream.id,
+      streamRepoChangedEvent.stream.streamDate,
       streamRepoChangedEvent.repo
     );
   }
@@ -176,7 +221,7 @@ export class Logger {
   private async onTwitchThemer(themerEventArg: IThemerEventArg) {
     // We want to record the user as a contributor on the current stream
     await this.streamDb.recordUser(
-      themerEventArg.streamId,
+      themerEventArg.streamDate,
       'contributors',
       themerEventArg.user
     );
@@ -185,7 +230,7 @@ export class Logger {
   private async onModeratorJoined(userEventArg: IUserEventArg) {
     // We want to record the moderator as being with us
     await this.streamDb.recordUser(
-      userEventArg.streamId,
+      userEventArg.streamDate,
       'moderators',
       userEventArg.user
     );
@@ -193,21 +238,18 @@ export class Logger {
 
   private async onStreamSegment(streamSegmentEvent: INewSegmentEventArg) {
     await this.streamDb.recordSegment(
-      streamSegmentEvent.streamId,
+      streamSegmentEvent.streamDate,
       streamSegmentEvent.streamSegment
     );
   }
 
   private async newNote(noteEvent: INewNoteEventArg) {
-    await this.streamDb.recordNote(
-      noteEvent.streamId,
-      noteEvent.streamNote
-    );
+    await this.streamDb.recordNote(noteEvent.streamDate, noteEvent.streamNote);
   }
 
   private async newGoal(goalEvent: INewGoalEventArg) {
-    await this.streamDb.recordGoal(
-      goalEvent.streamId,
+    await this.streamDb.recordNewGoal(
+      goalEvent.streamDate,
       goalEvent.streamGoal
     );
   }
@@ -215,32 +257,30 @@ export class Logger {
   private async onCandleWinner(candleWinnerEvent: ICandleWinnerEventArg) {
     log(
       'info',
-      `onCandleWinner: ${candleWinnerEvent.streamId} - ${
-        candleWinnerEvent.candle.label
-      }`
+      `onCandleWinner: ${candleWinnerEvent.streamDate} - ${candleWinnerEvent.candle.label}`
     );
     // Only need to set the streams candle property
     await this.streamDb.saveStream({
       candle: candleWinnerEvent.candle,
-      id: candleWinnerEvent.streamId
+      streamDate: candleWinnerEvent.streamDate
     });
   }
 
   private async onCandleReset(streamEvent: IStreamEventArg) {
-    log('info', `onCandleReset: ${streamEvent.stream.id}`);
+    log('info', `onCandleReset: ${streamEvent.stream.streamDate}`);
     // Only need to set the streams candle property to null
     await this.streamDb.saveStream({
       candle: null,
       candleVotes: [],
-      id: streamEvent.stream.id
+      id: streamEvent.stream.streamDate
     });
   }
 
   private async onCandleStop(streamEvent: IStreamEventArg) {
-    log('info', `onCandleStop: ${streamEvent.stream.id}`);
+    log('info', `onCandleStop: ${streamEvent.stream.streamDate}`);
 
     const stream: IStream | undefined = await this.streamDb.getStream(
-      streamEvent.stream.id
+      streamEvent.stream.streamDate
     );
 
     if (stream) {
@@ -259,7 +299,7 @@ export class Logger {
         if (winner) {
           const candleWinnerEventArg: ICandleWinnerEventArg = {
             candle: winner.candle,
-            streamId: streamEvent.stream.id
+            streamDate: streamEvent.stream.streamDate
           };
 
           this.socket.emit(SocketIOEvents.CandleWinner, candleWinnerEventArg);
@@ -271,7 +311,7 @@ export class Logger {
   private async onCandleVote(candleVoteEvent: ICandleVoteEventArg) {
     const vote: IVote = {
       candle: candleVoteEvent.candle,
-      streamId: candleVoteEvent.streamId,
+      streamDate: candleVoteEvent.streamDate,
       user: candleVoteEvent.userInfo
     };
 
@@ -280,13 +320,13 @@ export class Logger {
     // tablulate current results & emit
     const candles: ICandle[] = await this.candleDb.getCandles();
     const stream: IStream | null | undefined = await this.streamDb.getStream(
-      candleVoteEvent.streamId
+      candleVoteEvent.streamDate
     );
 
     if (stream && stream.candleVotes) {
       const candleVoteResultEvent: ICandleVoteResultEventArg = {
         candles,
-        streamId: stream.id,
+        streamDate: stream.streamDate,
         voteResults: tabulateResults(candles, stream.candleVotes)
       };
       this.socket.emit(SocketIOEvents.CandleVoteUpdate, candleVoteResultEvent);
@@ -303,9 +343,7 @@ const tabulateResults = (
   const results: ICandleVoteResult[] = [];
 
   for (const key of Object.keys(voteResults)) {
-    const candle: any = candles.find(
-      (f: any) => f.name === key
-    );
+    const candle: any = candles.find((f: any) => f.name === key);
     if (candle) {
       log('info', `${key}: ${voteResults[key].length}`);
       const voteResult: ICandleVoteResult = {
@@ -321,4 +359,3 @@ const tabulateResults = (
   log('info', `tabulateResults: ${JSON.stringify(results)}`);
   return results;
 };
-

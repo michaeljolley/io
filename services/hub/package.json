@@ -1,7 +1,7 @@
 {
-  "name": "io-chat",
+  "name": "io-hub",
   "version": "2.0.0",
-  "description": "Twitch chat client",
+  "description": "",
   "repository": {
     "type": "git",
     "url": "https://github.com/MichaelJolley/io"

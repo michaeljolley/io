@@ -1,6 +1,7 @@
 ﻿"use strict";
 
 const socket = io('http://localhost:5060');
+let avEnabled = true;
 
 socket.on('NewAnnouncement', (newAnnouncementEventArg) => {
     const user = newAnnouncementEventArg.user;
@@ -19,7 +20,11 @@ socket.on('NewRaid', (newRaidEventArg) => {
     const raider = newRaidEventArg.raider;
     const displayName = raider.user.display_name || raider.user.login;
     const msg = `DEFEND! ${displayName} is raiding with ${raider.viewers} accomplices!`;
-    addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
+    if(raider.user.raidAlert) {
+        addAndStart(msg, raider.user.raidAlert, raider.user.profile_image_url, 10);
+    } else {
+        addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
+    }
 });
 
 socket.on('NewSubscriber', (newSubscriptionEventArg) => {
@@ -40,7 +45,7 @@ socket.on('NewFollower', (newFollowerEventArg) => {
     const follower = newFollowerEventArg.follower;
     const displayName = follower.display_name || follower.login;
     const msg = `Welcome ${displayName}! Thanks for following!`;
-    attemptToStart(msg, 'ohmy', follower.profile_image_url, 10);
+    addAndStart(msg, 'ohmy', follower.profile_image_url, 10);
 });
 
 let messageQueue = [];
@@ -78,7 +83,7 @@ function processMessage(qItem, bypass) {
 
     // Emit playAudio if needed
     if(qItem.audio && qItem.audio.length > 0) {
-        socket.emit('playAudio', qItem.audio);
+        playAudio(qItem.audio);
     }
 
     messageQueue.splice(0, 1);
@@ -99,4 +104,54 @@ function processMessage(qItem, bypass) {
             }
         }, 2000);
     }, qItem.timeout * 1000);
+}
+
+
+const _audioPath = '/assets/audio/clips/';
+const container = document.getElementById('container');
+const playNext = new CustomEvent('playNext', {
+  bubbles: true
+});
+
+function playAudio(clipName) {
+    if (avEnabled) {
+        var audio = document.createElement('audio');
+        audio.src = `${_audioPath}${clipName}.mp3`;
+        audio.id = +(new Date());
+        audio.addEventListener('ended', audioStop, false);
+
+        if (container.childElementCount > 0) {
+            audioQueue.push(audio);
+
+        } else {
+            container.appendChild(audio);
+            let playPromise = audio.play().catch(error => {
+                throw error;
+            });
+        }
+    }
+}
+
+socket.on('StopAudio', () => {
+    container.innerHTML = '';
+    audioQueue = [];
+});
+
+socket.on('avStateChanged', (isEnabled) => {
+    avEnabled = isEnabled;
+});
+
+function playQueue() {
+    if (audioQueue.length > 0) {
+        let audio = audioQueue.shift();
+        container.appendChild(audio);
+        let playPromise = audio.play().catch(error => {
+            throw error;
+        });
+    }
+}
+
+function audioStop(e) {
+    e.srcElement.dispatchEvent(playNext);
+    e.srcElement.remove();
 }

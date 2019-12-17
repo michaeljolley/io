@@ -1,7 +1,7 @@
-import { IStreamGoal } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { IStreamGoal } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface INewGoalEventArg extends IBaseEventArg {
-  streamId: string;
+  streamDate: string;
   streamGoal: IStreamGoal;
 }
