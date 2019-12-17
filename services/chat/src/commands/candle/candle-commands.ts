@@ -118,7 +118,7 @@ const baseCandleCommand = async (
       twitchChatFunc(`It's still up in the air. Voting is active now.`);
     } else {
       twitchChatFunc(
-        `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @theMichaelJolley.`
+        `I dunno, but it smells like stinky feet in here. Maybe we should vote for a candle @BaldBeardedBuilder.`
       );
     }
   } else {
