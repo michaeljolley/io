@@ -190,7 +190,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -320,7 +320,34 @@ export const awesumRepoCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `The Awesum repository can be found at https://github.com/appar-io/awesum`
+      `The Awesum.io repository can be found at https://github.com/MichaelJolley/awesum.io`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const keyboardCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+
+  if (firstWord !== '!keyboard') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `Mike is using the MassDrop ALT mechanical keyboard.  You can find it at https://drop.com/buy/massdrop-alt-mechanical-keyboard`
     );
     return true;
   }

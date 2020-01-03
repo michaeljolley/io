@@ -160,8 +160,10 @@ export class API {
     this.app.post('/issues/:issue/comment', async (req, res) => {
       log('info', `route: /issues called with issue - ${req.params.issue}`);
 
+      const issue: number = parseInt(req.params.issue);
+
       const payload: any = await this.github.createComment(
-        req.body.repo, req.params.issue, req.body.comment);
+        req.body.repo, issue, req.body.comment);
 
       res.send(payload);
     });
