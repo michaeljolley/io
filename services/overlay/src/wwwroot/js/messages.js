@@ -20,7 +20,11 @@ socket.on('NewRaid', (newRaidEventArg) => {
     const raider = newRaidEventArg.raider;
     const displayName = raider.user.display_name || raider.user.login;
     const msg = `DEFEND! ${displayName} is raiding with ${raider.viewers} accomplices!`;
-    addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
+    if( raider.user.login === 'cldubya' ){
+        addAndStart(msg, 'hurricane', raider.user.profile_image_url, 10);
+    } else {
+        addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
+    }
 });
 
 socket.on('NewSubscriber', (newSubscriptionEventArg) => {
@@ -41,7 +45,7 @@ socket.on('NewFollower', (newFollowerEventArg) => {
     const follower = newFollowerEventArg.follower;
     const displayName = follower.display_name || follower.login;
     const msg = `Welcome ${displayName}! Thanks for following!`;
-    attemptToStart(msg, 'ohmy', follower.profile_image_url, 10);
+    addAndStart(msg, 'ohmy', follower.profile_image_url, 10);
 });
 
 let messageQueue = [];

@@ -24,7 +24,7 @@
     "express": "^4.17.0",
     "module-alias": "^2.2.0",
     "mongoose": "^5.6.0",
-    "ngrok": "^3.2.3",
+    "ngrok": "^3.2.5",
     "query-string": "^6.5.0",
     "restler": "^3.4.0",
     "socket.io-client": "^2.2.0",

@@ -190,7 +190,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !blog, !candle, !discord, !font, !github, !heroines, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -302,7 +302,12 @@ export const fontCommand = (
   return false;
 };
 
+<<<<<<< HEAD
 export const raidCommand = (
+=======
+
+export const keyboardCommand = (
+>>>>>>> b95926e75a5d3ffcddbfe9f49358413e1a32e769
   message: string,
   user: ChatUserstate,
   twitchChatFunc: (message: string) => void
@@ -314,13 +319,21 @@ export const raidCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
+<<<<<<< HEAD
   if (firstWord !== '!raid') {
+=======
+  if (firstWord !== '!keyboard') {
+>>>>>>> b95926e75a5d3ffcddbfe9f49358413e1a32e769
     return false;
   }
 
   if (twitchChatFunc) {
     twitchChatFunc(
+<<<<<<< HEAD
       `themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid`
+=======
+      `Mike is using the MassDrop ALT mechanical keyboard.  You can find it at https://drop.com/buy/massdrop-alt-mechanical-keyboard`
+>>>>>>> b95926e75a5d3ffcddbfe9f49358413e1a32e769
     );
     return true;
   }

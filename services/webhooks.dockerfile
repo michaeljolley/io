@@ -1,4 +1,4 @@
-FROM node:12.6.0-alpine
+FROM node:12.6.0-slim
 
 WORKDIR /app/shared
 
@@ -14,9 +14,12 @@ WORKDIR /app/webhooks
 COPY ./webhooks/package*.json ./
 RUN npm ci --silent
 
+COPY ./webhooks/.ngrok2/ngrok.yml /root/.ngrok2/
+
 COPY ./webhooks/ ./
 RUN npm version $BUILDVERSION --allow-same-version \
-  && npm run build
+  && npm run build \
+  && rm -rf .ngrok2
 
 EXPOSE 80
 CMD [ "node", "dist/index.js" ]

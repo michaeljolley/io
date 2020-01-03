@@ -9,7 +9,7 @@ import {
   INewSubscriptionEventArg,
   INewRaidEventArg,
   INewCheerEventArg,
-  ICandleWinnerEventArg,
+  ICandleWinnerEventArg, 
   ICandleVoteEventArg,
   ICandleVoteResultEventArg,
   INewSegmentEventArg,
