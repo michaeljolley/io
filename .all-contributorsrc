@@ -73,7 +73,8 @@
       "avatar_url": "https://avatars0.githubusercontent.com/u/3969086?v=4",
       "profile": "https://c-j.tech",
       "contributions": [
-        "ideas"
+        "ideas",
+        "code"
       ]
     },
     {
@@ -248,5 +249,6 @@
   "projectName": "io",
   "projectOwner": "MichaelJolley",
   "repoType": "github",
-  "repoHost": "https://github.com"
+  "repoHost": "https://github.com",
+  "skipCi": true
 }
