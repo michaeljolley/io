@@ -190,7 +190,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !awesum, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !awesum, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -302,6 +302,31 @@ export const fontCommand = (
   return false;
 };
 
+export const awesumRepoCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!awesumRepo') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `The Awesum.io repository can be found at https://github.com/MichaelJolley/awesum.io`
+    );
+    return true;
+  }
+
+  return false;
+};
 
 export const keyboardCommand = (
   message: string,
@@ -314,6 +339,7 @@ export const keyboardCommand = (
 
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
+
 
   if (firstWord !== '!keyboard') {
     return false;
