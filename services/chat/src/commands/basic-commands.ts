@@ -340,7 +340,6 @@ export const keyboardCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-
   if (firstWord !== '!keyboard') {
     return false;
   }
