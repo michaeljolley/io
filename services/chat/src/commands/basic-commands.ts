@@ -301,7 +301,6 @@ export const fontCommand = (
   return false;
 };
 
-<<<<<<< HEAD
 export const awesumRepoCommand = (
   message: string,
   user: ChatUserstate,
@@ -328,8 +327,6 @@ export const awesumRepoCommand = (
   return false;
 };
 
-=======
->>>>>>> master
 export const keyboardCommand = (
   message: string,
   user: ChatUserstate,
@@ -381,7 +378,6 @@ export const awesumCommand = (
 
   return false;
 };
-
 
 export const raidCommand = (
   message: string,
