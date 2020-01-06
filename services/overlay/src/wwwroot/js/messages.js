@@ -20,8 +20,8 @@ socket.on('NewRaid', (newRaidEventArg) => {
     const raider = newRaidEventArg.raider;
     const displayName = raider.user.display_name || raider.user.login;
     const msg = `DEFEND! ${displayName} is raiding with ${raider.viewers} accomplices!`;
-    if( raider.user.login === 'cldubya' ){
-        addAndStart(msg, 'hurricane', raider.user.profile_image_url, 10);
+    if(raider.user.raidAlert) {
+        addAndStart(msg, raider.user.raidAlert, raider.user.profile_image_url, 10);
     } else {
         addAndStart(msg, 'goodbadugly', raider.user.profile_image_url, 10);
     }

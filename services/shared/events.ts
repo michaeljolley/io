@@ -1,6 +1,4 @@
-
 export enum SocketIOEvents {
-
   /* chat related events */
   OnChatMessage = 'OnChatMessage',
   OnUserJoined = 'OnUserJoined',
@@ -39,6 +37,7 @@ export enum SocketIOEvents {
   /* data events */
   NewNote = 'NewNote',
   NewGoal = 'NewGoal',
+  GoalUpdated = 'GoalUpdated',
   NewSegment = 'NewSegment',
   TwitchThemer = 'TwitchThemer',
   RetrievedLiveCodersTeamMembers = 'RetrievedLiveCodersTeamMembers',
@@ -51,5 +50,4 @@ export enum SocketIOEvents {
   CandleVote = 'CandleVote',
   CandleWinner = 'CandleWinner',
   CandleVoteUpdate = 'CandleVoteUpdate'
-
 }

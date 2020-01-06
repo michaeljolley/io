@@ -11,6 +11,7 @@ export interface IUserInfo extends mongoose.Document {
   githubHandle: string;
   twitterHandle: string;
   comicAvatar: string;
+  raidAlert: string;
 }
 
 export const UserInfoModel = mongoose.model<IUserInfo>(
@@ -25,6 +26,7 @@ export const UserInfoModel = mongoose.model<IUserInfo>(
     liveCodersTeamMember: Boolean,
     login: String,
     profile_image_url: String,
-    twitterHandle: String
+    twitterHandle: String,
+    raidAlert: String
   })
 );

@@ -2,8 +2,20 @@ import io from 'socket.io-client';
 
 import { SocketIOEvents } from '@shared/events';
 import { get, post, log, config } from '@shared/common';
-import { IGitHubRepo, IUserInfo, ILiveCodersTeam, ILiveCodersTeamMember } from '@shared/models';
-import { IBaseEventArg, ILastUserEventArg, IViewerCountEventArg, IStreamEventArg, IFollowerCountEventArg, INewAnnouncementEventArg } from '@shared/event_args';
+import {
+  IGitHubRepo,
+  IUserInfo,
+  ILiveCodersTeam,
+  ILiveCodersTeamMember
+} from '@shared/models';
+import {
+  IBaseEventArg,
+  ILastUserEventArg,
+  IViewerCountEventArg,
+  IStreamEventArg,
+  IFollowerCountEventArg,
+  INewAnnouncementEventArg
+} from '@shared/event_args';
 
 export class Chron {
   private socket!: SocketIOClient.Socket;
@@ -32,7 +44,7 @@ export class Chron {
     }, 3600000);
 
     // Every week update the live coders team members;
-    setInterval(async() => {
+    setInterval(async () => {
       await this.loadLiveTeamMembers();
     }, 604800000);
 
@@ -44,18 +56,24 @@ export class Chron {
     // Every  minutes, announce that viewers can use !help to learn more about the commands
     // available in chat
     setInterval(async () => {
-      await this.broadcastAnnouncement("New here? You can type '!help' in chat to see what commands are available.");
+      await this.broadcastAnnouncement(
+        "New here? You can type '!help' in chat to see what commands are available."
+      );
     }, 330000);
 
     // Every  minutes, announce that viewers can use !theme to change the theme of VS Code
     setInterval(async () => {
-      await this.broadcastAnnouncement("Change my VS Code theme. Type '!theme help' in chat to learn how.");
+      await this.broadcastAnnouncement(
+        "Change my VS Code theme. Type '!theme help' in chat to learn how."
+      );
     }, 540000);
 
     // Every  minutes, announce that viewers can use !sfx to find out what sound effects they can control
     // from chat
     setInterval(async () => {
-      await this.broadcastAnnouncement("Want to play a sound? Type '!sfx' in chat to see what's available.");
+      await this.broadcastAnnouncement(
+        "Want to play a sound? Type '!sfx' in chat to see what's available."
+      );
     }, 720000);
 
     // Every minute get the current viewer count
@@ -72,24 +90,30 @@ export class Chron {
   }
 
   public refreshRepos = async (): Promise<void> => {
-    const resp: IGitHubRepo[] = await get(this.repoUrl).then((response: any) => response.data as IGitHubRepo[]);
+    const resp: IGitHubRepo[] = await get(this.repoUrl).then(
+      (response: any) => response.data as IGitHubRepo[]
+    );
     if (resp.length > 0) {
       const url = `http://repo/refresh`;
       await post(url, resp);
     }
-  }
+  };
 
   public loadLiveTeamMembers = async (): Promise<any> => {
     const url = `${this.apiUrl}/team/livecoders`;
 
-    const resp: ILiveCodersTeam = await get(url).then((data: any) => data as ILiveCodersTeam);
+    const resp: ILiveCodersTeam = await get(url).then(
+      (data: any) => data as ILiveCodersTeam
+    );
 
     const liveCodersTeamMembers: ILiveCodersTeamMember[] = resp.users;
 
     if (liveCodersTeamMembers) {
-      await this.updateLiveCoders(liveCodersTeamMembers.map(member => member.name));
+      await this.updateLiveCoders(
+        liveCodersTeamMembers.map(member => member.name)
+      );
     }
-  }
+  };
 
   public broadcastFollowers = async (): Promise<any> => {
     const url = `${this.apiUrl}/followers`;
@@ -102,7 +126,10 @@ export class Chron {
       followers: followerCount
     };
 
-    this.emitMessage(SocketIOEvents.FollowerCountChanged, followerCountEventArg);
+    this.emitMessage(
+      SocketIOEvents.FollowerCountChanged,
+      followerCountEventArg
+    );
 
     if (resp.total > 0 && resp.data[0].from_name) {
       const lastFollower: IUserInfo | undefined = await this.getUser(
@@ -114,7 +141,10 @@ export class Chron {
           userInfo: lastFollower
         };
 
-        this.emitMessage(SocketIOEvents.LastFollowerUpdated, lastFollowerEventArg);
+        this.emitMessage(
+          SocketIOEvents.LastFollowerUpdated,
+          lastFollowerEventArg
+        );
       }
     }
     return;
@@ -135,13 +165,14 @@ export class Chron {
       // stream ended
       if (resp.started_at === undefined && this.activeStream !== undefined) {
         this.emitMessage(SocketIOEvents.StreamEnded, streamEventArg);
+        log('info', `Stream ended: ${this.activeStream.streamDate}`);
         this.activeStream = undefined;
-        log('info', `Stream ended: ${this.activeStream.id}`);
       }
 
       // stream started
       if (resp.started_at !== undefined && this.activeStream === undefined) {
         this.activeStream = resp;
+        this.activeStream.streamDate = new Date().toLocaleDateString('en-US');
         streamEventArg.stream = this.activeStream;
         this.emitMessage(SocketIOEvents.StreamStarted, streamEventArg);
         log('info', `Stream started: ${this.activeStream.id}`);
@@ -149,7 +180,7 @@ export class Chron {
 
       if (this.activeStream) {
         this.emitMessage(SocketIOEvents.StreamUpdated, streamEventArg);
-        log('info', `Stream update: ${this.activeStream.id}`);
+        log('info', `Stream update: ${this.activeStream.streamDate}`);
       }
     } else {
       viewerCount = 0;
@@ -172,9 +203,7 @@ export class Chron {
 
     log('info', JSON.stringify(lastSub));
 
-    const lastSubscriber: IUserInfo | undefined = await this.getUser(
-      lastSub
-    );
+    const lastSubscriber: IUserInfo | undefined = await this.getUser(lastSub);
     if (lastSubscriber) {
       const lastSubEventArg: ILastUserEventArg = {
         userInfo: lastSubscriber
@@ -188,8 +217,7 @@ export class Chron {
     return;
   };
 
-  private broadcastAnnouncement = async (message: string) : Promise<any> => {
-
+  private broadcastAnnouncement = async (message: string): Promise<any> => {
     const user = await this.getUser(config.twitchBotUsername);
 
     if (user) {
@@ -200,11 +228,9 @@ export class Chron {
 
       this.emitMessage(SocketIOEvents.NewAnnouncement, newAnnouncementEventArg);
     }
-  }
+  };
 
-  private updateLiveCoders = async (
-    usernames: string[]
-  ): Promise<void> => {
+  private updateLiveCoders = async (usernames: string[]): Promise<void> => {
     const url = `http://user/livecoders`;
     await post(url, usernames);
   };

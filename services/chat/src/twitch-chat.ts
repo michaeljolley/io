@@ -8,10 +8,36 @@ import {
 import io from 'socket.io-client';
 import sanitizeHtml from 'sanitize-html';
 
-import { IUserInfo, ISubscriber, IRaider, ICheer, IStream, IProjectSettings } from '@shared/models';
-import { genericComicAvatars, config, get, log, isMod, isBroadcaster } from '@shared/common';
+import {
+  IUserInfo,
+  ISubscriber,
+  IRaider,
+  ICheer,
+  IStream,
+  IProjectSettings
+} from '@shared/models';
+import {
+  genericComicAvatars,
+  config,
+  get,
+  log,
+  isMod,
+  isBroadcaster
+} from '@shared/common';
 import { SocketIOEvents } from '@shared/events';
-import { IEmoteEventArg, IChatMessageEventArg, INewSubscriptionEventArg, INewCheerEventArg, INewRaidEventArg, IUserLeftEventArg, IUserJoinedEventArg, IBaseEventArg, IStreamEventArg, ICandleWinnerEventArg, IUserEventArg } from '@shared/event_args';
+import {
+  IEmoteEventArg,
+  IChatMessageEventArg,
+  INewSubscriptionEventArg,
+  INewCheerEventArg,
+  INewRaidEventArg,
+  IUserLeftEventArg,
+  IUserJoinedEventArg,
+  IBaseEventArg,
+  IStreamEventArg,
+  ICandleWinnerEventArg,
+  IUserEventArg
+} from '@shared/event_args';
 
 import { Emote } from './emote';
 
@@ -50,8 +76,8 @@ export class TwitchChat {
   private clientUsername: string = config.twitchBotUsername;
   private socket!: SocketIOClient.Socket;
   private activeStream: IStream | undefined;
-  private projectSettings: IProjectSettings = {repositories: undefined};
-  private avCommandHistory: { [userLogin: string] : Date } = {};
+  private projectSettings: IProjectSettings = { repositories: undefined };
+  private avCommandHistory: { [userLogin: string]: Date } = {};
   private avCommandThrottle = +config.avCommandThrottleInSeconds;
   private announcedTeamMembers: string[] = [];
 
@@ -73,32 +99,36 @@ export class TwitchChat {
     this.tmi.on('subgift', this.onGiftSub);
     this.tmi.on('subscription', this.onSub);
 
-    this.socket.on(SocketIOEvents.StreamStarted, (currentStream: IStreamEventArg) => {
-      log('info', "Stream started");
-      this.activeStream = currentStream.stream;
+    this.socket.on(
+      SocketIOEvents.StreamStarted,
+      (currentStream: IStreamEventArg) => {
+        log('info', 'Stream started');
+        this.activeStream = currentStream.stream;
 
-      // Go ahead and grab up to date repository information when the stream starts
-      const url = "http://api/repos/full";
-      get(url).then((response: any) => {
+        // Go ahead and grab up to date repository information when the stream starts
+        const url = 'http://api/repos/full';
+        get(url).then((response: any) => {
           if (response.status === 200) {
             log('info', 'Repos have been updated');
             this.projectSettings.repositories = response.data;
           }
-        })
-      });
+        });
+      }
+    );
 
-    this.socket.on(SocketIOEvents.StreamUpdated, (currentStream: IStreamEventArg) => {
-      this.activeStream = currentStream.stream;
-    });
+    this.socket.on(
+      SocketIOEvents.StreamUpdated,
+      (currentStream: IStreamEventArg) => {
+        this.activeStream = currentStream.stream;
+      }
+    );
 
     this.socket.on(
       SocketIOEvents.CandleWinner,
       (candleWinner: ICandleWinnerEventArg) => {
         setTimeout(() => {
           this.sendChatMessage(
-            `The vote is over and today's Candle to Code By is ${
-              candleWinner.candle.label
-            }.  You can try it yourself at ${candleWinner.candle.url}`
+            `The vote is over and today's Candle to Code By is ${candleWinner.candle.label}.  You can try it yourself at ${candleWinner.candle.url}`
           );
         }, 12500);
       }
@@ -106,7 +136,7 @@ export class TwitchChat {
 
     this.socket.on(SocketIOEvents.StreamEnded, () => {
       this.activeStream = undefined;
-      this.projectSettings = {repositories: undefined};
+      this.projectSettings = { repositories: undefined };
     });
   }
 
@@ -219,7 +249,7 @@ export class TwitchChat {
 
       const newRaidEventArg: INewRaidEventArg = {
         raider,
-        streamId: this.activeStream.id
+        streamDate: this.activeStream.streamDate
       };
 
       this.emitMessage(SocketIOEvents.NewRaid, newRaidEventArg);
@@ -250,7 +280,7 @@ export class TwitchChat {
 
       const cheerEventArg: INewCheerEventArg = {
         cheerer,
-        streamId: this.activeStream.id
+        streamDate: this.activeStream.streamDate
       };
 
       this.emitMessage(SocketIOEvents.NewCheer, cheerEventArg);
@@ -342,7 +372,7 @@ export class TwitchChat {
         wasGift
       };
       const newSubscriberArg: INewSubscriptionEventArg = {
-        streamId: this.activeStream.id,
+        streamDate: this.activeStream.streamDate,
         subscriber
       };
 
@@ -360,7 +390,6 @@ export class TwitchChat {
     user: ChatUserstate,
     message: string
   ): Promise<any> => {
-
     if (this.activeStream === undefined) {
       return false;
     }
@@ -396,14 +425,15 @@ export class TwitchChat {
       mentions,
       message,
       originalMessage: cleanMessage,
-      streamId: this.activeStream.id,
+      streamDate: this.activeStream.streamDate,
       user,
-      userInfo
+      userInfo,
+      hasCommand: false
     };
 
     if (this.activeStream && user.mod) {
       const userEvent: IUserEventArg = {
-        streamId: this.activeStream.id,
+        streamDate: this.activeStream.streamDate,
         user: userInfo
       };
       this.emitMessage(SocketIOEvents.OnModeratorJoined, userEvent);
@@ -424,16 +454,13 @@ export class TwitchChat {
       if (updatedUser) {
         handledByCommand = true;
 
-        if (typeof updatedUser !== "boolean") {
+        if (typeof updatedUser !== 'boolean') {
           chatMessageArg.userInfo = updatedUser;
         }
 
         break;
       }
     }
-
-    // Go ahead and emit message to hub before processing the rest of the commands
-    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
 
     if (!handledByCommand) {
       for (const basicCommand of Object.values(BasicCommands)) {
@@ -448,8 +475,14 @@ export class TwitchChat {
       }
     }
 
-    if (!handledByCommand &&
-      !this.isCommandThrottled( this.avCommandHistory, this.avCommandThrottle, user)) {
+    if (
+      !handledByCommand &&
+      !this.isCommandThrottled(
+        this.avCommandHistory,
+        this.avCommandThrottle,
+        user
+      )
+    ) {
       for (const avCommand of Object.values(AVCommands)) {
         handledByCommand = avCommand(
           originalMessage,
@@ -528,7 +561,7 @@ export class TwitchChat {
         if (result) {
           handledByCommand = true;
 
-          if (typeof(result) !== "boolean") {
+          if (typeof result !== 'boolean') {
             this.projectSettings = result;
           }
           break;
@@ -536,13 +569,26 @@ export class TwitchChat {
       }
     }
 
+    chatMessageArg.hasCommand = handledByCommand;
+
+    // Go ahead and emit message to hub before processing the rest of the commands
+    this.emitMessage(SocketIOEvents.OnChatMessage, chatMessageArg);
+
     // If the user sending this chat message is a member of the Live Coders team and we haven't
     // given them a !so yet, do so.
-    if (userInfo.login != config.twitchClientUsername &&
-        userInfo.liveCodersTeamMember &&
-        this.announcedTeamMembers.find(login => login === userInfo.login) === undefined) {
-
-      if (BasicCommands.shoutoutCommand(`!so ${user.username}`, undefined, this.sendChatMessage)) {
+    if (
+      userInfo.login != config.twitchClientUsername &&
+      userInfo.liveCodersTeamMember &&
+      this.announcedTeamMembers.find(login => login === userInfo.login) ===
+        undefined
+    ) {
+      if (
+        BasicCommands.shoutoutCommand(
+          `!so ${user.username}`,
+          undefined,
+          this.sendChatMessage
+        )
+      ) {
         this.announcedTeamMembers.push(userInfo.login);
       }
     }
@@ -598,18 +644,17 @@ export class TwitchChat {
   private randomComicAvatar = () => {
     const genericAvatars: string[] = genericComicAvatars;
     return genericAvatars[Math.floor(Math.random() * genericAvatars.length)];
-  }
+  };
 
   private identifyMentions = async (message: string): Promise<IUserInfo[]> => {
-
     const mentions: IUserInfo[] = [];
-    const usernameRegEx: RegExp = /@[a-z]*[0-9]*/ig;
+    const usernameRegEx: RegExp = /@[a-z]*[0-9]*/gi;
 
     const usernames = message.match(usernameRegEx);
 
     if (usernames) {
       for (const user of usernames) {
-        const cleanuser = user.replace('@','');
+        const cleanuser = user.replace('@', '');
         const userInfo: IUserInfo | undefined = await this.getUser(cleanuser);
         if (userInfo) {
           mentions.push(userInfo);
@@ -618,7 +663,7 @@ export class TwitchChat {
     }
 
     return mentions;
-  }
+  };
 
   private getUser = async (username: string): Promise<IUserInfo> => {
     const url = `http://user/users/${username}`;
@@ -642,10 +687,15 @@ export class TwitchChat {
     }
   };
 
-  private isCommandThrottled = (avCommandHistory: {[userLogin: string] : Date}, commandThrottleInSeconds: number, user: any): boolean => {
+  private isCommandThrottled = (
+    avCommandHistory: { [userLogin: string]: Date },
+    commandThrottleInSeconds: number,
+    user: any
+  ): boolean => {
     if (avCommandHistory[user.username] && !this.shouldOverrideThrottle(user)) {
-      const timeDifference = new Date().getTime() - avCommandHistory[user.username].getTime();
-      if (timeDifference < (commandThrottleInSeconds * 1000)) {
+      const timeDifference =
+        new Date().getTime() - avCommandHistory[user.username].getTime();
+      if (timeDifference < commandThrottleInSeconds * 1000) {
         return true;
       }
     }
@@ -653,10 +703,9 @@ export class TwitchChat {
   };
 
   private shouldOverrideThrottle = (user: any): boolean => {
-    if (isMod(user) || isBroadcaster(user))
-    {
+    if (isMod(user) || isBroadcaster(user)) {
       return true;
     }
     return false;
-  }
+  };
 }

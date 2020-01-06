@@ -14,14 +14,13 @@ export const blogCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!blog' &&
-      firstWord !== '!website') {
+  if (firstWord !== '!blog' && firstWord !== '!website') {
     return false;
   }
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `Mike's blog and our stream notes can be found at https://michaeljolley.com`
+      `Mike's blog and our stream notes can be found at https://baldbeardedbuilder.com`
     );
     return true;
   }
@@ -73,7 +72,7 @@ export const twitterCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `You can find Mike on Twitter at https://twitter.com/michaeljolley`
+      `You can find Michael on Twitter at https://twitter.com/baldbeardbuild`
     );
     return true;
   }
@@ -139,12 +138,12 @@ export const shoutoutCommand = (
   twitchChatFunc: (message: string) => void
 ): boolean => {
   /*
-  * 1. We have to have a message to parse in order to do a shout-out.
-  * 2. Only mods & broadcasters can shout-out.  So we have to have the user object to
-  *    evaluate whether they are a mod or broadcaster
-  * 3. If user is undefined we've specifically called this method from the bot so we want
-  *    to exit the if statement below and continue the !so.
-  */
+   * 1. We have to have a message to parse in order to do a shout-out.
+   * 2. Only mods & broadcasters can shout-out.  So we have to have the user object to
+   *    evaluate whether they are a mod or broadcaster
+   * 3. If user is undefined we've specifically called this method from the bot so we want
+   *    to exit the if statement below and continue the !so.
+   */
   if (
     message === undefined ||
     message.length === 0 ||
@@ -190,7 +189,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !awesum, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -302,6 +301,7 @@ export const fontCommand = (
   return false;
 };
 
+<<<<<<< HEAD
 export const awesumRepoCommand = (
   message: string,
   user: ChatUserstate,
@@ -328,6 +328,8 @@ export const awesumRepoCommand = (
   return false;
 };
 
+=======
+>>>>>>> master
 export const keyboardCommand = (
   message: string,
   user: ChatUserstate,

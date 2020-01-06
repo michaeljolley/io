@@ -1,7 +1,7 @@
-import { IUserInfo } from "../models";
-import { IBaseEventArg } from "./baseEventArg";
+import { IUserInfo } from '../models';
+import { IBaseEventArg } from './baseEventArg';
 
 export interface INewFollowerEventArg extends IBaseEventArg {
-  streamId: string;
+  streamDate: string;
   follower: IUserInfo;
 }
