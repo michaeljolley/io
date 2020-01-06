@@ -313,7 +313,7 @@ export const awesumRepoCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!awesumRepo') {
+  if (firstWord !== '!awesumrepo') {
     return false;
   }
 
