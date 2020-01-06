@@ -189,7 +189,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !avatar {character}, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -301,6 +301,32 @@ export const fontCommand = (
   return false;
 };
 
+export const awesumRepoCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!awesumrepo') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `The Awesum.io repository can be found at https://github.com/MichaelJolley/awesum.io`
+    );
+    return true;
+  }
+
+  return false;
+};
+
 export const keyboardCommand = (
   message: string,
   user: ChatUserstate,
@@ -320,6 +346,58 @@ export const keyboardCommand = (
   if (twitchChatFunc) {
     twitchChatFunc(
       `Mike is using the MassDrop ALT mechanical keyboard.  You can find it at https://drop.com/buy/massdrop-alt-mechanical-keyboard`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const awesumCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!awesum') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `The Awesum.io project is a new way to spread the love and thank those who may have helped you - help brighten up their day by acknowledging how they've helped you. There is a short video introduction which can be found at https://www.twitch.tv/videos/523855530`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const raidCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!raid') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid`
     );
     return true;
   }
