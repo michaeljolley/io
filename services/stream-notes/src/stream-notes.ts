@@ -163,7 +163,23 @@ export class StreamNotes {
   private generateStreamNotesFile = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
       const markdowner = new Markdowner(this.activeStream);
+      const mkdnStream = this.activeStream!;
       markdowner.generateMarkdown().then((content: string) => {
+        // Ensure directories exist
+        if (
+          !fs.existsSync(
+            `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
+              mkdnStream.started_at
+            ).format('YYYY')}/`
+          )
+        ) {
+          fs.mkdirSync(
+            `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
+              mkdnStream.started_at
+            ).format('YYYY')}`
+          );
+        }
+
         if (
           !fs.existsSync(
             `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
@@ -219,7 +235,8 @@ export class StreamNotes {
         this.streamNoteName = moment(this.activeStream.started_at).format(
           'YYYY-MM-DD'
         );
-        this.streamNoteDir = `_streams/${moment(
+
+        this.streamNoteDir = `/_streams/${moment(
           this.activeStream.started_at
         ).format('YYYY/MM')}/`;
 

@@ -189,7 +189,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !discord, !font, !github, !heroines, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !derp, !discord, !font, !github, !giving, !heroines, !hype, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -397,7 +397,85 @@ export const raidCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid themic5Raid`
+      `baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid baldbeRaid`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const hypeCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!raid') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype baldbeHype`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const derpCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!raid') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp baldbeDerp`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const givingCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!raid') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `The Bald Bearded Builder is currently supporting Backpack Buddies, helping feed underprivileged children who don't know where their next meal comes from. More information about the charity can be found at http://stclairbuddies.org`
     );
     return true;
   }
