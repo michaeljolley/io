@@ -189,7 +189,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !derp, !discord, !font, !github, !giving, !heroines, !hype, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !raid, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !defend, !derp, !discord, !font, !github, !giving, !heroines, !hype, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -379,7 +379,7 @@ export const awesumCommand = (
   return false;
 };
 
-export const raidCommand = (
+export const defendCommand = (
   message: string,
   user: ChatUserstate,
   twitchChatFunc: (message: string) => void
@@ -391,7 +391,7 @@ export const raidCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!raid') {
+  if (firstWord !== '!defend') {
     return false;
   }
 
@@ -417,7 +417,7 @@ export const hypeCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!raid') {
+  if (firstWord !== '!hype') {
     return false;
   }
 
@@ -443,7 +443,7 @@ export const derpCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!raid') {
+  if (firstWord !== '!derp') {
     return false;
   }
 
@@ -469,7 +469,7 @@ export const givingCommand = (
   const lowerMessage = message.toLocaleLowerCase().trim();
   const firstWord = lowerMessage.split(' ')[0];
 
-  if (firstWord !== '!raid') {
+  if (firstWord !== '!giving') {
     return false;
   }
 

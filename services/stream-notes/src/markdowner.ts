@@ -19,21 +19,23 @@ export class Markdowner {
 
   public async generateMarkdown(): Promise<string> {
     if (this.activeStream) {
-      return this.addMeta()
-        .then(this.addYouTube)
-        .then(this.addFold)
-        .then(this.addSegments)
-        .then(this.addCandle)
-        .then(this.addGoals)
-        .then(this.addGitHubRepos)
-        .then(this.addThingsLearned)
-        .then(this.addSponsors)
-        .then(this.addSubscriptions)
-        .then(this.addCheers)
-        .then(this.addRaiders)
-        .then(this.addModerators)
-        .then(this.addFollowers)
-        .then(this.addContributors);
+      return (
+        this.addMeta()
+          .then(this.addYouTube)
+          .then(this.addFold)
+          // .then(this.addSegments)
+          .then(this.addCandle)
+          // .then(this.addGoals)
+          .then(this.addGitHubRepos)
+          .then(this.addThingsLearned)
+          .then(this.addSponsors)
+          .then(this.addSubscriptions)
+          .then(this.addCheers)
+          .then(this.addRaiders)
+          .then(this.addModerators)
+          .then(this.addFollowers)
+          .then(this.addContributors)
+      );
     } else {
       return '';
     }
