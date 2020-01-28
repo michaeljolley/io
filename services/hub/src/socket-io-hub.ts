@@ -29,7 +29,9 @@ import {
   INewGoalEventArg,
   INewNoteEventArg,
   INewAnnouncementEventArg,
-  IUserProfileUpdateEventArg
+  IUserProfileUpdateEventArg,
+  ICharityDetailEventArg,
+  ICharityCountEventArg
 } from '@shared/event_args';
 
 export class IOHub {
@@ -176,6 +178,16 @@ export class IOHub {
         SocketIOEvents.UserProfileUpdated,
         (profileUpdate: IUserProfileUpdateEventArg) =>
           this.profileUpdate(profileUpdate)
+      );
+      socket.on(
+        SocketIOEvents.CharityCount,
+        (charityCountArg: ICharityCountEventArg) =>
+          this.charityCount(charityCountArg)
+      );
+      socket.on(
+        SocketIOEvents.CharityDetail,
+        (charityDetailArg: ICharityDetailEventArg) =>
+          this.charityDetail(charityDetailArg)
       );
 
       /**
@@ -422,6 +434,16 @@ export class IOHub {
   ) {
     log('info', 'onCandleVoteUpdate');
     this.io.emit(SocketIOEvents.CandleVoteUpdate, candleVoteResultEventArg);
+  }
+
+  private charityCount(charityCountArg: ICharityCountEventArg) {
+    log('info', 'charityCount');
+    this.io.emit(SocketIOEvents.CharityCount, charityCountArg);
+  }
+
+  private charityDetail(charityDetailArg: ICharityDetailEventArg) {
+    log('info', 'charityDetail');
+    this.io.emit(SocketIOEvents.CharityDetail, charityDetailArg);
   }
 
   /**

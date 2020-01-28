@@ -247,39 +247,39 @@ ${this.addLink(
     return existingContent + `<!--more-->\n\n`;
   };
 
-  private addSegments = async (existingContent: string): Promise<string> => {
-    this.activeStream = this.activeStream as IStream;
+  //   private addSegments = async (existingContent: string): Promise<string> => {
+  //     this.activeStream = this.activeStream as IStream;
 
-    let response: string = `### Segments\n
-| Timestamp | Topic
-| ---       | ---\n`;
+  //     let response: string = `### Segments\n
+  // | Timestamp | Topic
+  // | ---       | ---\n`;
 
-    if (this.activeStream.segments) {
-      const startedAt: moment.Moment = moment(this.activeStream.started_at);
+  //     if (this.activeStream.segments) {
+  //       const startedAt: moment.Moment = moment(this.activeStream.started_at);
 
-      for (const segment of this.activeStream.segments) {
-        const segmentTime: moment.Moment = moment(segment.timestamp);
-        const timestamp: moment.Duration = moment.duration(
-          segmentTime.diff(startedAt)
-        );
-        const hours: string =
-          timestamp.get('hours') > 9
-            ? `${timestamp.get('hours')}`
-            : `0${timestamp.get('hours')}`;
-        const minutes: string =
-          timestamp.get('minutes') > 9
-            ? `${timestamp.get('minutes')}`
-            : `0${timestamp.get('minutes')}`;
-        response =
-          response +
-          `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.asSeconds()}) | ${
-            segment.topic
-          } |\n`;
-      }
-    }
+  //       for (const segment of this.activeStream.segments) {
+  //         const segmentTime: moment.Moment = moment(segment.timestamp);
+  //         const timestamp: moment.Duration = moment.duration(
+  //           segmentTime.diff(startedAt)
+  //         );
+  //         const hours: string =
+  //           timestamp.get('hours') > 9
+  //             ? `${timestamp.get('hours')}`
+  //             : `0${timestamp.get('hours')}`;
+  //         const minutes: string =
+  //           timestamp.get('minutes') > 9
+  //             ? `${timestamp.get('minutes')}`
+  //             : `0${timestamp.get('minutes')}`;
+  //         response =
+  //           response +
+  //           `| [${hours}:${minutes}]({{page.replay}}?t=${timestamp.asSeconds()}) | ${
+  //             segment.topic
+  //           } |\n`;
+  //       }
+  //     }
 
-    return existingContent + response + `\n`;
-  };
+  //     return existingContent + response + `\n`;
+  //   };
 
   private generateUserTable = (users: IUserInfo[]): string => {
     let table: string = `<div class="users">\n`;
@@ -303,21 +303,21 @@ ${this.addLink(
     return table;
   };
 
-  private addGoals = async (existingContent: string): Promise<string> => {
-    this.activeStream = this.activeStream as IStream;
+  // private addGoals = async (existingContent: string): Promise<string> => {
+  //   this.activeStream = this.activeStream as IStream;
 
-    if (this.activeStream.goals) {
-      let response: string = `### Goals\n\n`;
+  //   if (this.activeStream.goals) {
+  //     let response: string = `### Goals\n\n`;
 
-      for (const goal of this.activeStream.goals) {
-        response =
-          response + `- [${goal.accomplished ? 'x' : ' '}] ${goal.name}\n`;
-      }
-      return existingContent + response + `\n`;
-    }
+  //     for (const goal of this.activeStream.goals) {
+  //       response =
+  //         response + `- [${goal.accomplished ? 'x' : ' '}] ${goal.name}\n`;
+  //     }
+  //     return existingContent + response + `\n`;
+  //   }
 
-    return existingContent;
-  };
+  //   return existingContent;
+  // };
 
   private addGitHubRepos = async (existingContent: string): Promise<string> => {
     this.activeStream = this.activeStream as IStream;

@@ -18,7 +18,6 @@ export class User {
   private usersUrl: string = 'http://api/users/';
   private userDb: UserDb;
 
-
   constructor() {
     this.socket = io('http://hub');
     this.app = express.default().use(express.json());
@@ -31,7 +30,11 @@ export class User {
   public start() {
     this.listen();
 
-    this.socket.on(SocketIOEvents.UserProfileUpdated, (profileUpdateEventArg: IUserProfileUpdateEventArg) => this.onProfileUpdate(profileUpdateEventArg));
+    this.socket.on(
+      SocketIOEvents.UserProfileUpdated,
+      (profileUpdateEventArg: IUserProfileUpdateEventArg) =>
+        this.onProfileUpdate(profileUpdateEventArg)
+    );
   }
 
   /**
@@ -57,7 +60,8 @@ export class User {
         `route: /update/:username called with username: ${req.params.username}`
       );
 
-      const forceUpdate: boolean = req.params.force !== undefined ? req.params.force : false;
+      const forceUpdate: boolean =
+        req.params.force !== undefined ? req.params.force : false;
 
       const payload: IUserInfo | undefined = await this.updateUser(
         req.params.username,
@@ -74,19 +78,14 @@ export class User {
         );
         return;
       }
-      log(
-        'info',
-        `route: /livecoders ${JSON.stringify(req.body)}`
-      )
+      log('info', `route: /livecoders ${JSON.stringify(req.body)}`);
       this.liveCodersUpdates(req.body);
     });
   }
 
-  private liveCodersUpdates = async(
-    usernames: string[]
-  ): Promise<void> => {
+  private liveCodersUpdates = async (usernames: string[]): Promise<void> => {
     const url = `${this.usersUrl}`;
-    const users = await post(url, usernames) as IUserInfo[];
+    const users = (await post(url, usernames)) as IUserInfo[];
     users.forEach(async user => {
       user.liveCodersTeamMember = true;
       const savedUser = await this.userDb.saveUserInfo(user);
@@ -94,7 +93,7 @@ export class User {
         this.users[savedUser.login] = savedUser;
       }
     });
-  }
+  };
 
   private getUser = async (
     username: string
@@ -144,14 +143,16 @@ export class User {
 
     const existingUser: IUserInfo | undefined = await this.getUser(username);
 
-    if (!forceUpdate &&
-        existingUser &&
-        existingUser.lastUpdated) {
-        const refreshIfBefore: moment.Moment = moment(new Date().setDate(new Date().getDate() -1));
-        const lastUpdated: moment.Moment = moment(new Date(existingUser.lastUpdated));
-        if (!lastUpdated.isBefore(refreshIfBefore)) {
-          return existingUser;
-        }
+    if (!forceUpdate && existingUser && existingUser.lastUpdated) {
+      const refreshIfBefore: moment.Moment = moment(
+        new Date().setDate(new Date().getDate() - 1)
+      );
+      const lastUpdated: moment.Moment = moment(
+        new Date(existingUser.lastUpdated)
+      );
+      if (!lastUpdated.isBefore(refreshIfBefore)) {
+        return existingUser;
+      }
     }
 
     const url = `${this.usersUrl}${username}`;
@@ -164,8 +165,7 @@ export class User {
     user = await this.userDb.saveUserInfo(user);
 
     // Provide some error handling
-    if (user)
-    {
+    if (user) {
       this.users[user.login] = user;
       log('info', `Updated ${username} from api`);
     } else if (existingUser) {
@@ -176,7 +176,9 @@ export class User {
     return user;
   };
 
-  private async onProfileUpdate(profileUpdateEventArg: IUserProfileUpdateEventArg) : Promise<void> {
+  private async onProfileUpdate(
+    profileUpdateEventArg: IUserProfileUpdateEventArg
+  ): Promise<void> {
     log('info', `onProfileUpdate: ${profileUpdateEventArg.userInfo.login}`);
 
     const userInfo = profileUpdateEventArg.userInfo;
@@ -185,12 +187,14 @@ export class User {
       const user = await this.userDb.saveUserInfo(userInfo);
 
       // Provide some error handling
-      if (user)
-      {
+      if (user) {
         this.users[user.login] = user;
         log('info', `Updated ${user.login} from profile`);
       } else {
-        log('error', `Error while updating profile for ${userInfo.login} in DB`);
+        log(
+          'error',
+          `Error while updating profile for ${userInfo.login} in DB`
+        );
       }
     }
   }

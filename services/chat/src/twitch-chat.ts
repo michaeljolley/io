@@ -492,7 +492,7 @@ export class TwitchChat {
           this.sendChatMessage,
           this.emitMessage
         );
-        if (handledByCommand && (!isMod(user) && !isBroadcaster(user))) {
+        if (handledByCommand && !isMod(user) && !isBroadcaster(user)) {
           this.avCommandHistory[userInfo.login] = new Date();
           break;
         }

@@ -22,6 +22,33 @@ export class StreamDb {
     this.connect();
   }
 
+  public getStreamsByDateRange = async (
+    month: number,
+    year: number
+  ): Promise<IStream[] | undefined> => {
+    const startDate: Date = new Date(year, month, 1);
+    const endDate: Date = new Date(year, month + 1, 1);
+
+    log(
+      'info',
+      `getStreamsByDateRange: ${startDate.toISOString()} - ${endDate.toISOString()}`
+    );
+
+    return await new Promise((resolve: any) =>
+      StreamModel.find({ started_at: { $gte: startDate, $lt: endDate } })
+        .populate('subscribers.user')
+        .populate('cheers.user')
+        .exec((err: any, res: any) => {
+          if (err) {
+            log('info', `ERROR: getStreamsByDateRange ${JSON.stringify(err)}`);
+            resolve(undefined);
+          }
+          log('info', `getStreamsByDateRange: ${month}/${year}`);
+          resolve(res);
+        })
+    );
+  };
+
   public getStream = async (
     streamDate: string
   ): Promise<IStream | undefined> => {

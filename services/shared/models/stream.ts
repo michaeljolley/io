@@ -16,7 +16,7 @@ export interface IStream extends mongoose.Document {
   id: string;
   title: string;
   streamDate: string;
-  started_at: string;
+  started_at: Date;
   ended_at?: string;
   replayLink?: string;
 
@@ -41,9 +41,9 @@ export interface IStream extends mongoose.Document {
 export const StreamModel = mongoose.model<IStream>(
   'Stream',
   new mongoose.Schema({
-    id: { type: String, unique: true, required: true },
-    started_at: { type: String, required: true },
-    streamDate: { type: String, required: true },
+    id: { type: String, unique: true, required: true, index: true },
+    started_at: { type: Date, required: true, index: true },
+    streamDate: { type: String, required: true, index: true },
     ended_at: String,
     title: { type: String, required: true },
     replayLink: String,

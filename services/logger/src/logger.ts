@@ -19,7 +19,9 @@ import {
   IStreamRepoChangedEventArg,
   INewNoteEventArg,
   INewGoalEventArg,
-  IChatMessageEventArg
+  IChatMessageEventArg,
+  ICharityCountEventArg,
+  ICharityDetailEventArg
 } from '@shared/event_args';
 import { CandleDb, StreamDb } from '@shared/db';
 import {
@@ -28,7 +30,9 @@ import {
   ICandle,
   ICandleVoteResult,
   IChatMessage,
-  IVote
+  IVote,
+  IGifter,
+  IUserInfo
 } from '@shared/models';
 
 export class Logger {
@@ -134,6 +138,7 @@ export class Logger {
 
   private async onStreamStart(streamEvent: IStreamEventArg) {
     await this.streamDb.saveStream(streamEvent.stream);
+    await this.announceCharity(false);
   }
 
   private async onStreamEnd(streamEvent: IStreamEventArg) {
@@ -147,6 +152,7 @@ export class Logger {
   private async onStreamUpdate(streamEvent: IStreamEventArg) {
     // Only need to update title
     await this.streamDb.saveStream(streamEvent.stream);
+    await this.announceCharity(false);
   }
 
   private async onNewFollow(newFollowerEvent: INewFollowerEventArg) {
@@ -187,6 +193,7 @@ export class Logger {
       newCheerEvent.streamDate,
       newCheerEvent.cheerer
     );
+    await this.announceCharity(true);
   }
 
   private async onNewSubscription(
@@ -197,6 +204,7 @@ export class Logger {
       newSubscriptionEvent.streamDate,
       newSubscriptionEvent.subscriber
     );
+    await this.announceCharity(true);
   }
 
   private async onPlayAudio(mediaEventArg: IMediaEventArg) {
@@ -317,7 +325,7 @@ export class Logger {
 
     await this.streamDb.recordCandleVote(vote);
 
-    // tablulate current results & emit
+    // tabulate current results & emit
     const candles: ICandle[] = await this.candleDb.getCandles();
     const stream: IStream | null | undefined = await this.streamDb.getStream(
       candleVoteEvent.streamDate
@@ -330,6 +338,73 @@ export class Logger {
         voteResults: tabulateResults(candles, stream.candleVotes)
       };
       this.socket.emit(SocketIOEvents.CandleVoteUpdate, candleVoteResultEvent);
+    }
+  }
+
+  private gifters: IGifter[] = [];
+
+  private async announceCharity(monkeyDance: boolean): Promise<boolean> {
+    const date = new Date();
+    const streamData:
+      | IStream[]
+      | undefined = await this.streamDb.getStreamsByDateRange(
+      date.getMonth(),
+      date.getFullYear()
+    );
+
+    if (streamData) {
+      for (let i = 0; i < streamData.length; i++) {
+        const stream: IStream = streamData[i];
+
+        if (stream.subscribers) {
+          for (let s = 0; s < stream.subscribers.length; s++) {
+            this.addGifter(stream.subscribers[s].user, 250);
+          }
+        }
+
+        if (stream.cheers) {
+          for (let c = 0; c < stream.cheers.length; c++) {
+            this.addGifter(stream.cheers[c].user, stream.cheers[c].bits);
+          }
+        }
+      }
+    }
+
+    const totalAmount: number = _.sum(this.gifters.map(m => m.amount));
+
+    const countEventArg: ICharityCountEventArg = {
+      amount: totalAmount
+    };
+
+    this.socket.emit(SocketIOEvents.CharityCount, countEventArg);
+
+    if (monkeyDance) {
+      const charityDetailEventArg: ICharityDetailEventArg = {
+        gifters: this.gifters
+      };
+
+      this.socket.emit(SocketIOEvents.CharityDetail, charityDetailEventArg);
+    }
+
+    this.gifters = [];
+    log('info', `announceCharity: ${totalAmount}`);
+
+    return true;
+  }
+
+  private addGifter(user: IUserInfo, amount: number) {
+    const gifter: IGifter | undefined = this.gifters.find(
+      f => f.user.login === user.login
+    );
+
+    if (gifter) {
+      gifter.amount = gifter.amount + amount;
+    } else {
+      const newGifter: IGifter = {
+        user,
+        amount
+      };
+      this.gifters.push(newGifter);
     }
   }
 }

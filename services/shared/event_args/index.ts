@@ -1,4 +1,6 @@
 export { IBaseEventArg } from './baseEventArg';
+export { ICharityCountEventArg } from './charityCountEventArg';
+export { ICharityDetailEventArg } from './charityDetailEventArg';
 export { IChatMessageEventArg } from './chatMessageEventArg';
 export { ICandleVoteEventArg } from './candleVoteEventArg';
 export { ICandleVoteResultEventArg } from './candleVoteResultEventArg';

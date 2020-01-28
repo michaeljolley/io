@@ -42,6 +42,8 @@ export enum SocketIOEvents {
   TwitchThemer = 'TwitchThemer',
   RetrievedLiveCodersTeamMembers = 'RetrievedLiveCodersTeamMembers',
   UserProfileUpdated = 'UserProfileUpdated',
+  CharityCount = 'CharityCount',
+  CharityDetail = 'CharityDetail',
 
   /* candle events */
   CandleReset = 'CandleReset',
