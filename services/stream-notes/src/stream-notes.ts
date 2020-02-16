@@ -5,12 +5,9 @@ import rimraf from 'rimraf';
 import simplegit from 'simple-git/promise';
 
 import { config, log } from '@shared/common';
-import { IStreamEventArg } from '@shared/event_args';
 import { StreamDb } from '@shared/db';
 import { IStream } from '@shared/models';
 import { SocketIOEvents } from '@shared/events';
-
-import { Markdowner } from './markdowner';
 
 export class StreamNotes {
   private socket!: SocketIOClient.Socket;
@@ -32,9 +29,6 @@ export class StreamNotes {
       fs.mkdirSync(__dirname + '/tmp');
     }
 
-    this.socket.on(SocketIOEvents.StreamEnded, (streamEvent: IStreamEventArg) =>
-      this.onStreamEnd(streamEvent)
-    );
     this.socket.on(SocketIOEvents.StreamNoteRebuild, (streamDate: string) =>
       this.onStreamNoteRebuild(streamDate)
     );
@@ -107,10 +101,10 @@ export class StreamNotes {
   private branch = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
       this.git
-        .checkoutLocalBranch(this.streamNoteName)
+        .checkoutLocalBranch('jsonStreamNotes')
         .then(() => {
-          log('info', `Successfully checked out ${this.streamNoteName}`);
-          resolve(this.streamNoteName);
+          log('info', `Successfully checked out jsonStreamNotes`);
+          resolve('jsonStreamNotes');
         })
         .catch((err: any) => {
           reject(err);
@@ -123,8 +117,8 @@ export class StreamNotes {
       this.git
         .add('./*')
         .then(() => {
-          log('info', `Successfully added file ${this.streamNoteName}.md`);
-          resolve(this.streamNoteName);
+          log('info', `Successfully added file json`);
+          resolve('json');
         })
         .catch((err: any) => {
           reject(err);
@@ -135,10 +129,10 @@ export class StreamNotes {
   private commit = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
       this.git
-        .commit(`Adding stream notes for ${this.streamNoteName}`)
+        .commit(`Adding JSON for all stream notes`)
         .then(() => {
-          log('info', `Successfully committed file ${this.streamNoteName}.md`);
-          resolve(this.streamNoteName);
+          log('info', `Successfully committed file json`);
+          resolve('json');
         })
         .catch((err: any) => {
           reject(err);
@@ -149,10 +143,10 @@ export class StreamNotes {
   private push = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) =>
       this.git
-        .push(this.gitHubRepoUrl, this.streamNoteName)
+        .push(this.gitHubRepoUrl, 'jsonStreamNotes')
         .then(() => {
-          log('info', `Successfully pushed branch: ${this.streamNoteName}`);
-          resolve(this.streamNoteName);
+          log('info', `Successfully pushed branch: 'jsonStreamNotes'`);
+          resolve('json');
         })
         .catch((err: any) => {
           reject(err);
@@ -160,47 +154,45 @@ export class StreamNotes {
     );
   };
 
-  private generateStreamNotesFile = async (): Promise<any> => {
+  private generateJSONFile = async (): Promise<any> => {
     return await new Promise((resolve: any, reject: any) => {
-      const markdowner = new Markdowner(this.activeStream);
       const mkdnStream = this.activeStream!;
-      markdowner.generateMarkdown().then((content: string) => {
-        // Ensure directories exist
-        if (
-          !fs.existsSync(
-            `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
-              mkdnStream.started_at
-            ).format('YYYY')}/`
-          )
-        ) {
-          fs.mkdirSync(
-            `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
-              mkdnStream.started_at
-            ).format('YYYY')}`
-          );
-        }
 
-        if (
-          !fs.existsSync(
-            `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
-          )
-        ) {
-          fs.mkdirSync(
-            `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
-          );
-        }
+      // Ensure directories exist
+      if (
+        !fs.existsSync(
+          `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
+            mkdnStream.started_at
+          ).format('YYYY')}/`
+        )
+      ) {
+        fs.mkdirSync(
+          `${__dirname}/tmp/${this.repoDirectory}/_streams/${moment(
+            mkdnStream.started_at
+          ).format('YYYY')}`
+        );
+      }
 
-        fs.writeFileSync(
-          __dirname +
-            `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md`,
-          content
+      if (
+        !fs.existsSync(
+          `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
+        )
+      ) {
+        fs.mkdirSync(
+          `${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}`
         );
-        log(
-          'info',
-          `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.md'!`
-        );
-        resolve(this.streamNoteName);
-      });
+      }
+
+      fs.writeFileSync(
+        __dirname +
+          `/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.json`,
+        JSON.stringify(this.activeStream)
+      );
+      log(
+        'info',
+        `Stream notes added to '${__dirname}/tmp/${this.repoDirectory}/${this.streamNoteDir}${this.streamNoteName}.json'!`
+      );
+      resolve('json');
     });
   };
 
@@ -212,46 +204,45 @@ export class StreamNotes {
     rimraf.sync(__dirname + `/tmp/${this.repoDirectory}`);
   };
 
-  private async onStreamEnd(streamEvent: IStreamEventArg) {
-    if (streamEvent && streamEvent.stream) {
-      this.buildStreamNotes(streamEvent.stream.streamDate);
-    }
-  }
-
   private async onStreamNoteRebuild(streamDate: string) {
     if (streamDate) {
-      this.buildStreamNotes(streamDate);
+      // this.buildStreamNotes(streamDate);
+      this.buildJSON();
     }
   }
 
-  private async buildStreamNotes(streamDate: string) {
-    // Get the stream from the streamDb (include users/candles/etc)
-    this.activeStream = await this.streamDb.getStream(streamDate);
+  private async buildJSON() {
+    let streams: IStream[] | undefined = await this.streamDb.getAllStreams();
 
-    if (this.activeStream) {
-      log('info', `Building stream notes for ${this.activeStream.streamDate}`);
+    if (streams && streams.length) {
+      log('info', `Building stream notes for ${streams.length} streams`);
 
-      if (this.activeStream) {
-        this.streamNoteName = moment(this.activeStream.started_at).format(
-          'YYYY-MM-DD'
-        );
+      await this.initGit()
+        .then(this.clone)
+        .then(this.configureGit)
+        .then(this.branch);
 
-        this.streamNoteDir = `/_streams/${moment(
-          this.activeStream.started_at
-        ).format('YYYY/MM')}/`;
+      for (let i = 0; i < streams.length; i++) {
+        this.activeStream = streams[i];
 
-        // Clone our BBB repo
-        await this.initGit()
-          .then(this.clone)
-          .then(this.configureGit)
-          .then(this.branch)
-          .then(this.generateStreamNotesFile)
-          .then(this.add)
-          .then(this.commit)
-          .then(this.push)
-          .catch((err: any) => log('info', `buildStreamNotes: ${err}`))
-          .finally(this.cleanUp);
+        if (this.activeStream) {
+          this.streamNoteName = moment(this.activeStream.started_at).format(
+            'YYYY-MM-DD'
+          );
+
+          this.streamNoteDir = `/_streams/${moment(
+            this.activeStream.started_at
+          ).format('YYYY/MM')}/`;
+
+          await this.generateJSONFile();
+        }
       }
+
+      await this.add()
+        .then(this.commit)
+        .then(this.push)
+        .catch((err: any) => log('info', `buildStreamNotes: ${err}`))
+        .finally(this.cleanUp);
     }
   }
 }

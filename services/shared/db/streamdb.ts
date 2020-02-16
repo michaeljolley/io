@@ -49,6 +49,31 @@ export class StreamDb {
     );
   };
 
+  public getAllStreams = async (): Promise<IStream[] | undefined> => {
+    log('info', `getAllStreams:`);
+
+    return await new Promise((resolve: any) =>
+      StreamModel.find()
+        .populate('candle')
+        .populate('notes.user')
+        .populate('followers')
+        .populate('subscribers.user')
+        .populate('raiders.user')
+        .populate('cheers.user')
+        .populate('segments.user')
+        .populate('contributors')
+        .populate('moderators')
+        .exec((err: any, res: any) => {
+          if (err) {
+            log('info', `ERROR: getAllStreams ${JSON.stringify(err)}`);
+            resolve(undefined);
+          }
+          log('info', `getAllStreams:`);
+          resolve(res);
+        })
+    );
+  };
+
   public getStream = async (
     streamDate: string
   ): Promise<IStream | undefined> => {

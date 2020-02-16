@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   admin:
@@ -154,28 +154,6 @@ services:
       - /app/overlay/node_modules
       - ./services/overlay:/app/overlay
     depends_on:
-      - hub
-
-  streamnotes:
-    build:
-      context: ./services
-      dockerfile: stream-notes.dockerfile
-    image: io-streamnotes
-    container_name: io-streamnotes
-    init: true
-    restart: always
-    command: npm run debug
-    volumes:
-      - /app/shared/node_modules
-      - ./services/shared:/app/shared
-      - /app/stream-notes/node_modules
-      - ./services/stream-notes:/app/stream-notes
-    ports:
-      - "9227:9229"
-    env_file:
-      - .env
-    depends_on:
-      - api
       - hub
 
   user:

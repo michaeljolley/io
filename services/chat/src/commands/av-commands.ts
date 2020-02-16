@@ -208,7 +208,14 @@ export const themeShameCommand = (
 
     const lowerMessage = message.toLocaleLowerCase().trim();
     const words = lowerMessage.split(' ');
-    const shamedThemes: string[] = ['hotdogstand', 'lasers'];
+    const shamedThemes: string[] = [
+      'hotdogstand',
+      'lasers',
+      'bbbdark',
+      'bbblight',
+      'bbbgarish',
+      'powershell'
+    ];
 
     if (words.length > 1) {
       if (words[0] === '!theme' && shamedThemes.indexOf(words[1]) !== -1) {
