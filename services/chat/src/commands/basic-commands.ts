@@ -189,7 +189,7 @@ export const helpCommand = (
 
   if (twitchChatFunc) {
     twitchChatFunc(
-      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !defend, !derp, !discord, !font, !github, !giving, !heroines, !hype, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
+      `I can respond to the following commands: !attention, !avatar {character}, !awesum, !awesumRepo, !blog, !candle, !defend, !derp, !discord, !font, !github, !giving, !heroines, !hype, !keyboard, !mark, !mod, !profile {github/twitter} {handle}, !pobox, !project, !sfx, !so {user name}, !team, !theme, !twitter, !website, !youtube`
     );
     return true;
   }
@@ -476,6 +476,32 @@ export const givingCommand = (
   if (twitchChatFunc) {
     twitchChatFunc(
       `The Bald Bearded Builder is currently supporting Backpack Buddies, helping feed underprivileged children who don't know where their next meal comes from. More information about the charity can be found at http://stclairbuddies.org`
+    );
+    return true;
+  }
+
+  return false;
+};
+
+export const poboxCommand = (
+  message: string,
+  user: ChatUserstate,
+  twitchChatFunc: (message: string) => void
+): boolean => {
+  if (message === undefined || message.length === 0) {
+    return false;
+  }
+
+  const lowerMessage = message.toLocaleLowerCase().trim();
+  const firstWord = lowerMessage.split(' ')[0];
+
+  if (firstWord !== '!giving') {
+    return false;
+  }
+
+  if (twitchChatFunc) {
+    twitchChatFunc(
+      `You can send candles, swag, art supplies (for the girls) to our PO Box: Bald. Bearded. Builder. PO Box 795, Odenville, AL 35120`
     );
     return true;
   }
