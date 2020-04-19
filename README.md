@@ -1,10 +1,11 @@
+> **This repository has been deprecated and superseded by [https://github.com/MichaelJolley/vulcan](https://github.com/MichaelJolley/vulcan).**
+
 <p align="center">
     <img src="https://user-images.githubusercontent.com/1228996/61920397-11dc2d80-af1f-11e9-9695-7263d1e1d0f2.png"/>
 </p>
 
-| master | vNext | Contributors |
-| --- | --- | --- |
-| [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=master)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=master) | [![Build Status](https://dev.azure.com/michaeljolley/io-bot/_apis/build/status/Build%20IO?branchName=vNext)](https://dev.azure.com/michaeljolley/io-bot/_build/latest?definitionId=3&branchName=vNext) |[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors) |
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-25-orange.svg?style=flat-square)](#contributors)
 
 IO is a Twitch chat-bot, overlay & stream note micro-service application.
 
@@ -65,11 +66,9 @@ a pull request adding them to the /assets/images/characters/{your twitch handle}
 
 See [CHANGELOG.md](CHANGELOG.md)
 
-## Contributing
+## Contributors
 
-Want to contribute? Check out our [Code of Conduct](CODE_OF_CONDUCT.md) and [Contributing](CONTRIBUTING.md) docs. This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification.  Contributions of any kind welcome!
-
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people:
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
