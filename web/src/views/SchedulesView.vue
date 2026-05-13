@@ -81,11 +81,16 @@
                     class="bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded transition-colors"
                     title="Run now"
                   >▶ Run now</button>
-                  <RouterLink
-                    :to="`/activity?schedule=${encodeURIComponent(s.name)}`"
-                    class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded transition-colors"
-                    title="View history"
-                  >📋 History</RouterLink>
+                  <button
+                    @click="toggleHistory('io', s.id)"
+                    :class="[
+                      'text-xs px-3 py-1.5 rounded transition-colors',
+                      historyOpen.get(`io-${s.id}`)
+                        ? 'bg-blue-800 text-blue-200'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                    ]"
+                    title="Toggle run history"
+                  >📋 History</button>
                   <button
                     @click="deleteSchedule('io', s.id, s.name)"
                     :disabled="mutating.has(`io-${s.id}`)"
@@ -93,6 +98,43 @@
                     title="Delete"
                   >🗑</button>
                 </div>
+              </div>
+
+              <!-- Inline history panel -->
+              <div v-if="historyOpen.get(`io-${s.id}`)" class="mt-4 pt-4 border-t border-gray-700">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Run history — {{ s.name }}
+                </h4>
+                <div v-if="historyLoading.has(`io-${s.id}`)" class="text-gray-500 text-xs py-2 text-center">
+                  Loading…
+                </div>
+                <div v-else-if="!historyData.get(`io-${s.id}`) || historyData.get(`io-${s.id}`)!.length === 0"
+                     class="text-gray-500 italic text-xs py-2 text-center">
+                  No history yet
+                </div>
+                <ul v-else class="space-y-2">
+                  <li
+                    v-for="run in historyData.get(`io-${s.id}`)"
+                    :key="run.id"
+                    class="flex items-start gap-2 text-xs bg-gray-900 rounded p-2"
+                  >
+                    <span class="shrink-0 mt-0.5">{{ runIcon(run.status) }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-300">{{ formatDate(run.started_at) }}</span>
+                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium', runStatusClass(run.status)]">
+                          {{ run.status }}
+                        </span>
+                      </div>
+                      <div v-if="run.completed_at" class="text-gray-500 mt-0.5">
+                        Completed: {{ formatDate(run.completed_at) }}
+                      </div>
+                      <div v-if="run.error_text" class="text-red-400 mt-1 break-words">
+                        {{ run.error_text }}
+                      </div>
+                    </div>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -159,11 +201,16 @@
                     class="bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded transition-colors"
                     title="Run now"
                   >▶ Run now</button>
-                  <RouterLink
-                    :to="`/activity?schedule=${encodeURIComponent(s.name)}`"
-                    class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs px-3 py-1.5 rounded transition-colors"
-                    title="View history"
-                  >📋 History</RouterLink>
+                  <button
+                    @click="toggleHistory('squads', s.id)"
+                    :class="[
+                      'text-xs px-3 py-1.5 rounded transition-colors',
+                      historyOpen.get(`squads-${s.id}`)
+                        ? 'bg-blue-800 text-blue-200'
+                        : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                    ]"
+                    title="Toggle run history"
+                  >📋 History</button>
                   <button
                     @click="deleteSchedule('squads', s.id, s.name)"
                     :disabled="mutating.has(`squads-${s.id}`)"
@@ -171,6 +218,43 @@
                     title="Delete"
                   >🗑</button>
                 </div>
+              </div>
+
+              <!-- Inline history panel -->
+              <div v-if="historyOpen.get(`squads-${s.id}`)" class="mt-4 pt-4 border-t border-gray-700">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Run history — {{ s.name }}
+                </h4>
+                <div v-if="historyLoading.has(`squads-${s.id}`)" class="text-gray-500 text-xs py-2 text-center">
+                  Loading…
+                </div>
+                <div v-else-if="!historyData.get(`squads-${s.id}`) || historyData.get(`squads-${s.id}`)!.length === 0"
+                     class="text-gray-500 italic text-xs py-2 text-center">
+                  No history yet
+                </div>
+                <ul v-else class="space-y-2">
+                  <li
+                    v-for="run in historyData.get(`squads-${s.id}`)"
+                    :key="run.id"
+                    class="flex items-start gap-2 text-xs bg-gray-900 rounded p-2"
+                  >
+                    <span class="shrink-0 mt-0.5">{{ runIcon(run.status) }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-300">{{ formatDate(run.started_at) }}</span>
+                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium', runStatusClass(run.status)]">
+                          {{ run.status }}
+                        </span>
+                      </div>
+                      <div v-if="run.completed_at" class="text-gray-500 mt-0.5">
+                        Completed: {{ formatDate(run.completed_at) }}
+                      </div>
+                      <div v-if="run.error_text" class="text-red-400 mt-1 break-words">
+                        {{ run.error_text }}
+                      </div>
+                    </div>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -182,7 +266,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import { apiFetch } from '../lib/api'
 
 interface IoSchedule {
@@ -210,19 +293,81 @@ interface SquadSchedule {
   next_run_at: string | null
 }
 
+interface ScheduleRun {
+  id: number
+  schedule_type: string
+  schedule_id: number
+  schedule_name: string
+  squad_slug: string | null
+  status: string
+  error_text: string | null
+  notification_id: number | null
+  started_at: string
+  completed_at: string | null
+}
+
 const ioSchedules = ref<IoSchedule[]>([])
 const squadSchedules = ref<SquadSchedule[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const mutating = ref(new Set<string>())
 
+const historyOpen = ref(new Map<string, boolean>())
+const historyData = ref(new Map<string, ScheduleRun[]>())
+const historyLoading = ref(new Set<string>())
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString()
+}
+
+function runIcon(status: string): string {
+  if (status === 'done') return '✅'
+  if (status === 'failed') return '❌'
+  return '⏳'
+}
+
+function runStatusClass(status: string): string {
+  if (status === 'done') return 'bg-green-900 text-green-200'
+  if (status === 'failed') return 'bg-red-900 text-red-200'
+  return 'bg-gray-700 text-gray-300'
+}
+
+async function toggleHistory(ns: 'io' | 'squads', id: number): Promise<void> {
+  const key = `${ns}-${id}`
+  const isOpen = historyOpen.value.get(key) ?? false
+
+  // Toggle off
+  const nextOpen = new Map(historyOpen.value)
+  nextOpen.set(key, !isOpen)
+  historyOpen.value = nextOpen
+
+  // Fetch if opening and not yet loaded
+  if (!isOpen && !historyData.value.has(key)) {
+    const nextLoading = new Set(historyLoading.value)
+    nextLoading.add(key)
+    historyLoading.value = nextLoading
+
+    try {
+      const res = await apiFetch(`/api/schedules/${ns}/${id}/runs?limit=25`)
+      if (res.ok) {
+        const data = (await res.json()) as { runs: ScheduleRun[] }
+        const nextData = new Map(historyData.value)
+        nextData.set(key, data.runs ?? [])
+        historyData.value = nextData
+      }
+    } catch { /* best effort */ } finally {
+      const next = new Set(historyLoading.value)
+      next.delete(key)
+      historyLoading.value = next
+    }
+  }
 }
 
 async function fetchSchedules(): Promise<void> {
   loading.value = true
   error.value = null
+  // Clear cached history so a refresh picks up new runs
+  historyData.value = new Map()
   try {
     const res = await apiFetch('/api/schedules')
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
