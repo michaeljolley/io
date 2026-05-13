@@ -187,12 +187,18 @@
               {{ previewStatusLabel }}
             </p>
           </div>
-          <button
-            type="button"
-            @click="closePreview"
-            class="text-gray-400 hover:text-gray-100 text-2xl leading-none focus:outline-none"
-            aria-label="Close"
-          >×</button>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none">
+              <input type="checkbox" v-model="previewSummaryMode" class="rounded bg-gray-700 border-gray-600" />
+              Summary
+            </label>
+            <button
+              type="button"
+              @click="closePreview"
+              class="text-gray-400 hover:text-gray-100 text-2xl leading-none focus:outline-none"
+              aria-label="Close"
+            >×</button>
+          </div>
         </div>
 
         <div ref="previewScrollEl" class="overflow-y-auto p-4 space-y-3 flex-1 font-mono text-xs">
@@ -200,17 +206,39 @@
           <div v-else-if="previewEvents.length === 0" class="text-gray-500 italic text-center py-8">
             Waiting for activity...
           </div>
-          <div
-            v-for="(ev, idx) in previewEvents"
-            :key="idx"
-            class="border border-gray-800 rounded p-2 bg-gray-950"
-          >
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-blue-400">{{ ev.type }}</span>
-              <span class="text-gray-600 text-[10px]">{{ formatEventTime(ev.ts) }}</span>
+
+          <!-- Summary mode: uses server-computed ActivityEntry attached to each event -->
+          <template v-else-if="previewSummaryMode">
+            <div
+              v-for="(ev, idx) in summarizedPreviewEvents"
+              :key="idx"
+              class="flex items-start gap-2 py-1.5"
+            >
+              <span class="shrink-0">{{ ev.summary.icon }}</span>
+              <div class="flex-1 min-w-0">
+                <span class="text-gray-200 break-words">{{ ev.summary.summary }}</span>
+                <span class="text-gray-600 text-[10px] ml-2">{{ formatEventTime(ev.ts) }}</span>
+              </div>
             </div>
-            <pre class="text-gray-200 whitespace-pre-wrap break-words">{{ formatEventBody(ev) }}</pre>
-          </div>
+            <div v-if="summarizedPreviewEvents.length === 0" class="text-gray-500 italic text-center py-4">
+              Processing…
+            </div>
+          </template>
+
+          <!-- Raw mode -->
+          <template v-else>
+            <div
+              v-for="(ev, idx) in previewEvents"
+              :key="idx"
+              class="border border-gray-800 rounded p-2 bg-gray-950"
+            >
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-blue-400">{{ ev.type }}</span>
+                <span class="text-gray-600 text-[10px]">{{ formatEventTime(ev.ts) }}</span>
+              </div>
+              <pre class="text-gray-200 whitespace-pre-wrap break-words">{{ formatEventBody(ev) }}</pre>
+            </div>
+          </template>
         </div>
 
         <div class="p-3 border-t border-gray-700 flex justify-end">
@@ -257,6 +285,30 @@ interface SquadAgent {
   currentTask?: string | null
 }
 
+/** Mirrors the ActivityEntry shape emitted by src/copilot/event-summary.ts */
+interface ActivityEntry {
+  ts: number
+  kind: string
+  icon: string
+  summary: string
+  detail?: string
+  rawType: string
+  raw: unknown
+  toolCallId?: string
+  status?: 'pending' | 'success' | 'error'
+}
+
+/** SSE payload: raw event fields + server-computed summary */
+interface PreviewEvent {
+  ts: number
+  type: string
+  data: unknown
+  summary: ActivityEntry
+}
+
+/** Event kinds to hide in summary mode (noise / session lifecycle) */
+const SUMMARY_SKIP_KINDS = new Set(['system'])
+
 const UNIVERSE_NAMES: Record<string, string> = {
   'a-team': 'The A-Team',
   'transformers': 'Transformers',
@@ -280,9 +332,10 @@ const agentsError = reactive<Record<string, string | null>>({})
 const stoppingTaskIds = ref<Set<string>>(new Set())
 
 const previewAgent = ref<SquadAgent | null>(null)
-const previewEvents = ref<Array<{ ts: number; type: string; data: unknown }>>([])
+const previewEvents = ref<PreviewEvent[]>([])
 const previewError = ref<string | null>(null)
 const previewConnected = ref(false)
+const previewSummaryMode = ref(true)
 const previewScrollEl = ref<HTMLElement | null>(null)
 let previewSource: EventSource | null = null
 
@@ -290,6 +343,17 @@ const previewStatusLabel = computed(() => {
   if (previewError.value) return 'Disconnected'
   if (previewConnected.value) return 'Live'
   return 'Connecting...'
+})
+
+/** Summary mode: skip system/lifecycle noise; skip tool_complete for pending tool_start entries */
+const summarizedPreviewEvents = computed<PreviewEvent[]>(() => {
+  return previewEvents.value.filter((ev) => {
+    if (!ev.summary) return false
+    if (SUMMARY_SKIP_KINDS.has(ev.summary.kind)) return false
+    // Skip message_delta — only show complete messages
+    if (ev.type === 'assistant.message_delta') return false
+    return true
+  })
 })
 
 const formatEventTime = (ts: number) => {
@@ -334,6 +398,7 @@ const openPreview = (agent: SquadAgent) => {
   previewEvents.value = []
   previewError.value = null
   previewConnected.value = false
+  previewSummaryMode.value = true
 
   const url = authenticatedUrl(`/api/tasks/${encodeURIComponent(agent.currentTaskId)}/events`)
   const es = new EventSource(url)
@@ -342,7 +407,7 @@ const openPreview = (agent: SquadAgent) => {
   es.onopen = () => { previewConnected.value = true }
   es.onmessage = (e) => {
     try {
-      const ev = JSON.parse(e.data) as { ts: number; type: string; data: unknown }
+      const ev = JSON.parse(e.data) as PreviewEvent
       previewEvents.value.push(ev)
       // Auto-scroll for streaming deltas
       scrollPreviewToBottom()
