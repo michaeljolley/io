@@ -15,6 +15,7 @@ import {
 import { sendToOrchestrator } from "./orchestrator.js";
 import { nextRun } from "./cron.js";
 import { notifyBackground } from "../notify.js";
+import { startScheduleRun, completeScheduleRun, failScheduleRun } from "../store/schedule-runs.js";
 
 const TICK_MS = 30_000;
 
@@ -47,6 +48,11 @@ async function fireSchedule(schedule: IoSchedule): Promise<void> {
   console.log(
     `[io] io-scheduler: firing schedule "${schedule.name}" (next run: ${nextIso ?? "never"})`,
   );
+  const run = startScheduleRun({
+    schedule_type: "io",
+    schedule_id: schedule.id,
+    schedule_name: schedule.name,
+  });
   try {
     let buffer = "";
     await sendToOrchestrator(
@@ -63,11 +69,16 @@ async function fireSchedule(schedule: IoSchedule): Promise<void> {
             },
             title: `IO schedule: ${schedule.name}`,
             text: buffer.trim(),
+          }).then((notifyResult) => {
+            completeScheduleRun(run.id, notifyResult.id);
+          }).catch((err) => {
+            failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
           });
         }
       },
     );
   } catch (err) {
+    failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
     console.error(
       `[io] io-scheduler: failed to dispatch schedule ${schedule.id}:`,
       err instanceof Error ? err.message : err,

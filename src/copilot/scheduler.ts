@@ -16,6 +16,7 @@ import { getSquad } from "../store/squads.js";
 import { delegateToAgent } from "./agents.js";
 import { nextRun } from "./cron.js";
 import { notifyBackground } from "../notify.js";
+import { startScheduleRun, completeScheduleRun, failScheduleRun } from "../store/schedule-runs.js";
 
 const TICK_MS = 30_000;
 
@@ -79,6 +80,12 @@ async function fireSchedule(schedule: SquadSchedule): Promise<void> {
     schedule,
   );
   console.log(`[io] scheduler: firing schedule "${schedule.name}" for squad "${squad.slug}" (next run: ${nextIso ?? "never"})`);
+  const run = startScheduleRun({
+    schedule_type: "squad",
+    schedule_id: schedule.id,
+    schedule_name: schedule.name,
+    squad_slug: squad.slug,
+  });
   try {
     await delegateToAgent(squad.slug, prompt, (_taskId, result) => {
       void notifyBackground({
@@ -90,9 +97,14 @@ async function fireSchedule(schedule: SquadSchedule): Promise<void> {
         },
         title: `${squad.name}: ${schedule.name}`,
         text: result,
+      }).then((notifyResult) => {
+        completeScheduleRun(run.id, notifyResult.id);
+      }).catch((err) => {
+        failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
       });
     });
   } catch (err) {
+    failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
     console.error(`[io] scheduler: failed to delegate stand-up for schedule ${schedule.id}:`, err instanceof Error ? err.message : err);
   } finally {
     inFlight.delete(schedule.id);

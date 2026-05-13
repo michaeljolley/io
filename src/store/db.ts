@@ -148,6 +148,19 @@ GROUP BY agent_slug`,
       read_at DATETIME
     )`,
     `CREATE INDEX IF NOT EXISTS idx_bg_notifications_unread ON background_notifications(read_at, created_at)`,
+    `CREATE TABLE IF NOT EXISTS schedule_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      schedule_type TEXT NOT NULL,
+      schedule_id INTEGER NOT NULL,
+      schedule_name TEXT NOT NULL,
+      squad_slug TEXT,
+      status TEXT NOT NULL DEFAULT 'running',
+      error_text TEXT,
+      notification_id INTEGER,
+      started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_schedule_runs_lookup ON schedule_runs(schedule_type, schedule_id, started_at)`,
   ];
 
   for (const migration of migrations) {
