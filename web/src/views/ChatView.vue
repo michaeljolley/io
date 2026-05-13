@@ -37,13 +37,16 @@
 
     <!-- Input bar -->
     <div class="border-t border-gray-800 p-4">
-      <form @submit.prevent="sendMessage" class="flex gap-3">
-        <input
+      <form @submit.prevent="sendMessage" class="flex gap-3 items-end">
+        <textarea
+          ref="inputEl"
           v-model="input"
-          type="text"
           placeholder="Message IO..."
           :disabled="store.isLoading"
-          class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+          rows="1"
+          class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 resize-none overflow-hidden"
+          @keydown="handleKeydown"
+          @input="autoResize"
         />
         <button
           v-if="store.isLoading"
@@ -78,6 +81,7 @@ const store = useChatStore()
 const input = ref('')
 const stopping = ref(false)
 const messagesEl = ref<HTMLElement | null>(null)
+const inputEl = ref<HTMLTextAreaElement | null>(null)
 
 async function stopOrchestrator() {
   if (stopping.value) return
@@ -105,11 +109,31 @@ function scrollToBottom() {
 
 watch(() => store.messages.length, scrollToBottom)
 
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    sendMessage()
+  }
+  // Shift+Enter falls through and inserts a newline
+}
+
+function autoResize() {
+  const el = inputEl.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px' // max ~8 lines
+}
+
 async function sendMessage() {
   const text = input.value.trim()
   if (!text || store.isLoading) return
 
   input.value = ''
+  nextTick(() => {
+    if (inputEl.value) {
+      inputEl.value.style.height = 'auto'
+    }
+  })
   store.isLoading = true
 
   store.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
