@@ -13,6 +13,7 @@ import { IO_VERSION } from "../paths.js";
 import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
+import { getScheduleRuns } from "../store/schedule-runs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
 import {
@@ -449,6 +450,25 @@ export async function startApiServer(): Promise<void> {
       res.json({ ok: true });
     } catch (e) {
       console.error("Error deleting IO schedule:", e);
+      res.status(500).json({ error: (e instanceof Error ? e.message : String(e)) });
+    }
+  });
+
+  // Schedule run history (issue #65)
+  api.get("/schedules/:type/:id/runs", (req: Request, res: Response) => {
+    const rawType = Array.isArray(req.params.type) ? req.params.type[0] : req.params.type;
+    const id = Number(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id);
+    if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid schedule id" }); return; }
+    const scheduleTypeMap: Record<string, string> = { squads: "squad", io: "io" };
+    const scheduleType = scheduleTypeMap[rawType];
+    if (!scheduleType) { res.status(400).json({ error: "type must be 'squads' or 'io'" }); return; }
+    const rawLimit = Number.parseInt(String(req.query.limit ?? ""), 10);
+    const limit = Number.isNaN(rawLimit) ? 25 : Math.min(rawLimit, 100);
+    try {
+      const runs = getScheduleRuns(scheduleType, id, limit);
+      res.json({ runs });
+    } catch (e) {
+      console.error("Error fetching schedule runs:", e);
       res.status(500).json({ error: (e instanceof Error ? e.message : String(e)) });
     }
   });
