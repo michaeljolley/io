@@ -45,6 +45,22 @@
         </li>
         <li>
           <RouterLink
+            to="/notifications"
+            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors relative"
+            :class="{ 'bg-blue-900 text-blue-300': route.name === 'notifications' }"
+            @click="onNotificationsClick"
+          >
+            🔔 Notifications
+            <span
+              v-if="unreadCount > 0"
+              class="absolute top-1 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+            >
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink
             to="/activity"
             class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
             :class="{ 'bg-blue-900 text-blue-300': route.name === 'activity' }"
@@ -68,15 +84,52 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { apiFetch, authenticatedUrl } from '../lib/api'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+const unreadCount = ref(0)
+let notificationSource: EventSource | null = null
+
 async function handleSignOut() {
   await auth.signOut()
   router.push('/login')
 }
+
+function onNotificationsClick() {
+  // Clear badge immediately when the user navigates to notifications
+  unreadCount.value = 0
+}
+
+onMounted(async () => {
+  // Fetch initial unread count
+  try {
+    const res = await apiFetch('/api/notifications?unread=true&limit=1')
+    if (res.ok) {
+      const data = (await res.json()) as { unreadCount?: number }
+      unreadCount.value = data.unreadCount ?? 0
+    }
+  } catch { /* best effort */ }
+
+  // Listen for new notifications via the shared SSE events stream
+  notificationSource = new EventSource(authenticatedUrl('/api/events'))
+  notificationSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data) as { type?: string }
+      if (data.type === 'notification' && route.name !== 'notifications') {
+        unreadCount.value++
+      }
+    } catch { /* ignore */ }
+  }
+})
+
+onUnmounted(() => {
+  notificationSource?.close()
+  notificationSource = null
+})
 </script>
