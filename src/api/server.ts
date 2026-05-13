@@ -244,7 +244,28 @@ export async function startApiServer(): Promise<void> {
     const taskId = Array.isArray(req.params.taskId) ? req.params.taskId[0] : req.params.taskId;
     try {
       const events = getTaskEvents(taskId);
-      const activity = summarize(events);
+      let activity = summarize(events);
+
+      // Fallback: when in-memory events are gone (e.g. daemon restart),
+      // build a minimal entry from the persisted task result so the UI
+      // doesn't show "no activity" for tasks that actually ran. (#66)
+      if (activity.length === 0) {
+        const task = getTask(taskId);
+        if (task?.result) {
+          activity = [{
+            ts: task.completed_at ? new Date(task.completed_at).getTime() : Date.now(),
+            kind: "outcome" as const,
+            icon: task.status === "failed" ? "\u274c" : task.status === "done" ? "\u2705" : "\ud83d\udccb",
+            summary: task.status === "failed"
+              ? "Task failed (activity log unavailable after restart)"
+              : "Task completed (activity log unavailable after restart)",
+            rawType: "task.result.fallback",
+            detail: task.result,
+            raw: { result: task.result, status: task.status },
+          }];
+        }
+      }
+
       res.json({ taskId, activity });
     } catch (e) {
       console.error("Error building task activity:", e);
