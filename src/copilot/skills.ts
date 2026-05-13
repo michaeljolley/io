@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import { join, basename } from "path";
 import { execSync } from "child_process";
 import { SKILLS_DIR } from "../paths.js";
@@ -107,11 +107,105 @@ export function listSkills(): SkillInfo[] {
   return skills;
 }
 
+export type ParsedSkillUrl =
+  | { type: "repo"; url: string }
+  | { type: "file"; rawUrl: string; slug: string };
+
+const GITHUB_BLOB_RE =
+  /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+\/)?SKILL\.md$/i;
+const RAW_GH_RE =
+  /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+\/)?SKILL\.md$/i;
+const GENERIC_SKILL_MD_RE = /\/SKILL\.md$/i;
+
+function deriveSlug(repo: string, pathPrefix: string | undefined): string {
+  if (!pathPrefix) return repo;
+  const segments = pathPrefix.replace(/\/$/, "").split("/").filter(Boolean);
+  const last = segments[segments.length - 1];
+  return last ? `${repo}-${last}` : repo;
+}
+
 /**
- * Clone a git repo into SKILLS_DIR and return the installed skill info.
- * Throws if the cloned repo does not contain a SKILL.md file.
+ * Determine whether the input URL points to a full repo or a specific
+ * SKILL.md file. For GitHub blob URLs the raw download URL is derived
+ * automatically.
  */
-export async function installSkill(repoUrl: string): Promise<SkillInfo> {
+export function parseSkillUrl(input: string): ParsedSkillUrl {
+  const blobMatch = input.match(GITHUB_BLOB_RE);
+  if (blobMatch) {
+    const [, owner, repo, branch, pathPrefix] = blobMatch;
+    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${pathPrefix ?? ""}SKILL.md`;
+    return { type: "file", rawUrl, slug: deriveSlug(repo, pathPrefix) };
+  }
+
+  const rawMatch = input.match(RAW_GH_RE);
+  if (rawMatch) {
+    const [, _owner, repo, _branch, pathPrefix] = rawMatch;
+    return { type: "file", rawUrl: input, slug: deriveSlug(repo, pathPrefix) };
+  }
+
+  if (GENERIC_SKILL_MD_RE.test(input)) {
+    if (!input.startsWith("https://")) {
+      throw new Error("Only https:// URLs are supported for SKILL.md installs.");
+    }
+    const urlObj = new URL(input);
+    const segments = urlObj.pathname.split("/").filter(Boolean);
+    // Use the segment before SKILL.md, or the hostname as slug fallback
+    const slug = segments.length >= 2
+      ? segments[segments.length - 2]
+      : urlObj.hostname.replace(/\./g, "-");
+    return { type: "file", rawUrl: input, slug };
+  }
+
+  return { type: "repo", url: input };
+}
+
+async function installSkillFromFile(rawUrl: string, slug: string): Promise<SkillInfo> {
+  if (!rawUrl.startsWith("https://")) {
+    throw new Error("Only https:// URLs are supported for SKILL.md installs.");
+  }
+
+  const destDir = join(SKILLS_DIR, slug);
+  if (existsSync(destDir)) {
+    throw new Error(`Skill "${slug}" is already installed.`);
+  }
+
+  const response = await fetch(rawUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch SKILL.md from ${rawUrl} (HTTP ${response.status})`);
+  }
+
+  const content = await response.text();
+
+  // Validate: at least one markdown heading in the first 10 lines
+  const first10 = content.split(/\r?\n/).slice(0, 10);
+  if (!first10.some((line) => /^#\s+/.test(line))) {
+    throw new Error("URL does not appear to contain a valid SKILL.md file.");
+  }
+
+  mkdirSync(destDir, { recursive: true });
+  writeFileSync(join(destDir, "SKILL.md"), content, "utf-8");
+
+  const { name, description } = parseSkillMd(content);
+  return {
+    name: name || slug,
+    slug,
+    description,
+    path: destDir,
+  };
+}
+
+/**
+ * Install a skill from a git repo URL or a direct SKILL.md file URL.
+ * Throws if the repo/file does not contain a valid SKILL.md.
+ */
+export async function installSkill(input: string): Promise<SkillInfo> {
+  const parsed = parseSkillUrl(input);
+
+  if (parsed.type === "file") {
+    return installSkillFromFile(parsed.rawUrl, parsed.slug);
+  }
+
+  const repoUrl = parsed.url;
   const repoName = basename(repoUrl, ".git").replace(/\.git$/, "");
   const destDir = join(SKILLS_DIR, repoName);
 

@@ -916,10 +916,10 @@ export function createTools(deps: ToolDeps) {
   });
 
   const skillInstall = defineTool("skill_install", {
-    description: "Install a skill from a git repository URL. The repo must contain a SKILL.md file.",
+    description: "Install a skill from a git repository URL or a direct SKILL.md file URL. Accepts full repo URLs (clones the repo) and GitHub blob/raw URLs pointing to a specific SKILL.md (fetches just that file).",
     skipPermission: true,
     parameters: z.object({
-      repo_url: z.string().describe("Git repository URL (e.g., https://github.com/user/my-skill.git)"),
+      repo_url: z.string().describe("Git repository URL (e.g., https://github.com/user/my-skill.git) or direct SKILL.md URL (e.g., https://github.com/user/repo/blob/main/skills/my-skill/SKILL.md)"),
     }),
     handler: async ({ repo_url }) => {
       console.error(`[io] skill_install called: ${repo_url}`);
