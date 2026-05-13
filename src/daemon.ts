@@ -3,6 +3,8 @@ import { initOrchestrator, sendToOrchestrator, shutdownOrchestrator } from "./co
 import { startApiServer, setMessageHandler as setApiHandler, broadcastToSSE, broadcastNotificationToSSE } from "./api/server.js";
 import { createBot, startBot, stopBot, sendProactiveMessage, sendBackgroundNotification, setMessageHandler as setTelegramHandler } from "./telegram/bot.js";
 import { setTelegramSender, setTuiSender, setSseBroadcaster } from "./notify.js";
+import { pruneOldScheduleRuns } from "./store/schedule-runs.js";
+import { pruneOldNotifications } from "./store/notifications.js";
 import { printBackgroundNotification } from "./tui/index.js";
 import { getDb, closeDb } from "./store/db.js";
 import { clearStaleTasks } from "./store/tasks.js";
@@ -155,6 +157,31 @@ export async function startDaemon(): Promise<void> {
   setSseBroadcaster((p) => broadcastNotificationToSSE(p));
   setTuiSender((opts) => printBackgroundNotification(opts));
   setTelegramSender((opts) => sendBackgroundNotification(opts));
+
+  // Daily cleanup — prune schedule runs and notifications older than 30 days
+  const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+  const PRUNE_RETENTION_DAYS = 30;
+  const pruneTimer = setInterval(() => {
+    try {
+      const runsDeleted = pruneOldScheduleRuns(PRUNE_RETENTION_DAYS);
+      const notificationsDeleted = pruneOldNotifications(PRUNE_RETENTION_DAYS);
+      if (runsDeleted > 0 || notificationsDeleted > 0) {
+        console.log(`[prune] Cleaned up ${runsDeleted} schedule runs and ${notificationsDeleted} notifications older than ${PRUNE_RETENTION_DAYS} days`);
+      }
+    } catch (err) {
+      console.error("[prune] Error during cleanup:", err);
+    }
+  }, PRUNE_INTERVAL_MS);
+  pruneTimer.unref();
+
+  // Run once on startup after a brief delay
+  const pruneStartup = setTimeout(() => {
+    try {
+      pruneOldScheduleRuns(PRUNE_RETENTION_DAYS);
+      pruneOldNotifications(PRUNE_RETENTION_DAYS);
+    } catch { /* best effort */ }
+  }, 5000);
+  (pruneStartup as unknown as { unref?: () => void }).unref?.();
 
   console.log("[io] IO is fully operational.");
 
