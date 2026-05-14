@@ -1,216 +1,252 @@
 <template>
-  <div class="flex flex-col h-full bg-gray-950">
+  <div class="flex flex-col h-full bg-surface-0">
 
-    <!-- Skill detail panel -->
-    <div v-if="selectedSkill" class="flex flex-col h-full overflow-hidden">
-      <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-800 shrink-0">
+    <!-- ═══ Skill detail panel ═══ -->
+    <div v-if="selectedSkill" class="flex flex-col h-full overflow-hidden animate-fade-in">
+      <div class="flex items-center gap-3 px-6 py-3.5 border-b border-edge shrink-0 bg-surface-1/60 backdrop-blur-sm">
         <button
           @click="closeDetail"
-          class="text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-1.5 text-sm"
+          class="text-txt-muted hover:text-accent transition-colors flex items-center gap-1.5 text-sm group"
         >
-          ← Back
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>
+          Back
         </button>
-        <h2 class="text-lg font-bold text-gray-100 truncate">{{ selectedSkill.name }}</h2>
-        <span class="text-xs text-gray-500 font-mono shrink-0">{{ selectedSkill.slug }}</span>
+        <div class="w-px h-5 bg-edge"></div>
+        <h2 class="text-base font-semibold text-txt-primary truncate">{{ selectedSkill.name }}</h2>
+        <span class="text-[11px] text-txt-muted font-mono shrink-0 bg-surface-2/60 px-1.5 py-0.5 rounded">{{ selectedSkill.slug }}</span>
       </div>
 
       <div v-if="contentLoading" class="flex-1 flex items-center justify-center">
-        <span class="text-sm text-gray-500">Loading…</span>
+        <div class="flex items-center gap-2 text-txt-muted text-sm">
+          <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+          Loading…
+        </div>
       </div>
       <div v-else-if="contentError" class="flex-1 p-6">
-        <p class="text-sm text-red-400">{{ contentError }}</p>
+        <div class="inline-flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          <span>⚠</span> {{ contentError }}
+        </div>
       </div>
-      <div v-else class="flex-1 overflow-y-auto p-6 skill-content text-sm text-gray-300 leading-relaxed">
+      <div v-else class="flex-1 overflow-y-auto p-6 skill-content text-sm text-txt-secondary leading-relaxed">
         <!-- Frontmatter info card -->
-        <div v-if="parsedFrontmatter" class="mb-6 bg-gray-900 border border-gray-700 rounded-lg p-4">
-          <div v-if="parsedFrontmatter.name" class="mb-2">
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Name</p>
-            <p class="text-base font-semibold text-gray-100">{{ parsedFrontmatter.name }}</p>
+        <div v-if="parsedFrontmatter" class="mb-6 bg-surface-2/60 border border-edge rounded-xl p-5">
+          <div v-if="parsedFrontmatter.name" class="mb-3">
+            <p class="text-[10px] text-txt-muted uppercase tracking-widest mb-0.5">Name</p>
+            <p class="text-base font-semibold text-txt-primary">{{ parsedFrontmatter.name }}</p>
           </div>
-          <div v-if="parsedFrontmatter.description" class="mb-2">
-            <p class="text-xs text-gray-500 uppercase tracking-wide">Description</p>
-            <p class="text-sm text-gray-300">{{ parsedFrontmatter.description }}</p>
+          <div v-if="parsedFrontmatter.description" class="mb-3">
+            <p class="text-[10px] text-txt-muted uppercase tracking-widest mb-0.5">Description</p>
+            <p class="text-sm text-txt-secondary">{{ parsedFrontmatter.description }}</p>
           </div>
-          <div class="flex flex-wrap gap-6 mt-2">
+          <div class="flex flex-wrap gap-6 mt-1">
             <div v-if="parsedFrontmatter.version">
-              <p class="text-xs text-gray-500 uppercase tracking-wide">Version</p>
-              <p class="text-sm text-gray-300 font-mono">{{ parsedFrontmatter.version }}</p>
+              <p class="text-[10px] text-txt-muted uppercase tracking-widest mb-0.5">Version</p>
+              <p class="text-sm text-accent font-mono">{{ parsedFrontmatter.version }}</p>
             </div>
             <div v-if="parsedFrontmatter.author">
-              <p class="text-xs text-gray-500 uppercase tracking-wide">Author</p>
-              <p class="text-sm text-gray-300">{{ parsedFrontmatter.author }}</p>
+              <p class="text-[10px] text-txt-muted uppercase tracking-widest mb-0.5">Author</p>
+              <p class="text-sm text-txt-secondary">{{ parsedFrontmatter.author }}</p>
             </div>
           </div>
-          <!-- Remaining frontmatter fields -->
-          <dl v-if="remainingFrontmatterFields.length > 0" class="mt-3 pt-3 border-t border-gray-800 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-baseline">
+          <dl v-if="remainingFrontmatterFields.length > 0" class="mt-3 pt-3 border-t border-edge grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-baseline">
             <template v-for="[key, val] in remainingFrontmatterFields" :key="key">
-              <dt class="text-xs text-gray-500 whitespace-nowrap">{{ key }}</dt>
-              <dd class="text-xs text-gray-400 font-mono">{{ val }}</dd>
+              <dt class="text-[10px] text-txt-muted uppercase tracking-wider whitespace-nowrap">{{ key }}</dt>
+              <dd class="text-xs text-txt-secondary font-mono">{{ val }}</dd>
             </template>
           </dl>
         </div>
-        <!-- Markdown body -->
         <div v-html="renderedBody"></div>
       </div>
     </div>
 
-    <!-- Skills list -->
+    <!-- ═══ Skills list ═══ -->
     <div v-else class="flex-1 overflow-y-auto p-6">
-      <h2 class="text-2xl font-bold mb-6">Skills</h2>
-
-      <!-- Discover Skills links -->
-      <div class="flex items-center gap-4 mb-6">
-        <span class="text-xs text-gray-500 uppercase tracking-wide shrink-0">Discover</span>
-        <a
-          href="https://github.com/github/awesome-copilot"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4 h-4 fill-current" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
-          awesome-copilot
-        </a>
-        <a
-          href="https://skills.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-4 h-4 fill-current" aria-hidden="true"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8c0 .93.16 1.82.46 2.65L5 8.5V7H3.5l-.07.01A6.492 6.492 0 0 0 1.5 8Zm6.5 6.5c.93 0 1.82-.17 2.65-.47L8.5 11H7v2.5c.17.01.33.01.5.01Zm-5.3-1.7c.56.4 1.19.7 1.87.88L5 11H3.5c.34.66.79 1.25 1.2 1.8ZM8.5 1.5V4H10l2.5 2.5c.02-.16.03-.33.03-.5A6.5 6.5 0 0 0 8.5 1.5Zm-1 0A6.5 6.5 0 0 0 1.97 6H3.5L6 3.5V1.53c-.51.1-1 .26-1.5.46V1.5ZM11 8.5l-2.5 2.5H10l1.88-1.88A6.47 6.47 0 0 0 11 8.5ZM6 6v4h4V6H6Z"/></svg>
-          skills.sh
-        </a>
-      </div>
-
-      <!-- Install form with URL / Paste tabs -->
-      <div class="mb-6 max-w-2xl">
-        <!-- Tab switcher -->
-        <div class="flex gap-1 mb-3 border-b border-gray-800">
-          <button
-            type="button"
-            @click="installTab = 'url'"
-            class="px-3 py-1.5 text-sm rounded-t transition-colors"
-            :class="installTab === 'url' ? 'bg-gray-800 text-gray-100 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'"
-          >
-            From URL
-          </button>
-          <button
-            type="button"
-            @click="installTab = 'paste'"
-            class="px-3 py-1.5 text-sm rounded-t transition-colors"
-            :class="installTab === 'paste' ? 'bg-gray-800 text-gray-100 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'"
-          >
-            Paste SKILL.md
-          </button>
+      <div class="max-w-3xl">
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-txt-primary tracking-tight">Skills</h2>
+            <p class="text-xs text-txt-muted mt-0.5">Manage installed Copilot skills</p>
+          </div>
+          <!-- Discover links as accent pills -->
+          <div class="flex items-center gap-2">
+            <a
+              href="https://github.com/github/awesome-copilot"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-1.5 text-xs text-txt-muted bg-surface-2/50 border border-edge
+                     px-2.5 py-1 rounded-full hover:border-accent/30 hover:text-accent transition-all duration-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3 h-3 fill-current" aria-hidden="true"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+              awesome-copilot
+            </a>
+            <a
+              href="https://skills.sh"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-1.5 text-xs text-txt-muted bg-surface-2/50 border border-edge
+                     px-2.5 py-1 rounded-full hover:border-accent/30 hover:text-accent transition-all duration-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" class="w-3 h-3 fill-current" aria-hidden="true"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8c0 .93.16 1.82.46 2.65L5 8.5V7H3.5l-.07.01A6.492 6.492 0 0 0 1.5 8Zm6.5 6.5c.93 0 1.82-.17 2.65-.47L8.5 11H7v2.5c.17.01.33.01.5.01Zm-5.3-1.7c.56.4 1.19.7 1.87.88L5 11H3.5c.34.66.79 1.25 1.2 1.8ZM8.5 1.5V4H10l2.5 2.5c.02-.16.03-.33.03-.5A6.5 6.5 0 0 0 8.5 1.5Zm-1 0A6.5 6.5 0 0 0 1.97 6H3.5L6 3.5V1.53c-.51.1-1 .26-1.5.46V1.5ZM11 8.5l-2.5 2.5H10l1.88-1.88A6.47 6.47 0 0 0 11 8.5ZM6 6v4h4V6H6Z"/></svg>
+              skills.sh
+            </a>
+          </div>
         </div>
 
-        <!-- URL install tab -->
-        <form v-if="installTab === 'url'" @submit.prevent="installSkill">
-          <div class="flex gap-2">
-            <input
-              v-model="newRepoUrl"
-              type="url"
-              placeholder="https://github.com/owner/repo.git"
-              aria-label="Git repository URL"
-              :disabled="installing"
-              class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-            />
+        <!-- ── Install form ── -->
+        <div class="mb-6 bg-surface-2/40 border border-edge rounded-xl p-4">
+          <!-- Tab switcher -->
+          <div class="flex gap-1 mb-3">
             <button
-              type="submit"
-              :disabled="installing || newRepoUrl.trim() === ''"
-              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm transition-colors whitespace-nowrap"
+              type="button"
+              @click="installTab = 'url'"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150"
+              :class="installTab === 'url'
+                ? 'bg-accent/10 text-accent border border-accent/20'
+                : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-3/40 border border-transparent'"
             >
-              {{ installing ? 'Installing…' : 'Install' }}
+              From URL
+            </button>
+            <button
+              type="button"
+              @click="installTab = 'paste'"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150"
+              :class="installTab === 'paste'
+                ? 'bg-accent/10 text-accent border border-accent/20'
+                : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-3/40 border border-transparent'"
+            >
+              Paste SKILL.md
             </button>
           </div>
-        </form>
 
-        <!-- Paste install tab -->
-        <form v-else @submit.prevent="installPaste">
-          <div class="flex flex-col gap-2">
-            <div>
+          <!-- URL tab -->
+          <form v-if="installTab === 'url'" @submit.prevent="installSkill">
+            <div class="flex gap-2">
               <input
-                v-model="pasteSlug"
-                type="text"
-                placeholder="my-skill"
-                aria-label="Skill slug"
-                :disabled="pasting"
-                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                v-model="newRepoUrl"
+                type="url"
+                placeholder="https://github.com/owner/repo.git"
+                aria-label="Git repository URL"
+                :disabled="installing"
+                class="flex-1 bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                       placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                       disabled:opacity-40 transition-all duration-200"
               />
-              <p class="text-xs text-gray-600 mt-1">Unique identifier for this skill (lowercase, hyphens ok)</p>
+              <button
+                type="submit"
+                :disabled="installing || newRepoUrl.trim() === ''"
+                class="bg-accent/15 text-accent border border-accent/25 px-4 py-2 rounded-lg text-sm font-medium
+                       hover:bg-accent/25 hover:border-accent/40 disabled:opacity-30 disabled:cursor-not-allowed
+                       transition-all duration-150 whitespace-nowrap"
+              >
+                {{ installing ? 'Installing…' : 'Install' }}
+              </button>
             </div>
-            <textarea
-              v-model="pasteContent"
-              placeholder="Paste SKILL.md content here…"
-              aria-label="SKILL.md content"
-              :disabled="pasting"
-              rows="8"
-              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 font-mono resize-y"
-            ></textarea>
-            <button
-              type="submit"
-              :disabled="pasting || pasteSlug.trim() === '' || pasteContent.trim() === ''"
-              class="self-end bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm transition-colors"
-            >
-              {{ pasting ? 'Installing…' : 'Install' }}
-            </button>
-          </div>
-        </form>
-      </div>
+          </form>
 
-      <!-- Install feedback banners -->
-      <div v-if="installSuccess" class="bg-green-900 text-green-100 p-4 rounded-lg mb-4">
-        {{ installSuccess }}
-      </div>
-      <div v-if="installError" class="bg-red-900 text-red-100 p-4 rounded-lg mb-4">
-        {{ installError }}
-      </div>
-
-      <!-- Search -->
-      <div v-if="!loading && !error && skills.length > 0" class="mb-4 max-w-2xl">
-        <input
-          v-model="searchQuery"
-          type="search"
-          placeholder="Search skills…"
-          aria-label="Search skills"
-          class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-        />
-      </div>
-
-      <!-- List states -->
-      <div v-if="loading" class="text-gray-400 text-center py-12">
-        Loading skills...
-      </div>
-      <div v-else-if="error" class="bg-red-900 text-red-100 p-4 rounded-lg mb-4">
-        {{ error }}
-      </div>
-      <div v-else-if="skills.length === 0" class="text-gray-400 text-center py-12">
-        No skills available
-      </div>
-
-      <div v-else-if="filteredSkills.length === 0" class="text-gray-400 text-center py-12">
-        No matching skills
-      </div>
-
-      <div v-else class="grid gap-4">
-        <div
-          v-for="skill in filteredSkills"
-          :key="skill.slug"
-          @click="openDetail(skill)"
-          class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
-        >
-          <div class="flex justify-between items-start mb-2">
-            <div class="min-w-0">
-              <h3 class="font-bold text-gray-100">{{ skill.name }}</h3>
-              <p class="text-sm text-gray-500">{{ skill.slug }}</p>
+          <!-- Paste tab -->
+          <form v-else @submit.prevent="installPaste">
+            <div class="flex flex-col gap-2">
+              <div>
+                <input
+                  v-model="pasteSlug"
+                  type="text"
+                  placeholder="my-skill"
+                  aria-label="Skill slug"
+                  :disabled="pasting"
+                  class="w-full bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                         placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                         disabled:opacity-40 transition-all duration-200"
+                />
+                <p class="text-[10px] text-txt-muted mt-1 ml-1">Unique identifier (lowercase, hyphens ok)</p>
+              </div>
+              <textarea
+                v-model="pasteContent"
+                placeholder="Paste SKILL.md content here…"
+                aria-label="SKILL.md content"
+                :disabled="pasting"
+                rows="6"
+                class="w-full bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary font-mono
+                       placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                       disabled:opacity-40 resize-y transition-all duration-200"
+              ></textarea>
+              <button
+                type="submit"
+                :disabled="pasting || pasteSlug.trim() === '' || pasteContent.trim() === ''"
+                class="self-end bg-accent/15 text-accent border border-accent/25 px-4 py-2 rounded-lg text-sm font-medium
+                       hover:bg-accent/25 hover:border-accent/40 disabled:opacity-30 disabled:cursor-not-allowed
+                       transition-all duration-150"
+              >
+                {{ pasting ? 'Installing…' : 'Install' }}
+              </button>
             </div>
-            <button
-              @click.stop="deleteSkill(skill)"
-              class="shrink-0 ml-2 text-gray-600 hover:text-red-400 transition-colors text-sm p-1 rounded hover:bg-gray-700"
-              title="Delete skill"
-            >🗑️</button>
+          </form>
+        </div>
+
+        <!-- Feedback banners -->
+        <div v-if="installSuccess" class="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 p-3 rounded-lg mb-4 text-sm animate-fade-in">
+          <span>✓</span> {{ installSuccess }}
+        </div>
+        <div v-if="installError" class="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg mb-4 text-sm animate-fade-in">
+          <span>⚠</span> {{ installError }}
+        </div>
+
+        <!-- Search -->
+        <div v-if="!loading && !error && skills.length > 0" class="mb-4">
+          <input
+            v-model="searchQuery"
+            type="search"
+            placeholder="Search skills…"
+            aria-label="Search skills"
+            class="w-full bg-surface-2/50 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                   placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- List states -->
+        <div v-if="loading" class="flex items-center justify-center py-16">
+          <div class="flex items-center gap-2 text-txt-muted text-sm">
+            <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+            Loading skills…
           </div>
-          <p class="text-sm text-gray-400 mb-3">{{ skill.description }}</p>
-          <p class="text-xs text-gray-500">{{ skill.path }}</p>
+        </div>
+        <div v-else-if="error" class="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg mb-4 text-sm">
+          <span>⚠</span> {{ error }}
+        </div>
+        <div v-else-if="skills.length === 0" class="text-txt-muted text-sm text-center py-16">
+          No skills installed yet
+        </div>
+        <div v-else-if="filteredSkills.length === 0" class="text-txt-muted text-sm text-center py-12">
+          No matching skills
+        </div>
+
+        <!-- Skill cards grid -->
+        <div v-else class="grid gap-3">
+          <div
+            v-for="skill in filteredSkills"
+            :key="skill.slug"
+            @click="openDetail(skill)"
+            class="group bg-surface-2/40 border border-edge rounded-xl p-4
+                   hover:border-edge-bright hover:shadow-card-hover hover:bg-surface-2/70
+                   transition-all duration-200 cursor-pointer"
+          >
+            <div class="flex justify-between items-start mb-1.5">
+              <div class="min-w-0">
+                <h3 class="font-semibold text-txt-primary text-sm group-hover:text-accent transition-colors duration-150">{{ skill.name }}</h3>
+                <p class="text-[11px] text-txt-muted font-mono mt-0.5">{{ skill.slug }}</p>
+              </div>
+              <button
+                @click.stop="deleteSkill(skill)"
+                class="shrink-0 ml-2 p-1.5 rounded-lg text-txt-muted/0 group-hover:text-txt-muted
+                       hover:!text-red-400 hover:bg-red-500/10 transition-all duration-150"
+                title="Delete skill"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4m2 0v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4h9.334z"/></svg>
+              </button>
+            </div>
+            <p class="text-xs text-txt-secondary mb-2 line-clamp-2">{{ skill.description }}</p>
+            <p class="text-[10px] text-txt-muted font-mono truncate">{{ skill.path }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -417,5 +453,17 @@ onMounted(fetchSkills)
 .skill-content :deep(h3),
 .skill-content :deep(h4) {
   line-height: 1.3;
+}
+.skill-content :deep(pre) {
+  font-family: 'JetBrains Mono', monospace;
+  background: #060a13;
+  border-color: #1e2d4a;
+  border-radius: 0.625rem;
+}
+.skill-content :deep(code) {
+  font-family: 'JetBrains Mono', monospace;
+}
+.skill-content :deep(a) {
+  color: #22d3ee;
 }
 </style>

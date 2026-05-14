@@ -1,70 +1,93 @@
 <template>
-  <div class="flex h-full overflow-hidden">
-    <!-- Left panel: page list -->
-    <div class="w-72 shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col">
-      <div class="p-4 border-b border-gray-800">
+  <div class="flex h-full overflow-hidden bg-surface-0">
+    <!-- ── Page list sidebar ── -->
+    <div class="w-72 shrink-0 bg-surface-1/70 backdrop-blur-sm border-r border-edge flex flex-col">
+      <div class="p-3.5 shrink-0">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-gray-300">📚 Wiki</h2>
-          <span class="text-xs text-gray-500">{{ filteredPages.length }} pages</span>
+          <h2 class="text-sm font-semibold text-txt-primary tracking-tight flex items-center gap-1.5">
+            <span class="text-base">📚</span> Wiki
+          </h2>
+          <span class="text-[10px] text-txt-muted font-mono bg-surface-2/60 px-1.5 py-0.5 rounded">{{ filteredPages.length }}</span>
         </div>
         <input
           v-model="search"
           type="text"
           placeholder="Filter pages…"
-          class="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          class="w-full px-3 py-1.5 text-sm bg-surface-2/50 border border-edge rounded-lg text-txt-primary
+                 placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                 transition-all duration-200"
         />
       </div>
 
+      <div class="mx-3 h-px bg-gradient-to-r from-transparent via-edge to-transparent"></div>
+
       <div v-if="loadingList" class="flex-1 flex items-center justify-center">
-        <span class="text-sm text-gray-500">Loading…</span>
+        <div class="flex items-center gap-2 text-txt-muted text-sm">
+          <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+          Loading…
+        </div>
       </div>
       <div v-else-if="listError" class="flex-1 p-4">
-        <p class="text-sm text-red-400">{{ listError }}</p>
+        <div class="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{{ listError }}</div>
       </div>
-      <ul v-else class="flex-1 overflow-y-auto py-2">
-        <li v-if="filteredPages.length === 0" class="px-4 py-3 text-sm text-gray-500">
-          No pages found.
+      <ul v-else class="flex-1 overflow-y-auto py-2 px-2">
+        <li v-if="filteredPages.length === 0" class="px-2 py-3 text-sm text-txt-muted text-center">
+          No pages found
         </li>
         <li
           v-for="page in filteredPages"
           :key="page.path"
           @click="selectPage(page)"
-          class="px-4 py-2 cursor-pointer text-sm transition-colors hover:bg-gray-800"
+          class="relative px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all duration-150 mb-0.5"
           :class="selectedPage?.path === page.path
-            ? 'bg-blue-900 text-blue-300 font-medium'
-            : 'text-gray-300'"
+            ? 'bg-accent/10 text-accent'
+            : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-3/40'"
         >
-          {{ page.title }}
+          <span
+            v-if="selectedPage?.path === page.path"
+            class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent shadow-glow-sm"
+          ></span>
+          <span :class="selectedPage?.path === page.path ? 'ml-1' : ''">{{ page.title }}</span>
         </li>
       </ul>
     </div>
 
-    <!-- Right panel: page content -->
-    <div class="flex-1 min-w-0 flex flex-col bg-gray-950 overflow-hidden">
-      <!-- No selection -->
-      <div v-if="!selectedPage" class="flex-1 flex items-center justify-center">
-        <p class="text-gray-600 text-sm">Select a page to view</p>
+    <!-- ── Content area ── -->
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <!-- Empty state -->
+      <div v-if="!selectedPage" class="flex-1 flex flex-col items-center justify-center select-none">
+        <div class="w-12 h-12 rounded-xl bg-surface-2/60 border border-edge flex items-center justify-center mb-4">
+          <span class="text-2xl">📖</span>
+        </div>
+        <p class="text-txt-muted text-sm">Select a page to start reading</p>
       </div>
 
-      <!-- Loading content -->
+      <!-- Loading -->
       <div v-else-if="loadingContent" class="flex-1 flex items-center justify-center">
-        <span class="text-sm text-gray-500">Loading…</span>
+        <div class="flex items-center gap-2 text-txt-muted text-sm">
+          <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+          Loading…
+        </div>
       </div>
 
       <!-- Error -->
       <div v-else-if="contentError" class="flex-1 p-6">
-        <p class="text-sm text-red-400">{{ contentError }}</p>
+        <div class="inline-flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          <span>⚠</span> {{ contentError }}
+        </div>
       </div>
 
       <!-- Content -->
-      <div v-else class="flex-1 overflow-y-auto p-6">
-        <h1 class="text-xl font-bold text-gray-100 mb-4 pb-3 border-b border-gray-800">
-          {{ selectedPage.title }}
-        </h1>
-        <div
-          class="wiki-content text-gray-300 text-sm leading-relaxed"
-          v-html="renderedContent"
-        />
+      <div v-else class="flex-1 overflow-y-auto">
+        <div class="max-w-3xl mx-auto px-6 py-6">
+          <h1 class="text-xl font-bold text-txt-primary mb-4 pb-3 border-b border-edge">
+            {{ selectedPage.title }}
+          </h1>
+          <div
+            class="wiki-content text-txt-secondary text-sm leading-relaxed"
+            v-html="renderedContent"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -135,7 +158,6 @@ async function selectPage(page: WikiPage) {
   }
 }
 
-/** Lightweight markdown → HTML renderer (no external dep). */
 onMounted(fetchPages)
 </script>
 
@@ -145,5 +167,17 @@ onMounted(fetchPages)
 .wiki-content :deep(h3),
 .wiki-content :deep(h4) {
   line-height: 1.3;
+}
+.wiki-content :deep(pre) {
+  font-family: 'JetBrains Mono', monospace;
+  background: #060a13;
+  border-color: #1e2d4a;
+  border-radius: 0.625rem;
+}
+.wiki-content :deep(code) {
+  font-family: 'JetBrains Mono', monospace;
+}
+.wiki-content :deep(a) {
+  color: #22d3ee;
 }
 </style>
