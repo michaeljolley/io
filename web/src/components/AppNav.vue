@@ -53,7 +53,7 @@
                 : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-3/40'
             ]"
             :title="collapsed ? item.label : undefined"
-            @click="item.name === 'notifications' ? onNotificationsClick() : undefined"
+            @click="item.name === 'notifications' ? onNotificationsClick() : item.name === 'inbox' ? onInboxClick() : undefined"
           >
             <!-- Active indicator bar -->
             <span
@@ -72,6 +72,14 @@
               :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
             >
               {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+            <!-- Inbox count badge -->
+            <span
+              v-if="item.name === 'inbox' && inboxCount > 0"
+              class="absolute flex items-center justify-center bg-accent text-surface-0 text-[9px] font-bold rounded-full min-w-[16px] h-[16px] px-0.5 ring-2 ring-surface-1"
+              :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
+            >
+              {{ inboxCount > 99 ? '99+' : inboxCount }}
             </span>
           </RouterLink>
         </li>
@@ -156,6 +164,7 @@ const auth = useAuthStore()
 
 const version = ref('')
 const unreadCount = ref(0)
+const inboxCount = ref(0)
 const collapsed = ref(false)
 let notificationSource: EventSource | null = null
 
@@ -163,6 +172,7 @@ const STORAGE_KEY = 'io-nav-collapsed'
 
 const navItems = [
   { to: '/chat',          name: 'chat',          icon: '💬', label: 'Chat' },
+  { to: '/inbox',         name: 'inbox',         icon: '📥', label: 'Inbox' },
   { to: '/skills',        name: 'skills',        icon: '⚙️',  label: 'Skills' },
   { to: '/squads',        name: 'squads',        icon: '👥', label: 'Squads' },
   { to: '/wiki',          name: 'wiki',          icon: '📚', label: 'Wiki' },
@@ -194,6 +204,10 @@ function onNotificationsClick() {
   unreadCount.value = 0
 }
 
+function onInboxClick() {
+  inboxCount.value = 0
+}
+
 onMounted(async () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -213,6 +227,14 @@ onMounted(async () => {
     if (res.ok) {
       const data = (await res.json()) as { unreadCount?: number }
       unreadCount.value = data.unreadCount ?? 0
+    }
+  } catch { /* best effort */ }
+
+  try {
+    const inboxRes = await apiFetch('/api/inbox/count')
+    if (inboxRes.ok) {
+      const inboxData = (await inboxRes.json()) as { count?: number }
+      inboxCount.value = inboxData.count ?? 0
     }
   } catch { /* best effort */ }
 

@@ -57,6 +57,11 @@ const router = createRouter({
       name: 'notifications',
       component: NotificationsView,
     },
+    {
+      path: '/inbox',
+      name: 'inbox',
+      component: () => import('../views/InboxView.vue'),
+    },
   ],
 })
 
