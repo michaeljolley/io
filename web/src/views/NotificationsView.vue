@@ -67,7 +67,11 @@ const loading = ref(true)
 const expanded = ref(new Set<number>())
 
 function formatTime(ts: string) {
-  try { return new Date(ts).toLocaleString() } catch { return ts }
+  try {
+    // SQLite CURRENT_TIMESTAMP is UTC without Z — normalize to ISO 8601 UTC
+    const normalized = ts.includes('T') || ts.endsWith('Z') ? ts : ts.replace(' ', 'T') + 'Z'
+    return new Date(normalized).toLocaleString()
+  } catch { return ts }
 }
 
 function toggleExpand(id: number) {

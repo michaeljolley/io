@@ -348,7 +348,9 @@ const historyLoading = ref(new Set<string>())
 const promptExpanded = ref(new Set<string>())
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString()
+  // SQLite CURRENT_TIMESTAMP is UTC without Z — normalize to ISO 8601 UTC
+  const normalized = iso.includes('T') || iso.endsWith('Z') ? iso : iso.replace(' ', 'T') + 'Z'
+  return new Date(normalized).toLocaleString()
 }
 
 function runIcon(status: string): string {
