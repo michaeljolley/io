@@ -2,7 +2,7 @@
  * Lightweight markdown → HTML renderer (no external dependency).
  * Handles: headings H1–H4, fenced code blocks, bold/italic/inline-code,
  * links (https/http/relative/anchor only — javascript: and data: are blocked),
- * unordered and ordered lists, horizontal rules, paragraphs.
+ * unordered and ordered lists, horizontal rules, GFM tables, paragraphs.
  *
  * Output is safe to use with v-html: HTML entities are escaped before any
  * markdown substitution so raw content can never inject markup.
@@ -29,6 +29,58 @@ function inlineFormat(text: string): string {
     })
 }
 
+/** Returns true if the line looks like a table row (has at least one | inside). */
+function isTableRow(line: string): boolean {
+  const t = line.trim()
+  return t.startsWith('|') && t.endsWith('|') && t.length > 2
+}
+
+/** Returns true if the line is a table separator row (---|:---:|---: etc.). */
+function isSeparatorRow(line: string): boolean {
+  return isTableRow(line) && /^\|[\s|:\-]+\|$/.test(line.trim())
+}
+
+/** Split a table row string into trimmed cell strings (excludes empty outer cells). */
+function splitRow(line: string): string[] {
+  return line.trim().slice(1, -1).split('|').map(c => c.trim())
+}
+
+/** Parse alignment from a separator cell: ':---' → left, ':---:' → center, '---:' → right. */
+function parseAlign(sep: string): string {
+  const s = sep.trim()
+  if (s.startsWith(':') && s.endsWith(':')) return 'text-center'
+  if (s.endsWith(':')) return 'text-right'
+  return 'text-left'
+}
+
+/** Render a buffered block of table lines as an HTML table. */
+function renderTable(tableLines: string[]): string {
+  if (tableLines.length < 2) return tableLines.map(l => `<p class="my-1">${inlineFormat(l)}</p>`).join('\n')
+
+  const headers = splitRow(tableLines[0])
+  const sepLine = tableLines[1]
+  const alignments = isSeparatorRow(sepLine)
+    ? splitRow(sepLine).map(parseAlign)
+    : headers.map(() => 'text-left')
+  const dataRows = isSeparatorRow(sepLine) ? tableLines.slice(2) : tableLines.slice(1)
+
+  const thCells = headers.map((h, i) => {
+    const align = alignments[i] ?? 'text-left'
+    return `<th class="px-3 py-1.5 font-medium text-gray-300 ${align}">${inlineFormat(h)}</th>`
+  }).join('')
+
+  const tbodyRows = dataRows.map(row => {
+    const cells = splitRow(row)
+    const tds = headers.map((_, i) => {
+      const align = alignments[i] ?? 'text-left'
+      return `<td class="px-3 py-1.5 text-gray-400 ${align}">${inlineFormat(cells[i] ?? '')}</td>`
+    }).join('')
+    return `<tr class="border-b border-gray-800">${tds}</tr>`
+  }).join('')
+
+  return `<div class="overflow-x-auto my-2"><table class="border-collapse w-full text-sm"><thead><tr class="border-b border-gray-700">${thCells}</tr></thead><tbody>${tbodyRows}</tbody></table></div>`
+}
+
 export function renderMarkdown(md: string): string {
   if (!md) return ''
 
@@ -36,17 +88,28 @@ export function renderMarkdown(md: string): string {
   const out: string[] = []
   let inCode = false
   let inList = false
+  let inTable = false
   let codeLines: string[] = []
+  let tableLines: string[] = []
 
   function closeList() {
     if (inList) { out.push('</ul>'); inList = false }
   }
 
+  function closeTable() {
+    if (inTable) {
+      out.push(renderTable(tableLines))
+      tableLines = []
+      inTable = false
+    }
+  }
+
   for (const line of lines) {
     // Fenced code blocks
     if (line.startsWith('```')) {
+      closeList()
+      closeTable()
       if (!inCode) {
-        closeList()
         inCode = true
         codeLines = []
       } else {
@@ -60,6 +123,17 @@ export function renderMarkdown(md: string): string {
     }
 
     if (inCode) { codeLines.push(line); continue }
+
+    // Table rows — buffer until a non-table line appears
+    if (isTableRow(line)) {
+      closeList()
+      inTable = true
+      tableLines.push(line)
+      continue
+    }
+
+    // Non-table line while buffering a table → flush it
+    if (inTable) closeTable()
 
     // Headings
     const h4 = line.match(/^####\s+(.+)/)
@@ -101,12 +175,13 @@ export function renderMarkdown(md: string): string {
     out.push(`<p class="my-1">${inlineFormat(line)}</p>`)
   }
 
-  // Close any uncovered code block (malformed markdown)
+  // Flush any open blocks at EOF
   if (inCode && codeLines.length) {
     const escaped = codeLines.join('\n')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     out.push(`<pre class="bg-gray-900 border border-gray-800 rounded p-3 my-2 overflow-x-auto"><code class="font-mono text-xs text-green-300">${escaped}</code></pre>`)
   }
+  closeTable()
   closeList()
 
   return out.join('\n')
