@@ -183,7 +183,7 @@ async function installSkillFromFile(rawUrl: string, slug: string): Promise<Skill
 
   // Validate: at least one markdown heading in the first 10 lines
   const first10 = content.split(/\r?\n/).slice(0, 10);
-  if (!first10.some((line) => /^#\s+/.test(line))) {
+  if (!first10.some((line) => /^#{1,6}\s/.test(line))) {
     throw new Error("URL does not appear to contain a valid SKILL.md file.");
   }
 
@@ -201,7 +201,7 @@ async function installSkillFromFile(rawUrl: string, slug: string): Promise<Skill
 
 function isValidSkillContent(content: string): boolean {
   const first10 = content.split(/\r?\n/).slice(0, 10);
-  return first10.some((line) => /^#\s+/.test(line));
+  return first10.some((line) => /^#{1,6}\s/.test(line));
 }
 
 /**
