@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import { join, basename } from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { SKILLS_DIR } from "../paths.js";
 
 export interface SkillInfo {
@@ -147,7 +147,12 @@ export function parseSkillUrl(input: string): ParsedSkillUrl {
     if (!input.startsWith("https://")) {
       throw new Error("Only https:// URLs are supported for SKILL.md installs.");
     }
-    const urlObj = new URL(input);
+    let urlObj: URL;
+    try {
+      urlObj = new URL(input);
+    } catch {
+      throw new Error(`Invalid URL: ${input}`);
+    }
     const segments = urlObj.pathname.split("/").filter(Boolean);
     // Use the segment before SKILL.md, or the hostname as slug fallback
     const slug = segments.length >= 2
@@ -199,35 +204,48 @@ async function installSkillFromFile(rawUrl: string, slug: string): Promise<Skill
  * Throws if the repo/file does not contain a valid SKILL.md.
  */
 export async function installSkill(input: string): Promise<SkillInfo> {
-  const parsed = parseSkillUrl(input);
+  let destDir: string | undefined;
+  try {
+    const parsed = parseSkillUrl(input);
 
-  if (parsed.type === "file") {
-    return installSkillFromFile(parsed.rawUrl, parsed.slug);
+    if (parsed.type === "file") {
+      return await installSkillFromFile(parsed.rawUrl, parsed.slug);
+    }
+
+    const repoUrl = parsed.url;
+    const repoName = basename(repoUrl, ".git").replace(/\.git$/, "");
+    destDir = join(SKILLS_DIR, repoName);
+
+    execFileSync("git", ["clone", repoUrl, destDir], {
+      stdio: "pipe",
+      timeout: 60_000,
+    });
+
+    const skillMdPath = join(destDir, "SKILL.md");
+    if (!existsSync(skillMdPath)) {
+      rmSync(destDir, { recursive: true, force: true });
+      destDir = undefined;
+      throw new Error(
+        `Repository "${repoUrl}" does not contain a SKILL.md file.`,
+      );
+    }
+
+    const content = readFileSync(skillMdPath, "utf-8");
+    const { name, description } = parseSkillMd(content);
+
+    return {
+      name: name || repoName,
+      slug: repoName,
+      description,
+      path: destDir,
+    };
+  } catch (e) {
+    // Clean up partially-created directory on failure
+    if (destDir && existsSync(destDir)) {
+      rmSync(destDir, { recursive: true, force: true });
+    }
+    throw e instanceof Error ? e : new Error(String(e));
   }
-
-  const repoUrl = parsed.url;
-  const repoName = basename(repoUrl, ".git").replace(/\.git$/, "");
-  const destDir = join(SKILLS_DIR, repoName);
-
-  execSync(`git clone ${repoUrl} ${destDir}`, { stdio: "pipe" });
-
-  const skillMdPath = join(destDir, "SKILL.md");
-  if (!existsSync(skillMdPath)) {
-    rmSync(destDir, { recursive: true, force: true });
-    throw new Error(
-      `Repository "${repoUrl}" does not contain a SKILL.md file.`,
-    );
-  }
-
-  const content = readFileSync(skillMdPath, "utf-8");
-  const { name, description } = parseSkillMd(content);
-
-  return {
-    name: name || repoName,
-    slug: repoName,
-    description,
-    path: destDir,
-  };
 }
 
 /**
