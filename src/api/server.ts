@@ -14,6 +14,7 @@ import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
 import { getScheduleRuns } from "../store/schedule-runs.js";
+import { listPages, readPage } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
 import {
@@ -578,6 +579,46 @@ export async function startApiServer(): Promise<void> {
     req.on("close", () => {
       sseConnections.delete(res);
     });
+  });
+
+  // Wiki endpoints (issue #105)
+  function extractWikiTitle(pageContent: string, fallback: string): string {
+    const match = pageContent.match(/^#\s+(.+)/m);
+    return match ? match[1].trim() : fallback;
+  }
+
+  api.get("/wiki", (_req: Request, res: Response) => {
+    try {
+      const pages = listPages();
+      const result = pages.map((pagePath) => {
+        const pageContent = readPage(pagePath);
+        const title = pageContent ? extractWikiTitle(pageContent, pagePath) : pagePath;
+        return { path: pagePath, title };
+      });
+      res.json({ pages: result });
+    } catch (e) {
+      console.error("Error listing wiki pages:", e);
+      res.status(500).json({ error: "Failed to list wiki pages" });
+    }
+  });
+
+  api.get("/wiki/*", (req: Request, res: Response) => {
+    try {
+      const pagePath = Array.isArray(req.params[0]) ? req.params[0][0] : req.params[0];
+      if (!pagePath) {
+        res.status(400).json({ error: "Missing page path" });
+        return;
+      }
+      const pageContent = readPage(pagePath);
+      if (pageContent === undefined) {
+        res.status(404).json({ error: "Page not found" });
+        return;
+      }
+      res.json({ path: pagePath, content: pageContent });
+    } catch (e) {
+      console.error("Error reading wiki page:", e);
+      res.status(500).json({ error: "Failed to read wiki page" });
+    }
   });
 
   // Mount API at /api (for frontend)
