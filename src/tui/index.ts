@@ -2,6 +2,11 @@ import { createInterface, type Interface } from "readline";
 import { listRecentTasks, getTask } from "../store/tasks.js";
 import { getTaskEvents } from "../copilot/agents.js";
 import { summarize } from "../copilot/event-summary.js";
+import {
+  listInboxEntries,
+  deleteInboxEntry,
+  countInboxEntries,
+} from "../store/inbox.js";
 
 export type TuiMessageHandler = (
   text: string,
@@ -22,6 +27,9 @@ Type a message to chat. Commands:
   /status              — show status
   /activity [id|N]     — show summarized activity for a task (default: most recent)
   /verbose             — toggle verbose mode (raw event detail in /activity)
+  /inbox               — list inbox entries
+  /inbox delete <id>   — delete an inbox entry by ID
+  /inbox clear         — delete all inbox entries
   /quit                — exit
 `;
 
@@ -141,6 +149,25 @@ function renderActivity(taskIdArg: string | undefined): void {
   }
 }
 
+function renderInbox(): void {
+  const entries = listInboxEntries();
+  if (entries.length === 0) {
+    console.log("\u2705 Inbox is empty.");
+    return;
+  }
+  console.log(`\u2705 Inbox (${entries.length} ${entries.length === 1 ? "entry" : "entries"})`);
+  console.log("\u2500".repeat(60));
+  for (const entry of entries) {
+    const ts = new Date(entry.created_at).toLocaleString();
+    console.log(`[${entry.id}] ${entry.title} \u2014 ${ts}`);
+    const preview = entry.body.length > 200 ? entry.body.slice(0, 200) + "\u2026" : entry.body;
+    for (const line of preview.split(/\r?\n/)) {
+      console.log(`    ${line}`);
+    }
+    console.log("");
+  }
+}
+
 function clearLine(): void {
   process.stdout.write("\r\x1b[K");
 }
@@ -174,7 +201,11 @@ export async function startTui(): Promise<void> {
     }
 
     if (trimmed === "/status") {
+      const inboxCount = countInboxEntries();
       console.log(`[io] Uptime: ${Math.floor(process.uptime())}s`);
+      if (inboxCount > 0) {
+        console.log(`[io] \u2705 Inbox: ${inboxCount} ${inboxCount === 1 ? "entry" : "entries"}`);
+      }
       rl.prompt();
       return;
     }
@@ -190,6 +221,38 @@ export async function startTui(): Promise<void> {
       const arg = trimmed.slice("/activity".length).trim() || undefined;
       try { renderActivity(arg); } catch (err) {
         console.error(`[io] /activity failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      rl.prompt();
+      return;
+    }
+
+    if (trimmed === "/inbox" || trimmed.startsWith("/inbox ")) {
+      const sub = trimmed.slice("/inbox".length).trim();
+      try {
+        if (sub === "" ) {
+          renderInbox();
+        } else if (sub === "clear") {
+          const entries = listInboxEntries();
+          let deleted = 0;
+          for (const entry of entries) {
+            if (deleteInboxEntry(entry.id)) deleted++;
+          }
+          console.log(`[io] Cleared ${deleted} inbox ${deleted === 1 ? "entry" : "entries"}.`);
+        } else if (sub.startsWith("delete ")) {
+          const rawId = sub.slice("delete ".length).trim();
+          const id = Number.parseInt(rawId, 10);
+          if (Number.isNaN(id)) {
+            console.log(`[io] Invalid ID: "${rawId}". Usage: /inbox delete <id>`);
+          } else if (deleteInboxEntry(id)) {
+            console.log(`[io] Deleted inbox entry #${id}.`);
+          } else {
+            console.log(`[io] Inbox entry #${id} not found.`);
+          }
+        } else {
+          console.log(`[io] Unknown inbox subcommand: "${sub}". Try /inbox, /inbox delete <id>, or /inbox clear.`);
+        }
+      } catch (err) {
+        console.error(`[io] /inbox failed: ${err instanceof Error ? err.message : String(err)}`);
       }
       rl.prompt();
       return;
