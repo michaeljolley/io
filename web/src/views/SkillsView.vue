@@ -1,6 +1,34 @@
 <template>
   <div class="flex flex-col h-full bg-gray-950">
-    <div class="flex-1 overflow-y-auto p-6">
+
+    <!-- Skill detail panel -->
+    <div v-if="selectedSkill" class="flex flex-col h-full overflow-hidden">
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-800 shrink-0">
+        <button
+          @click="closeDetail"
+          class="text-gray-400 hover:text-gray-200 transition-colors flex items-center gap-1.5 text-sm"
+        >
+          ← Back
+        </button>
+        <h2 class="text-lg font-bold text-gray-100 truncate">{{ selectedSkill.name }}</h2>
+        <span class="text-xs text-gray-500 font-mono shrink-0">{{ selectedSkill.slug }}</span>
+      </div>
+
+      <div v-if="contentLoading" class="flex-1 flex items-center justify-center">
+        <span class="text-sm text-gray-500">Loading…</span>
+      </div>
+      <div v-else-if="contentError" class="flex-1 p-6">
+        <p class="text-sm text-red-400">{{ contentError }}</p>
+      </div>
+      <div
+        v-else
+        class="flex-1 overflow-y-auto p-6 skill-content text-sm text-gray-300 leading-relaxed"
+        v-html="renderedContent"
+      ></div>
+    </div>
+
+    <!-- Skills list -->
+    <div v-else class="flex-1 overflow-y-auto p-6">
       <h2 class="text-2xl font-bold mb-6">Skills</h2>
 
       <!-- Add Skill form -->
@@ -32,15 +60,13 @@
         {{ installError }}
       </div>
 
-      <!-- Skills list -->
+      <!-- List states -->
       <div v-if="loading" class="text-gray-400 text-center py-12">
         Loading skills...
       </div>
-
       <div v-else-if="error" class="bg-red-900 text-red-100 p-4 rounded-lg mb-4">
         {{ error }}
       </div>
-
       <div v-else-if="skills.length === 0" class="text-gray-400 text-center py-12">
         No skills available
       </div>
@@ -49,7 +75,8 @@
         <div
           v-for="skill in skills"
           :key="skill.slug"
-          class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors"
+          @click="openDetail(skill)"
+          class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
         >
           <div class="flex justify-between items-start mb-2">
             <div>
@@ -62,12 +89,14 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { apiFetch } from '../lib/api'
+import { renderMarkdown } from '../lib/markdown'
 
 interface Skill {
   name: string
@@ -84,6 +113,42 @@ const newRepoUrl = ref<string>('')
 const installing = ref(false)
 const installError = ref<string | null>(null)
 const installSuccess = ref<string | null>(null)
+
+// Detail panel state
+const selectedSkill = ref<Skill | null>(null)
+const skillContent = ref<string>('')
+const contentLoading = ref(false)
+const contentError = ref<string | null>(null)
+
+const renderedContent = computed(() => renderMarkdown(skillContent.value))
+
+async function openDetail(skill: Skill) {
+  selectedSkill.value = skill
+  skillContent.value = ''
+  contentError.value = null
+  contentLoading.value = true
+  try {
+    const res = await apiFetch(`/api/skills/${encodeURIComponent(skill.slug)}`)
+    if (res.status === 404) {
+      contentError.value = 'Skill not found'
+    } else if (!res.ok) {
+      contentError.value = `Failed to load skill (HTTP ${res.status})`
+    } else {
+      const data = (await res.json()) as { slug: string; content: string }
+      skillContent.value = data.content ?? ''
+    }
+  } catch (e) {
+    contentError.value = e instanceof Error ? e.message : 'Failed to load skill'
+  } finally {
+    contentLoading.value = false
+  }
+}
+
+function closeDetail() {
+  selectedSkill.value = null
+  skillContent.value = ''
+  contentError.value = null
+}
 
 async function fetchSkills(): Promise<void> {
   try {
@@ -115,12 +180,10 @@ async function installSkill(): Promise<void> {
 
     if (response.ok) {
       const data = (await response.json()) as { skill: Skill }
-      // Optimistic prepend for instant feedback while refetch is in flight
       skills.value = [data.skill, ...skills.value]
       newRepoUrl.value = ''
       installSuccess.value = `✓ Installed: ${data.skill.name}`
       setTimeout(() => { installSuccess.value = null }, 4000)
-      // Refetch so dedup/ordering from the server takes effect
       void fetchSkills()
     } else {
       let message = 'Install failed'
@@ -143,4 +206,10 @@ onMounted(fetchSkills)
 </script>
 
 <style scoped>
+.skill-content :deep(h1),
+.skill-content :deep(h2),
+.skill-content :deep(h3),
+.skill-content :deep(h4) {
+  line-height: 1.3;
+}
 </style>
