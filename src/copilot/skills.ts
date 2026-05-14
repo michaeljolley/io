@@ -214,6 +214,9 @@ export async function installSkill(input: string): Promise<SkillInfo> {
 
     const repoUrl = parsed.url;
     const repoName = basename(repoUrl, ".git").replace(/\.git$/, "");
+    if (!repoName) {
+      throw new Error("Could not determine skill name from URL.");
+    }
     destDir = join(SKILLS_DIR, repoName);
 
     execFileSync("git", ["clone", repoUrl, destDir], {
