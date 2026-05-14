@@ -602,9 +602,9 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  api.get("/wiki/*", (req: Request, res: Response) => {
+  api.get("/wiki/*path", (req: Request, res: Response) => {
     try {
-      const pagePath = Array.isArray(req.params[0]) ? req.params[0][0] : req.params[0];
+      const pagePath = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
       if (!pagePath) {
         res.status(400).json({ error: "Missing page path" });
         return;
