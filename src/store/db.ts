@@ -161,6 +161,12 @@ GROUP BY agent_slug`,
       completed_at DATETIME
     )`,
     `CREATE INDEX IF NOT EXISTS idx_schedule_runs_lookup ON schedule_runs(schedule_type, schedule_id, started_at)`,
+    `CREATE TABLE IF NOT EXISTS inbox_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
   ];
 
   for (const migration of migrations) {
