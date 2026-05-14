@@ -50,7 +50,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function init() {
     if (initialized.value) return
     if (!initPromise) {
-      initPromise = doInit()
+      initPromise = doInit().catch(() => {
+        // Allow retry on next navigation if init failed (e.g. network error
+        // during config fetch before the API server was ready)
+        initPromise = null
+      })
     }
     return initPromise
   }
