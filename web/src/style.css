@@ -2,10 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ──────────────────────────────────────── */
+
 html {
   color-scheme: dark;
 }
 
 body {
-  @apply bg-gray-950 text-gray-100;
+  @apply bg-surface-0 text-txt-primary font-sans antialiased;
+}
+
+/* ── Scrollbar ─────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-edge rounded-full;
+  border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-edge-bright;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e2d4a transparent;
+}
+
+/* ── Selection ─────────────────────────────────── */
+
+::selection {
+  @apply bg-accent/20 text-accent;
+}
+
+/* ── Focus ring ────────────────────────────────── */
+
+*:focus-visible {
+  @apply outline-none ring-1 ring-accent/50 ring-offset-1 ring-offset-surface-0;
+}
+
+/* ── Global link style ─────────────────────────── */
+
+a {
+  @apply transition-colors duration-150;
+}
+
+/* ── Smooth page transitions ───────────────────── */
+
+.view-enter-active {
+  animation: viewIn 0.2s ease-out;
+}
+
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Utility: glass surface ────────────────────── */
+
+@layer utilities {
+  .glass {
+    @apply bg-surface-2/80 backdrop-blur-sm border border-edge;
+  }
 }
