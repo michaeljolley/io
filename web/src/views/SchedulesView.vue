@@ -37,30 +37,31 @@
             <div
               v-for="s in ioSchedules"
               :key="s.id"
-              class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors"
+              class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors overflow-hidden"
             >
-              <div class="flex flex-wrap items-start justify-between gap-3">
+              <!-- Top row: info + actions -->
+              <div class="flex flex-wrap items-start gap-3">
                 <!-- Info -->
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-bold text-gray-100">{{ s.name }}</span>
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="font-bold text-gray-100 break-words min-w-0">{{ s.name }}</span>
                     <span :class="[
-                      'px-2 py-0.5 rounded text-xs font-medium',
+                      'px-2 py-0.5 rounded text-xs font-medium shrink-0',
                       s.enabled ? 'bg-green-900 text-green-200' : 'bg-gray-700 text-gray-400'
                     ]">
                       {{ s.enabled ? 'Active' : 'Paused' }}
                     </span>
                   </div>
-                  <div class="flex flex-wrap gap-4 text-sm text-gray-400 mt-1">
-                    <span class="font-mono text-xs bg-gray-900 px-2 py-0.5 rounded">{{ s.cron_expr }}</span>
-                    <span title="Next run">⏭ {{ s.next_run_at ? formatDate(s.next_run_at) : '—' }}</span>
-                    <span title="Last run">🕐 {{ s.last_run_at ? formatDate(s.last_run_at) : '—' }}</span>
+                  <div class="flex flex-wrap gap-3 text-sm text-gray-400 mt-1">
+                    <span class="font-mono text-xs bg-gray-900 px-2 py-0.5 rounded break-all">{{ s.cron_expr }}</span>
+                    <span title="Next run" class="shrink-0">⏭ {{ s.next_run_at ? formatDate(s.next_run_at) : '—' }}</span>
+                    <span title="Last run" class="shrink-0">🕐 {{ s.last_run_at ? formatDate(s.last_run_at) : '—' }}</span>
                   </div>
-                  <p v-if="s.notes" class="text-xs text-gray-500 mt-1 truncate">{{ s.notes }}</p>
+                  <p v-if="s.notes" class="text-xs text-gray-500 mt-1 break-words">{{ s.notes }}</p>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-2 shrink-0">
+                <!-- Actions — wrap on narrow cards -->
+                <div class="flex flex-wrap items-center gap-2">
                   <button
                     v-if="s.enabled"
                     @click="pauseSchedule('io', s.id)"
@@ -100,6 +101,20 @@
                 </div>
               </div>
 
+              <!-- Prompt with expand/collapse -->
+              <div v-if="s.prompt" class="mt-3">
+                <p class="text-xs text-gray-400 break-words" :class="promptExpanded.has(`io-${s.id}`) ? '' : 'line-clamp-2'">
+                  {{ s.prompt }}
+                </p>
+                <button
+                  v-if="s.prompt.length > 120"
+                  @click="togglePrompt('io', s.id)"
+                  class="text-[10px] text-blue-400 hover:text-blue-300 mt-1 transition-colors"
+                >
+                  {{ promptExpanded.has(`io-${s.id}`) ? 'Show less ▲' : 'Show more ▼' }}
+                </button>
+              </div>
+
               <!-- Inline history panel -->
               <div v-if="historyOpen.get(`io-${s.id}`)" class="mt-4 pt-4 border-t border-gray-700">
                 <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -120,9 +135,9 @@
                   >
                     <span class="shrink-0 mt-0.5">{{ runIcon(run.status) }}</span>
                     <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2">
+                      <div class="flex flex-wrap items-center gap-2">
                         <span class="text-gray-300">{{ formatDate(run.started_at) }}</span>
-                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium', runStatusClass(run.status)]">
+                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0', runStatusClass(run.status)]">
                           {{ run.status }}
                         </span>
                       </div>
@@ -156,31 +171,32 @@
             <div
               v-for="s in squadSchedules"
               :key="s.id"
-              class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors"
+              class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors overflow-hidden"
             >
-              <div class="flex flex-wrap items-start justify-between gap-3">
+              <!-- Top row: info + actions -->
+              <div class="flex flex-wrap items-start gap-3">
                 <!-- Info -->
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-bold text-gray-100">{{ s.name }}</span>
-                    <span class="text-xs text-gray-500 bg-gray-900 px-2 py-0.5 rounded">{{ s.squad_slug }}</span>
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="font-bold text-gray-100 break-words min-w-0">{{ s.name }}</span>
+                    <span class="text-xs text-gray-500 bg-gray-900 px-2 py-0.5 rounded shrink-0">{{ s.squad_slug }}</span>
                     <span :class="[
-                      'px-2 py-0.5 rounded text-xs font-medium',
+                      'px-2 py-0.5 rounded text-xs font-medium shrink-0',
                       s.enabled ? 'bg-green-900 text-green-200' : 'bg-gray-700 text-gray-400'
                     ]">
                       {{ s.enabled ? 'Active' : 'Paused' }}
                     </span>
                   </div>
-                  <div class="flex flex-wrap gap-4 text-sm text-gray-400 mt-1">
-                    <span class="font-mono text-xs bg-gray-900 px-2 py-0.5 rounded">{{ s.cron_expr }}</span>
-                    <span title="Next run">⏭ {{ s.next_run_at ? formatDate(s.next_run_at) : '—' }}</span>
-                    <span title="Last run">🕐 {{ s.last_run_at ? formatDate(s.last_run_at) : '—' }}</span>
+                  <div class="flex flex-wrap gap-3 text-sm text-gray-400 mt-1">
+                    <span class="font-mono text-xs bg-gray-900 px-2 py-0.5 rounded break-all">{{ s.cron_expr }}</span>
+                    <span title="Next run" class="shrink-0">⏭ {{ s.next_run_at ? formatDate(s.next_run_at) : '—' }}</span>
+                    <span title="Last run" class="shrink-0">🕐 {{ s.last_run_at ? formatDate(s.last_run_at) : '—' }}</span>
                   </div>
-                  <p v-if="s.notes" class="text-xs text-gray-500 mt-1 truncate">{{ s.notes }}</p>
+                  <p v-if="s.notes" class="text-xs text-gray-500 mt-1 break-words">{{ s.notes }}</p>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-2 shrink-0">
+                <!-- Actions — wrap on narrow cards -->
+                <div class="flex flex-wrap items-center gap-2">
                   <button
                     v-if="s.enabled"
                     @click="pauseSchedule('squads', s.id)"
@@ -220,6 +236,20 @@
                 </div>
               </div>
 
+              <!-- Prompt with expand/collapse -->
+              <div v-if="s.prompt" class="mt-3">
+                <p class="text-xs text-gray-400 break-words" :class="promptExpanded.has(`squads-${s.id}`) ? '' : 'line-clamp-2'">
+                  {{ s.prompt }}
+                </p>
+                <button
+                  v-if="s.prompt.length > 120"
+                  @click="togglePrompt('squads', s.id)"
+                  class="text-[10px] text-blue-400 hover:text-blue-300 mt-1 transition-colors"
+                >
+                  {{ promptExpanded.has(`squads-${s.id}`) ? 'Show less ▲' : 'Show more ▼' }}
+                </button>
+              </div>
+
               <!-- Inline history panel -->
               <div v-if="historyOpen.get(`squads-${s.id}`)" class="mt-4 pt-4 border-t border-gray-700">
                 <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -240,9 +270,9 @@
                   >
                     <span class="shrink-0 mt-0.5">{{ runIcon(run.status) }}</span>
                     <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2">
+                      <div class="flex flex-wrap items-center gap-2">
                         <span class="text-gray-300">{{ formatDate(run.started_at) }}</span>
-                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium', runStatusClass(run.status)]">
+                        <span :class="['px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0', runStatusClass(run.status)]">
                           {{ run.status }}
                         </span>
                       </div>
@@ -315,6 +345,7 @@ const mutating = ref(new Set<string>())
 const historyOpen = ref(new Map<string, boolean>())
 const historyData = ref(new Map<string, ScheduleRun[]>())
 const historyLoading = ref(new Set<string>())
+const promptExpanded = ref(new Set<string>())
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString()
@@ -332,16 +363,22 @@ function runStatusClass(status: string): string {
   return 'bg-gray-700 text-gray-300'
 }
 
+function togglePrompt(ns: 'io' | 'squads', id: number): void {
+  const key = `${ns}-${id}`
+  const next = new Set(promptExpanded.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  promptExpanded.value = next
+}
+
 async function toggleHistory(ns: 'io' | 'squads', id: number): Promise<void> {
   const key = `${ns}-${id}`
   const isOpen = historyOpen.value.get(key) ?? false
 
-  // Toggle off
   const nextOpen = new Map(historyOpen.value)
   nextOpen.set(key, !isOpen)
   historyOpen.value = nextOpen
 
-  // Fetch if opening and not yet loaded
   if (!isOpen && !historyData.value.has(key)) {
     const nextLoading = new Set(historyLoading.value)
     nextLoading.add(key)
@@ -366,7 +403,6 @@ async function toggleHistory(ns: 'io' | 'squads', id: number): Promise<void> {
 async function fetchSchedules(): Promise<void> {
   loading.value = true
   error.value = null
-  // Clear cached history so a refresh picks up new runs
   historyData.value = new Map()
   try {
     const res = await apiFetch('/api/schedules')
