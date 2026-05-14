@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
-import { join, basename } from "path";
+import { join, basename, resolve } from "path";
 import { execFileSync } from "child_process";
 import { SKILLS_DIR } from "../paths.js";
 
@@ -209,11 +209,14 @@ function isValidSkillContent(content: string): boolean {
  * Useful for paste-to-install workflows.
  */
 export function installSkillFromContent(content: string, slug: string): SkillInfo {
-  if (!slug || /[\/\\]/.test(slug)) {
-    throw new Error("Invalid slug — must be a non-empty string without path separators.");
+  if (!slug || /[\/\\]/.test(slug) || slug === "." || slug === ".." || slug.includes("..")) {
+    throw new Error("Invalid slug — must be a non-empty string without path separators or traversals.");
   }
 
   const destDir = join(SKILLS_DIR, slug);
+  if (!resolve(destDir).startsWith(resolve(SKILLS_DIR) + "/")) {
+    throw new Error("Invalid slug — resolved path escapes the skills directory.");
+  }
   if (existsSync(destDir)) {
     throw new Error(`Skill "${slug}" is already installed.`);
   }
@@ -243,7 +246,7 @@ function discoverSkillsInRepo(repoDir: string): { subdir: string; skillMdPath: s
   for (const entry of readdirSync(repoDir)) {
     const subPath = join(repoDir, entry);
     if (!statSync(subPath).isDirectory()) continue;
-    if (entry.startsWith(".")) continue;
+    if (entry.startsWith(".") || entry === ".." || entry.includes("..")) continue;
     const mdPath = join(subPath, "SKILL.md");
     if (existsSync(mdPath)) {
       found.push({ subdir: entry, skillMdPath: mdPath });
