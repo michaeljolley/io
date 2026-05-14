@@ -5,6 +5,7 @@ import SquadsView from '../views/SquadsView.vue'
 import AgentActivityView from '../views/AgentActivityView.vue'
 import SchedulesView from '../views/SchedulesView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
+import WikiView from '../views/WikiView.vue'
 import LoginView from '../views/LoginView.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -40,6 +41,11 @@ const router = createRouter({
       path: '/activity',
       name: 'activity',
       component: AgentActivityView,
+    },
+    {
+      path: '/wiki',
+      name: 'wiki',
+      component: WikiView,
     },
     {
       path: '/schedules',

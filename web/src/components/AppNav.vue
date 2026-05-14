@@ -36,6 +36,15 @@
         </li>
         <li>
           <RouterLink
+            to="/wiki"
+            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
+            :class="{ 'bg-blue-900 text-blue-300': route.name === 'wiki' }"
+          >
+            📚 Wiki
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink
             to="/schedules"
             class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
             :class="{ 'bg-blue-900 text-blue-300': route.name === 'schedules' }"
