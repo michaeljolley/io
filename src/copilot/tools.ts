@@ -1348,7 +1348,7 @@ export function createTools(deps: ToolDeps) {
   // GitHub issue/PR management via gh CLI
   const github = defineTool("github", {
     description:
-      "Manage GitHub issues and pull requests using the gh CLI. Supports creating, listing, viewing, and commenting on issues and PRs.",
+      "Manage GitHub issues and pull requests using the gh CLI. Supports creating, listing, viewing, commenting on, and reviewing issues and PRs.",
     skipPermission: true,
     parameters: z.object({
       action: z
@@ -1362,6 +1362,7 @@ export function createTools(deps: ToolDeps) {
           "list_prs",
           "view_pr",
           "comment_pr",
+          "review_pr",
         ])
         .describe("The GitHub action to perform"),
       repo: z.string().describe("Repository in owner/repo format"),
@@ -1374,8 +1375,10 @@ export function createTools(deps: ToolDeps) {
       head: z.string().optional().describe("Head branch (for create_pr)"),
       state: z.enum(["open", "closed", "all"]).optional().describe("Filter by state (for list_*)"),
       limit: z.number().optional().describe("Max results (for list_*, default 10)"),
+      review_action: z.enum(["approve", "request-changes", "comment"]).optional()
+        .describe("Review action (for review_pr): approve, request-changes, or comment"),
     }),
-    handler: async ({ action, repo, title, body, labels, assignees, number, base, head, state, limit }) => {
+    handler: async ({ action, repo, title, body, labels, assignees, number, base, head, state, limit, review_action }) => {
       console.error(`[io] github tool called: ${action} on ${repo}`);
       try {
         let cmd: string;
@@ -1433,6 +1436,15 @@ export function createTools(deps: ToolDeps) {
             if (!number) return "Error: number is required for comment_pr";
             if (!body) return "Error: body is required for comment_pr";
             cmd = `gh pr comment ${number} ${r} --body "${body.replace(/"/g, '\\"')}"`;
+            break;
+          }
+          case "review_pr": {
+            if (!number) return "Error: number is required for review_pr";
+            if (!review_action) return "Error: review_action is required for review_pr (approve, request-changes, or comment)";
+            cmd = `gh pr review ${number} ${r} --${review_action}`;
+            if (body && (review_action === "request-changes" || review_action === "comment")) {
+              cmd += ` --body "${body.replace(/"/g, '\\"')}"`;
+            }
             break;
           }
           default:
