@@ -1,99 +1,83 @@
 <template>
-  <nav v-if="route.name !== 'login'" class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
-    <div class="p-6 border-b border-gray-800">
-      <h1 class="text-xl font-bold text-blue-400">IO</h1>
-      <p class="text-xs text-gray-500">Terminal Assistant</p>
+  <nav
+    v-if="route.name !== 'login'"
+    class="bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 nav-sidebar"
+    :class="collapsed ? 'nav-collapsed' : 'nav-expanded'"
+  >
+    <!-- Header -->
+    <div class="p-3 border-b border-gray-800 flex items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
+      <div v-if="!collapsed" class="min-w-0">
+        <h1 class="text-xl font-bold text-blue-400">IO</h1>
+        <p class="text-xs text-gray-500">Terminal Assistant</p>
+      </div>
+      <span v-else class="text-xl font-bold text-blue-400">IO</span>
+      <button
+        @click="toggleCollapsed"
+        class="text-gray-400 hover:text-gray-200 transition-colors p-1 rounded hover:bg-gray-800 shrink-0"
+        :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :class="collapsed ? '' : 'ml-2'"
+      >
+        <span class="text-sm font-mono select-none">{{ collapsed ? '»' : '«' }}</span>
+      </button>
     </div>
-    
-    <div class="flex-1 py-6">
-      <ul class="space-y-2 px-3">
-        <li>
+
+    <!-- Nav links -->
+    <div class="flex-1 py-4 overflow-hidden">
+      <ul class="space-y-1 px-2">
+        <li v-for="item in navItems" :key="item.to">
           <RouterLink
-            to="/chat"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'chat' }"
+            :to="item.to"
+            class="flex items-center rounded hover:bg-gray-800 transition-colors relative"
+            :class="[
+              collapsed ? 'justify-center px-2 py-2' : 'px-3 py-2 gap-2',
+              route.name === item.name ? 'bg-blue-900 text-blue-300' : ''
+            ]"
+            :title="collapsed ? item.label : undefined"
+            @click="item.name === 'notifications' ? onNotificationsClick() : undefined"
           >
-            💬 Chat
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink
-            to="/skills"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'skills' }"
-          >
-            ⚙️ Skills
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink
-            to="/squads"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'squads' }"
-          >
-            👥 Squads
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink
-            to="/wiki"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'wiki' }"
-          >
-            📚 Wiki
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink
-            to="/schedules"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'schedules' }"
-          >
-            📅 Schedules
-          </RouterLink>
-        </li>
-        <li>
-          <RouterLink
-            to="/notifications"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors relative"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'notifications' }"
-            @click="onNotificationsClick"
-          >
-            🔔 Notifications
+            <span class="text-base leading-none shrink-0">{{ item.icon }}</span>
+            <span v-if="!collapsed" class="text-sm truncate">{{ item.label }}</span>
+            <!-- Notification badge -->
             <span
-              v-if="unreadCount > 0"
-              class="absolute top-1 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+              v-if="item.name === 'notifications' && unreadCount > 0"
+              class="absolute bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5"
+              :class="collapsed ? 'top-0.5 right-0.5' : 'top-1 right-1.5'"
             >
               {{ unreadCount > 99 ? '99+' : unreadCount }}
             </span>
           </RouterLink>
         </li>
-        <li>
-          <RouterLink
-            to="/activity"
-            class="block px-4 py-2 rounded hover:bg-gray-800 transition-colors"
-            :class="{ 'bg-blue-900 text-blue-300': route.name === 'activity' }"
-          >
-            📊 Activity
-          </RouterLink>
-        </li>
       </ul>
     </div>
 
-    <div class="p-4 border-t border-gray-800">
-      <template v-if="auth.authEnabled && auth.user">
-        <div class="flex items-center justify-between mb-2">
-          <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
-          <span v-if="version" class="text-[10px] text-gray-600 shrink-0 ml-2">v{{ version }}</span>
-        </div>
+    <!-- Footer -->
+    <div class="p-3 border-t border-gray-800">
+      <template v-if="!collapsed">
+        <template v-if="auth.authEnabled && auth.user">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500 truncate">{{ auth.user.email }}</p>
+            <span v-if="version" class="text-[10px] text-gray-600 shrink-0 ml-2">v{{ version }}</span>
+          </div>
+          <button
+            @click="handleSignOut"
+            class="w-full px-3 py-1.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+          >
+            Sign out
+          </button>
+        </template>
+        <span v-else-if="version" class="text-[10px] text-gray-600">v{{ version }}</span>
+      </template>
+      <template v-else>
+        <!-- Collapsed: sign-out icon only when auth active -->
         <button
+          v-if="auth.authEnabled && auth.user"
           @click="handleSignOut"
-          class="w-full px-3 py-1.5 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+          class="w-full flex justify-center p-1 text-gray-500 hover:text-white hover:bg-gray-800 rounded transition-colors"
+          title="Sign out"
         >
-          Sign out
+          <span class="text-sm">↩</span>
         </button>
       </template>
-      <span v-else-if="version" class="text-[10px] text-gray-600">v{{ version }}</span>
     </div>
   </nav>
 </template>
@@ -110,7 +94,25 @@ const auth = useAuthStore()
 
 const version = ref('')
 const unreadCount = ref(0)
+const collapsed = ref(false)
 let notificationSource: EventSource | null = null
+
+const STORAGE_KEY = 'io-nav-collapsed'
+
+const navItems = [
+  { to: '/chat',          name: 'chat',          icon: '💬', label: 'Chat' },
+  { to: '/skills',        name: 'skills',        icon: '⚙️',  label: 'Skills' },
+  { to: '/squads',        name: 'squads',        icon: '👥', label: 'Squads' },
+  { to: '/wiki',          name: 'wiki',          icon: '📚', label: 'Wiki' },
+  { to: '/schedules',     name: 'schedules',     icon: '📅', label: 'Schedules' },
+  { to: '/notifications', name: 'notifications', icon: '🔔', label: 'Notifications' },
+  { to: '/activity',      name: 'activity',      icon: '📊', label: 'Activity' },
+]
+
+function toggleCollapsed() {
+  collapsed.value = !collapsed.value
+  try { localStorage.setItem(STORAGE_KEY, String(collapsed.value)) } catch { /* ignore */ }
+}
 
 async function handleSignOut() {
   await auth.signOut()
@@ -122,6 +124,12 @@ function onNotificationsClick() {
 }
 
 onMounted(async () => {
+  // Restore collapsed state
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored !== null) collapsed.value = stored === 'true'
+  } catch { /* ignore */ }
+
   // Fetch version
   try {
     const res = await apiFetch('/api/status')
@@ -140,7 +148,7 @@ onMounted(async () => {
     }
   } catch { /* best effort */ }
 
-  // Listen for new notifications via the shared SSE events stream
+  // Listen for new notifications via SSE
   notificationSource = new EventSource(authenticatedUrl('/api/events'))
   notificationSource.onmessage = (e) => {
     try {
@@ -157,3 +165,16 @@ onUnmounted(() => {
   notificationSource = null
 })
 </script>
+
+<style scoped>
+.nav-sidebar {
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+.nav-expanded {
+  width: 256px;
+}
+.nav-collapsed {
+  width: 60px;
+}
+</style>
