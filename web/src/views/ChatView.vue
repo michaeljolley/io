@@ -12,17 +12,19 @@
         class="flex"
         :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
       >
+        <!-- User message: plain text -->
         <div
-          class="max-w-[75%] px-4 py-3 rounded-lg text-sm whitespace-pre-wrap"
-          :class="
-            msg.role === 'user'
-              ? 'bg-blue-700 text-white'
-              : 'bg-gray-800 text-gray-100 border border-gray-700'
-          "
+          v-if="msg.role === 'user'"
+          class="max-w-[75%] px-4 py-3 rounded-lg text-sm whitespace-pre-wrap bg-blue-700 text-white"
         >
-          <span>{{ msg.content }}</span>
-          <span v-if="msg.streaming" class="inline-block w-2 h-4 bg-blue-400 ml-1 animate-pulse" />
+          {{ msg.content }}
         </div>
+        <!-- Assistant message: markdown rendered -->
+        <div
+          v-else
+          class="chat-md max-w-[75%] px-4 py-3 rounded-lg text-sm bg-gray-800 text-gray-100 border border-gray-700"
+          v-html="renderMarkdown(msg.content) + (msg.streaming ? '<span class=&quot;inline-block w-2 h-4 bg-blue-400 ml-1 animate-pulse align-middle&quot;></span>' : '')"
+        ></div>
       </div>
 
       <!-- Thinking indicator: shown while isLoading but no streaming content yet -->
@@ -87,6 +89,7 @@
 <script setup lang="ts">
 import { ref, nextTick, watch, computed } from 'vue'
 import { useChatStore } from '../stores/chat'
+import { renderMarkdown } from '../lib/markdown'
 import { apiFetch, authenticatedUrl } from '../lib/api'
 
 const store = useChatStore()
@@ -218,4 +221,9 @@ async function sendMessage() {
   background-color: #60a5fa; /* blue-400 */
   animation: dot-pulse 1.2s ease-in-out infinite;
 }
+.chat-md :deep(h1), .chat-md :deep(h2), .chat-md :deep(h3), .chat-md :deep(h4) { line-height: 1.3; }
+.chat-md :deep(p) { margin: 0.15rem 0; }
+.chat-md :deep(ul), .chat-md :deep(ol) { padding-left: 0.5rem; }
+.chat-md :deep(pre) { font-size: 0.75rem; }
+.chat-md :deep(table) { font-size: 0.75rem; }
 </style>
