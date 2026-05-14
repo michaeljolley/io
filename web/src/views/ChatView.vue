@@ -1,85 +1,133 @@
 <template>
-  <div class="flex flex-col h-full relative">
+  <div class="flex flex-col h-full relative bg-surface-0">
     <!-- Message history -->
-    <div ref="messagesEl" class="flex-1 overflow-y-auto p-6 space-y-4" @scroll="handleScroll">
-      <div v-if="store.messages.length === 0" class="text-gray-600 text-sm text-center mt-12">
-        Send a message to start chatting with IO
-      </div>
+    <div ref="messagesEl" class="flex-1 overflow-y-auto px-4 py-6 sm:px-6" @scroll="handleScroll">
 
-      <div
-        v-for="msg in store.messages"
-        :key="msg.id"
-        class="flex"
-        :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
-      >
-        <!-- User message: plain text -->
-        <div
-          v-if="msg.role === 'user'"
-          class="max-w-[75%] px-4 py-3 rounded-lg text-sm whitespace-pre-wrap bg-blue-700 text-white"
-        >
-          {{ msg.content }}
+      <!-- Empty state -->
+      <div v-if="store.messages.length === 0" class="flex flex-col items-center justify-center h-full select-none animate-fade-in">
+        <div class="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-5 shadow-glow">
+          <span class="text-accent font-bold text-2xl font-mono tracking-tighter">IO</span>
         </div>
-        <!-- Assistant message: markdown rendered -->
-        <div
-          v-else
-          class="chat-md max-w-[75%] px-4 py-3 rounded-lg text-sm bg-gray-800 text-gray-100 border border-gray-700"
-          v-html="renderMarkdown(msg.content) + (msg.streaming ? '<span class=&quot;inline-block w-2 h-4 bg-blue-400 ml-1 animate-pulse align-middle&quot;></span>' : '')"
-        ></div>
+        <p class="text-txt-secondary text-sm font-medium mb-1">What can I help you build?</p>
+        <p class="text-txt-muted text-xs">Send a message to start a conversation</p>
+
+        <div class="flex flex-wrap justify-center gap-2 mt-8 max-w-md">
+          <button
+            v-for="hint in suggestions"
+            :key="hint"
+            @click="useSuggestion(hint)"
+            class="px-3 py-1.5 text-xs text-txt-secondary bg-surface-2/60 border border-edge rounded-full
+                   hover:border-accent/30 hover:text-accent hover:bg-accent/5 transition-all duration-200"
+          >
+            {{ hint }}
+          </button>
+        </div>
       </div>
 
-      <!-- Thinking indicator: shown while isLoading but no streaming content yet -->
-      <div v-if="store.isLoading && !isStreaming" class="flex justify-start">
-        <div class="bg-gray-800 border border-gray-700 px-4 py-3 rounded-lg flex items-center gap-1.5">
-          <span class="dot-pulse" style="animation-delay: 0s"></span>
-          <span class="dot-pulse" style="animation-delay: 0.2s"></span>
-          <span class="dot-pulse" style="animation-delay: 0.4s"></span>
+      <!-- Messages -->
+      <div v-else class="max-w-3xl mx-auto space-y-5">
+        <div
+          v-for="msg in store.messages"
+          :key="msg.id"
+          class="flex animate-fade-in"
+          :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
+        >
+          <!-- User message -->
+          <div
+            v-if="msg.role === 'user'"
+            class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm whitespace-pre-wrap
+                   bg-accent/[0.12] text-txt-primary border border-accent/20"
+          >{{ msg.content }}</div>
+
+          <!-- Assistant message -->
+          <div v-else class="max-w-[85%] flex gap-2.5 items-start">
+            <div class="shrink-0 w-6 h-6 rounded-lg bg-surface-3/60 border border-edge flex items-center justify-center mt-0.5">
+              <span class="text-accent text-[10px] font-bold font-mono">IO</span>
+            </div>
+            <div
+              class="chat-md min-w-0 px-4 py-2.5 rounded-2xl rounded-tl-md text-sm
+                     bg-surface-2/70 text-txt-primary border border-edge"
+              v-html="renderMarkdown(msg.content) + (msg.streaming ? streamCursorHtml : '')"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Thinking indicator -->
+        <div v-if="store.isLoading && !isStreaming" class="flex justify-start animate-fade-in">
+          <div class="flex gap-2.5 items-start">
+            <div class="shrink-0 w-6 h-6 rounded-lg bg-surface-3/60 border border-edge flex items-center justify-center">
+              <span class="text-accent text-[10px] font-bold font-mono">IO</span>
+            </div>
+            <div class="px-4 py-3 rounded-2xl rounded-tl-md bg-surface-2/70 border border-edge flex items-center gap-1">
+              <span class="thinking-dot" style="animation-delay: 0s"></span>
+              <span class="thinking-dot" style="animation-delay: 0.15s"></span>
+              <span class="thinking-dot" style="animation-delay: 0.3s"></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Scroll to bottom button -->
-    <button
-      v-if="isScrolledUp"
-      @click="scrollToBottom"
-      class="absolute bottom-20 right-8 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full p-2 shadow-lg transition-all z-10"
-      title="Scroll to bottom"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-      </svg>
-    </button>
+    <!-- Scroll to bottom -->
+    <Transition name="scroll-btn">
+      <button
+        v-if="isScrolledUp"
+        @click="scrollToBottom"
+        class="absolute bottom-24 left-1/2 -translate-x-1/2 z-10
+               w-8 h-8 rounded-full bg-surface-2/90 backdrop-blur-sm border border-edge-bright
+               text-txt-secondary hover:text-accent hover:border-accent/40 hover:shadow-glow-sm
+               flex items-center justify-center transition-all duration-200"
+        title="Scroll to bottom"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+    </Transition>
 
     <!-- Input bar -->
-    <div class="border-t border-gray-800 p-4">
-      <form @submit.prevent="sendMessage" class="flex gap-3 items-end">
-        <textarea
-          ref="inputEl"
-          v-model="input"
-          placeholder="Message IO..."
-          :disabled="store.isLoading"
-          rows="1"
-          class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 resize-none overflow-hidden"
-          @keydown="handleKeydown"
-          @input="autoResize"
-        />
+    <div class="shrink-0 border-t border-edge/50 bg-surface-1/60 backdrop-blur-md p-3 sm:p-4">
+      <form @submit.prevent="sendMessage" class="max-w-3xl mx-auto flex gap-2 items-end">
+        <div class="flex-1 relative group">
+          <textarea
+            ref="inputEl"
+            v-model="input"
+            placeholder="Message IO…"
+            :disabled="store.isLoading"
+            rows="1"
+            class="w-full bg-surface-2/60 border border-edge rounded-xl px-4 py-2.5 pr-3 text-sm text-txt-primary
+                   placeholder-txt-muted/60 resize-none overflow-hidden
+                   focus:outline-none focus:border-accent/40 focus:shadow-glow-sm
+                   disabled:opacity-40 transition-all duration-200"
+            @keydown="handleKeydown"
+            @input="autoResize"
+          />
+        </div>
         <button
           v-if="store.isLoading"
           type="button"
           @click="stopOrchestrator"
           :disabled="stopping"
-          class="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2"
-          title="Stop the orchestrator"
+          class="shrink-0 h-10 px-3.5 rounded-xl text-sm font-medium
+                 bg-red-500/15 text-red-400 border border-red-500/25
+                 hover:bg-red-500/25 hover:border-red-500/40
+                 disabled:opacity-40 disabled:cursor-not-allowed
+                 transition-all duration-150 flex items-center gap-1.5"
+          title="Stop"
         >
-          <span class="inline-block w-3 h-3 bg-white rounded-sm"></span>
-          {{ stopping ? 'Stopping...' : 'Stop' }}
+          <span class="w-2.5 h-2.5 rounded-[3px] bg-red-400"></span>
+          <span class="hidden sm:inline">{{ stopping ? 'Stopping…' : 'Stop' }}</span>
         </button>
         <button
           v-else
           type="submit"
           :disabled="!input.trim()"
-          class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
+                 bg-accent/15 text-accent border border-accent/25
+                 hover:bg-accent/25 hover:border-accent/40 hover:shadow-glow-sm
+                 disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:shadow-none
+                 transition-all duration-150"
+          title="Send"
         >
-          Send
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M1.724 1.053a.5.5 0 0 1 .54-.068l12 6a.5.5 0 0 1 0 .894l-12 6A.5.5 0 0 1 1.5 13.5v-4.379l6.5-1.121-6.5-1.121V2.5a.5.5 0 0 1 .224-.447Z"/></svg>
         </button>
       </form>
     </div>
@@ -99,13 +147,27 @@ const messagesEl = ref<HTMLElement | null>(null)
 const isScrolledUp = ref(false)
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 
+const streamCursorHtml = '<span class="stream-cursor"></span>'
+
+const suggestions = [
+  'Check squad status',
+  'Run my schedules',
+  'Summarize recent activity',
+  'What skills are installed?',
+]
+
+function useSuggestion(text: string) {
+  input.value = text
+  nextTick(() => sendMessage())
+}
+
 async function stopOrchestrator() {
   if (stopping.value) return
   stopping.value = true
   try {
     await apiFetch('/api/orchestrator/abort', { method: 'POST' })
   } catch {
-    // best-effort — UI will recover when SSE delivers done/error
+    // best-effort
   } finally {
     stopping.value = false
   }
@@ -118,7 +180,6 @@ const isStreaming = computed(() =>
 function handleScroll() {
   const el = messagesEl.value
   if (!el) return
-  // Consider "at bottom" if within 100px of the end
   isScrolledUp.value = el.scrollTop + el.clientHeight < el.scrollHeight - 100
 }
 
@@ -130,7 +191,6 @@ function scrollToBottom() {
   })
 }
 
-// Only auto-scroll on incoming messages when user hasn't scrolled up
 watch(() => store.messages.length, () => {
   if (!isScrolledUp.value) scrollToBottom()
 })
@@ -140,14 +200,13 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault()
     sendMessage()
   }
-  // Shift+Enter falls through and inserts a newline
 }
 
 function autoResize() {
   const el = inputEl.value
   if (!el) return
   el.style.height = 'auto'
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px' // max ~8 lines
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px'
 }
 
 async function sendMessage() {
@@ -165,10 +224,8 @@ async function sendMessage() {
   store.addMessage({ id: crypto.randomUUID(), role: 'user', content: text })
   store.addMessage({ id: crypto.randomUUID(), role: 'assistant', content: '', streaming: true })
 
-  // Always scroll when user sends — they want to see the response
   scrollToBottom()
 
-  // Open SSE stream for real-time deltas
   const evtSource = new EventSource(authenticatedUrl('/api/events'))
   evtSource.onmessage = (e) => {
     try {
@@ -192,7 +249,6 @@ async function sendMessage() {
     evtSource.close()
   }
 
-  // Send message — response includes full text but SSE deltas are primary UX
   try {
     await apiFetch('/api/message', {
       method: 'POST',
@@ -209,21 +265,75 @@ async function sendMessage() {
 </script>
 
 <style scoped>
-@keyframes dot-pulse {
-  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1); }
+/* ── Thinking dots ── */
+@keyframes thinking {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
 }
-.dot-pulse {
+.thinking-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: #60a5fa; /* blue-400 */
-  animation: dot-pulse 1.2s ease-in-out infinite;
+  background-color: #22d3ee; /* accent */
+  animation: thinking 1.4s ease-in-out infinite;
 }
-.chat-md :deep(h1), .chat-md :deep(h2), .chat-md :deep(h3), .chat-md :deep(h4) { line-height: 1.3; }
-.chat-md :deep(p) { margin: 0.15rem 0; }
-.chat-md :deep(ul), .chat-md :deep(ol) { padding-left: 0.5rem; }
-.chat-md :deep(pre) { font-size: 0.75rem; }
-.chat-md :deep(table) { font-size: 0.75rem; }
+
+/* ── Streaming cursor ── */
+.chat-md :deep(.stream-cursor) {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background-color: #22d3ee;
+  vertical-align: text-bottom;
+  animation: cursor-blink 0.8s steps(2) infinite;
+}
+@keyframes cursor-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Chat markdown overrides (compact for bubbles) ── */
+.chat-md :deep(h1),
+.chat-md :deep(h2),
+.chat-md :deep(h3),
+.chat-md :deep(h4) {
+  line-height: 1.3;
+}
+.chat-md :deep(p) {
+  margin: 0.15rem 0;
+}
+.chat-md :deep(ul),
+.chat-md :deep(ol) {
+  padding-left: 0.5rem;
+}
+.chat-md :deep(pre) {
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  background: #060a13; /* surface-0 */
+  border-color: #1e2d4a; /* edge */
+  border-radius: 0.625rem;
+}
+.chat-md :deep(code) {
+  font-family: 'JetBrains Mono', monospace;
+}
+.chat-md :deep(table) {
+  font-size: 0.75rem;
+}
+.chat-md :deep(a) {
+  color: #22d3ee; /* accent */
+}
+.chat-md :deep(a:hover) {
+  text-decoration: underline;
+}
+
+/* ── Scroll button transition ── */
+.scroll-btn-enter-active { transition: all 0.2s ease-out; }
+.scroll-btn-leave-active { transition: all 0.15s ease-in; }
+.scroll-btn-enter-from,
+.scroll-btn-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
 </style>
