@@ -1,171 +1,221 @@
 <template>
-  <div class="flex flex-col h-full bg-gray-950">
+  <div class="flex flex-col h-full bg-surface-0">
     <div class="flex-1 overflow-y-auto p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">Squads & Dashboard</h2>
-        <button
-          @click="showCreateForm = !showCreateForm"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-        >
-          {{ showCreateForm ? 'Cancel' : 'New Squad' }}
-        </button>
-      </div>
-
-      <!-- Create Squad Form -->
-      <form
-        v-if="showCreateForm"
-        @submit.prevent="createSquad"
-        class="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-6"
-      >
-        <h3 class="font-bold text-gray-100 mb-4">Create New Squad</h3>
-        <div class="space-y-3">
-          <input
-            v-model="form.slug"
-            type="text"
-            placeholder="Squad slug (e.g., frontend-team)"
-            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          />
-          <input
-            v-model="form.name"
-            type="text"
-            placeholder="Squad name (e.g., Frontend Team)"
-            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          />
-          <input
-            v-model="form.projectPath"
-            type="text"
-            placeholder="Project path (e.g., /path/to/project)"
-            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-          />
+      <div class="max-w-4xl">
+        <div class="flex justify-between items-end mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-txt-primary tracking-tight">Squads</h2>
+            <p class="text-xs text-txt-muted mt-0.5">Manage teams and monitor agents</p>
+          </div>
           <button
-            type="submit"
-            :disabled="creating || !form.slug || !form.name || !form.projectPath"
-            class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white px-4 py-2 rounded text-sm transition-colors"
+            @click="showCreateForm = !showCreateForm"
+            class="px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150"
+            :class="showCreateForm
+              ? 'bg-surface-3/50 text-txt-secondary border border-edge hover:bg-surface-3/70'
+              : 'bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 hover:border-accent/40'"
           >
-            {{ creating ? 'Creating...' : 'Create Squad' }}
+            {{ showCreateForm ? 'Cancel' : 'New Squad' }}
           </button>
         </div>
-        <div v-if="createError" class="mt-2 text-red-400 text-sm">
-          {{ createError }}
-        </div>
-      </form>
 
-      <!-- Squads List -->
-      <div v-if="loading" class="text-gray-400 text-center py-12">
-        Loading squads...
-      </div>
-
-      <div v-else-if="error" class="bg-red-900 text-red-100 p-4 rounded-lg mb-4">
-        {{ error }}
-      </div>
-
-      <div v-else-if="squads.length === 0" class="text-gray-400 text-center py-12">
-        No squads created yet
-      </div>
-
-      <div v-else class="grid gap-4">
-        <div
-          v-for="squad in squads"
-          :key="squad.id"
-          class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors"
+        <!-- Create Squad Form -->
+        <form
+          v-if="showCreateForm"
+          @submit.prevent="createSquad"
+          class="bg-surface-2/40 border border-edge rounded-xl p-5 mb-6 animate-fade-in"
         >
-          <button
-            type="button"
-            @click="toggleSquad(squad.slug)"
-            class="w-full text-left focus:outline-none"
-            :aria-expanded="isExpanded(squad.slug)"
+          <h3 class="font-semibold text-txt-primary text-sm mb-4">Create New Squad</h3>
+          <div class="space-y-3">
+            <input
+              v-model="form.slug"
+              type="text"
+              placeholder="Squad slug (e.g., frontend-team)"
+              class="w-full bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                     placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm transition-all duration-200"
+            />
+            <input
+              v-model="form.name"
+              type="text"
+              placeholder="Squad name (e.g., Frontend Team)"
+              class="w-full bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                     placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm transition-all duration-200"
+            />
+            <input
+              v-model="form.projectPath"
+              type="text"
+              placeholder="Project path (e.g., /path/to/project)"
+              class="w-full bg-surface-1/80 border border-edge rounded-lg px-3 py-2 text-sm text-txt-primary
+                     placeholder-txt-muted/50 focus:outline-none focus:border-accent/40 focus:shadow-glow-sm transition-all duration-200"
+            />
+            <button
+              type="submit"
+              :disabled="creating || !form.slug || !form.name || !form.projectPath"
+              class="w-full bg-accent/15 text-accent border border-accent/25 px-4 py-2 rounded-lg text-sm font-medium
+                     hover:bg-accent/25 hover:border-accent/40 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150"
+            >
+              {{ creating ? 'Creating…' : 'Create Squad' }}
+            </button>
+          </div>
+          <div v-if="createError" class="mt-3 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            <span>⚠</span> {{ createError }}
+          </div>
+        </form>
+
+        <!-- List states -->
+        <div v-if="loading" class="flex items-center justify-center py-16">
+          <div class="flex items-center gap-2 text-txt-muted text-sm">
+            <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+            Loading squads…
+          </div>
+        </div>
+
+        <div v-else-if="error" class="flex items-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg mb-4 text-sm">
+          <span>⚠</span> {{ error }}
+        </div>
+
+        <div v-else-if="squads.length === 0" class="text-txt-muted text-sm text-center py-16">
+          No squads created yet
+        </div>
+
+        <!-- Squad cards -->
+        <div v-else class="grid gap-3">
+          <div
+            v-for="squad in squads"
+            :key="squad.id"
+            class="bg-surface-2/40 border border-edge rounded-xl overflow-hidden
+                   hover:border-edge-bright transition-all duration-200"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div class="flex-1 flex items-center gap-2">
-                <span
-                  class="inline-block transition-transform text-gray-400"
-                  :class="isExpanded(squad.slug) ? 'rotate-90' : ''"
-                >▶</span>
-                <div>
-                  <h3 class="font-bold text-gray-100">{{ squad.name }}</h3>
-                  <p class="text-sm text-gray-500">{{ squad.slug }}</p>
+            <button
+              type="button"
+              @click="toggleSquad(squad.slug)"
+              class="w-full text-left p-4 focus:outline-none"
+              :aria-expanded="isExpanded(squad.slug)"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <div class="flex-1 flex items-center gap-2.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-txt-muted transition-transform duration-200 shrink-0"
+                    :class="isExpanded(squad.slug) ? 'rotate-90' : ''"
+                    viewBox="0 0 16 16" fill="currentColor"
+                  ><path d="M6 3l5 5-5 5z"/></svg>
+                  <div class="min-w-0">
+                    <h3 class="font-semibold text-txt-primary text-sm">{{ squad.name }}</h3>
+                    <p class="text-[11px] text-txt-muted font-mono">{{ squad.slug }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span v-if="squad.universe" class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                    🎬 {{ universeLabel(squad.universe) }}
+                  </span>
+                  <span
+                    class="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium"
+                    :class="squad.status === 'working'
+                      ? 'bg-accent/10 text-accent border border-accent/20'
+                      : squad.status === 'error'
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        : 'bg-surface-3/60 text-txt-muted border border-edge'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full" :class="squad.status === 'working' ? 'bg-accent animate-pulse' : squad.status === 'error' ? 'bg-red-400' : 'bg-txt-muted/50'"></span>
+                    {{ squad.status }}
+                  </span>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span v-if="squad.universe" class="px-2 py-1 rounded text-xs font-medium bg-purple-900 text-purple-100">
-                  🎬 {{ universeLabel(squad.universe) }}
-                </span>
-                <span :class="[
-                  'px-2 py-1 rounded text-xs font-medium',
-                  squad.status === 'working'
-                    ? 'bg-blue-900 text-blue-100'
-                    : squad.status === 'error'
-                      ? 'bg-red-900 text-red-100'
-                      : 'bg-gray-700 text-gray-200'
-                ]">
-                  {{ squad.status }}
-                </span>
+              <p class="text-xs text-txt-muted font-mono ml-6">📁 {{ squad.project_path }}</p>
+            </button>
+
+            <!-- Expanded: agent roster -->
+            <div v-if="isExpanded(squad.slug)" class="border-t border-edge px-4 pb-4 pt-3 animate-fade-in">
+              <div class="flex justify-between items-center text-[10px] text-txt-muted mb-3">
+                <span v-if="squad.model" class="font-mono">Model: {{ squad.model }}</span>
+                <span>{{ formatDate(squad.created_at) }}</span>
               </div>
-            </div>
-            <p class="text-sm text-gray-400">📁 {{ squad.project_path }}</p>
-          </button>
 
-          <div v-if="isExpanded(squad.slug)" class="mt-4 pt-4 border-t border-gray-700">
-            <div class="flex justify-between items-center text-xs text-gray-500 mb-3">
-              <span v-if="squad.model">Model: {{ squad.model }}</span>
-              <span>{{ formatDate(squad.created_at) }}</span>
-            </div>
+              <h4 class="text-xs font-semibold text-txt-secondary uppercase tracking-wider mb-2">Team Roster</h4>
 
-            <h4 class="font-semibold text-gray-200 text-sm mb-2">Team Roster</h4>
-            <div v-if="agentsLoading[squad.slug]" class="text-gray-400 text-sm py-2">
-              Loading agents...
-            </div>
-            <div v-else-if="agentsError[squad.slug]" class="text-red-400 text-sm py-2">
-              {{ agentsError[squad.slug] }}
-            </div>
-            <div v-else-if="!agentsBySquad[squad.slug] || agentsBySquad[squad.slug].length === 0"
-                 class="text-gray-500 text-sm italic py-2">
-              No agents assigned yet
-            </div>
-            <ul v-else class="space-y-2">
-              <li
-                v-for="agent in sortedAgents(agentsBySquad[squad.slug] ?? [])"
-                :key="agent.id ?? agent.character_name"
-                class="flex items-center gap-3 rounded px-3 py-2"
-                :class="agent.status === 'working' ? 'bg-blue-950 border border-blue-800' : 'bg-gray-900 border border-gray-700'"
-              >
-                <div class="flex-1 min-w-0">
-                  <span class="text-sm font-medium text-gray-100">{{ agent.character_name }}</span>
-                  <span v-if="agent.is_lead" title="Team Lead" class="text-xs">👑</span>
-                  <span v-if="agent.is_qa" title="QA / Veto Power" class="text-xs">🛡️</span>
-                  <span class="text-xs text-gray-500 ml-2">{{ agent.role_title }}</span>
-                </div>
-                <span :class="[
-                  'px-2 py-0.5 rounded text-xs',
-                  agent.status === 'working' ? 'bg-blue-800 text-blue-200' :
-                  agent.status === 'error' ? 'bg-red-800 text-red-200' :
-                  'bg-gray-700 text-gray-400'
-                ]">
-                  {{ agent.status }}
-                </span>
-                <button
-                  v-if="agent.status === 'working' && agent.currentTaskId"
-                  type="button"
-                  @click="openPreview(agent)"
-                  class="bg-blue-700 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded transition-colors flex items-center gap-1"
-                  title="Preview this agent's live work"
+              <div v-if="agentsLoading[squad.slug]" class="flex items-center gap-2 text-txt-muted text-xs py-3">
+                <span class="w-3 h-3 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
+                Loading agents…
+              </div>
+              <div v-else-if="agentsError[squad.slug]" class="text-red-400 text-xs py-2">
+                {{ agentsError[squad.slug] }}
+              </div>
+              <div v-else-if="!agentsBySquad[squad.slug] || agentsBySquad[squad.slug].length === 0"
+                   class="text-txt-muted text-xs italic py-2">
+                No agents assigned yet
+              </div>
+              <ul v-else class="space-y-1.5">
+                <li
+                  v-for="agent in sortedAgents(agentsBySquad[squad.slug] ?? [])"
+                  :key="agent.id ?? agent.character_name"
+                  class="flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-150"
+                  :class="agent.status === 'working'
+                    ? 'bg-accent/[0.06] border border-accent/15'
+                    : 'bg-surface-1/50 border border-edge'"
                 >
-                  <span aria-hidden="true">👁</span>
-                  Preview
-                </button>
-                <button
-                  v-if="agent.status === 'working' && agent.currentTaskId"
-                  type="button"
-                  @click="stopAgentTask(squad.slug, agent.currentTaskId)"
-                  :disabled="stoppingTaskIds.has(agent.currentTaskId)"
-                  class="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs px-2 py-1 rounded transition-colors flex items-center gap-1"
-                  title="Stop this agent's current task"
-                >
-                  <span class="inline-block w-2 h-2 bg-white rounded-sm"></span>
-                  {{ stoppingTaskIds.has(agent.currentTaskId) ? 'Stopping...' : 'Stop' }}
-                </button>
-              </li>
-            </ul>
+                  <!-- Avatar circle -->
+                  <div
+                    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
+                    :class="agent.status === 'working'
+                      ? 'bg-accent/15 text-accent border border-accent/25'
+                      : agent.status === 'error'
+                        ? 'bg-red-500/15 text-red-400 border border-red-500/25'
+                        : 'bg-surface-3/60 text-txt-muted border border-edge'"
+                  >
+                    {{ (agent.character_name ?? '?').charAt(0).toUpperCase() }}
+                  </div>
+
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm font-medium text-txt-primary truncate">{{ agent.character_name }}</span>
+                      <span v-if="agent.is_lead" title="Team Lead" class="text-xs">👑</span>
+                      <span v-if="agent.is_qa" title="QA / Veto Power" class="text-xs">🛡️</span>
+                    </div>
+                    <span class="text-[10px] text-txt-muted">{{ agent.role_title }}</span>
+                  </div>
+
+                  <!-- Status -->
+                  <span
+                    class="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium shrink-0"
+                    :class="agent.status === 'working'
+                      ? 'bg-accent/10 text-accent'
+                      : agent.status === 'error'
+                        ? 'bg-red-500/10 text-red-400'
+                        : 'bg-surface-3/40 text-txt-muted'"
+                  >
+                    <span class="w-1.5 h-1.5 rounded-full"
+                      :class="agent.status === 'working' ? 'bg-accent animate-pulse' : agent.status === 'error' ? 'bg-red-400' : 'bg-emerald-400'"
+                    ></span>
+                    {{ agent.status }}
+                  </span>
+
+                  <!-- Action buttons -->
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button
+                      v-if="agent.status === 'working' && agent.currentTaskId"
+                      type="button"
+                      @click="openPreview(agent)"
+                      class="text-[10px] font-medium px-2 py-1 rounded-md bg-accent/10 text-accent border border-accent/20
+                             hover:bg-accent/20 transition-all duration-150 flex items-center gap-1"
+                      title="Preview live work"
+                    >
+                      <span aria-hidden="true">👁</span> Preview
+                    </button>
+                    <button
+                      v-if="agent.status === 'working' && agent.currentTaskId"
+                      type="button"
+                      @click="stopAgentTask(squad.slug, agent.currentTaskId)"
+                      :disabled="stoppingTaskIds.has(agent.currentTaskId)"
+                      class="text-[10px] font-medium px-2 py-1 rounded-md bg-red-500/10 text-red-400 border border-red-500/20
+                             hover:bg-red-500/20 disabled:opacity-40 transition-all duration-150 flex items-center gap-1"
+                      title="Stop task"
+                    >
+                      <span class="w-2 h-2 rounded-[2px] bg-red-400"></span>
+                      {{ stoppingTaskIds.has(agent.currentTaskId) ? 'Stopping…' : 'Stop' }}
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -174,55 +224,55 @@
     <!-- Live agent preview modal -->
     <div
       v-if="previewAgent"
-      class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
       @click.self="closePreview"
     >
-      <div class="bg-gray-900 border border-gray-700 rounded-lg w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl">
-        <div class="flex justify-between items-center p-4 border-b border-gray-700">
-          <div class="min-w-0">
-            <h3 class="text-lg font-bold text-gray-100 truncate">
+      <div class="bg-surface-1 border border-edge rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in">
+        <div class="flex justify-between items-center px-5 py-3.5 border-b border-edge">
+          <div>
+            <h3 class="text-sm font-semibold text-txt-primary flex items-center gap-2">
               {{ previewAgent.character_name }}
-              <span class="text-sm font-normal text-gray-400">— {{ previewAgent.role_title }}</span>
+              <span class="text-xs font-normal text-txt-muted">— {{ previewAgent.role_title }}</span>
             </h3>
-            <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
-              <span class="inline-block w-2 h-2 rounded-full" :class="previewConnected ? 'bg-green-400 animate-pulse' : 'bg-gray-500'"></span>
+            <p class="text-[10px] text-txt-muted mt-0.5 flex items-center gap-1.5">
+              <span class="inline-block w-1.5 h-1.5 rounded-full" :class="previewConnected ? 'bg-emerald-400 animate-pulse' : 'bg-txt-muted/50'"></span>
               {{ previewStatusLabel }}
             </p>
           </div>
           <div class="flex items-center gap-3">
-            <label class="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none">
-              <input type="checkbox" v-model="previewSummaryMode" class="rounded bg-gray-700 border-gray-600" />
+            <label class="flex items-center gap-1.5 text-[10px] text-txt-muted cursor-pointer select-none">
+              <input type="checkbox" v-model="previewSummaryMode" class="rounded bg-surface-3 border-edge accent-accent" />
               Summary
             </label>
             <button
               type="button"
               @click="closePreview"
-              class="text-gray-400 hover:text-gray-100 text-2xl leading-none focus:outline-none"
+              class="text-txt-muted hover:text-txt-primary text-lg leading-none transition-colors p-1"
               aria-label="Close"
             >×</button>
           </div>
         </div>
 
-        <div ref="previewScrollEl" class="overflow-y-auto p-4 space-y-3 flex-1 font-mono text-xs">
-          <div v-if="previewError" class="bg-red-900 text-red-100 p-3 rounded">{{ previewError }}</div>
-          <div v-else-if="previewEvents.length === 0" class="text-gray-500 italic text-center py-8">
-            Waiting for activity...
+        <div ref="previewScrollEl" class="overflow-y-auto p-4 space-y-2 flex-1 font-mono text-xs">
+          <div v-if="previewError" class="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-lg text-sm">{{ previewError }}</div>
+          <div v-else-if="previewEvents.length === 0" class="text-txt-muted italic text-center py-8">
+            Waiting for activity…
           </div>
 
-          <!-- Summary mode: uses server-computed ActivityEntry attached to each event -->
+          <!-- Summary mode -->
           <template v-else-if="previewSummaryMode">
             <div
               v-for="(ev, idx) in summarizedPreviewEvents"
               :key="idx"
-              class="flex items-start gap-2 py-1.5"
+              class="flex items-start gap-2 py-1.5 px-1"
             >
               <span class="shrink-0">{{ ev.summary.icon }}</span>
               <div class="flex-1 min-w-0">
-                <span class="text-gray-200 break-words">{{ ev.summary.summary }}</span>
-                <span class="text-gray-600 text-[10px] ml-2">{{ formatEventTime(ev.ts) }}</span>
+                <span class="text-txt-secondary break-words">{{ ev.summary.summary }}</span>
+                <span class="text-txt-muted text-[10px] ml-2">{{ formatEventTime(ev.ts) }}</span>
               </div>
             </div>
-            <div v-if="summarizedPreviewEvents.length === 0" class="text-gray-500 italic text-center py-4">
+            <div v-if="summarizedPreviewEvents.length === 0" class="text-txt-muted italic text-center py-4">
               Processing…
             </div>
           </template>
@@ -232,22 +282,22 @@
             <div
               v-for="(ev, idx) in previewEvents"
               :key="idx"
-              class="border border-gray-800 rounded p-2 bg-gray-950"
+              class="border border-edge rounded-lg p-2.5 bg-surface-0"
             >
               <div class="flex justify-between items-center mb-1">
-                <span class="text-blue-400">{{ ev.type }}</span>
-                <span class="text-gray-600 text-[10px]">{{ formatEventTime(ev.ts) }}</span>
+                <span class="text-accent">{{ ev.type }}</span>
+                <span class="text-txt-muted text-[10px]">{{ formatEventTime(ev.ts) }}</span>
               </div>
-              <pre class="text-gray-200 whitespace-pre-wrap break-words">{{ formatEventBody(ev) }}</pre>
+              <pre class="text-txt-secondary whitespace-pre-wrap break-words">{{ formatEventBody(ev) }}</pre>
             </div>
           </template>
         </div>
 
-        <div class="p-3 border-t border-gray-700 flex justify-end">
+        <div class="px-4 py-3 border-t border-edge flex justify-end">
           <button
             type="button"
             @click="closePreview"
-            class="bg-gray-700 hover:bg-gray-600 text-gray-100 text-sm px-4 py-2 rounded transition-colors"
+            class="bg-surface-3/50 hover:bg-surface-3/70 text-txt-secondary text-sm px-4 py-1.5 rounded-lg border border-edge transition-all duration-150"
           >
             Close
           </button>
@@ -332,7 +382,6 @@ const createError = ref<string | null>(null)
 const expanded = reactive<Record<string, boolean>>({})
 const agentsBySquad = reactive<Record<string, SquadAgent[]>>({})
 
-/** Returns agents sorted: lead first, then QA, then everyone else. Stable within each tier. */
 function sortedAgents(agents: SquadAgent[]): SquadAgent[] {
   return [...agents].sort((a, b) => {
     const rank = (ag: SquadAgent) => ag.is_lead ? 0 : ag.is_qa ? 1 : 2
@@ -354,15 +403,13 @@ let previewSource: EventSource | null = null
 const previewStatusLabel = computed(() => {
   if (previewError.value) return 'Disconnected'
   if (previewConnected.value) return 'Live'
-  return 'Connecting...'
+  return 'Connecting…'
 })
 
-/** Summary mode: skip system/lifecycle noise; skip tool_complete for pending tool_start entries */
 const summarizedPreviewEvents = computed<PreviewEvent[]>(() => {
   return previewEvents.value.filter((ev) => {
     if (!ev.summary) return false
     if (SUMMARY_SKIP_KINDS.has(ev.summary.kind)) return false
-    // Skip message_delta — only show complete messages
     if (ev.type === 'assistant.message_delta') return false
     return true
   })
@@ -379,7 +426,6 @@ const formatEventTime = (ts: number) => {
 const formatEventBody = (ev: { type: string; data: unknown }) => {
   const d = ev.data as Record<string, unknown> | null | undefined
   if (!d || typeof d !== 'object') return ''
-  // Surface common interesting fields verbatim
   if (typeof (d as { deltaContent?: string }).deltaContent === 'string') {
     return (d as { deltaContent: string }).deltaContent
   }
@@ -421,17 +467,15 @@ const openPreview = (agent: SquadAgent) => {
     try {
       const ev = JSON.parse(e.data) as PreviewEvent
       previewEvents.value.push(ev)
-      // Auto-scroll for streaming deltas
       scrollPreviewToBottom()
     } catch {
-      // ignore parse errors
+      // ignore
     }
   }
   es.onerror = () => {
     previewConnected.value = false
-    // EventSource will auto-retry; surface a soft warning only if we never connected
     if (previewEvents.value.length === 0) {
-      previewError.value = 'Connection error. Retrying...'
+      previewError.value = 'Connection error. Retrying…'
     }
   }
 }
@@ -552,7 +596,6 @@ const createSquad = async () => {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    // Reset form and reload squads
     form.value = { slug: '', name: '', projectPath: '' }
     showCreateForm.value = false
     await loadSquads()
