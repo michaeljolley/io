@@ -16,6 +16,7 @@ import type { CopilotSession, SessionEvent } from "@github/copilot-sdk";
 import { z } from "zod";
 
 import { getClient } from "./client.js";
+import { getSkillDirectories } from "./skills.js";
 import { sendWithIdleTimeout } from "./session-timeout.js";
 import { getModelForTask, getModelForTier, classifyComplexity } from "./model-router.js";
 import type { Tier } from "./model-router.js";
@@ -576,6 +577,7 @@ Stay in character — let your personality color your work style and communicati
     streaming: false,
     systemMessage: { content: systemMessage },
     tools: agentTools,
+    skillDirectories: getSkillDirectories(),
     onPermissionRequest: approveAll,
     infiniteSessions: {
       enabled: true,
@@ -646,6 +648,7 @@ You are a coding agent. Use the shell tool to run commands and file_ops to read/
 Log important decisions with squad_log_decision so they persist.`,
     },
     tools: agentTools,
+    skillDirectories: getSkillDirectories(),
     onPermissionRequest: approveAll,
     infiniteSessions: {
       enabled: true,
