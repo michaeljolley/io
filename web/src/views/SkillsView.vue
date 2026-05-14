@@ -31,26 +31,81 @@
     <div v-else class="flex-1 overflow-y-auto p-6">
       <h2 class="text-2xl font-bold mb-6">Skills</h2>
 
-      <!-- Add Skill form -->
-      <form @submit.prevent="installSkill" class="mb-6 max-w-2xl">
-        <div class="flex gap-2">
-          <input
-            v-model="newRepoUrl"
-            type="url"
-            placeholder="https://github.com/owner/repo.git"
-            aria-label="Git repository URL"
-            :disabled="installing"
-            class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-          />
+      <!-- Install form with URL / Paste tabs -->
+      <div class="mb-6 max-w-2xl">
+        <!-- Tab switcher -->
+        <div class="flex gap-1 mb-3 border-b border-gray-800">
           <button
-            type="submit"
-            :disabled="installing || newRepoUrl.trim() === ''"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm transition-colors whitespace-nowrap"
+            type="button"
+            @click="installTab = 'url'"
+            class="px-3 py-1.5 text-sm rounded-t transition-colors"
+            :class="installTab === 'url' ? 'bg-gray-800 text-gray-100 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'"
           >
-            {{ installing ? 'Installing…' : 'Install' }}
+            From URL
+          </button>
+          <button
+            type="button"
+            @click="installTab = 'paste'"
+            class="px-3 py-1.5 text-sm rounded-t transition-colors"
+            :class="installTab === 'paste' ? 'bg-gray-800 text-gray-100 border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'"
+          >
+            Paste SKILL.md
           </button>
         </div>
-      </form>
+
+        <!-- URL install tab -->
+        <form v-if="installTab === 'url'" @submit.prevent="installSkill">
+          <div class="flex gap-2">
+            <input
+              v-model="newRepoUrl"
+              type="url"
+              placeholder="https://github.com/owner/repo.git"
+              aria-label="Git repository URL"
+              :disabled="installing"
+              class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              :disabled="installing || newRepoUrl.trim() === ''"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm transition-colors whitespace-nowrap"
+            >
+              {{ installing ? 'Installing…' : 'Install' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- Paste install tab -->
+        <form v-else @submit.prevent="installPaste">
+          <div class="flex flex-col gap-2">
+            <div>
+              <input
+                v-model="pasteSlug"
+                type="text"
+                placeholder="my-skill"
+                aria-label="Skill slug"
+                :disabled="pasting"
+                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              />
+              <p class="text-xs text-gray-600 mt-1">Unique identifier for this skill (lowercase, hyphens ok)</p>
+            </div>
+            <textarea
+              v-model="pasteContent"
+              placeholder="Paste SKILL.md content here…"
+              aria-label="SKILL.md content"
+              :disabled="pasting"
+              rows="8"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 font-mono resize-y"
+            ></textarea>
+            <button
+              type="submit"
+              :disabled="pasting || pasteSlug.trim() === '' || pasteContent.trim() === ''"
+              class="self-end bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50 text-white px-4 py-2 rounded text-sm transition-colors"
+            >
+              {{ pasting ? 'Installing…' : 'Install' }}
+            </button>
+          </div>
+        </form>
+      </div>
 
       <!-- Install feedback banners -->
       <div v-if="installSuccess" class="bg-green-900 text-green-100 p-4 rounded-lg mb-4">
@@ -113,6 +168,12 @@ const newRepoUrl = ref<string>('')
 const installing = ref(false)
 const installError = ref<string | null>(null)
 const installSuccess = ref<string | null>(null)
+
+// Paste install state
+const installTab = ref<'url' | 'paste'>('url')
+const pasteSlug = ref<string>('')
+const pasteContent = ref<string>('')
+const pasting = ref(false)
 
 // Detail panel state
 const selectedSkill = ref<Skill | null>(null)
@@ -199,6 +260,44 @@ async function installSkill(): Promise<void> {
     installError.value = e instanceof Error ? e.message : 'Install failed'
   } finally {
     installing.value = false
+  }
+}
+
+async function installPaste(): Promise<void> {
+  if (pasting.value || pasteSlug.value.trim() === '' || pasteContent.value.trim() === '') return
+  pasting.value = true
+  installError.value = null
+  installSuccess.value = null
+
+  try {
+    const response = await apiFetch('/api/skills/paste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: pasteContent.value.trim(), slug: pasteSlug.value.trim() }),
+    })
+
+    if (response.ok) {
+      const data = (await response.json()) as { skill: Skill }
+      skills.value = [data.skill, ...skills.value]
+      pasteSlug.value = ''
+      pasteContent.value = ''
+      installSuccess.value = `✓ Installed: ${data.skill.name}`
+      setTimeout(() => { installSuccess.value = null }, 4000)
+      void fetchSkills()
+    } else {
+      let message = 'Install failed'
+      try {
+        const body = (await response.json()) as { error?: string }
+        message = body.error ?? response.statusText ?? message
+      } catch {
+        message = response.statusText || message
+      }
+      installError.value = message
+    }
+  } catch (e) {
+    installError.value = e instanceof Error ? e.message : 'Install failed'
+  } finally {
+    pasting.value = false
   }
 }
 
