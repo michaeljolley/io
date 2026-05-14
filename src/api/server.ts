@@ -1,6 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import express, { type Request, type Response } from "express";
 import { config } from "../config.js";
 import { listSkills, installSkill } from "../copilot/skills.js";
@@ -9,7 +9,7 @@ import { getAgentInfo, cancelAgentTask, getTaskEvents, subscribeToTaskEvents } f
 import { summarize, summarizeEvent } from "../copilot/event-summary.js";
 import { abortOrchestrator } from "../copilot/orchestrator.js";
 import { getActiveTasks, getTask, listRecentTasks } from "../store/tasks.js";
-import { IO_VERSION } from "../paths.js";
+import { IO_VERSION, SKILLS_DIR } from "../paths.js";
 import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
@@ -111,6 +111,27 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
+
+  // Get a single skill's SKILL.md content by slug (issue #119)
+  api.get("/skills/:slug", (req: Request, res: Response) => {
+    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+    if (!slug || slug.includes("..") || slug.includes("/") || slug.includes("\\")) {
+      res.status(400).json({ error: "Invalid skill slug" });
+      return;
+    }
+    const skillFile = `${SKILLS_DIR}/${slug}/SKILL.md`;
+    try {
+      if (!existsSync(skillFile)) {
+        res.status(404).json({ error: "Skill not found" });
+        return;
+      }
+      const content = readFileSync(skillFile, "utf-8");
+      res.json({ slug, content });
+    } catch (e) {
+      console.error("Error reading skill content:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
 
   // Install a skill from a git repo URL (mirrors the skill_install tool)
   api.post("/skills", async (req: Request, res: Response) => {
