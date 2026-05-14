@@ -345,7 +345,7 @@ export interface ToolDeps {
     perAgent: Array<{ agent_slug: string; count: number }>;
   };
   listSkills: () => Array<{ name: string; slug: string; description: string; path: string }>;
-  installSkill: (repoUrl: string) => Promise<{ name: string; slug: string; description: string; path: string }>;
+  installSkill: (repoUrl: string) => Promise<{ name: string; slug: string; description: string; path: string } | { name: string; slug: string; description: string; path: string }[]>;
   removeSkill: (slug: string) => boolean;
   searchSkillsRegistry: (query: string) => Promise<Array<{ name: string; description: string; repoUrl: string }>>;
   saveConfig: (updates: Record<string, unknown>) => void;
@@ -924,8 +924,11 @@ export function createTools(deps: ToolDeps) {
     handler: async ({ repo_url }) => {
       console.error(`[io] skill_install called: ${repo_url}`);
       try {
-        const skill = await deps.installSkill(repo_url);
-        return `Skill "${skill.name}" installed successfully.\nSlug: ${skill.slug}\nDescription: ${skill.description || "(none)"}`;
+        const result = await deps.installSkill(repo_url);
+        const skills = Array.isArray(result) ? result : [result];
+        return skills.map((skill) =>
+          `Skill "${skill.name}" installed successfully.\nSlug: ${skill.slug}\nDescription: ${skill.description || "(none)"}`,
+        ).join("\n\n");
       } catch (err) {
         return `Error installing skill: ${err instanceof Error ? err.message : String(err)}`;
       }

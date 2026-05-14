@@ -158,8 +158,9 @@ export async function startApiServer(): Promise<void> {
     }
 
     try {
-      const skill = await installSkill(trimmed);
-      res.status(201).json({ skill });
+      const result = await installSkill(trimmed);
+      const skills = Array.isArray(result) ? result : [result];
+      res.status(201).json({ skill: skills[0], skills });
     } catch (e) {
       console.error("Error installing skill:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });

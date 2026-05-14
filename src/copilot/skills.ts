@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import { join, basename } from "path";
 import { execFileSync } from "child_process";
 import { SKILLS_DIR } from "../paths.js";
@@ -199,11 +199,65 @@ async function installSkillFromFile(rawUrl: string, slug: string): Promise<Skill
   };
 }
 
+function isValidSkillContent(content: string): boolean {
+  const first10 = content.split(/\r?\n/).slice(0, 10);
+  return first10.some((line) => /^#\s+/.test(line));
+}
+
+/**
+ * Install a skill from raw markdown content and a caller-chosen slug.
+ * Useful for paste-to-install workflows.
+ */
+export function installSkillFromContent(content: string, slug: string): SkillInfo {
+  if (!slug || /[\/\\]/.test(slug)) {
+    throw new Error("Invalid slug — must be a non-empty string without path separators.");
+  }
+
+  const destDir = join(SKILLS_DIR, slug);
+  if (existsSync(destDir)) {
+    throw new Error(`Skill "${slug}" is already installed.`);
+  }
+
+  if (!isValidSkillContent(content)) {
+    throw new Error("Content does not appear to be a valid SKILL.md (no heading found in first 10 lines).");
+  }
+
+  mkdirSync(destDir, { recursive: true });
+  writeFileSync(join(destDir, "SKILL.md"), content, "utf-8");
+
+  const { name, description } = parseSkillMd(content);
+  return {
+    name: name || slug,
+    slug,
+    description,
+    path: destDir,
+  };
+}
+
+/**
+ * Scan a cloned repo for SKILL.md files in subdirectories (1 level deep).
+ * Returns an array of { subdir, skillMdPath } for each found skill.
+ */
+function discoverSkillsInRepo(repoDir: string): { subdir: string; skillMdPath: string }[] {
+  const found: { subdir: string; skillMdPath: string }[] = [];
+  for (const entry of readdirSync(repoDir)) {
+    const subPath = join(repoDir, entry);
+    if (!statSync(subPath).isDirectory()) continue;
+    if (entry.startsWith(".")) continue;
+    const mdPath = join(subPath, "SKILL.md");
+    if (existsSync(mdPath)) {
+      found.push({ subdir: entry, skillMdPath: mdPath });
+    }
+  }
+  return found;
+}
+
 /**
  * Install a skill from a git repo URL or a direct SKILL.md file URL.
- * Throws if the repo/file does not contain a valid SKILL.md.
+ * Returns a single SkillInfo for single-skill repos/files, or an array
+ * for repos containing multiple SKILL.md files in subdirectories.
  */
-export async function installSkill(input: string): Promise<SkillInfo> {
+export async function installSkill(input: string): Promise<SkillInfo | SkillInfo[]> {
   let destDir: string | undefined;
   try {
     const parsed = parseSkillUrl(input);
@@ -225,23 +279,57 @@ export async function installSkill(input: string): Promise<SkillInfo> {
     });
 
     const skillMdPath = join(destDir, "SKILL.md");
-    if (!existsSync(skillMdPath)) {
+    if (existsSync(skillMdPath)) {
+      // Single-skill repo (root SKILL.md)
+      const content = readFileSync(skillMdPath, "utf-8");
+      const { name, description } = parseSkillMd(content);
+      return {
+        name: name || repoName,
+        slug: repoName,
+        description,
+        path: destDir,
+      };
+    }
+
+    // No root SKILL.md — scan subdirectories for multi-skill repos
+    const discovered = discoverSkillsInRepo(destDir);
+    if (discovered.length === 0) {
       rmSync(destDir, { recursive: true, force: true });
       destDir = undefined;
       throw new Error(
-        `Repository "${repoUrl}" does not contain a SKILL.md file.`,
+        `Repository "${repoUrl}" does not contain a SKILL.md file at the root or in any subdirectory. ` +
+        `If skills are nested deeper, try installing with a direct URL to the SKILL.md file.`,
       );
     }
 
-    const content = readFileSync(skillMdPath, "utf-8");
-    const { name, description } = parseSkillMd(content);
+    // Install each discovered skill into its own SKILLS_DIR/<slug> directory
+    const installed: SkillInfo[] = [];
+    for (const { subdir, skillMdPath: mdPath } of discovered) {
+      const skillDest = join(SKILLS_DIR, subdir);
+      if (existsSync(skillDest)) {
+        console.error(`[io] Skipping "${subdir}" — already installed.`);
+        continue;
+      }
+      mkdirSync(skillDest, { recursive: true });
+      copyFileSync(mdPath, join(skillDest, "SKILL.md"));
+      // Also copy agents/ subdirectory if present
+      const agentsDir = join(destDir!, subdir, "agents");
+      if (existsSync(agentsDir) && statSync(agentsDir).isDirectory()) {
+        execFileSync("cp", ["-r", agentsDir, join(skillDest, "agents")], { stdio: "pipe" });
+      }
+      const content = readFileSync(mdPath, "utf-8");
+      const { name, description } = parseSkillMd(content);
+      installed.push({ name: name || subdir, slug: subdir, description, path: skillDest });
+    }
 
-    return {
-      name: name || repoName,
-      slug: repoName,
-      description,
-      path: destDir,
-    };
+    // Clean up cloned repo — individual skills have been extracted
+    rmSync(destDir, { recursive: true, force: true });
+    destDir = undefined;
+
+    if (installed.length === 0) {
+      throw new Error("All skills in the repository are already installed.");
+    }
+    return installed.length === 1 ? installed[0] : installed;
   } catch (e) {
     // Clean up partially-created directory on failure
     if (destDir && existsSync(destDir)) {

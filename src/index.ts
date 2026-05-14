@@ -91,8 +91,11 @@ skillCmd
   .action(async (repoUrl: string) => {
     try {
       console.log(`Installing skill from ${repoUrl}...`);
-      const skill = await installSkill(repoUrl);
-      console.log(`✓ Installed: ${skill.name} (${skill.slug})`);
+      const result = await installSkill(repoUrl);
+      const skills = Array.isArray(result) ? result : [result];
+      for (const skill of skills) {
+        console.log(`✓ Installed: ${skill.name} (${skill.slug})`);
+      }
     } catch (err) {
       console.error(`✗ ${err instanceof Error ? err.message : String(err)}`);
       process.exit(1);
