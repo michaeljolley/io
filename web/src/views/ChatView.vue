@@ -25,12 +25,12 @@
         </div>
       </div>
 
-      <!-- Thinking indicator -->
+      <!-- Thinking indicator: shown while isLoading but no streaming content yet -->
       <div v-if="store.isLoading && !isStreaming" class="flex justify-start">
-        <div class="bg-gray-800 border border-gray-700 px-4 py-3 rounded-lg text-sm text-gray-400 flex gap-1">
-          <span class="animate-bounce" style="animation-delay: 0ms">·</span>
-          <span class="animate-bounce" style="animation-delay: 150ms">·</span>
-          <span class="animate-bounce" style="animation-delay: 300ms">·</span>
+        <div class="bg-gray-800 border border-gray-700 px-4 py-3 rounded-lg flex items-center gap-1.5">
+          <span class="dot-pulse" style="animation-delay: 0s"></span>
+          <span class="dot-pulse" style="animation-delay: 0.2s"></span>
+          <span class="dot-pulse" style="animation-delay: 0.4s"></span>
         </div>
       </div>
     </div>
@@ -204,3 +204,18 @@ async function sendMessage() {
   }
 }
 </script>
+
+<style scoped>
+@keyframes dot-pulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+.dot-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #60a5fa; /* blue-400 */
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+</style>
