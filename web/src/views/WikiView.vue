@@ -164,7 +164,10 @@ function renderMarkdown(md: string): string {
       // inline code
       .replace(/`([^`]+)`/g, '<code class="bg-gray-800 px-1 rounded text-blue-300 font-mono text-xs">$1</code>')
       // links
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-blue-400 hover:underline">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+        const safe = /^https?:\/\//i.test(url) || url.startsWith('/') || url.startsWith('#')
+        return `<a href="${safe ? url : '#'}" target="_blank" rel="noopener" class="text-blue-400 hover:underline">${text}</a>`
+      })
   }
 
   for (let i = 0; i < lines.length; i++) {
