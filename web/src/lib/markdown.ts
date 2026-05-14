@@ -81,6 +81,48 @@ function renderTable(tableLines: string[]): string {
   return `<div class="overflow-x-auto my-2"><table class="border-collapse w-full text-sm"><thead><tr class="border-b border-gray-700">${thCells}</tr></thead><tbody>${tbodyRows}</tbody></table></div>`
 }
 
+
+/**
+ * Extract YAML frontmatter from a markdown string.
+ * Detects content between opening `---` and closing `---` fences at the start of the file.
+ * Parses simple `key: value` pairs — no full YAML library needed for SKILL.md files.
+ * Handles quoted values (single or double quotes) and empty values.
+ */
+export function extractFrontmatter(md: string): { frontmatter: Record<string, string> | null; body: string } {
+  if (!md.startsWith('---\n') && md !== '---') {
+    return { frontmatter: null, body: md }
+  }
+  // Find the closing fence: a `---` on its own line after the opening
+  const closeIdx = md.indexOf('\n---\n', 3)
+  const closeIdxEof = md.indexOf('\n---', 3)
+  const end = (closeIdx !== -1) ? closeIdx : (closeIdxEof !== -1 && md.slice(closeIdxEof).trimEnd() === '---' ? closeIdxEof : -1)
+  if (end === -1) return { frontmatter: null, body: md }
+
+  const yamlBlock = md.slice(4, end) // everything between the two fences
+  const body = (closeIdx !== -1) ? md.slice(closeIdx + 5) : ''
+
+  const frontmatter: Record<string, string> = {}
+  for (const line of yamlBlock.split('\n')) {
+    const m = line.match(/^([^:]+):\s*(.*)$/)
+    if (!m) continue
+    const key = m[1].trim()
+    let value = m[2].trim()
+    // Strip surrounding quotes
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+    frontmatter[key] = value
+  }
+
+  return {
+    frontmatter: Object.keys(frontmatter).length > 0 ? frontmatter : null,
+    body,
+  }
+}
+
 export function renderMarkdown(md: string): string {
   if (!md) return ''
 

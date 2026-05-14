@@ -20,11 +20,38 @@
       <div v-else-if="contentError" class="flex-1 p-6">
         <p class="text-sm text-red-400">{{ contentError }}</p>
       </div>
-      <div
-        v-else
-        class="flex-1 overflow-y-auto p-6 skill-content text-sm text-gray-300 leading-relaxed"
-        v-html="renderedContent"
-      ></div>
+      <div v-else class="flex-1 overflow-y-auto p-6 skill-content text-sm text-gray-300 leading-relaxed">
+        <!-- Frontmatter info card -->
+        <div v-if="parsedFrontmatter" class="mb-6 bg-gray-900 border border-gray-700 rounded-lg p-4">
+          <div v-if="parsedFrontmatter.name" class="mb-2">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Name</p>
+            <p class="text-base font-semibold text-gray-100">{{ parsedFrontmatter.name }}</p>
+          </div>
+          <div v-if="parsedFrontmatter.description" class="mb-2">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Description</p>
+            <p class="text-sm text-gray-300">{{ parsedFrontmatter.description }}</p>
+          </div>
+          <div class="flex flex-wrap gap-6 mt-2">
+            <div v-if="parsedFrontmatter.version">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Version</p>
+              <p class="text-sm text-gray-300 font-mono">{{ parsedFrontmatter.version }}</p>
+            </div>
+            <div v-if="parsedFrontmatter.author">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Author</p>
+              <p class="text-sm text-gray-300">{{ parsedFrontmatter.author }}</p>
+            </div>
+          </div>
+          <!-- Remaining frontmatter fields -->
+          <dl v-if="remainingFrontmatterFields.length > 0" class="mt-3 pt-3 border-t border-gray-800 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 items-baseline">
+            <template v-for="[key, val] in remainingFrontmatterFields" :key="key">
+              <dt class="text-xs text-gray-500 whitespace-nowrap">{{ key }}</dt>
+              <dd class="text-xs text-gray-400 font-mono">{{ val }}</dd>
+            </template>
+          </dl>
+        </div>
+        <!-- Markdown body -->
+        <div v-html="renderedBody"></div>
+      </div>
     </div>
 
     <!-- Skills list -->
@@ -171,7 +198,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { apiFetch } from '../lib/api'
-import { renderMarkdown } from '../lib/markdown'
+import { renderMarkdown, extractFrontmatter } from '../lib/markdown'
 
 interface Skill {
   name: string
@@ -201,7 +228,15 @@ const skillContent = ref<string>('')
 const contentLoading = ref(false)
 const contentError = ref<string | null>(null)
 
-const renderedContent = computed(() => renderMarkdown(skillContent.value))
+const skillData = computed(() => extractFrontmatter(skillContent.value))
+const parsedFrontmatter = computed(() => skillData.value.frontmatter)
+const renderedBody = computed(() => renderMarkdown(skillData.value.body))
+
+const PROMINENT_KEYS = ['name', 'description', 'version', 'author'] as const
+const remainingFrontmatterFields = computed(() => {
+  if (!parsedFrontmatter.value) return []
+  return Object.entries(parsedFrontmatter.value).filter(([k]) => !(PROMINENT_KEYS as readonly string[]).includes(k))
+})
 
 const searchQuery = ref<string>('')
 
