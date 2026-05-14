@@ -115,6 +115,17 @@
         {{ installError }}
       </div>
 
+      <!-- Search -->
+      <div v-if="!loading && !error && skills.length > 0" class="mb-4 max-w-2xl">
+        <input
+          v-model="searchQuery"
+          type="search"
+          placeholder="Search skills…"
+          aria-label="Search skills"
+          class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+        />
+      </div>
+
       <!-- List states -->
       <div v-if="loading" class="text-gray-400 text-center py-12">
         Loading skills...
@@ -126,9 +137,13 @@
         No skills available
       </div>
 
+      <div v-else-if="filteredSkills.length === 0" class="text-gray-400 text-center py-12">
+        No matching skills
+      </div>
+
       <div v-else class="grid gap-4">
         <div
-          v-for="skill in skills"
+          v-for="skill in filteredSkills"
           :key="skill.slug"
           @click="openDetail(skill)"
           class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
@@ -187,6 +202,18 @@ const contentLoading = ref(false)
 const contentError = ref<string | null>(null)
 
 const renderedContent = computed(() => renderMarkdown(skillContent.value))
+
+const searchQuery = ref<string>('')
+
+const filteredSkills = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  if (!q) return skills.value
+  return skills.value.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.slug.toLowerCase().includes(q) ||
+    (s.description ?? '').toLowerCase().includes(q)
+  )
+})
 
 async function openDetail(skill: Skill) {
   selectedSkill.value = skill
