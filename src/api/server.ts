@@ -93,14 +93,7 @@ export async function startApiServer(): Promise<void> {
     });
   });
 
-  // Apply auth middleware to all subsequent routes
-  api.use(requireAuth);
-
-  api.get("/status", (_req: Request, res: Response) => {
-    res.json({ version: IO_VERSION, uptime: process.uptime() });
-  });
-
-  // Skills endpoints
+  // Skills read endpoints — public (no auth required; read-only local filesystem)
   api.get("/skills", (_req: Request, res: Response) => {
     try {
       const skills = listSkills();
@@ -110,7 +103,6 @@ export async function startApiServer(): Promise<void> {
       res.status(500).json({ error: "Failed to list skills" });
     }
   });
-
 
   // Get a single skill's SKILL.md content by slug (issue #119)
   api.get("/skills/:slug", (req: Request, res: Response) => {
@@ -131,6 +123,13 @@ export async function startApiServer(): Promise<void> {
       console.error("Error reading skill content:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
+  });
+
+  // Apply auth middleware to all subsequent routes
+  api.use(requireAuth);
+
+  api.get("/status", (_req: Request, res: Response) => {
+    res.json({ version: IO_VERSION, uptime: process.uptime() });
   });
 
   // Install a skill from pasted SKILL.md content (issue #117)
