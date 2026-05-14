@@ -134,10 +134,15 @@
           class="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
         >
           <div class="flex justify-between items-start mb-2">
-            <div>
+            <div class="min-w-0">
               <h3 class="font-bold text-gray-100">{{ skill.name }}</h3>
               <p class="text-sm text-gray-500">{{ skill.slug }}</p>
             </div>
+            <button
+              @click.stop="deleteSkill(skill)"
+              class="shrink-0 ml-2 text-gray-600 hover:text-red-400 transition-colors text-sm p-1 rounded hover:bg-gray-700"
+              title="Delete skill"
+            >🗑️</button>
           </div>
           <p class="text-sm text-gray-400 mb-3">{{ skill.description }}</p>
           <p class="text-xs text-gray-500">{{ skill.path }}</p>
@@ -298,6 +303,23 @@ async function installPaste(): Promise<void> {
     installError.value = e instanceof Error ? e.message : 'Install failed'
   } finally {
     pasting.value = false
+  }
+}
+
+async function deleteSkill(skill: Skill): Promise<void> {
+  if (!confirm(`Delete skill "${skill.name}"? This cannot be undone.`)) return
+  try {
+    const res = await apiFetch(`/api/skills/${encodeURIComponent(skill.slug)}`, { method: 'DELETE' })
+    if (res.ok) {
+      skills.value = skills.value.filter(s => s.slug !== skill.slug)
+      installSuccess.value = `✓ Deleted: ${skill.name}`
+      setTimeout(() => { installSuccess.value = null }, 3000)
+    } else {
+      const body = await res.json().catch(() => ({})) as { error?: string }
+      installError.value = body.error ?? (res.status === 404 ? 'Skill not found' : `Delete failed (HTTP ${res.status})`)
+    }
+  } catch (e) {
+    installError.value = e instanceof Error ? e.message : 'Delete failed'
   }
 }
 
