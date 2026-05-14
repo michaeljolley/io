@@ -10,7 +10,10 @@ export const useAuthStore = defineStore('auth', () => {
   const initialized = ref(false)
   const authEnabled = ref(false)
 
-  async function init() {
+  // Deduplicates concurrent init() calls during page load / multi-navigation on refresh
+  let initPromise: Promise<void> | null = null
+
+  async function doInit() {
     const config = await getAuthConfig()
     authEnabled.value = config.authEnabled
 
@@ -25,16 +28,31 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
 
-    const { data } = await supabase.auth.getSession()
-    session.value = data.session
-    user.value = data.session?.user ?? null
-
-    supabase.auth.onAuthStateChange((_event, s) => {
-      session.value = s
-      user.value = s?.user ?? null
+    // Register onAuthStateChange BEFORE calling getSession() so we never miss
+    // the INITIAL_SESSION event that Supabase fires when it restores the
+    // localStorage session after a page refresh.  getSession() alone can
+    // transiently return null while a background token-refresh is in flight.
+    await new Promise<void>((resolve) => {
+      supabase.auth.onAuthStateChange((event, s) => {
+        session.value = s
+        user.value = s?.user ?? null
+        // INITIAL_SESSION fires exactly once at startup (session may be null
+        // when the user is not logged in — that is the correct outcome too)
+        if (event === 'INITIAL_SESSION') {
+          resolve()
+        }
+      })
     })
 
     initialized.value = true
+  }
+
+  async function init() {
+    if (initialized.value) return
+    if (!initPromise) {
+      initPromise = doInit()
+    }
+    return initPromise
   }
 
   async function signIn(email: string, password: string): Promise<string | null> {
