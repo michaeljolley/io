@@ -124,7 +124,7 @@
             </div>
             <ul v-else class="space-y-2">
               <li
-                v-for="agent in agentsBySquad[squad.slug]"
+                v-for="agent in sortedAgents(agentsBySquad[squad.slug] ?? [])"
                 :key="agent.id ?? agent.character_name"
                 class="flex items-center gap-3 rounded px-3 py-2"
                 :class="agent.status === 'working' ? 'bg-blue-950 border border-blue-800' : 'bg-gray-900 border border-gray-700'"
@@ -331,6 +331,14 @@ const createError = ref<string | null>(null)
 
 const expanded = reactive<Record<string, boolean>>({})
 const agentsBySquad = reactive<Record<string, SquadAgent[]>>({})
+
+/** Returns agents sorted: lead first, then QA, then everyone else. Stable within each tier. */
+function sortedAgents(agents: SquadAgent[]): SquadAgent[] {
+  return [...agents].sort((a, b) => {
+    const rank = (ag: SquadAgent) => ag.is_lead ? 0 : ag.is_qa ? 1 : 2
+    return rank(a) - rank(b)
+  })
+}
 const agentsLoading = reactive<Record<string, boolean>>({})
 const agentsError = reactive<Record<string, string | null>>({})
 const stoppingTaskIds = ref<Set<string>>(new Set())
