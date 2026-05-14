@@ -17,6 +17,8 @@ import { delegateToAgent } from "./agents.js";
 import { nextRun } from "./cron.js";
 import { notifyBackground } from "../notify.js";
 import { startScheduleRun, completeScheduleRun, failScheduleRun } from "../store/schedule-runs.js";
+import { createInboxEntry } from "../store/inbox.js";
+import { shouldRouteToInbox } from "./tools.js";
 
 const TICK_MS = 30_000;
 
@@ -88,20 +90,26 @@ async function fireSchedule(schedule: SquadSchedule): Promise<void> {
   });
   try {
     await delegateToAgent(squad.slug, prompt, (_taskId, result) => {
-      void notifyBackground({
-        source: {
-          type: "squad-schedule",
-          scheduleId: schedule.id,
-          squadSlug: squad.slug,
-          scheduleName: schedule.name,
-        },
-        title: `${squad.name}: ${schedule.name}`,
-        text: result,
-      }).then((notifyResult) => {
-        completeScheduleRun(run.id, notifyResult.id);
-      }).catch((err) => {
-        failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
-      });
+      if (shouldRouteToInbox(prompt)) {
+        createInboxEntry(`[${squad.slug}] ${schedule.name}`, result);
+        console.error(`[io] Schedule ${schedule.id} result routed to inbox`);
+        completeScheduleRun(run.id, 0);
+      } else {
+        void notifyBackground({
+          source: {
+            type: "squad-schedule",
+            scheduleId: schedule.id,
+            squadSlug: squad.slug,
+            scheduleName: schedule.name,
+          },
+          title: `${squad.name}: ${schedule.name}`,
+          text: result,
+        }).then((notifyResult) => {
+          completeScheduleRun(run.id, notifyResult.id);
+        }).catch((err) => {
+          failScheduleRun(run.id, err instanceof Error ? err.message : String(err));
+        });
+      }
     });
   } catch (err) {
     failScheduleRun(run.id, err instanceof Error ? err.message : String(err));

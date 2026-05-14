@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSy
 import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
 import { UNIVERSES } from "./universes.js";
+import { createInboxEntry } from "../store/inbox.js";
 import { validateCron, nextRun } from "./cron.js";
 import {
   createIoSchedule,
@@ -352,6 +353,19 @@ export interface ToolDeps {
   checkForUpdate: () => Promise<{ updateAvailable: boolean; current: string; latest: string }>;
 }
 
+
+export function shouldRouteToInbox(taskDescription: string): boolean {
+  const lower = taskDescription.toLowerCase();
+  return (
+    lower.includes("io inbox") ||
+    lower.includes("io-inbox") ||
+    lower.includes("send to inbox") ||
+    lower.includes("to the inbox") ||
+    lower.includes("result: \"io-inbox\"") ||
+    lower.includes("not github or telegram") ||
+    lower.includes("not telegram")
+  );
+}
 export function createTools(deps: ToolDeps) {
   const wikiRead = defineTool("wiki_read", {
     description: "Read a page from IO's knowledge base wiki. Path is relative to the wiki root (e.g., 'pages/preferences/editor.md').",
@@ -514,6 +528,10 @@ export function createTools(deps: ToolDeps) {
       try {
         const taskId = await deps.delegateToAgent(slug, task, (id, result) => {
           console.error(`[io] Agent task ${id} completed for squad ${slug}`);
+          if (shouldRouteToInbox(task)) {
+            createInboxEntry(`[${slug}] Task result`, result);
+            console.error(`[io] Task ${id} result routed to inbox`);
+          }
         }, agent);
         const agentLabel = agent ? `agent "${agent}" in squad "${slug}"` : `squad "${slug}"`;
         const warningPrefix = coverage.warning
