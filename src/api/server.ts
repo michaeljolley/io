@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
 import express, { type Request, type Response } from "express";
 import { config } from "../config.js";
-import { listSkills, installSkill, installSkillFromContent } from "../copilot/skills.js";
+import { listSkills, installSkill, installSkillFromContent, removeSkill } from "../copilot/skills.js";
 import { listSquads, createSquad, listSquadAgents } from "../store/squads.js";
 import { getAgentInfo, cancelAgentTask, getTaskEvents, subscribeToTaskEvents } from "../copilot/agents.js";
 import { summarize, summarizeEvent } from "../copilot/event-summary.js";
@@ -181,6 +181,26 @@ export async function startApiServer(): Promise<void> {
       res.status(201).json({ skill: skills[0], skills });
     } catch (e) {
       console.error("Error installing skill:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  // Delete an installed skill by slug (issue #140)
+  api.delete("/skills/:slug", (req: Request, res: Response) => {
+    const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+    if (!slug || slug.includes("..") || slug.includes("/") || slug.includes("\\")) {
+      res.status(400).json({ error: "Invalid skill slug" });
+      return;
+    }
+    try {
+      const deleted = removeSkill(slug);
+      if (!deleted) {
+        res.status(404).json({ error: "Skill not found" });
+        return;
+      }
+      res.json({ deleted: true });
+    } catch (e) {
+      console.error("Error deleting skill:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
