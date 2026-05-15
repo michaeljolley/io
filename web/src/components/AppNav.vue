@@ -24,7 +24,7 @@
         class="p-1.5 rounded-md text-txt-muted hover:text-txt-secondary hover:bg-surface-3/50 transition-all duration-150 shrink-0 ml-1"
         title="Collapse sidebar"
       >
-        <FluentIcon paths="<path d="M12.35 15.85a.5.5 0 0 1-.7 0L6.16 10.4a.55.55 0 0 1 0-.78l5.49-5.46a.5.5 0 1 1 .7.7L7.2 10l5.16 5.15c.2.2.2.5 0 .7Z"/>" :size="14" />
+        <FluentIcon :paths='`<path d="M12.35 15.85a.5.5 0 0 1-.7 0L6.16 10.4a.55.55 0 0 1 0-.78l5.49-5.46a.5.5 0 1 1 .7.7L7.2 10l5.16 5.15c.2.2.2.5 0 .7Z"/>`' :size="14" />
       </button>
       <button
         v-else
@@ -32,7 +32,7 @@
         class="absolute -right-3 top-4 w-6 h-6 rounded-full bg-surface-2 border border-edge-bright shadow-card flex items-center justify-center text-txt-muted hover:text-accent hover:border-accent/30 transition-all duration-150 z-20"
         title="Expand sidebar"
       >
-        <FluentIcon paths="<path d="M7.65 4.15c.2-.2.5-.2.7 0l5.49 5.46c.21.22.21.57 0 .78l-5.49 5.46a.5.5 0 0 1-.7-.7L12.8 10 7.65 4.85a.5.5 0 0 1 0-.7Z"/>" :size="12" />
+        <FluentIcon :paths='`<path d="M7.65 4.15c.2-.2.5-.2.7 0l5.49 5.46c.21.22.21.57 0 .78l-5.49 5.46a.5.5 0 0 1-.7-.7L12.8 10 7.65 4.85a.5.5 0 0 1 0-.7Z"/>`' :size="12" />
       </button>
     </div>
 
@@ -144,7 +144,7 @@
               class="p-1.5 rounded-md text-txt-muted hover:text-red-400 hover:bg-surface-3/50 transition-all duration-150"
               title="Sign out"
             >
-              <FluentIcon paths="<path d="M9.16 16.87a.5.5 0 1 0 .67-.74L3.67 10.5H17.5a.5.5 0 0 0 0-1H3.67l6.16-5.63a.5.5 0 0 0-.67-.74L2.24 9.44a.75.75 0 0 0 0 1.11l6.92 6.32Z"/>" :size="14" />
+              <FluentIcon :paths='`<path d="M9.16 16.87a.5.5 0 1 0 .67-.74L3.67 10.5H17.5a.5.5 0 0 0 0-1H3.67l6.16-5.63a.5.5 0 0 0-.67-.74L2.24 9.44a.75.75 0 0 0 0 1.11l6.92 6.32Z"/>`' :size="14" />
             </button>
           </div>
         </template>

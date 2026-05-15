@@ -93,7 +93,7 @@
             >
               <div class="flex justify-between items-start mb-2">
                 <div class="flex-1 flex items-center gap-2.5">
-                  <FluentIcon paths="<path d="M7.65 4.15c.2-.2.5-.2.7 0l5.49 5.46c.21.22.21.57 0 .78l-5.49 5.46a.5.5 0 0 1-.7-.7L12.8 10 7.65 4.85a.5.5 0 0 1 0-.7Z"/>" :size="14" class="text-txt-muted transition-transform duration-200 shrink-0" :class="isExpanded(squad.slug) ? 'rotate-90' : ''"/>
+                  <FluentIcon :paths='`<path d="M7.65 4.15c.2-.2.5-.2.7 0l5.49 5.46c.21.22.21.57 0 .78l-5.49 5.46a.5.5 0 0 1-.7-.7L12.8 10 7.65 4.85a.5.5 0 0 1 0-.7Z"/>`' :size="14" class="text-txt-muted transition-transform duration-200 shrink-0" :class="isExpanded(squad.slug) ? 'rotate-90' : ''"/>
                   <div class="min-w-0">
                     <h3 class="font-semibold text-txt-primary text-sm">{{ squad.name }}</h3>
                     <p class="text-[11px] text-txt-muted font-mono">{{ squad.slug }}</p>

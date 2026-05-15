@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col md:flex-row h-full overflow-hidden bg-surface-0">
     <!-- ── Page list sidebar ── -->
-    <div :class="["bg-surface-1/70 backdrop-blur-sm border-edge flex flex-col", selectedPage ? "hidden md:flex md:w-72 md:shrink-0 md:border-r" : "flex w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r md:h-full max-h-64 md:max-h-none"]">
+    <div :class='["bg-surface-1/70 backdrop-blur-sm border-edge flex flex-col", selectedPage ? "hidden md:flex md:w-72 md:shrink-0 md:border-r" : "flex w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r md:h-full max-h-64 md:max-h-none"]'>
       <div class="p-3.5 shrink-0">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-sm font-semibold text-txt-primary tracking-tight flex items-center gap-1.5">
@@ -53,14 +53,14 @@
     </div>
 
     <!-- ── Content area ── -->
-    <div :class="["flex-1 min-w-0 flex flex-col overflow-hidden", !selectedPage ? "hidden md:flex" : "flex"]">
+    <div :class='["flex-1 min-w-0 flex flex-col overflow-hidden", !selectedPage ? "hidden md:flex" : "flex"]'>
       <!-- Mobile: back to list button -->
       <div v-if="selectedPage" class="md:hidden flex items-center gap-2 px-3 py-2 border-b border-edge bg-surface-1/60 shrink-0">
         <button
           @click="selectedPage = null"
           class="flex items-center gap-1.5 text-xs text-txt-muted hover:text-accent transition-colors py-1"
         >
-          <FluentIcon paths="<path d=\"M12.35 15.85a.5.5 0 0 1-.7 0L6.16 10.4a.55.55 0 0 1 0-.78l5.49-5.46a.5.5 0 1 1 .7.7L7.2 10l5.16 5.15c.2.2.2.5 0 .7Z\"/>" :size="14" />
+          <FluentIcon :paths='`<path d="M12.35 15.85a.5.5 0 0 1-.7 0L6.16 10.4a.55.55 0 0 1 0-.78l5.49-5.46a.5.5 0 1 1 .7.7L7.2 10l5.16 5.15c.2.2.2.5 0 .7Z"/>`' :size="14" />
           All pages
         </button>
         <span class="text-txt-muted/30">·</span>
