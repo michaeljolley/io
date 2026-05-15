@@ -80,3 +80,33 @@ a {
     @apply bg-surface-2/80 backdrop-blur-sm border border-edge;
   }
 }
+
+/* ── Background texture ────────────────────────── */
+
+/* Very subtle dot-grid — reinforces depth without competing with content */
+body {
+  background-image: radial-gradient(
+    circle,
+    rgba(30, 45, 74, 0.25) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* ── Gradient utilities ────────────────────────── */
+
+@layer utilities {
+  /* Gradient top border line for section headers */
+  .gradient-border-t {
+    border-top: 1px solid transparent;
+    background-image: linear-gradient(#0c1220, #0c1220),
+      linear-gradient(90deg, transparent 0%, #1e2d4a 20%, #2a3f65 50%, #1e2d4a 80%, transparent 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Subtle inner glow on cards — gives depth to surface-2 containers */
+  .glow-inner {
+    box-shadow: inset 0 1px 0 rgba(34, 211, 238, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+}

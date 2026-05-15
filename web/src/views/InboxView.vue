@@ -34,7 +34,7 @@
       <li
         v-for="entry in entries"
         :key="entry.id"
-        class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in"
+        class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in glow-inner"
       >
         <!-- Card header (always visible) -->
         <div

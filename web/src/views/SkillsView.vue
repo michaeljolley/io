@@ -3,7 +3,7 @@
 
     <!-- ═══ Skill detail panel ═══ -->
     <div v-if="selectedSkill" class="flex flex-col h-full overflow-hidden animate-fade-in">
-      <div class="flex items-center gap-3 px-6 py-3.5 border-b border-edge shrink-0 bg-surface-1/60 backdrop-blur-sm">
+      <div class="flex items-center gap-3 px-6 py-3.5 border-b border-edge/70 shrink-0 backdrop-blur-sm" style="background: linear-gradient(180deg, rgba(19,27,46,0.9) 0%, rgba(12,18,32,0.85) 100%)">
         <button
           @click="closeDetail"
           class="text-txt-muted hover:text-accent transition-colors flex items-center gap-1.5 text-sm group"

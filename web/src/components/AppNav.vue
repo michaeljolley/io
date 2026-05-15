@@ -1,7 +1,7 @@
 <template>
   <nav
     v-if="route.name !== 'login'"
-    class="relative z-10 flex flex-col shrink-0 nav-sidebar border-r border-edge bg-surface-1/70 backdrop-blur-md"
+    class="relative z-10 flex flex-col shrink-0 nav-sidebar border-r border-edge backdrop-blur-md" style="background: linear-gradient(180deg, rgba(10,17,32,0.85) 0%, rgba(12,18,32,0.78) 50%, rgba(8,13,25,0.88) 100%)"
     :class="collapsed ? 'nav-collapsed' : 'nav-expanded'"
   >
     <!-- ── Brand ── -->
@@ -37,7 +37,7 @@
     </div>
 
     <!-- ── Divider ── -->
-    <div class="mx-3 h-px bg-gradient-to-r from-transparent via-edge to-transparent"></div>
+    <div class="mx-3 h-px bg-gradient-to-r from-transparent via-accent/[0.12] to-transparent"></div>
 
     <!-- ── Navigation ── -->
     <div class="flex-1 py-3 overflow-y-auto overflow-x-hidden">
@@ -88,7 +88,7 @@
 
     <!-- ── Footer ── -->
     <div class="shrink-0">
-      <div class="mx-3 h-px bg-gradient-to-r from-transparent via-edge to-transparent"></div>
+      <div class="mx-3 h-px bg-gradient-to-r from-transparent via-accent/[0.08] to-transparent"></div>
       <div class="p-2.5">
         <template v-if="!collapsed">
           <template v-if="auth.authEnabled && auth.user">

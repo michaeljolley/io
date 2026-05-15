@@ -36,7 +36,7 @@
           <div
             v-if="msg.role === 'user'"
             class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm whitespace-pre-wrap
-                   bg-accent/[0.12] text-txt-primary border border-accent/20"
+                   bg-gradient-to-br from-accent/[0.14] to-accent/[0.08] text-txt-primary border border-accent/20 shadow-glow-sm"
           >{{ msg.content }}</div>
 
           <!-- Assistant message -->
@@ -84,7 +84,7 @@
     </Transition>
 
     <!-- Input bar -->
-    <div class="shrink-0 border-t border-edge/50 bg-surface-1/60 backdrop-blur-md p-3 sm:p-4">
+    <div class="shrink-0 border-t border-edge/50 backdrop-blur-md p-3 sm:p-4" style="background: linear-gradient(180deg, rgba(12,18,32,0.75) 0%, rgba(8,13,22,0.88) 100%)">
       <form @submit.prevent="sendMessage" class="max-w-3xl mx-auto flex gap-2 items-end">
         <div class="flex-1 relative group">
           <textarea
