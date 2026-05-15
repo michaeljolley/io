@@ -14,17 +14,11 @@ import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
 import { getScheduleRuns } from "../store/schedule-runs.js";
-import { createInboxEntry, listInboxEntries, deleteInboxEntry, countInboxEntries } from "../store/inbox.js";
+import { createFeedEntry, listFeedEntries, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, type FeedEntryType } from "../store/feed.js";
 import { listPages, readPage } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
-import {
-  listRecentNotifications,
-  listUnreadNotifications,
-  countUnreadNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-} from "../store/notifications.js";
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = path.resolve(__dirname, "../../web-dist");
@@ -59,7 +53,7 @@ export interface BroadcastNotificationPayload {
 }
 
 export function broadcastNotificationToSSE(payload: BroadcastNotificationPayload): void {
-  const data = JSON.stringify({ type: "notification", ...payload });
+  const data = JSON.stringify({ type: "feed", ...payload });
   for (const res of sseConnections) {
     res.write(`data: ${data}\n\n`);
   }
@@ -133,23 +127,51 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Inbox read endpoints
-  api.get("/inbox/count", (_req: Request, res: Response) => {
+  // Feed endpoints — unified deliverables + notifications feed
+  api.get("/feed/count", (req: Request, res: Response) => {
     try {
-      const count = countInboxEntries();
+      const rawType = req.query.type;
+      const type = rawType === "deliverable" || rawType === "notification"
+        ? (rawType as FeedEntryType)
+        : undefined;
+      const count = countUnreadFeedEntries(type);
       res.json({ count });
     } catch (e) {
-      console.error("Error counting inbox entries:", e);
+      console.error("Error counting feed entries:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
 
-  api.get("/inbox", (_req: Request, res: Response) => {
+  api.get("/feed", (req: Request, res: Response) => {
     try {
-      const entries = listInboxEntries();
-      res.json({ entries });
+      const rawType = req.query.type;
+      const type = rawType === "deliverable" || rawType === "notification"
+        ? (rawType as FeedEntryType)
+        : undefined;
+      const unreadOnly = req.query.unread === "true";
+      const rawLimit = req.query.limit;
+      const parsed = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : NaN;
+      const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 200) : 50;
+      const rows = listFeedEntries({ type, unreadOnly, limit });
+      const unreadCount = countUnreadFeedEntries(type);
+      const entries = rows.map(({ id, type: entryType, title, body, created_at, read_at, source_type, source_ref }) => {
+        let source: { type: string; [key: string]: unknown } | null = null;
+        if (source_type) {
+          source = { type: source_type };
+          if (source_ref) {
+            try {
+              const parsedRef = JSON.parse(source_ref) as Record<string, unknown>;
+              source = { type: source_type, ...parsedRef };
+            } catch {
+              // source_ref is not valid JSON — fall back to type-only
+            }
+          }
+        }
+        return { id, type: entryType, title, body, created_at, read_at, source };
+      });
+      res.json({ entries, unreadCount });
     } catch (e) {
-      console.error("Error listing inbox entries:", e);
+      console.error("Error listing feed entries:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
@@ -157,38 +179,6 @@ export async function startApiServer(): Promise<void> {
   // Status endpoint
   api.get("/status", (_req: Request, res: Response) => {
     res.json({ version: IO_VERSION, uptime: process.uptime() });
-  });
-
-  // Notifications endpoint
-  api.get("/notifications", (_req: Request, res: Response) => {
-    try {
-      const unreadOnly = _req.query.unread === "true";
-      const rows = unreadOnly
-        ? listUnreadNotifications()
-        : (() => {
-            const rawLimit = _req.query.limit;
-            const parsed = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : NaN;
-            const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 200) : 50;
-            return listRecentNotifications(limit);
-          })();
-      const unreadCount = countUnreadNotifications();
-      const notifications = rows.map(({ id, title, text, created_at, read_at, source_type, source_ref }) => {
-        let source: { type: string; [key: string]: unknown } = { type: source_type };
-        if (source_ref) {
-          try {
-            const parsed = JSON.parse(source_ref) as Record<string, unknown>;
-            source = { type: source_type, ...parsed };
-          } catch {
-            // source_ref is not valid JSON — fall back to type-only
-          }
-        }
-        return { id, title, text, created_at, read_at, source };
-      });
-      res.json({ notifications, unreadCount });
-    } catch (e) {
-      console.error("Error listing notifications:", e);
-      res.status(500).json({ error: "Failed to list notifications" });
-    }
   });
 
   // SSE events endpoint
@@ -278,9 +268,54 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Inbox write endpoints — auth required
-  api.post("/inbox", (req: Request, res: Response) => {
-    const { title, body } = req.body as { title?: unknown; body?: unknown };
+  // Feed write endpoints
+  // Note: POST /feed/read-all must be before POST /feed/:id/read to avoid route shadowing
+  api.post("/feed/read-all", (req: Request, res: Response) => {
+    try {
+      const rawType = req.query.type;
+      const type = rawType === "deliverable" || rawType === "notification"
+        ? (rawType as FeedEntryType)
+        : undefined;
+      const marked = markAllFeedEntriesRead(type);
+      res.json({ marked });
+    } catch (e) {
+      console.error("Error marking feed entries read:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/feed/:id/read", (req: Request, res: Response) => {
+    const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = Number.parseInt(raw, 10);
+    if (Number.isNaN(id)) {
+      res.status(400).json({ error: "Invalid id" });
+      return;
+    }
+    try {
+      const found = markFeedEntryRead(id);
+      if (!found) {
+        res.status(404).json({ error: "Feed entry not found" });
+        return;
+      }
+      res.json({ ok: true });
+    } catch (e) {
+      console.error("Error marking feed entry read:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/feed", (req: Request, res: Response) => {
+    const { type, title, body, source_type, source_ref } = req.body as {
+      type?: unknown;
+      title?: unknown;
+      body?: unknown;
+      source_type?: unknown;
+      source_ref?: unknown;
+    };
+    if (type !== "deliverable" && type !== "notification") {
+      res.status(400).json({ error: "type must be 'deliverable' or 'notification'" });
+      return;
+    }
     if (!title || typeof title !== "string" || title.trim() === "") {
       res.status(400).json({ error: "Missing or empty required field: title" });
       return;
@@ -290,15 +325,21 @@ export async function startApiServer(): Promise<void> {
       return;
     }
     try {
-      const entry = createInboxEntry(title.trim(), body.trim());
+      const entry = createFeedEntry({
+        type: type as FeedEntryType,
+        title: title.trim(),
+        body: body.trim(),
+        source_type: typeof source_type === "string" ? source_type : undefined,
+        source_ref: typeof source_ref === "string" ? source_ref : undefined,
+      });
       res.status(201).json({ entry });
     } catch (e) {
-      console.error("Error creating inbox entry:", e);
+      console.error("Error creating feed entry:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
 
-  api.delete("/inbox/:id", (req: Request, res: Response) => {
+  api.delete("/feed/:id", (req: Request, res: Response) => {
     const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = Number.parseInt(raw, 10);
     if (Number.isNaN(id)) {
@@ -306,14 +347,14 @@ export async function startApiServer(): Promise<void> {
       return;
     }
     try {
-      const deleted = deleteInboxEntry(id);
+      const deleted = deleteFeedEntry(id);
       if (!deleted) {
-        res.status(404).json({ error: "Inbox entry not found" });
+        res.status(404).json({ error: "Feed entry not found" });
         return;
       }
       res.json({ deleted: true });
     } catch (e) {
-      console.error("Error deleting inbox entry:", e);
+      console.error("Error deleting feed entry:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
@@ -647,35 +688,7 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  api.post("/notifications/read-all", (_req: Request, res: Response) => {
-    try {
-      const marked = markAllNotificationsRead();
-      res.json({ marked });
-    } catch (e) {
-      console.error("Error marking all notifications read:", e);
-      res.status(500).json({ error: "Failed to mark notifications read" });
-    }
-  });
 
-  api.post("/notifications/:id/read", (req: Request, res: Response) => {
-    try {
-      const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const id = Number.parseInt(rawId, 10);
-      if (Number.isNaN(id)) {
-        res.status(400).json({ error: "invalid id" });
-        return;
-      }
-      const found = markNotificationRead(id);
-      if (!found) {
-        res.status(404).json({ error: "notification not found" });
-        return;
-      }
-      res.json({ ok: true });
-    } catch (e) {
-      console.error("Error marking notification read:", e);
-      res.status(500).json({ error: "Failed to mark notification read" });
-    }
-  });
 
   // Chat endpoints
   api.post("/message", async (req: Request, res: Response) => {
