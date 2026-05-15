@@ -7,7 +7,7 @@ import { getSupabase } from './supabase'
  */
 export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const auth = useAuthStore()
-  const token = auth.getAccessToken()
+  const token = await auth.getAccessToken()
 
   const headers = new Headers(init?.headers)
   if (token) {
@@ -23,16 +23,19 @@ export async function apiFetch(input: string, init?: RequestInit): Promise<Respo
   if (res.status === 401 && auth.authEnabled) {
     const supabase = await getSupabase()
     if (supabase) {
-      const { data } = await supabase.auth.refreshSession()
+      const { data, error } = await supabase.auth.refreshSession()
       if (data.session) {
         // Retry the original request with the fresh token
         const retryHeaders = new Headers(init?.headers)
         retryHeaders.set('Authorization', `Bearer ${data.session.access_token}`)
         return fetch(input, { ...init, headers: retryHeaders })
       }
+      // Only sign out when refresh explicitly returns no session with no error.
+      // If there was a network error, don't nuke the session — it may recover.
+      if (!error) {
+        await auth.signOut()
+      }
     }
-    // Refresh failed — session is truly gone, sign out
-    await auth.signOut()
   }
 
   return res
@@ -42,9 +45,9 @@ export async function apiFetch(input: string, init?: RequestInit): Promise<Respo
  * Build an EventSource URL with the access token as a query param.
  * The server can read `req.query.token` for SSE endpoints.
  */
-export function authenticatedUrl(path: string): string {
+export async function authenticatedUrl(path: string): Promise<string> {
   const auth = useAuthStore()
-  const token = auth.getAccessToken()
+  const token = await auth.getAccessToken()
   if (!token) return path
   const sep = path.includes('?') ? '&' : '?'
   return `${path}${sep}token=${encodeURIComponent(token)}`

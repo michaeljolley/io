@@ -252,11 +252,11 @@ onMounted(async () => {
   connectSSE()
 })
 
-function connectSSE(retries = 0) {
+async function connectSSE(retries = 0) {
   notificationSource?.close()
   notificationSource = null
 
-  const es = new EventSource(authenticatedUrl('/api/events'))
+  const es = new EventSource(await authenticatedUrl('/api/events'))
   notificationSource = es
 
   es.onmessage = (e) => {

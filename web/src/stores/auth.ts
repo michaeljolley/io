@@ -82,7 +82,16 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = null
   }
 
-  function getAccessToken(): string | null {
+  async function getAccessToken(): Promise<string | null> {
+    if (!authEnabled.value) return null
+    const supabase = await getSupabase()
+    if (!supabase) return session.value?.access_token ?? null
+    const { data } = await supabase.auth.getSession()
+    if (data.session) {
+      session.value = data.session
+      user.value = data.session.user
+      return data.session.access_token
+    }
     return session.value?.access_token ?? null
   }
 

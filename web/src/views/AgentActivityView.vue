@@ -574,11 +574,11 @@ const scheduleActivityRefresh = (taskId: string) => {
   }, 250)
 }
 
-const startActivityStream = (taskId: string) => {
+const startActivityStream = async (taskId: string) => {
   stopActivityStream()
   loadActivity(taskId, { initial: true })
   try {
-    activityEventSource = new EventSource(authenticatedUrl(`/api/tasks/${encodeURIComponent(taskId)}/events`))
+    activityEventSource = new EventSource(await authenticatedUrl(`/api/tasks/${encodeURIComponent(taskId)}/events`))
     activityEventSource.onmessage = () => {
       scheduleActivityRefresh(taskId)
     }

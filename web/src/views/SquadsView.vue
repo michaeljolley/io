@@ -446,7 +446,7 @@ const scrollPreviewToBottom = () => {
   })
 }
 
-const openPreview = (agent: SquadAgent) => {
+const openPreview = async (agent: SquadAgent) => {
   if (!agent.currentTaskId) return
   closePreview()
   previewAgent.value = agent
@@ -455,7 +455,7 @@ const openPreview = (agent: SquadAgent) => {
   previewConnected.value = false
   previewSummaryMode.value = true
 
-  const url = authenticatedUrl(`/api/tasks/${encodeURIComponent(agent.currentTaskId)}/events`)
+  const url = await authenticatedUrl(`/api/tasks/${encodeURIComponent(agent.currentTaskId)}/events`)
   const es = new EventSource(url)
   previewSource = es
 

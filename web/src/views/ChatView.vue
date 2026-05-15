@@ -238,7 +238,7 @@ async function sendMessage() {
 
   scrollToBottom()
 
-  const evtSource = new EventSource(authenticatedUrl('/api/events'))
+  const evtSource = new EventSource(await authenticatedUrl('/api/events'))
   evtSource.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data) as { type: 'delta' | 'done'; text: string }
