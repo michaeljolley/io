@@ -1,18 +1,40 @@
 <template>
-  <div class="flex flex-col h-full p-3 sm:p-6">
+  <div class="relative flex flex-col h-full p-3 sm:p-6">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-start mb-4">
       <div>
         <h2 class="text-xl font-semibold text-txt-primary tracking-tight">Feed</h2>
         <p class="text-xs text-txt-muted mt-0.5">Messages, results &amp; notifications</p>
       </div>
-      <button
-        v-if="entries.length > 0"
-        @click="markAllRead"
-        class="text-xs text-accent hover:text-accent-glow transition-colors font-medium"
-      >
-        Mark all read
-      </button>
+      <div class="flex items-center gap-2 flex-wrap justify-end">
+        <!-- Select all / Deselect all (only in select mode) -->
+        <button
+          v-if="selectMode && filtered.length > 0"
+          @click="toggleSelectAll"
+          class="text-xs text-txt-secondary hover:text-txt-primary transition-colors font-medium"
+        >
+          {{ allSelected ? 'Deselect all' : 'Select all' }}
+        </button>
+        <!-- Mark all read (hidden in select mode) -->
+        <button
+          v-if="!selectMode && entries.length > 0"
+          @click="markAllRead"
+          class="text-xs text-accent hover:text-accent-glow transition-colors font-medium"
+        >
+          Mark all read
+        </button>
+        <!-- Select / Cancel toggle -->
+        <button
+          v-if="entries.length > 0"
+          @click="toggleSelectMode"
+          class="text-xs px-2.5 py-1 rounded-lg border transition-all duration-150 font-medium"
+          :class="selectMode
+            ? 'text-accent border-accent/30 bg-accent/10 hover:bg-accent/20'
+            : 'text-txt-muted border-edge hover:text-txt-secondary hover:border-edge-bright hover:bg-surface-3/40'"
+        >
+          {{ selectMode ? 'Cancel' : 'Select' }}
+        </button>
+      </div>
     </div>
 
     <!-- Filter tabs -->
@@ -58,18 +80,43 @@
     </div>
 
     <!-- Entry list -->
-    <ul v-else class="space-y-2 overflow-y-auto flex-1 pr-1">
+    <ul v-else class="space-y-2 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
       <li
         v-for="entry in filtered"
         :key="entry.id"
         class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in"
-        :class="entry.read_at ? '' : 'glow-inner'"
+        :class="[
+          entry.read_at ? '' : 'glow-inner',
+          selectMode && selected.has(entry.id) ? 'ring-1 ring-accent/40 bg-accent/5 border-accent/30' : ''
+        ]"
       >
         <!-- Card header -->
         <div
-          class="flex items-start gap-3 p-4 cursor-pointer"
-          @click="toggleExpand(entry.id)"
+          class="flex items-start gap-3 p-4"
+          :class="selectMode ? 'cursor-pointer' : 'cursor-pointer'"
+          @click="selectMode ? toggleSelect(entry.id) : toggleExpand(entry.id)"
         >
+          <!-- Selection circle (select mode only) -->
+          <div
+            v-if="selectMode"
+            class="mt-0.5 shrink-0"
+            @click.stop="toggleSelect(entry.id)"
+          >
+            <div
+              class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
+              :class="selected.has(entry.id)
+                ? 'border-accent bg-accent shadow-glow-sm'
+                : 'border-edge hover:border-accent/60'"
+            >
+              <FluentIcon
+                v-if="selected.has(entry.id)"
+                :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`'
+                :size="11"
+                class="text-surface-0"
+              />
+            </div>
+          </div>
+
           <!-- Type icon -->
           <div class="mt-0.5 shrink-0">
             <FluentIcon
@@ -109,8 +156,11 @@
             >{{ bodyPreview(entry.body) }}</p>
           </div>
 
-          <!-- Action buttons -->
-          <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <!-- Per-item action buttons (hidden in select mode) -->
+          <div
+            v-if="!selectMode"
+            class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          >
             <!-- Mark read -->
             <button
               v-if="!entry.read_at"
@@ -132,8 +182,8 @@
           </div>
         </div>
 
-        <!-- Expanded markdown body -->
-        <div v-if="expanded.has(entry.id)" class="px-4 pb-4">
+        <!-- Expanded markdown body (only outside select mode) -->
+        <div v-if="!selectMode && expanded.has(entry.id)" class="px-4 pb-4">
           <div
             class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed"
             v-html="renderMarkdown(entry.body)"
@@ -141,6 +191,41 @@
         </div>
       </li>
     </ul>
+
+    <!-- Bulk action bar -->
+    <Transition
+      enter-active-class="transition-all duration-200 ease-out"
+      enter-from-class="opacity-0 translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-4"
+    >
+      <div
+        v-if="selectMode && selected.size > 0"
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-surface-3 border border-edge-bright shadow-card backdrop-blur-sm z-20"
+      >
+        <span class="text-xs font-semibold text-txt-secondary mr-1 whitespace-nowrap">
+          {{ selected.size }} selected
+        </span>
+        <button
+          @click="bulkMarkRead"
+          :disabled="bulkWorking"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 disabled:opacity-40 transition-all duration-150"
+        >
+          <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
+          Mark read
+        </button>
+        <button
+          @click="bulkDelete"
+          :disabled="bulkWorking"
+          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-40 transition-all duration-150"
+        >
+          <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
+          Delete
+        </button>
+      </div>
+    </Transition>
 
     <!-- Error banner -->
     <div
@@ -186,10 +271,19 @@ const expanded = ref(new Set<number>())
 const deleting = ref(new Set<number>())
 const errorMsg = ref<string | null>(null)
 
+// Bulk select state
+const selectMode = ref(false)
+const selected = ref(new Set<number>())
+const bulkWorking = ref(false)
+
 const filtered = computed(() => {
   if (activeTab.value === 'all') return entries.value
   return entries.value.filter(e => e.type === activeTab.value)
 })
+
+const allSelected = computed(() =>
+  filtered.value.length > 0 && filtered.value.every(e => selected.value.has(e.id))
+)
 
 function tabCount(type: TabValue): number {
   return entries.value.filter(e => e.type === type).length
@@ -211,6 +305,26 @@ function toggleExpand(id: number) {
   if (next.has(id)) next.delete(id)
   else next.add(id)
   expanded.value = next
+}
+
+function toggleSelectMode() {
+  selectMode.value = !selectMode.value
+  if (!selectMode.value) selected.value = new Set()
+}
+
+function toggleSelect(id: number) {
+  const next = new Set(selected.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selected.value = next
+}
+
+function toggleSelectAll() {
+  if (allSelected.value) {
+    selected.value = new Set()
+  } else {
+    selected.value = new Set(filtered.value.map(e => e.id))
+  }
 }
 
 async function loadEntries() {
@@ -268,6 +382,59 @@ async function deleteEntry(id: number) {
     const nextDel = new Set(deleting.value)
     nextDel.delete(id)
     deleting.value = nextDel
+  }
+}
+
+async function bulkMarkRead() {
+  const ids = Array.from(selected.value)
+  if (ids.length === 0) return
+  bulkWorking.value = true
+  try {
+    const res = await apiFetch('/api/feed/batch-read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    if (res.ok) {
+      const now = new Date().toISOString()
+      for (const e of entries.value) {
+        if (ids.includes(e.id)) e.read_at = e.read_at ?? now
+      }
+      selected.value = new Set()
+    } else {
+      errorMsg.value = `Bulk mark-read failed (HTTP ${res.status})`
+    }
+  } catch (e) {
+    errorMsg.value = e instanceof Error ? e.message : 'Bulk mark-read failed'
+  } finally {
+    bulkWorking.value = false
+  }
+}
+
+async function bulkDelete() {
+  const ids = Array.from(selected.value)
+  if (ids.length === 0) return
+  if (!window.confirm(`Delete ${ids.length} item${ids.length === 1 ? '' : 's'}?`)) return
+  bulkWorking.value = true
+  try {
+    const res = await apiFetch('/api/feed/batch-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    if (res.ok) {
+      entries.value = entries.value.filter(e => !ids.includes(e.id))
+      const nextExpanded = new Set(expanded.value)
+      ids.forEach(id => nextExpanded.delete(id))
+      expanded.value = nextExpanded
+      selected.value = new Set()
+    } else {
+      errorMsg.value = `Bulk delete failed (HTTP ${res.status})`
+    }
+  } catch (e) {
+    errorMsg.value = e instanceof Error ? e.message : 'Bulk delete failed'
+  } finally {
+    bulkWorking.value = false
   }
 }
 
