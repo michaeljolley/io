@@ -1,7 +1,7 @@
 <template>
   <nav
     v-if="route.name !== 'login'"
-    class="relative z-10 flex flex-col shrink-0 nav-sidebar border-r border-edge backdrop-blur-md" style="background: linear-gradient(180deg, rgba(10,17,32,0.85) 0%, rgba(12,18,32,0.78) 50%, rgba(8,13,25,0.88) 100%)"
+    class="relative z-10 hidden md:flex flex-col shrink-0 nav-sidebar border-r border-edge backdrop-blur-md" style="background: linear-gradient(180deg, rgba(10,17,32,0.85) 0%, rgba(12,18,32,0.78) 50%, rgba(8,13,25,0.88) 100%)"
     :class="collapsed ? 'nav-collapsed' : 'nav-expanded'"
   >
     <!-- ── Brand ── -->
@@ -115,7 +115,41 @@
                 Sign out
               </button>
             </div>
-          </template>
+          
+<!-- ── Mobile bottom navigation ── -->
+<nav
+  v-if="route.name !== 'login'"
+  class="md:hidden fixed bottom-0 inset-x-0 z-50 flex items-stretch border-t border-edge"
+  style="background: linear-gradient(180deg, rgba(8,13,22,0.93) 0%, rgba(5,8,15,0.98) 100%); backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom)"
+  aria-label="Mobile navigation"
+>
+  <RouterLink
+    v-for="item in navItems"
+    :key="item.to"
+    :to="item.to"
+    class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 transition-colors duration-150 touch-manipulation select-none"
+    :class="isActive(item.name) ? 'text-accent' : 'text-txt-muted'"
+    @click="item.name === 'notifications' ? onNotificationsClick() : item.name === 'inbox' ? onInboxClick() : undefined"
+    :aria-label="item.label"
+  >
+    <!-- Active top accent line -->
+    <span v-if="isActive(item.name)" class="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-accent rounded-b-full"></span>
+
+    <span class="relative">
+      <FluentIcon :paths="item.icon" :size="20" />
+      <span
+        v-if="item.name === 'notifications' && unreadCount > 0"
+        class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-red-500 text-white text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
+      >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      <span
+        v-if="item.name === 'inbox' && inboxCount > 0"
+        class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-accent text-surface-0 text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
+      >{{ inboxCount > 9 ? '9+' : inboxCount }}</span>
+    </span>
+    <span class="text-[9px] leading-tight font-medium truncate max-w-full px-0.5">{{ item.label }}</span>
+  </RouterLink>
+</nav>
+</template>
           <div v-else class="flex items-center gap-1.5 px-2">
             <span v-if="version" class="text-[10px] text-txt-muted font-mono">v{{ version }}</span>
             <span class="text-[10px] text-txt-muted">·</span>

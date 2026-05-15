@@ -16,7 +16,7 @@
 
     <AppNav />
 
-    <main class="flex-1 overflow-auto relative z-0">
+    <main class="flex-1 overflow-auto relative z-0 pb-16 md:pb-0">
       <!-- Subtle gradient highlight at the top edge of the content pane -->
       <div class="pointer-events-none absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-accent/[0.1] to-transparent z-10" aria-hidden="true"></div>
       <RouterView v-slot="{ Component }">

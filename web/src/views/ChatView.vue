@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full relative bg-surface-0">
     <!-- Message history -->
-    <div ref="messagesEl" class="flex-1 overflow-y-auto px-4 py-6 sm:px-6" @scroll="handleScroll">
+    <div ref="messagesEl" class="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6" @scroll="handleScroll">
 
       <!-- Empty state -->
       <div v-if="store.messages.length === 0" class="flex flex-col items-center justify-center h-full select-none animate-fade-in">

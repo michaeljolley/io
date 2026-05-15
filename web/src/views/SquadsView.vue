@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-full bg-surface-0">
-    <div class="flex-1 overflow-y-auto p-6">
+    <div class="flex-1 overflow-y-auto p-3 sm:p-6">
       <div class="max-w-4xl">
         <div class="flex justify-between items-end mb-6">
           <div>

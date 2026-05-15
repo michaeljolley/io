@@ -3,7 +3,7 @@
 
     <!-- ═══ Skill detail panel ═══ -->
     <div v-if="selectedSkill" class="flex flex-col h-full overflow-hidden animate-fade-in">
-      <div class="flex items-center gap-3 px-6 py-3.5 border-b border-edge/70 shrink-0 backdrop-blur-sm" style="background: linear-gradient(180deg, rgba(19,27,46,0.9) 0%, rgba(12,18,32,0.85) 100%)">
+      <div class="flex items-center gap-3 px-3 sm:px-6 py-3.5 border-b border-edge/70 shrink-0 backdrop-blur-sm" style="background: linear-gradient(180deg, rgba(19,27,46,0.9) 0%, rgba(12,18,32,0.85) 100%)">
         <button
           @click="closeDetail"
           class="text-txt-muted hover:text-accent transition-colors flex items-center gap-1.5 text-sm group"
@@ -60,7 +60,7 @@
     </div>
 
     <!-- ═══ Skills list ═══ -->
-    <div v-else class="flex-1 overflow-y-auto p-6">
+    <div v-else class="flex-1 overflow-y-auto p-3 sm:p-6">
       <div class="max-w-3xl">
         <div class="flex items-end justify-between mb-6">
           <div>
