@@ -198,7 +198,8 @@ export function renderMarkdown(md: string): string {
         } catch {
           highlighted = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         }
-        const langLabel = codeLang ? `<span class="text-[10px] text-txt-muted font-mono absolute top-2 right-3 select-none">${codeLang}</span>` : ''
+        const safeLang = codeLang.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        const langLabel = safeLang ? `<span class="text-[10px] text-txt-muted font-mono absolute top-2 right-3 select-none">${safeLang}</span>` : ''
         out.push(`<div class="relative my-2"><pre class="bg-surface-1 border border-edge rounded-xl p-3 overflow-x-auto"><code class="hljs font-mono text-xs">${highlighted}</code></pre>${langLabel}</div>`)
         inCode = false
         codeLang = ''
