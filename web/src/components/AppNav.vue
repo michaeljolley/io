@@ -94,7 +94,15 @@
             </div>
             <div class="flex items-center justify-between px-2">
               <span class="flex items-center gap-1.5">
-                <span v-if="version" class="text-[10px] text-txt-muted font-mono">v{{ version }}</span>
+                <button
+                  v-if="version"
+                  @click="openWhatsNew"
+                  class="group/ver flex items-center gap-1 hover:opacity-80 transition-opacity"
+                  title="What's New"
+                >
+                  <span class="text-[10px] text-txt-muted font-mono group-hover/ver:text-accent transition-colors">v{{ version }}</span>
+                  <span v-if="hasNewVersion" class="w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm animate-pulse"></span>
+                </button>
                 <span class="text-[10px] text-txt-muted">·</span>
                 <a href="https://github.com/michaeljolley/io" target="_blank" rel="noopener" class="text-[10px] text-txt-muted hover:text-accent transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
@@ -110,7 +118,15 @@
           
           </template>
           <div v-else class="flex items-center gap-1.5 px-2">
-            <span v-if="version" class="text-[10px] text-txt-muted font-mono">v{{ version }}</span>
+            <button
+              v-if="version"
+              @click="openWhatsNew"
+              class="group/ver flex items-center gap-1 hover:opacity-80 transition-opacity"
+              title="What's New"
+            >
+              <span class="text-[10px] text-txt-muted font-mono group-hover/ver:text-accent transition-colors">v{{ version }}</span>
+              <span v-if="hasNewVersion" class="w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm animate-pulse"></span>
+            </button>
             <span class="text-[10px] text-txt-muted">·</span>
             <a href="https://github.com/michaeljolley/io" target="_blank" rel="noopener" class="text-[10px] text-txt-muted hover:text-accent transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
@@ -173,6 +189,77 @@
   </RouterLink>
 </nav>
 
+
+<!-- ── What's New Modal ── -->
+<Teleport to="body">
+  <Transition
+    enter-active-class="transition-all duration-200 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition-all duration-150 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="showWhatsNew"
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      @click.self="closeWhatsNew"
+    >
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeWhatsNew"></div>
+
+      <!-- Modal -->
+      <div class="relative bg-surface-1 border border-edge rounded-2xl shadow-card w-full max-w-lg max-h-[80vh] flex flex-col z-10">
+        <!-- Header -->
+        <div class="flex items-start justify-between p-5 pb-4 border-b border-edge/50 shrink-0">
+          <div>
+            <h2 class="text-base font-semibold text-txt-primary">What's New</h2>
+            <div v-if="releases.length > 0" class="flex items-center gap-2 mt-1.5">
+              <span class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50">{{ releases[0].tag }}</span>
+              <span class="text-[10px] text-txt-muted">{{ releases[0].name }}</span>
+              <span class="text-[10px] text-txt-muted/60">{{ formatReleaseDate(releases[0].published_at) }}</span>
+            </div>
+          </div>
+          <button
+            @click="closeWhatsNew"
+            class="p-1.5 rounded-lg text-txt-muted hover:text-txt-primary hover:bg-surface-3/40 transition-all duration-150 shrink-0 ml-3 mt-0.5"
+            title="Close"
+          >
+            <FluentIcon :paths='`<path d="m4.09 4.22.06-.07a.5.5 0 0 1 .63-.06l.07.06L10 9.29l5.15-5.14a.5.5 0 0 1 .63-.06l.07.06c.18.17.2.44.06.63l-.06.07L10.71 10l5.14 5.15c.18.17.2.44.06.63l-.06.07a.5.5 0 0 1-.63.06l-.07-.06L10 10.71l-5.15 5.14a.5.5 0 0 1-.63.06l-.07-.06a.5.5 0 0 1-.06-.63l.06-.07L9.29 10 4.15 4.85a.5.5 0 0 1-.06-.63l.06-.07-.06.07Z"/>`' :size="16" />
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="overflow-y-auto flex-1 p-5">
+          <div v-if="whatsNewLoading" class="flex items-center justify-center py-8 text-txt-muted text-sm gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
+            Loading release notes…
+          </div>
+          <div v-else-if="releases.length === 0" class="text-txt-muted text-sm py-6 text-center">
+            No release notes found.
+          </div>
+          <div
+            v-else
+            class="wiki-content text-sm text-txt-secondary leading-relaxed"
+            v-html="renderMarkdown(releases[0].body)"
+          ></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 pt-3 border-t border-edge/50 shrink-0">
+          <a
+            href="https://github.com/michaeljolley/io/releases"
+            target="_blank"
+            rel="noopener"
+            class="text-xs text-accent hover:text-accent-glow transition-colors"
+          >
+            View all releases on GitHub →
+          </a>
+        </div>
+      </div>
+    </div>
+  </Transition>
+</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -181,6 +268,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
  import FluentIcon from './FluentIcon.vue'
 import { useAuthStore } from '../stores/auth'
 import { apiFetch, authenticatedUrl } from '../lib/api'
+import { renderMarkdown } from '../lib/markdown'
 import { getSupabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -191,6 +279,14 @@ const version = ref('')
 const unreadCount = ref(0)
 const collapsed = ref(false)
 let notificationSource: EventSource | null = null
+
+// What's New modal state
+interface Release { tag: string; name: string; body: string; published_at: string; html_url: string }
+const showWhatsNew = ref(false)
+const hasNewVersion = ref(false)
+const releases = ref<Release[]>([])
+const whatsNewLoading = ref(false)
+const WHATS_NEW_KEY = 'io-last-seen-version'
 
 const STORAGE_KEY = 'io-nav-collapsed'
 
@@ -211,6 +307,33 @@ const userInitial = computed(() => {
 
 function isActive(name: string): boolean {
   return route.name === name
+}
+
+function formatReleaseDate(ts: string): string {
+  try { return new Date(ts).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
+  catch { return ts }
+}
+
+async function openWhatsNew() {
+  showWhatsNew.value = true
+  if (version.value) {
+    try { localStorage.setItem(WHATS_NEW_KEY, version.value) } catch { /* ignore */ }
+    hasNewVersion.value = false
+  }
+  if (releases.value.length > 0) return
+  whatsNewLoading.value = true
+  try {
+    const res = await apiFetch('/api/releases')
+    if (res.ok) {
+      const data = (await res.json()) as { releases?: Release[] }
+      releases.value = data.releases ?? []
+    }
+  } catch { /* best effort */ }
+  whatsNewLoading.value = false
+}
+
+function closeWhatsNew() {
+  showWhatsNew.value = false
 }
 
 function toggleCollapsed() {
@@ -238,8 +361,15 @@ onMounted(async () => {
     if (res.ok) {
       const data = (await res.json()) as { version?: string }
       version.value = data.version ?? ''
+      try {
+        const lastSeen = localStorage.getItem(WHATS_NEW_KEY)
+        if (version.value && version.value !== lastSeen) hasNewVersion.value = true
+      } catch { /* ignore */ }
     }
   } catch { /* best effort */ }
+
+  // ESC closes the modal
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWhatsNew() })
 
   try {
     const res = await apiFetch('/api/feed/count')
