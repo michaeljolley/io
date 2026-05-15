@@ -4,7 +4,7 @@ import SkillsView from '../views/SkillsView.vue'
 import SquadsView from '../views/SquadsView.vue'
 import AgentActivityView from '../views/AgentActivityView.vue'
 import SchedulesView from '../views/SchedulesView.vue'
-import NotificationsView from '../views/NotificationsView.vue'
+import FeedView from '../views/FeedView.vue'
 import WikiView from '../views/WikiView.vue'
 import LoginView from '../views/LoginView.vue'
 import { useAuthStore } from '../stores/auth'
@@ -53,14 +53,17 @@ const router = createRouter({
       component: SchedulesView,
     },
     {
+      path: '/feed',
+      name: 'feed',
+      component: FeedView,
+    },
+    {
       path: '/notifications',
-      name: 'notifications',
-      component: NotificationsView,
+      redirect: '/feed',
     },
     {
       path: '/inbox',
-      name: 'inbox',
-      component: () => import('../views/InboxView.vue'),
+      redirect: '/feed',
     },
   ],
 })

@@ -53,7 +53,7 @@
                 : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-3/40'
             ]"
             :title="collapsed ? item.label : undefined"
-            @click="item.name === 'notifications' ? onNotificationsClick() : item.name === 'inbox' ? onInboxClick() : undefined"
+            @click="item.name === 'feed' ? onFeedClick() : undefined"
           >
             <!-- Active indicator bar -->
             <span
@@ -65,21 +65,13 @@
             <FluentIcon :paths="item.icon" :size="18" class="shrink-0 transition-transform duration-150 group-hover:scale-105" :class="collapsed ? '' : 'ml-0.5'" />
             <span v-if="!collapsed" class="text-[13px] font-medium truncate">{{ item.label }}</span>
 
-            <!-- Notification badge -->
+            <!-- Feed unread badge -->
             <span
-              v-if="item.name === 'notifications' && unreadCount > 0"
+              v-if="item.name === 'feed' && unreadCount > 0"
               class="absolute flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] px-0.5 ring-2 ring-surface-1"
               :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
             >
               {{ unreadCount > 99 ? '99+' : unreadCount }}
-            </span>
-            <!-- Inbox count badge -->
-            <span
-              v-if="item.name === 'inbox' && inboxCount > 0"
-              class="absolute flex items-center justify-center bg-accent text-surface-0 text-[9px] font-bold rounded-full min-w-[16px] h-[16px] px-0.5 ring-2 ring-surface-1"
-              :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
-            >
-              {{ inboxCount > 99 ? '99+' : inboxCount }}
             </span>
           </RouterLink>
         </li>
@@ -164,7 +156,7 @@
     :to="item.to"
     class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 transition-colors duration-150 touch-manipulation select-none"
     :class="isActive(item.name) ? 'text-accent' : 'text-txt-muted'"
-    @click="item.name === 'notifications' ? onNotificationsClick() : item.name === 'inbox' ? onInboxClick() : undefined"
+    @click="item.name === 'feed' ? onFeedClick() : undefined"
     :aria-label="item.label"
   >
     <!-- Active top accent line -->
@@ -173,13 +165,9 @@
     <span class="relative">
       <FluentIcon :paths="item.icon" :size="20" />
       <span
-        v-if="item.name === 'notifications' && unreadCount > 0"
+        v-if="item.name === 'feed' && unreadCount > 0"
         class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-red-500 text-white text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
       >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
-      <span
-        v-if="item.name === 'inbox' && inboxCount > 0"
-        class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-accent text-surface-0 text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
-      >{{ inboxCount > 9 ? '9+' : inboxCount }}</span>
     </span>
     <span class="text-[9px] leading-tight font-medium truncate max-w-full px-0.5">{{ item.label }}</span>
   </RouterLink>
@@ -201,7 +189,6 @@ const auth = useAuthStore()
 
 const version = ref('')
 const unreadCount = ref(0)
-const inboxCount = ref(0)
 const collapsed = ref(false)
 let notificationSource: EventSource | null = null
 
@@ -209,12 +196,11 @@ const STORAGE_KEY = 'io-nav-collapsed'
 
 const navItems = [
   { to: '/chat',          name: 'chat',          icon: '<path d="M10 2a8 8 0 1 1-3.61 15.14l-.12-.07-3.65.92a.5.5 0 0 1-.62-.45v-.08l.01-.08.92-3.64-.07-.12a7.95 7.95 0 0 1-.83-2.9l-.02-.37L2 10a8 8 0 0 1 8-8Zm0 1a7 7 0 0 0-6.1 10.42.5.5 0 0 1 .06.28l-.02.1-.75 3.01 3.02-.75a.5.5 0 0 1 .19-.01l.09.02.09.04A7 7 0 1 0 10 3Zm.5 8a.5.5 0 0 1 .09 1H7.5a.5.5 0 0 1-.09-1h3.09Zm2-3a.5.5 0 0 1 .09 1H7.5a.5.5 0 0 1-.09-1h5.09Z"/>', label: 'Chat' },
-  { to: '/inbox',         name: 'inbox',         icon: '<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>', label: 'Inbox' },
+  { to: '/feed',          name: 'feed',          icon: '<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>', label: 'Feed' },
   { to: '/skills',        name: 'skills',        icon: '<path d="M9 6.5a4.5 4.5 0 0 1 6.35-4.1.5.5 0 0 1 .15.8l-2.3 2.3 1.3 1.3 2.3-2.3a.5.5 0 0 1 .8.15A4.49 4.49 0 0 1 13.5 11a4.5 4.5 0 0 1-1.1-.14l-6.37 6.45a2.36 2.36 0 0 1-3.37-3.3l6.42-6.65A4.52 4.52 0 0 1 9 6.5ZM13.5 3a3.5 3.5 0 0 0-3.39 4.39.5.5 0 0 1-.12.47L3.38 14.7a1.36 1.36 0 0 0 1.94 1.9l6.57-6.66a.5.5 0 0 1 .51-.12 3.5 3.5 0 0 0 4.53-4.05l-2.08 2.07a.5.5 0 0 1-.7 0l-2-2a.5.5 0 0 1 0-.7l2.07-2.08A3.52 3.52 0 0 0 13.5 3Z"/>', label: 'Skills' },
   { to: '/squads',        name: 'squads',        icon: '<path d="M10 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM7.5 4.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0Zm8-.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm-10 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm1-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm.6 12H5a2 2 0 0 1-2-2V9.25c0-.14.11-.25.25-.25h1.76c.04-.37.17-.7.37-1H3.25C2.56 8 2 8.56 2 9.25V13a3 3 0 0 0 3.4 2.97 4.96 4.96 0 0 1-.3-.97Zm9.5.97A3 3 0 0 0 18 13V9.25C18 8.56 17.44 8 16.75 8h-2.13c.2.3.33.63.37 1h1.76c.14 0 .25.11.25.25V13a2 2 0 0 1-2.1 2c-.07.34-.17.66-.3.97ZM7.25 8C6.56 8 6 8.56 6 9.25V14a4 4 0 0 0 8 0V9.25C14 8.56 13.44 8 12.75 8h-5.5ZM7 9.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V14a3 3 0 1 1-6 0V9.25Z"/>', label: 'Squads' },
   { to: '/wiki',          name: 'wiki',          icon: '<path d="M10 16c-.46.6-1.18 1-2 1H3.5A1.5 1.5 0 0 1 2 15.5v-11C2 3.67 2.67 3 3.5 3H8c.82 0 1.54.4 2 1 .46-.6 1.18-1 2-1h4.5c.83 0 1.5.67 1.5 1.5v11c0 .83-.67 1.5-1.5 1.5H12a2.5 2.5 0 0 1-2-1ZM3 4.5v11c0 .28.22.5.5.5H8c.83 0 1.5-.67 1.5-1.5v-9C9.5 4.67 8.83 4 8 4H3.5a.5.5 0 0 0-.5.5Zm7.5 10c0 .83.67 1.5 1.5 1.5h4.5a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5H12c-.83 0-1.5.67-1.5 1.5v9Z"/>', label: 'Wiki' },
   { to: '/schedules',     name: 'schedules',     icon: '<path d="M7 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm4-5.5A2.5 2.5 0 0 0 14.5 3h-9A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9a2.5 2.5 0 0 0 2.5-2.5v-9ZM4 7h12v7.5c0 .83-.67 1.5-1.5 1.5h-9A1.5 1.5 0 0 1 4 14.5V7Zm1.5-3h9c.83 0 1.5.67 1.5 1.5V6H4v-.5C4 4.67 4.67 4 5.5 4Z"/>', label: 'Schedules' },
-  { to: '/notifications', name: 'notifications', icon: '<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>', label: 'Notifications' },
   { to: '/activity',      name: 'activity',      icon: '<path d="M16.52 9c.26 0 .48-.2.48-.46V8.5A6.5 6.5 0 0 0 10.5 2h-.04a.47.47 0 0 0-.46.48V8.5c0 .28.22.5.5.5h6.02ZM11 3.02A5.5 5.5 0 0 1 15.98 8H11V3.02ZM8 9V5.1A5 5 0 0 0 9 15v1a6 6 0 0 1-.5-11.98c.28-.02.5.2.5.48V9a1 1 0 0 0 1 1h4.5c.28 0 .5.22.48.5a6 6 0 0 1-.06.5H10a2 2 0 0 1-2-2Zm9 1a1 1 0 0 0-1 1v7a1 1 0 1 0 2 0v-7a1 1 0 0 0-1-1Zm-3 2a1 1 0 0 0-1 1v5a1 1 0 1 0 2 0v-5a1 1 0 0 0-1-1Zm-4 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0v-3Z"/>', label: 'Activity' },
 ]
 
@@ -237,12 +223,8 @@ async function handleSignOut() {
   router.push('/login')
 }
 
-function onNotificationsClick() {
+function onFeedClick() {
   unreadCount.value = 0
-}
-
-function onInboxClick() {
-  inboxCount.value = 0
 }
 
 onMounted(async () => {
@@ -260,18 +242,10 @@ onMounted(async () => {
   } catch { /* best effort */ }
 
   try {
-    const res = await apiFetch('/api/notifications?unread=true&limit=1')
+    const res = await apiFetch('/api/feed/count')
     if (res.ok) {
-      const data = (await res.json()) as { unreadCount?: number }
-      unreadCount.value = data.unreadCount ?? 0
-    }
-  } catch { /* best effort */ }
-
-  try {
-    const inboxRes = await apiFetch('/api/inbox/count')
-    if (inboxRes.ok) {
-      const inboxData = (await inboxRes.json()) as { count?: number }
-      inboxCount.value = inboxData.count ?? 0
+      const data = (await res.json()) as { count?: number }
+      unreadCount.value = data.count ?? 0
     }
   } catch { /* best effort */ }
 
@@ -288,7 +262,7 @@ function connectSSE(retries = 0) {
   es.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data) as { type?: string }
-      if (data.type === 'notification' && route.name !== 'notifications') {
+      if (data.type === 'feed' && route.name !== 'feed') {
         unreadCount.value++
       }
     } catch { /* ignore */ }
