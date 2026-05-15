@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fluentui/svg-icons": "^1.1.326",
     "@supabase/supabase-js": "^2.105.4",
     "highlight.js": "^11.11.1",
     "pinia": "^2.2.2",
