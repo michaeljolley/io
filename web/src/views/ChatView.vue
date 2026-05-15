@@ -135,13 +135,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch, computed } from 'vue'
+import { ref, nextTick, watch, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import FluentIcon from '../components/FluentIcon.vue'
 import { useChatStore } from '../stores/chat'
 import { renderMarkdown } from '../lib/markdown'
 import { apiFetch, authenticatedUrl } from '../lib/api'
 
 const store = useChatStore()
+const route = useRoute()
 const input = ref('')
 const stopping = ref(false)
 const messagesEl = ref<HTMLElement | null>(null)
@@ -191,6 +193,15 @@ function scrollToBottom() {
     }
   })
 }
+
+onMounted(() => {
+  scrollToBottom()
+})
+
+// Scroll to bottom when navigating back to the chat tab
+watch(() => route.name, (name) => {
+  if (name === 'chat') scrollToBottom()
+})
 
 watch(() => store.messages.length, () => {
   if (!isScrolledUp.value) scrollToBottom()
