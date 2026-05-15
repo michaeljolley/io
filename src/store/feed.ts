@@ -59,7 +59,7 @@ export function listFeedEntries(opts?: {
   params.push(limit);
 
   return getDb()
-    .prepare(`SELECT * FROM unified_feed ${where} ORDER BY created_at DESC LIMIT ?`)
+    .prepare(`SELECT * FROM unified_feed ${where} ORDER BY created_at DESC, id DESC LIMIT ?`)
     .all(...params) as FeedEntry[];
 }
 

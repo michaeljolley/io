@@ -4,7 +4,7 @@ import { startApiServer, setMessageHandler as setApiHandler, broadcastToSSE, bro
 import { createBot, startBot, stopBot, sendProactiveMessage, sendBackgroundNotification, setMessageHandler as setTelegramHandler } from "./telegram/bot.js";
 import { setTelegramSender, setTuiSender, setSseBroadcaster } from "./notify.js";
 import { pruneOldScheduleRuns } from "./store/schedule-runs.js";
-import { pruneOldNotifications } from "./store/notifications.js";
+import { pruneOldFeedEntries } from "./store/feed.js";
 import { printBackgroundNotification } from "./tui/index.js";
 import { getDb, closeDb } from "./store/db.js";
 import { clearStaleTasks } from "./store/tasks.js";
@@ -164,9 +164,9 @@ export async function startDaemon(): Promise<void> {
   const pruneTimer = setInterval(() => {
     try {
       const runsDeleted = pruneOldScheduleRuns(PRUNE_RETENTION_DAYS);
-      const notificationsDeleted = pruneOldNotifications(PRUNE_RETENTION_DAYS);
+      const notificationsDeleted = pruneOldFeedEntries(PRUNE_RETENTION_DAYS);
       if (runsDeleted > 0 || notificationsDeleted > 0) {
-        console.log(`[prune] Cleaned up ${runsDeleted} schedule runs and ${notificationsDeleted} notifications older than ${PRUNE_RETENTION_DAYS} days`);
+        console.log(`[prune] Cleaned up ${runsDeleted} schedule runs and ${notificationsDeleted} feed entries older than ${PRUNE_RETENTION_DAYS} days`);
       }
     } catch (err) {
       console.error("[prune] Error during cleanup:", err);
@@ -178,7 +178,7 @@ export async function startDaemon(): Promise<void> {
   const pruneStartup = setTimeout(() => {
     try {
       pruneOldScheduleRuns(PRUNE_RETENTION_DAYS);
-      pruneOldNotifications(PRUNE_RETENTION_DAYS);
+      pruneOldFeedEntries(PRUNE_RETENTION_DAYS);
     } catch { /* best effort */ }
   }, 5000);
   (pruneStartup as unknown as { unref?: () => void }).unref?.();
