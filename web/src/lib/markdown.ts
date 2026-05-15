@@ -8,6 +8,38 @@
  * markdown substitution so raw content can never inject markup.
  */
 
+import hljs from 'highlight.js/lib/core'
+import typescript from 'highlight.js/lib/languages/typescript'
+import javascript from 'highlight.js/lib/languages/javascript'
+import python from 'highlight.js/lib/languages/python'
+import bash from 'highlight.js/lib/languages/bash'
+import json from 'highlight.js/lib/languages/json'
+import css from 'highlight.js/lib/languages/css'
+import xml from 'highlight.js/lib/languages/xml'
+import sql from 'highlight.js/lib/languages/sql'
+import yaml from 'highlight.js/lib/languages/yaml'
+import markdown from 'highlight.js/lib/languages/markdown'
+import 'highlight.js/styles/github-dark.css'
+
+// Register only the languages we need to keep bundle size reasonable
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('ts', typescript)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('js', javascript)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('py', python)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('sh', bash)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('html', xml)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('yaml', yaml)
+hljs.registerLanguage('yml', yaml)
+hljs.registerLanguage('markdown', markdown)
+hljs.registerLanguage('md', markdown)
+
 function inlineFormat(text: string): string {
   return text
     // Escape HTML entities first — must happen before any tag insertion
@@ -132,6 +164,7 @@ export function renderMarkdown(md: string): string {
   let inList = false
   let inTable = false
   let codeLines: string[] = []
+  let codeLang = ''
   let tableLines: string[] = []
 
   function closeList() {
@@ -153,12 +186,22 @@ export function renderMarkdown(md: string): string {
       closeTable()
       if (!inCode) {
         inCode = true
+        codeLang = line.slice(3).trim().split(/\s+/)[0].toLowerCase()
         codeLines = []
       } else {
-        const escaped = codeLines.join('\n')
-          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        out.push(`<pre class="bg-gray-900 border border-gray-800 rounded p-3 my-2 overflow-x-auto"><code class="font-mono text-xs text-green-300">${escaped}</code></pre>`)
+        const raw = codeLines.join('\n')
+        let highlighted: string
+        try {
+          highlighted = codeLang && hljs.getLanguage(codeLang)
+            ? hljs.highlight(raw, { language: codeLang, ignoreIllegals: true }).value
+            : hljs.highlightAuto(raw).value
+        } catch {
+          highlighted = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        }
+        const langLabel = codeLang ? `<span class="text-[10px] text-txt-muted font-mono absolute top-2 right-3 select-none">${codeLang}</span>` : ''
+        out.push(`<div class="relative my-2"><pre class="bg-surface-1 border border-edge rounded-xl p-3 overflow-x-auto"><code class="hljs font-mono text-xs">${highlighted}</code></pre>${langLabel}</div>`)
         inCode = false
+        codeLang = ''
         codeLines = []
       }
       continue
