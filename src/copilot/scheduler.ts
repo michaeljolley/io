@@ -17,7 +17,7 @@ import { delegateToAgent } from "./agents.js";
 import { nextRun } from "./cron.js";
 import { notifyBackground } from "../notify.js";
 import { startScheduleRun, completeScheduleRun, failScheduleRun } from "../store/schedule-runs.js";
-import { createInboxEntry } from "../store/inbox.js";
+import { createFeedEntry } from "../store/feed.js";
 import { shouldRouteToInbox } from "./tools.js";
 
 const TICK_MS = 30_000;
@@ -91,7 +91,7 @@ async function fireSchedule(schedule: SquadSchedule): Promise<void> {
   try {
     await delegateToAgent(squad.slug, prompt, (_taskId, result) => {
       if (shouldRouteToInbox(prompt)) {
-        createInboxEntry(`[${squad.slug}] ${schedule.name}`, result);
+        createFeedEntry({ type: "deliverable", title: `[${squad.slug}] ${schedule.name}`, body: result });
         console.error(`[io] Schedule ${schedule.id} result routed to inbox`);
         completeScheduleRun(run.id, 0);
       } else {

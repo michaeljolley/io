@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSy
 import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
 import { UNIVERSES } from "./universes.js";
-import { createInboxEntry } from "../store/inbox.js";
+import { createFeedEntry } from "../store/feed.js";
 import { validateCron, nextRun } from "./cron.js";
 import {
   createIoSchedule,
@@ -529,7 +529,7 @@ export function createTools(deps: ToolDeps) {
         const taskId = await deps.delegateToAgent(slug, task, (id, result) => {
           console.error(`[io] Agent task ${id} completed for squad ${slug}`);
           if (shouldRouteToInbox(task)) {
-            createInboxEntry(`[${slug}] Task result`, result);
+            createFeedEntry({ type: "deliverable", title: `[${slug}] Task result`, body: result });
             console.error(`[io] Task ${id} result routed to inbox`);
           }
         }, agent);

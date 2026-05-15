@@ -1,8 +1,5 @@
 import { config } from "./config.js";
-import {
-  insertNotification,
-  type BackgroundNotificationRow,
-} from "./store/notifications.js";
+import { createFeedEntry, type FeedEntry } from "./store/feed.js";
 
 export type NotificationSource =
   | { type: "io-schedule"; scheduleId: number; scheduleName: string }
@@ -86,13 +83,14 @@ export async function notifyBackground(
 
   const { source, title } = input;
   const sourceRefJson = JSON.stringify(stripType(source));
-  let row: BackgroundNotificationRow;
+  let row: FeedEntry;
   try {
-    row = insertNotification({
+    row = createFeedEntry({
+      type: "notification",
+      title,
+      body: text,
       source_type: source.type,
       source_ref: sourceRefJson === "{}" ? null : sourceRefJson,
-      title,
-      text,
     });
   } catch (err) {
     console.error("[notify] failed to persist notification:", err);
