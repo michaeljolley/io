@@ -186,21 +186,21 @@ function handleScroll() {
   isScrolledUp.value = el.scrollTop + el.clientHeight < el.scrollHeight - 100
 }
 
-function scrollToBottom() {
+function scrollToBottom(smooth = true) {
   nextTick(() => {
     if (messagesEl.value) {
-      messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+      messagesEl.value.scrollTo({ top: messagesEl.value.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
     }
   })
 }
 
 onMounted(() => {
-  scrollToBottom()
+  scrollToBottom(false)
 })
 
 // Scroll to bottom when navigating back to the chat tab
 watch(() => route.name, (name) => {
-  if (name === 'chat') scrollToBottom()
+  if (name === 'chat') scrollToBottom(false)
 })
 
 watch(() => store.messages.length, () => {
