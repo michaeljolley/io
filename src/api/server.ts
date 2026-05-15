@@ -14,7 +14,7 @@ import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
 import { getScheduleRuns } from "../store/schedule-runs.js";
-import { createFeedEntry, listFeedEntries, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, type FeedEntryType } from "../store/feed.js";
+import { createFeedEntry, listFeedEntries, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, markFeedEntriesRead, deleteFeedEntries, type FeedEntryType } from "../store/feed.js";
 import { listPages, readPage } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
@@ -280,6 +280,36 @@ export async function startApiServer(): Promise<void> {
       res.json({ marked });
     } catch (e) {
       console.error("Error marking feed entries read:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/feed/batch-read", (req: Request, res: Response) => {
+    const { ids } = req.body as { ids?: unknown };
+    if (!Array.isArray(ids) || ids.length === 0 || !ids.every((x) => typeof x === "number")) {
+      res.status(400).json({ error: "ids must be a non-empty array of numbers" });
+      return;
+    }
+    try {
+      const marked = markFeedEntriesRead(ids as number[]);
+      res.json({ marked });
+    } catch (e) {
+      console.error("Error batch-marking feed entries read:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/feed/batch-delete", (req: Request, res: Response) => {
+    const { ids } = req.body as { ids?: unknown };
+    if (!Array.isArray(ids) || ids.length === 0 || !ids.every((x) => typeof x === "number")) {
+      res.status(400).json({ error: "ids must be a non-empty array of numbers" });
+      return;
+    }
+    try {
+      const deleted = deleteFeedEntries(ids as number[]);
+      res.json({ deleted });
+    } catch (e) {
+      console.error("Error batch-deleting feed entries:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });

@@ -119,3 +119,22 @@ export function pruneOldFeedEntries(olderThanDays: number): number {
     .run(olderThanDays);
   return info.changes;
 }
+export function markFeedEntriesRead(ids: number[]): number {
+  if (ids.length === 0) return 0;
+  const placeholders = ids.map(() => "?").join(", ");
+  const info = getDb()
+    .prepare(
+      `UPDATE unified_feed SET read_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders}) AND read_at IS NULL`,
+    )
+    .run(...ids);
+  return info.changes;
+}
+
+export function deleteFeedEntries(ids: number[]): number {
+  if (ids.length === 0) return 0;
+  const placeholders = ids.map(() => "?").join(", ");
+  const info = getDb()
+    .prepare(`DELETE FROM unified_feed WHERE id IN (${placeholders})`)
+    .run(...ids);
+  return info.changes;
+}
