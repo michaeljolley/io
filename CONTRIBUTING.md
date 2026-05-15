@@ -38,6 +38,7 @@ npm run build
 | `npm run dev` | Run daemon in watch mode (auto-restart on changes) |
 | `npm run daemon` | Run the daemon directly |
 | `npm run tui` | Run the TUI directly |
+| `npm test` | Run the test suite (Node.js built-in test runner via tsx) |
 
 ## Project Structure
 

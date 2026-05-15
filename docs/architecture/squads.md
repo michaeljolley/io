@@ -64,7 +64,7 @@ Decisions are stored in the `squad_decisions` table and summarized when building
 
 ```
 - [2025-05-06T10:30:00Z] Use bcrypt for password hashing instead of argon2 (Project already has bcrypt as a dependency)
-- [2025-05-06T11:15:00Z] Adopt Vitest over Jest for new test files (Aligns with existing project tooling)
+- [2025-05-06T11:15:00Z] Use Node.js built-in test runner (node --test) with tsx for new test files — not Vitest or Jest (zero extra dependencies, native ESM support)
 ```
 
 The `getDecisionsSummary()` function formats the last 20 decisions into the agent's system prompt, providing an audit trail and enabling consistent decisions over time.

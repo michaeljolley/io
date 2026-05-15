@@ -313,7 +313,12 @@ npm run tui
 
 # Run the daemon directly
 npm run daemon
+
+# Run the test suite
+npm test
 ```
+
+Tests use the Node.js built-in test runner with [tsx](https://github.com/privatenumber/tsx) for TypeScript support. Test files live alongside source files as `*.test.ts`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
