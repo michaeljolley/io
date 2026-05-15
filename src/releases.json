@@ -1,0 +1,72 @@
+[
+  {
+    "tag": "v0.20.0",
+    "name": "v0.20.0",
+    "body": "## What's Changed\n* feat: unified feed merging inbox + notifications by @michaeljolley in https://github.com/michaeljolley/io/pull/184\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.19.0...v0.20.0",
+    "published_at": "2026-05-15T18:09:18Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.20.0"
+  },
+  {
+    "tag": "v0.19.0",
+    "name": "v0.19.0",
+    "body": "## What's Changed\n* feat(web): auto-scroll to bottom when opening Chat tab (#180) by @michaeljolley in https://github.com/michaeljolley/io/pull/182\n* feat(web): smooth-scroll to bottom of chat (#181) by @michaeljolley in https://github.com/michaeljolley/io/pull/183\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.18.0...v0.19.0",
+    "published_at": "2026-05-15T17:09:31Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.19.0"
+  },
+  {
+    "tag": "v0.18.0",
+    "name": "v0.18.0",
+    "body": "## What's Changed\n* feat(web): render markdown in activity detail description and result (#166) by @michaeljolley in https://github.com/michaeljolley/io/pull/172\n* feat(web): add syntax highlighting to markdown code blocks (#170) by @michaeljolley in https://github.com/michaeljolley/io/pull/173\n* docs: update testing documentation for accuracy (#167) by @michaeljolley in https://github.com/michaeljolley/io/pull/174\n* feat: require JWT auth on all API endpoints when Supabase is enabled (#162) by @michaeljolley in https://github.com/michaeljolley/io/pull/175\n* feat(web): replace UI icons with Fluent design icons (#168) by @michaeljolley in https://github.com/michaeljolley/io/pull/176\n* feat(web): add subtle background gradients for depth and polish (#169) by @michaeljolley in https://github.com/michaeljolley/io/pull/177\n* feat(web): make web app mobile responsive (#171) by @michaeljolley in https://github.com/michaeljolley/io/pull/178\n* fix(web): use bound paths prop to avoid duplicate attribute parse error by @michaeljolley in https://github.com/michaeljolley/io/pull/179\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.17.2...v0.18.0",
+    "published_at": "2026-05-15T14:38:14Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.18.0"
+  },
+  {
+    "tag": "v0.17.2",
+    "name": "v0.17.2",
+    "body": "## What's Changed\n* fix: resolve 401 errors on page load and session loss on refresh by @michaeljolley in https://github.com/michaeljolley/io/pull/165\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.17.1...v0.17.2",
+    "published_at": "2026-05-15T03:14:17Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.17.2"
+  },
+  {
+    "tag": "v0.17.1",
+    "name": "v0.17.1",
+    "body": "## What's Changed\n* fix(web): replace GitHub text with SVG icon in expanded sidebar (#158) by @michaeljolley in https://github.com/michaeljolley/io/pull/161\n* fix: resolve IO_VERSION from package.json reliably across install contexts (#163) by @michaeljolley in https://github.com/michaeljolley/io/pull/164\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.17.0...v0.17.1",
+    "published_at": "2026-05-15T01:52:55Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.17.1"
+  },
+  {
+    "tag": "v0.17.0",
+    "name": "v0.17.0",
+    "body": "## What's Changed\n* fix: add review_pr action to GitHub tool for veto audit trail (#155) by @michaeljolley in https://github.com/michaeljolley/io/pull/159\n* fix(web): auth state not persisted across page refreshes by @michaeljolley in https://github.com/michaeljolley/io/pull/160\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.16.0...v0.17.0",
+    "published_at": "2026-05-14T23:11:18Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.17.0"
+  },
+  {
+    "tag": "v0.16.0",
+    "name": "v0.16.0",
+    "body": "## What's Changed\n* feat: route squad task results to inbox + TUI inbox commands by @michaeljolley in https://github.com/michaeljolley/io/pull/156\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.15.0...v0.16.0",
+    "published_at": "2026-05-14T21:23:31Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.16.0"
+  },
+  {
+    "tag": "v0.15.0",
+    "name": "v0.15.0",
+    "body": "## What's Changed\n* feat: add inbox feature for squad agent artifacts (#153) by @michaeljolley in https://github.com/michaeljolley/io/pull/154\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.14.0...v0.15.0",
+    "published_at": "2026-05-14T20:52:55Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.15.0"
+  },
+  {
+    "tag": "v0.14.0",
+    "name": "v0.14.0",
+    "body": "## What's Changed\n* feat(web): redesign IO web app with Obsidian Console design system (#139) by @michaeljolley in https://github.com/michaeljolley/io/pull/152\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.13.0...v0.14.0",
+    "published_at": "2026-05-14T17:46:36Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.14.0"
+  },
+  {
+    "tag": "v0.13.0",
+    "name": "v0.13.0",
+    "body": "## What's Changed\n* fix: move skill read endpoints before auth middleware (#137) by @michaeljolley in https://github.com/michaeljolley/io/pull/145\n* feat(web): sort squad members by role priority (#138) by @michaeljolley in https://github.com/michaeljolley/io/pull/146\n* feat: delete skills from web UI (#140) by @michaeljolley in https://github.com/michaeljolley/io/pull/147\n* feat(web): add skill search/filter (#141) by @michaeljolley in https://github.com/michaeljolley/io/pull/148\n* feat(web): structured frontmatter display for skills (#142) by @michaeljolley in https://github.com/michaeljolley/io/pull/149\n* fix: accept any heading level in skill install validation (#143) by @michaeljolley in https://github.com/michaeljolley/io/pull/150\n* feat(web): add skill discovery resource links (#144) by @michaeljolley in https://github.com/michaeljolley/io/pull/151\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.12.0...v0.13.0",
+    "published_at": "2026-05-14T17:21:24Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.13.0"
+  }
+]

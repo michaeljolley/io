@@ -23,6 +23,18 @@ import { runIoScheduleNow } from "../copilot/io-scheduler.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = path.resolve(__dirname, "../../web-dist");
 
+let releasesCache: unknown[] | null = null;
+function loadReleases(): unknown[] {
+  if (releasesCache) return releasesCache;
+  try {
+    const raw = readFileSync(path.join(__dirname, "../releases.json"), "utf-8");
+    releasesCache = JSON.parse(raw) as unknown[];
+    return releasesCache;
+  } catch {
+    return [];
+  }
+}
+
 export type ApiMessageHandler = (
   text: string,
   connectionId: string,
@@ -179,6 +191,11 @@ export async function startApiServer(): Promise<void> {
   // Status endpoint
   api.get("/status", (_req: Request, res: Response) => {
     res.json({ version: IO_VERSION, uptime: process.uptime() });
+  });
+
+  // Releases endpoint — serves build-time bundled GitHub release notes
+  api.get("/releases", (_req: Request, res: Response) => {
+    res.json({ releases: loadReleases() });
   });
 
   // SSE events endpoint
