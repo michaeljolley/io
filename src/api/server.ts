@@ -98,7 +98,10 @@ export async function startApiServer(): Promise<void> {
     });
   });
 
-  // Skills read endpoints — public (no auth required; read-only local filesystem)
+  // Apply auth middleware — all routes below require a valid JWT
+  api.use(requireAuth);
+
+  // Skills read endpoints
   api.get("/skills", (_req: Request, res: Response) => {
     try {
       const skills = listSkills();
@@ -130,7 +133,7 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Inbox read endpoints — public (nav badge needs count without auth timing issues)
+  // Inbox read endpoints
   api.get("/inbox/count", (_req: Request, res: Response) => {
     try {
       const count = countInboxEntries();
@@ -151,12 +154,12 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Status endpoint — public (non-sensitive version/uptime info)
+  // Status endpoint
   api.get("/status", (_req: Request, res: Response) => {
     res.json({ version: IO_VERSION, uptime: process.uptime() });
   });
 
-  // Notifications read endpoint — public (local-only app, nav badge needs data without auth race)
+  // Notifications endpoint
   api.get("/notifications", (_req: Request, res: Response) => {
     try {
       const unreadOnly = _req.query.unread === "true";
@@ -188,7 +191,7 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // SSE events — public (AppNav subscribes on load before auth resolves)
+  // SSE events endpoint
   api.get("/events", (req: Request, res: Response) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -201,9 +204,6 @@ export async function startApiServer(): Promise<void> {
       sseConnections.delete(res);
     });
   });
-
-  // Apply auth middleware to all subsequent routes
-  api.use(requireAuth);
 
   // Install a skill from pasted SKILL.md content (issue #117)
   api.post("/skills/paste", (req: Request, res: Response) => {

@@ -157,6 +157,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { apiFetch, authenticatedUrl } from '../lib/api'
+import { getSupabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
@@ -238,8 +239,17 @@ onMounted(async () => {
     }
   } catch { /* best effort */ }
 
-  notificationSource = new EventSource(authenticatedUrl('/api/events'))
-  notificationSource.onmessage = (e) => {
+  connectSSE()
+})
+
+function connectSSE(retries = 0) {
+  notificationSource?.close()
+  notificationSource = null
+
+  const es = new EventSource(authenticatedUrl('/api/events'))
+  notificationSource = es
+
+  es.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data) as { type?: string }
       if (data.type === 'notification' && route.name !== 'notifications') {
@@ -247,7 +257,23 @@ onMounted(async () => {
       }
     } catch { /* ignore */ }
   }
-})
+
+  es.onerror = async () => {
+    es.close()
+    if (notificationSource === es) {
+      notificationSource = null
+    }
+    if (retries >= 3) return // give up after 3 retries
+
+    // Refresh token before reconnecting so the new URL carries a valid JWT
+    try {
+      const supabase = await getSupabase()
+      if (supabase) await supabase.auth.refreshSession()
+    } catch { /* best effort */ }
+
+    setTimeout(() => connectSSE(retries + 1), 2000 * (retries + 1))
+  }
+}
 
 onUnmounted(() => {
   notificationSource?.close()
