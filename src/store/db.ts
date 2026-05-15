@@ -167,6 +167,18 @@ GROUP BY agent_slug`,
       body TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )`,
+    `CREATE TABLE IF NOT EXISTS unified_feed (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL CHECK(type IN ('deliverable', 'notification')),
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      source_type TEXT,
+      source_ref TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      read_at DATETIME
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_unified_feed_type ON unified_feed(type, created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_unified_feed_unread ON unified_feed(read_at, created_at)`,
   ];
 
   for (const migration of migrations) {
@@ -175,6 +187,26 @@ GROUP BY agent_slug`,
     } catch {
       // Already applied — ignore
     }
+  }
+
+  // One-time data migration: copy inbox_entries + background_notifications → unified_feed
+  try {
+    const migrated = db.prepare("SELECT value FROM io_state WHERE key = 'unified_feed_migrated'").get() as { value: string } | undefined;
+    if (!migrated) {
+      db.exec(`
+        INSERT OR IGNORE INTO unified_feed (type, title, body, source_type, source_ref, created_at, read_at)
+        SELECT 'deliverable', title, body, NULL, NULL, created_at, NULL
+        FROM inbox_entries
+      `);
+      db.exec(`
+        INSERT OR IGNORE INTO unified_feed (type, title, body, source_type, source_ref, created_at, read_at)
+        SELECT 'notification', title, text, source_type, source_ref, created_at, read_at
+        FROM background_notifications
+      `);
+      db.prepare("INSERT OR REPLACE INTO io_state (key, value) VALUES ('unified_feed_migrated', '1')").run();
+    }
+  } catch {
+    // Migration failed (e.g. old tables don't exist yet on a fresh install) — safe to ignore
   }
 
   return db;
