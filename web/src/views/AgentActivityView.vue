@@ -256,7 +256,7 @@
 
             <div>
               <p class="text-[10px] uppercase tracking-widest text-txt-muted mb-0.5">Description</p>
-              <pre class="text-sm text-txt-primary bg-surface-0/60 border border-edge rounded-lg p-3 whitespace-pre-wrap break-words font-sans">{{ selectedTask.description }}</pre>
+              <div class="text-sm text-txt-primary bg-surface-0/60 border border-edge rounded-lg p-3 wiki-content" v-html="renderMarkdown(selectedTask.description)"></div>
             </div>
 
             <div>
@@ -315,7 +315,7 @@
 
             <div>
               <p class="text-[10px] uppercase tracking-widest text-txt-muted mb-0.5">Result</p>
-              <pre v-if="selectedTask.result" class="text-sm text-txt-primary bg-surface-0/60 border border-edge rounded-lg p-3 whitespace-pre-wrap break-words font-mono max-h-96 overflow-y-auto">{{ selectedTask.result }}</pre>
+              <div v-if="selectedTask.result" class="text-sm text-txt-primary bg-surface-0/60 border border-edge rounded-lg p-3 wiki-content max-h-96 overflow-y-auto" v-html="renderMarkdown(selectedTask.result)"></div>
               <p v-else class="text-sm text-txt-muted italic">No result yet</p>
             </div>
           </template>
@@ -349,6 +349,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { apiFetch, authenticatedUrl } from '../lib/api'
+import { renderMarkdown } from '../lib/markdown'
 
 interface Agent {
   slug: string
