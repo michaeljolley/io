@@ -73,7 +73,11 @@ export async function startApiServer(): Promise<void> {
   app.use((_req: Request, res: Response, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (_req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
     next();
   });
 
@@ -147,12 +151,59 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Apply auth middleware to all subsequent routes
-  api.use(requireAuth);
-
+  // Status endpoint — public (non-sensitive version/uptime info)
   api.get("/status", (_req: Request, res: Response) => {
     res.json({ version: IO_VERSION, uptime: process.uptime() });
   });
+
+  // Notifications read endpoint — public (local-only app, nav badge needs data without auth race)
+  api.get("/notifications", (_req: Request, res: Response) => {
+    try {
+      const unreadOnly = _req.query.unread === "true";
+      const rows = unreadOnly
+        ? listUnreadNotifications()
+        : (() => {
+            const rawLimit = _req.query.limit;
+            const parsed = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : NaN;
+            const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 200) : 50;
+            return listRecentNotifications(limit);
+          })();
+      const unreadCount = countUnreadNotifications();
+      const notifications = rows.map(({ id, title, text, created_at, read_at, source_type, source_ref }) => {
+        let source: { type: string; [key: string]: unknown } = { type: source_type };
+        if (source_ref) {
+          try {
+            const parsed = JSON.parse(source_ref) as Record<string, unknown>;
+            source = { type: source_type, ...parsed };
+          } catch {
+            // source_ref is not valid JSON — fall back to type-only
+          }
+        }
+        return { id, title, text, created_at, read_at, source };
+      });
+      res.json({ notifications, unreadCount });
+    } catch (e) {
+      console.error("Error listing notifications:", e);
+      res.status(500).json({ error: "Failed to list notifications" });
+    }
+  });
+
+  // SSE events — public (AppNav subscribes on load before auth resolves)
+  api.get("/events", (req: Request, res: Response) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    sseConnections.add(res);
+
+    req.on("close", () => {
+      sseConnections.delete(res);
+    });
+  });
+
+  // Apply auth middleware to all subsequent routes
+  api.use(requireAuth);
 
   // Install a skill from pasted SKILL.md content (issue #117)
   api.post("/skills/paste", (req: Request, res: Response) => {
@@ -596,38 +647,6 @@ export async function startApiServer(): Promise<void> {
     }
   });
 
-  // Notifications endpoints
-  api.get("/notifications", (_req: Request, res: Response) => {
-    try {
-      const unreadOnly = _req.query.unread === "true";
-      const rows = unreadOnly
-        ? listUnreadNotifications()
-        : (() => {
-            const rawLimit = _req.query.limit;
-            const parsed = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : NaN;
-            const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 200) : 50;
-            return listRecentNotifications(limit);
-          })();
-      const unreadCount = countUnreadNotifications();
-      const notifications = rows.map(({ id, title, text, created_at, read_at, source_type, source_ref }) => {
-        let source: { type: string; [key: string]: unknown } = { type: source_type };
-        if (source_ref) {
-          try {
-            const parsed = JSON.parse(source_ref) as Record<string, unknown>;
-            source = { type: source_type, ...parsed };
-          } catch {
-            // source_ref is not valid JSON — fall back to type-only
-          }
-        }
-        return { id, title, text, created_at, read_at, source };
-      });
-      res.json({ notifications, unreadCount });
-    } catch (e) {
-      console.error("Error listing notifications:", e);
-      res.status(500).json({ error: "Failed to list notifications" });
-    }
-  });
-
   api.post("/notifications/read-all", (_req: Request, res: Response) => {
     try {
       const marked = markAllNotificationsRead();
@@ -688,19 +707,6 @@ export async function startApiServer(): Promise<void> {
     });
 
     res.json({ response: fullResponse });
-  });
-
-  api.get("/events", (req: Request, res: Response) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
-
-    sseConnections.add(res);
-
-    req.on("close", () => {
-      sseConnections.delete(res);
-    });
   });
 
   // Wiki endpoints (issue #105)
