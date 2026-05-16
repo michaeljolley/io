@@ -83,16 +83,23 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function getAccessToken(): Promise<string | null> {
-    if (!authEnabled.value) return null
-    const supabase = await getSupabase()
-    if (!supabase) return session.value?.access_token ?? null
-    const { data } = await supabase.auth.getSession()
-    if (data.session) {
-      session.value = data.session
-      user.value = data.session.user
-      return data.session.access_token
+    const cached = session.value
+    if (!cached?.access_token) return null
+
+    // Proactively refresh when within 30 seconds of expiry.
+    // Uses refreshSession() (safe) rather than getSession() which can fire
+    // onAuthStateChange with session=null and wipe our cached session ref.
+    if (cached.expires_at && cached.expires_at * 1000 - Date.now() < 30_000) {
+      try {
+        const supabase = await getSupabase()
+        if (supabase) {
+          const { data } = await supabase.auth.refreshSession()
+          if (data.session) return data.session.access_token
+        }
+      } catch { /* fall through to cached token */ }
     }
-    return session.value?.access_token ?? null
+
+    return cached.access_token
   }
 
   return { user, session, loading, initialized, authEnabled, init, signIn, signOut, getAccessToken }
