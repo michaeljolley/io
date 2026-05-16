@@ -34,10 +34,18 @@ export const useAuthStore = defineStore('auth', () => {
     // transiently return null while a background token-refresh is in flight.
     await new Promise<void>((resolve) => {
       supabase.auth.onAuthStateChange((event, s) => {
-        session.value = s
-        user.value = s?.user ?? null
-        // INITIAL_SESSION fires exactly once at startup (session may be null
-        // when the user is not logged in — that is the correct outcome too)
+        if (s) {
+          // Accept any valid session regardless of event type
+          session.value = s
+          user.value = s.user ?? null
+        } else if (event === 'SIGNED_OUT') {
+          // Only clear on explicit sign-out — other null-session events
+          // (TOKEN_REFRESHED failure, internal lock timeout, etc.) must not
+          // wipe a valid cached session.
+          session.value = null
+          user.value = null
+        }
+        // INITIAL_SESSION fires exactly once at startup
         if (event === 'INITIAL_SESSION') {
           resolve()
         }
@@ -84,22 +92,34 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function getAccessToken(): Promise<string | null> {
     const cached = session.value
-    if (!cached?.access_token) return null
+    if (cached?.access_token) {
+      // Proactively refresh when within 30 seconds of expiry
+      if (cached.expires_at && cached.expires_at * 1000 - Date.now() < 30_000) {
+        try {
+          const supabase = await getSupabase()
+          if (supabase) {
+            const { data } = await supabase.auth.refreshSession()
+            if (data.session) return data.session.access_token
+          }
+        } catch { /* fall through to cached token */ }
+      }
+      return cached.access_token
+    }
 
-    // Proactively refresh when within 30 seconds of expiry.
-    // Uses refreshSession() (safe) rather than getSession() which can fire
-    // onAuthStateChange with session=null and wipe our cached session ref.
-    if (cached.expires_at && cached.expires_at * 1000 - Date.now() < 30_000) {
+    // No cached session — attempt recovery if auth is enabled.
+    // Handles the edge case where the cache was spuriously cleared but a
+    // valid refresh token still exists in localStorage.
+    if (authEnabled.value) {
       try {
         const supabase = await getSupabase()
         if (supabase) {
           const { data } = await supabase.auth.refreshSession()
           if (data.session) return data.session.access_token
         }
-      } catch { /* fall through to cached token */ }
+      } catch { /* fall through to null */ }
     }
 
-    return cached.access_token
+    return null
   }
 
   return { user, session, loading, initialized, authEnabled, init, signIn, signOut, getAccessToken }
