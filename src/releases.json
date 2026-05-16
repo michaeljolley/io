@@ -1,5 +1,33 @@
 [
   {
+    "tag": "v0.21.3",
+    "name": "v0.21.3",
+    "body": "## What's Changed\n* fix(web): defer AppNav API calls until auth is initialized by @michaeljolley in https://github.com/michaeljolley/io/pull/196\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.2...v0.21.3\n\n## What's Changed\n* fix(web): defer AppNav API calls until auth is initialized by @michaeljolley in https://github.com/michaeljolley/io/pull/196\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.2...v0.21.3",
+    "published_at": "2026-05-16T03:33:38Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.21.3"
+  },
+  {
+    "tag": "v0.21.2",
+    "name": "v0.21.2",
+    "body": "## What's Changed\n* fix(web): guard onAuthStateChange against spurious null sessions by @michaeljolley in https://github.com/michaeljolley/io/pull/194\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.1...v0.21.2\n\n## What's Changed\n* fix(web): guard onAuthStateChange against spurious null sessions by @michaeljolley in https://github.com/michaeljolley/io/pull/194\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.1...v0.21.2",
+    "published_at": "2026-05-16T03:16:52Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.21.2"
+  },
+  {
+    "tag": "v0.21.1",
+    "name": "v0.21.1",
+    "body": "## What's Changed\n* fix(web): avoid getSession() side-effect that wiped cached session (#191) by @michaeljolley in https://github.com/michaeljolley/io/pull/192\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.0...v0.21.1\n\n## What's Changed\n* fix(web): avoid getSession() side-effect that wiped cached session (#191) by @michaeljolley in https://github.com/michaeljolley/io/pull/192\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.21.0...v0.21.1",
+    "published_at": "2026-05-16T02:27:01Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.21.1"
+  },
+  {
+    "tag": "v0.21.0",
+    "name": "v0.21.0",
+    "body": "## What's Changed\n* feat: bulk feed actions — select, mark-read, delete (#185) by @michaeljolley in https://github.com/michaeljolley/io/pull/186\n* fix(web): resilient token retrieval prevents sporadic auth failures (#188) by @michaeljolley in https://github.com/michaeljolley/io/pull/189\n* feat: in-app release notes with what's new badge (#187) by @michaeljolley in https://github.com/michaeljolley/io/pull/190\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.20.0...v0.21.0",
+    "published_at": "2026-05-16T02:03:49Z",
+    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.21.0"
+  },
+  {
     "tag": "v0.20.0",
     "name": "v0.20.0",
     "body": "## What's Changed\n* feat: unified feed merging inbox + notifications by @michaeljolley in https://github.com/michaeljolley/io/pull/184\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.19.0...v0.20.0",
@@ -40,33 +68,5 @@
     "body": "## What's Changed\n* fix: add review_pr action to GitHub tool for veto audit trail (#155) by @michaeljolley in https://github.com/michaeljolley/io/pull/159\n* fix(web): auth state not persisted across page refreshes by @michaeljolley in https://github.com/michaeljolley/io/pull/160\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.16.0...v0.17.0",
     "published_at": "2026-05-14T23:11:18Z",
     "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.17.0"
-  },
-  {
-    "tag": "v0.16.0",
-    "name": "v0.16.0",
-    "body": "## What's Changed\n* feat: route squad task results to inbox + TUI inbox commands by @michaeljolley in https://github.com/michaeljolley/io/pull/156\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.15.0...v0.16.0",
-    "published_at": "2026-05-14T21:23:31Z",
-    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.16.0"
-  },
-  {
-    "tag": "v0.15.0",
-    "name": "v0.15.0",
-    "body": "## What's Changed\n* feat: add inbox feature for squad agent artifacts (#153) by @michaeljolley in https://github.com/michaeljolley/io/pull/154\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.14.0...v0.15.0",
-    "published_at": "2026-05-14T20:52:55Z",
-    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.15.0"
-  },
-  {
-    "tag": "v0.14.0",
-    "name": "v0.14.0",
-    "body": "## What's Changed\n* feat(web): redesign IO web app with Obsidian Console design system (#139) by @michaeljolley in https://github.com/michaeljolley/io/pull/152\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.13.0...v0.14.0",
-    "published_at": "2026-05-14T17:46:36Z",
-    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.14.0"
-  },
-  {
-    "tag": "v0.13.0",
-    "name": "v0.13.0",
-    "body": "## What's Changed\n* fix: move skill read endpoints before auth middleware (#137) by @michaeljolley in https://github.com/michaeljolley/io/pull/145\n* feat(web): sort squad members by role priority (#138) by @michaeljolley in https://github.com/michaeljolley/io/pull/146\n* feat: delete skills from web UI (#140) by @michaeljolley in https://github.com/michaeljolley/io/pull/147\n* feat(web): add skill search/filter (#141) by @michaeljolley in https://github.com/michaeljolley/io/pull/148\n* feat(web): structured frontmatter display for skills (#142) by @michaeljolley in https://github.com/michaeljolley/io/pull/149\n* fix: accept any heading level in skill install validation (#143) by @michaeljolley in https://github.com/michaeljolley/io/pull/150\n* feat(web): add skill discovery resource links (#144) by @michaeljolley in https://github.com/michaeljolley/io/pull/151\n\n\n**Full Changelog**: https://github.com/michaeljolley/io/compare/v0.12.0...v0.13.0",
-    "published_at": "2026-05-14T17:21:24Z",
-    "html_url": "https://github.com/michaeljolley/io/releases/tag/v0.13.0"
   }
 ]

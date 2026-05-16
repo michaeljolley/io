@@ -26,13 +26,20 @@ const WEB_DIST = path.resolve(__dirname, "../../web-dist");
 let releasesCache: unknown[] | null = null;
 function loadReleases(): unknown[] {
   if (releasesCache) return releasesCache;
-  try {
-    const raw = readFileSync(path.join(__dirname, "../releases.json"), "utf-8");
-    releasesCache = JSON.parse(raw) as unknown[];
-    return releasesCache;
-  } catch {
-    return [];
+  // Check both dev (src/api/ → src/) and production (dist/api/ → src/) paths
+  const candidates = [
+    path.join(__dirname, "../releases.json"),         // dist/api/ → dist/releases.json
+    path.join(__dirname, "../../src/releases.json"),  // dist/api/ → src/releases.json
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (!existsSync(candidate)) continue;
+      const raw = readFileSync(candidate, "utf-8");
+      releasesCache = JSON.parse(raw) as unknown[];
+      return releasesCache;
+    } catch { /* try next */ }
   }
+  return [];
 }
 
 export type ApiMessageHandler = (

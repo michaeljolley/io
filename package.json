@@ -7,6 +7,7 @@
   },
   "files": [
     "dist/**/*.js",
+    "src/releases.json",
     "web-dist/**/*",
     "README.md"
   ],
