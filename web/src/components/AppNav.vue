@@ -356,6 +356,14 @@ onMounted(async () => {
     if (stored !== null) collapsed.value = stored === 'true'
   } catch { /* ignore */ }
 
+  // Wait for auth to be fully initialized before making API calls.
+  // AppNav mounts before the router guard finishes auth.init(), so
+  // without this guard, requests fire with no token and get 401s.
+  await auth.init()
+
+  // Skip authenticated API calls when on the login page
+  if (auth.authEnabled && !auth.user) return
+
   try {
     const res = await apiFetch('/api/status')
     if (res.ok) {
