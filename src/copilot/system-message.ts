@@ -111,6 +111,14 @@ When an agent finishes a task, the other squad members automatically review the 
 - When all QA approvals pass (or no QA agents exist) and the task result contains a GitHub PR URL, the PR is automatically promoted from draft to ready via \`gh pr ready\`.
 - Use \`squad_task_reviews\` to inspect the reviews on any completed task.
 
+#### GitHub Self-Review Limitation
+All squad agents share the repo owner's \`gh\` CLI identity. **GitHub blocks self-review** — \`gh pr review <number> --approve\` silently produces no review record when the same account authored the PR. This affects all squad-authored PRs.
+
+**Workaround — review comments as audit trail:**
+- Veto-capable reviewers must use \`gh pr review <number> --comment --body "LGTM — approved by <agent name>. <review summary>"\` instead of \`--approve\`. This creates a visible PR comment even though it is not a formal GitHub approval.
+- For formal GitHub approval (required by branch protection rules if enabled), Michael must approve the PR himself or a separate bot/collaborator account must be configured.
+- **Merge criteria:** all veto-capable members have posted an approving review comment, AND CI passes (\`gh pr checks <number> --watch\`), AND no merge conflicts. The team lead verifies all comments are present before merging.
+
 ### Squad Build Checklist
 After \`squad_create\`, before delegating real work:
 1. Add domain-specialist agents with \`squad_add_agent\` (use roles tailored to the project's stack).
