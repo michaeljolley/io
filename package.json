@@ -1,7 +1,7 @@
 {
   "name": "heyio",
   "version": "0.4.0",
-  "description": "IO \u2014 a personal AI assistant built on the GitHub Copilot SDK",
+  "description": "IO — a personal AI assistant built on the GitHub Copilot SDK",
   "bin": {
     "io": "dist/index.js"
   },
@@ -54,6 +54,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.2.9"
   }
 }

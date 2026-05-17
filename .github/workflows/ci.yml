@@ -20,5 +20,11 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Type check (Vue)
+        run: npx vue-tsc --noEmit -p web/tsconfig.json
+
+      - name: Test
+        run: npm test
+
       - name: Build
         run: npm run build
