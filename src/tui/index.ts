@@ -279,15 +279,24 @@ export async function startTui(): Promise<void> {
         }
 
         if (done) {
+          // Finalize the current message as its own line, then reset state
+          // so the next message in a multi-turn response starts a fresh bubble.
           clearLine();
-          process.stdout.write(accumulated + "\n");
-          rl.prompt();
+          if (accumulated) {
+            process.stdout.write(accumulated + "\n");
+          }
+          accumulated = "";
+          firstChunk = true;
         } else {
           accumulated += text;
           clearLine();
           process.stdout.write(accumulated);
         }
       });
+      // Restore the prompt once the handler promise fully resolves (i.e. after
+      // all turns are done), rather than inside the done callback so that
+      // multi-turn responses don't render a premature prompt between messages.
+      rl.prompt();
     } catch (err) {
       clearLine();
       console.error(
