@@ -1,5 +1,5 @@
 import { getDb } from "./db.js";
-import { nextCharacter, randomUniverse, getUniverse } from "../copilot/universes.js";
+import { nextCharacter, randomUniverse, getUniverse, getOrCreateUniverse } from "../copilot/universes.js";
 import type { Character, Universe } from "../copilot/universes.js";
 
 export interface Squad {
@@ -46,7 +46,7 @@ export function createSquad(
 ): Squad {
   const db = getDb();
   const universe = universeId
-    ? getUniverse(universeId)?.id ?? randomUniverse().id
+    ? getOrCreateUniverse(universeId).id
     : randomUniverse().id;
   db.prepare(
     "INSERT INTO squads (slug, name, project_path, universe) VALUES (?, ?, ?, ?)",

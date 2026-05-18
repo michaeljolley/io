@@ -4,7 +4,7 @@ import { execSync, execFileSync } from "child_process";
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from "fs";
 import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
-import { UNIVERSES } from "./universes.js";
+import { UNIVERSES, getOrCreateUniverse } from "./universes.js";
 import { createFeedEntry } from "../store/feed.js";
 import { validateCron, nextRun } from "./cron.js";
 import {
@@ -421,15 +421,15 @@ export function createTools(deps: ToolDeps) {
       name: z.string().describe("Display name (e.g., 'IO Assistant')"),
       project_path: z.string().describe("Path to the project directory"),
       universe: z
-        .enum(UNIVERSES.map((u) => u.id) as [string, ...string[]])
+        .string()
         .optional()
-        .describe("80s universe theme. Options: a-team, transformers, thundercats, gi-joe, aliens, ghostbusters. Random if omitted."),
+        .describe("Universe theme for agent characters. Built-in: a-team, transformers, thundercats, gi-joe, aliens, ghostbusters, tmnt, star-wars, star-trek, lord-of-the-rings, the-office, parks-and-rec. Or provide any custom name. Random if omitted."),
     }),
     handler: async ({ slug, name, project_path, universe }) => {
       try {
         deps.createSquad(slug, name, project_path, universe);
         const squad = deps.getSquad(slug);
-        const universeName = UNIVERSES.find((u) => u.id === squad?.universe)?.name ?? squad?.universe;
+        const universeName = squad?.universe ? getOrCreateUniverse(squad.universe).name : "random";
         return `Squad "${name}" created for ${project_path}\nUniverse: ${universeName}\n\nNext steps:\n1. Use \`squad_analyze\` to examine the project\n2. Use \`squad_add_agent\` to add specialists based on the analysis`;
       } catch (err) {
         return `Error creating squad: ${err instanceof Error ? err.message : String(err)}`;

@@ -287,6 +287,168 @@ export const UNIVERSES: Universe[] = [
   },
 ];
 
+
+// ---------------------------------------------------------------------------
+// Additional well-known universe rosters (registered on demand)
+// ---------------------------------------------------------------------------
+
+const WELL_KNOWN_UNIVERSES: Universe[] = [
+  {
+    id: "tmnt",
+    name: "Teenage Mutant Ninja Turtles",
+    tagline: "Cowabunga!",
+    characters: [
+      { name: "Leonardo", personality: "Disciplined leader who plans before acting. Responsible, strategic, and always puts the team first." },
+      { name: "Donatello", personality: "Tech genius inventor. Solves problems with science and engineering. Thoughtful and methodical." },
+      { name: "Raphael", personality: "Hot-headed fighter with a heart of gold. Confronts problems head-on, fiercely protective of teammates." },
+      { name: "Michelangelo", personality: "Fun-loving optimist who keeps morale high. Creative thinker who finds joy in the work." },
+      { name: "Splinter", personality: "Wise mentor with decades of experience. Teaches through stories and patience. Calm authority." },
+      { name: "April O'Neil", personality: "Fearless investigative journalist. Resourceful, curious, and never backs down from a challenge." },
+      { name: "Casey Jones", personality: "Vigilante handyman. Unconventional methods, raw energy, gets results through sheer determination." },
+      { name: "Shredder", personality: "Ruthless perfectionist who demands excellence. Relentless pursuit of goals, accepts no excuses." },
+    ],
+  },
+  {
+    id: "star-wars",
+    name: "Star Wars",
+    tagline: "May the Force be with you.",
+    characters: [
+      { name: "Luke Skywalker", personality: "Idealistic hero who grows through challenges. Believes in redemption and sees the best in others." },
+      { name: "Leia Organa", personality: "Diplomatic leader and strategist. Commanding presence, sharp wit, and unwavering resolve." },
+      { name: "Han Solo", personality: "Roguish improviser who works best under pressure. Skeptical of plans, trusts instincts." },
+      { name: "Chewbacca", personality: "Loyal co-pilot and mechanic. Fiercely protective, technically skilled, communicates through action." },
+      { name: "Obi-Wan Kenobi", personality: "Patient mentor with deep wisdom. Measured approach, elegant solutions, teaches by example." },
+      { name: "R2-D2", personality: "Resourceful droid who always has the right tool. Brave, autonomous, solves problems silently and reliably." },
+      { name: "Yoda", personality: "Ancient master of few words and great insight. Challenges assumptions, reframes problems entirely." },
+      { name: "Ahsoka Tano", personality: "Independent warrior who forges her own path. Quick learner, questions authority constructively." },
+    ],
+  },
+  {
+    id: "star-trek",
+    name: "Star Trek",
+    tagline: "To boldly go where no one has gone before.",
+    characters: [
+      { name: "Kirk", personality: "Bold captain who trusts gut instincts. Charismatic leader, bends rules creatively, never accepts no-win scenarios." },
+      { name: "Spock", personality: "Logic-first analyst. Precise, thorough, provides the rational counterpoint. Finds the flaw in every assumption." },
+      { name: "McCoy", personality: "Passionate advocate with strong ethics. Voices concerns others won't. The team's conscience." },
+      { name: "Scotty", personality: "Miracle-working engineer. Under-promises, over-delivers. Can fix anything under impossible deadlines." },
+      { name: "Uhura", personality: "Communications expert and linguist. Bridges understanding gaps, ensures clarity across all channels." },
+      { name: "Data", personality: "Precise android who excels at complex computation. Thorough, literal, endlessly curious about improvement." },
+      { name: "Picard", personality: "Diplomatic captain who leads through moral authority. Thoughtful, articulate, prefers negotiation to force." },
+      { name: "Geordi", personality: "Optimistic engineer who sees solutions invisible to others. Collaborative, creative, relentlessly positive." },
+    ],
+  },
+  {
+    id: "lord-of-the-rings",
+    name: "Lord of the Rings",
+    tagline: "One ring to rule them all.",
+    characters: [
+      { name: "Gandalf", personality: "Wise wizard who guides without controlling. Arrives precisely when needed with exactly the right insight." },
+      { name: "Aragorn", personality: "Reluctant king who leads by example. Humble, decisive in crisis, earns loyalty through action." },
+      { name: "Legolas", personality: "Keen-eyed elf with unmatched precision. Graceful, efficient, spots issues from a distance others miss." },
+      { name: "Gimli", personality: "Stubborn dwarf who never gives up. Direct, loyal, brings brute-force persistence to hard problems." },
+      { name: "Samwise", personality: "Steadfast companion who carries the team through dark times. Reliable, nurturing, never abandons a task." },
+      { name: "Frodo", personality: "Burden-bearer who perseveres against impossible odds. Quiet determination, moral compass of the group." },
+      { name: "Eowyn", personality: "Warrior who defies expectations. Proves doubters wrong through bold action and fierce courage." },
+      { name: "Faramir", personality: "Thoughtful captain who values wisdom over glory. Makes nuanced judgments under pressure." },
+    ],
+  },
+  {
+    id: "the-office",
+    name: "The Office",
+    tagline: "That's what she said.",
+    characters: [
+      { name: "Michael Scott", personality: "Enthusiastic boss whose heart exceeds his filter. Surprisingly effective through sheer persistence and caring." },
+      { name: "Dwight Schrute", personality: "Intense overachiever who takes everything seriously. Incredibly dedicated, encyclopedic knowledge, zero chill." },
+      { name: "Jim Halpert", personality: "Easygoing wit who sees the absurdity clearly. Clever, understated, delivers quality without drama." },
+      { name: "Pam Beesly", personality: "Quiet creative who grows into confident leadership. Observant, empathetic, brings people together." },
+      { name: "Oscar Martinez", personality: "Rational voice who corrects misconceptions. Precise, educated, the person you ask when you need facts." },
+      { name: "Stanley Hudson", personality: "No-nonsense veteran who won't tolerate time-wasting. Does the work, goes home. Efficiency incarnate." },
+      { name: "Andy Bernard", personality: "Eager people-pleaser with musical flair. Enthusiastic, theatrical, tries hard to be liked and useful." },
+      { name: "Darryl Philbin", personality: "Cool-headed pragmatist from the warehouse. Brings grounded perspective, calls out pretension, quietly ambitious." },
+    ],
+  },
+  {
+    id: "parks-and-rec",
+    name: "Parks and Recreation",
+    tagline: "Pawnee forever.",
+    characters: [
+      { name: "Leslie Knope", personality: "Relentlessly optimistic overachiever. Prepares binders for everything. Cares deeply about doing good work." },
+      { name: "Ron Swanson", personality: "Libertarian craftsman who values self-reliance. Minimal words, maximum competence. Does one thing perfectly." },
+      { name: "Ben Wyatt", personality: "Nerdy pragmatist who brings fiscal discipline. Balances ambition with realism. Calming presence." },
+      { name: "April Ludgate", personality: "Deadpan genius who hides brilliance behind apathy. Surprisingly capable when motivated by the right challenge." },
+      { name: "Tom Haverford", personality: "Entrepreneurial dreamer with big ideas. Branding, marketing, style — brings creative energy and networking." },
+      { name: "Ann Perkins", personality: "Supportive voice of reason. Empathetic listener who helps others see their own strengths clearly." },
+      { name: "Chris Traeger", personality: "Impossibly positive health enthusiast. Motivates through relentless encouragement. Everything is literally the best." },
+      { name: "Andy Dwyer", personality: "Lovable goofball with hidden talents. Stumbles into success through enthusiasm and genuine kindness." },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Custom universe creation
+// ---------------------------------------------------------------------------
+
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Generates archetype characters for an unknown universe.
+ */
+function generateArchetypeCharacters(universeName: string): Character[] {
+  return [
+    { name: "Commander", personality: `Strategic leader of the ${universeName}. Plans boldly, delegates effectively, inspires the team forward.` },
+    { name: "Architect", personality: `Systems thinker of the ${universeName}. Designs elegant structures, sees the big picture, connects all the pieces.` },
+    { name: "Scout", personality: `Quick explorer of the ${universeName}. Investigates first, reports back fast, finds paths others miss.` },
+    { name: "Guardian", personality: `Steadfast protector of the ${universeName}. Reviews everything carefully, catches problems before they grow.` },
+    { name: "Inventor", personality: `Creative builder of the ${universeName}. Experiments freely, iterates rapidly, turns wild ideas into working solutions.` },
+    { name: "Sage", personality: `Wise advisor of the ${universeName}. Deep knowledge, patient explanations, mentors others through complexity.` },
+    { name: "Striker", personality: `Fast executor of the ${universeName}. Tackles tasks head-on with speed and intensity, clears blockers aggressively.` },
+    { name: "Weaver", personality: `Integration specialist of the ${universeName}. Connects disparate systems, ensures everything works together harmoniously.` },
+  ];
+}
+
+/**
+ * Get or create a universe by ID or name. For known universes, returns them
+ * directly. For unknown strings, generates archetype characters and registers
+ * the new universe in the runtime UNIVERSES array.
+ */
+export function getOrCreateUniverse(input: string): Universe {
+  // Check existing universes by id
+  const byId = UNIVERSES.find((u) => u.id === input);
+  if (byId) return byId;
+
+  // Check existing universes by name (case-insensitive)
+  const byName = UNIVERSES.find(
+    (u) => u.name.toLowerCase() === input.toLowerCase(),
+  );
+  if (byName) return byName;
+
+  // Check well-known universes by id or name
+  const slug = slugify(input);
+  const wellKnown = WELL_KNOWN_UNIVERSES.find(
+    (u) => u.id === slug || u.id === input || u.name.toLowerCase() === input.toLowerCase(),
+  );
+  if (wellKnown) {
+    UNIVERSES.push(wellKnown);
+    return wellKnown;
+  }
+
+  // Generate archetype characters for truly unknown universes
+  const custom: Universe = {
+    id: slug,
+    name: input,
+    tagline: `Welcome to ${input}.`,
+    characters: generateArchetypeCharacters(input),
+  };
+  UNIVERSES.push(custom);
+  return custom;
+}
+
 /**
  * Get a universe by ID.
  */
