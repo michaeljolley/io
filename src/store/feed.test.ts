@@ -17,7 +17,9 @@ import {
   countUnreadFeedEntries,
   markFeedEntryRead,
   markAllFeedEntriesRead,
+  markFeedEntriesRead,
   deleteFeedEntry,
+  deleteFeedEntries,
   pruneOldFeedEntries,
 } from "./feed.js";
 
@@ -206,6 +208,52 @@ describe("markAllFeedEntriesRead", () => {
   });
 });
 
+// ── markFeedEntriesRead (batch) ───────────────────────────────────────────────
+
+describe("markFeedEntriesRead", () => {
+  it("marks multiple entries read and returns change count", () => {
+    const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
+    const b = createFeedEntry({ type: "deliverable", title: "B", body: "b" });
+    const c = createFeedEntry({ type: "notification", title: "C", body: "c" });
+    const count = markFeedEntriesRead([a.id, b.id, c.id]);
+    assert.equal(count, 3);
+    assert.equal(countUnreadFeedEntries(), 0);
+  });
+
+  it("returns 0 for an empty array without throwing", () => {
+    createFeedEntry({ type: "notification", title: "A", body: "a" });
+    assert.equal(markFeedEntriesRead([]), 0);
+    assert.equal(countUnreadFeedEntries(), 1);
+  });
+
+  it("works correctly for a single id", () => {
+    const e = createFeedEntry({ type: "deliverable", title: "Solo", body: "b" });
+    assert.equal(markFeedEntriesRead([e.id]), 1);
+    const entries = listFeedEntries();
+    assert.ok(entries[0].read_at !== null);
+  });
+
+  it("does not throw for non-existent ids — returns 0 changes", () => {
+    assert.equal(markFeedEntriesRead([9991, 9992, 9993]), 0);
+  });
+
+  it("is idempotent — already-read entries count as 0 changes", () => {
+    const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
+    const b = createFeedEntry({ type: "notification", title: "B", body: "b" });
+    markFeedEntriesRead([a.id, b.id]);
+    assert.equal(markFeedEntriesRead([a.id, b.id]), 0);
+  });
+
+  it("skips already-read entries and marks only unread ones", () => {
+    const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
+    const b = createFeedEntry({ type: "notification", title: "B", body: "b" });
+    markFeedEntriesRead([a.id]);
+    const count = markFeedEntriesRead([a.id, b.id]);
+    assert.equal(count, 1);
+    assert.equal(countUnreadFeedEntries(), 0);
+  });
+});
+
 // ── deleteFeedEntry ───────────────────────────────────────────────────────────
 
 describe("deleteFeedEntry", () => {
@@ -224,6 +272,45 @@ describe("deleteFeedEntry", () => {
     const e = createFeedEntry({ type: "deliverable", title: "T", body: "b" });
     deleteFeedEntry(e.id);
     assert.equal(deleteFeedEntry(e.id), false);
+  });
+});
+
+// ── deleteFeedEntries (batch) ─────────────────────────────────────────────────
+
+describe("deleteFeedEntries", () => {
+  it("deletes multiple entries and returns change count", () => {
+    const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
+    const b = createFeedEntry({ type: "deliverable", title: "B", body: "b" });
+    const c = createFeedEntry({ type: "notification", title: "C", body: "c" });
+    const count = deleteFeedEntries([a.id, b.id, c.id]);
+    assert.equal(count, 3);
+    assert.deepEqual(listFeedEntries(), []);
+  });
+
+  it("returns 0 for an empty array without throwing", () => {
+    createFeedEntry({ type: "notification", title: "A", body: "a" });
+    assert.equal(deleteFeedEntries([]), 0);
+    assert.equal(listFeedEntries().length, 1);
+  });
+
+  it("works correctly for a single id", () => {
+    const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
+    const b = createFeedEntry({ type: "notification", title: "B", body: "b" });
+    assert.equal(deleteFeedEntries([a.id]), 1);
+    const remaining = listFeedEntries();
+    assert.equal(remaining.length, 1);
+    assert.equal(remaining[0].id, b.id);
+  });
+
+  it("does not throw for non-existent ids — returns 0 changes", () => {
+    assert.equal(deleteFeedEntries([9991, 9992, 9993]), 0);
+  });
+
+  it("mix of existing and non-existent ids — only deletes what exists", () => {
+    const e = createFeedEntry({ type: "deliverable", title: "Real", body: "b" });
+    const count = deleteFeedEntries([e.id, 9999]);
+    assert.equal(count, 1);
+    assert.deepEqual(listFeedEntries(), []);
   });
 });
 
