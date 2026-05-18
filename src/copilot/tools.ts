@@ -1,6 +1,6 @@
 import { defineTool } from "@github/copilot-sdk";
 import { z } from "zod";
-import { execSync } from "child_process";
+import { execSync, execFileSync } from "child_process";
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from "fs";
 import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
@@ -1265,10 +1265,10 @@ export function createTools(deps: ToolDeps) {
     handler: async ({ pattern, path: searchPath, include }) => {
       console.error(`[io] grep tool called: ${pattern} in ${searchPath || "."}`);
       try {
-        let cmd = `grep -rn "${pattern.replace(/"/g, '\\"')}"`;
-        if (include) cmd += ` --include="${include}"`;
-        cmd += ` ${searchPath || "."}`;
-        const result = execSync(cmd, {
+        const args = ["-rn", pattern];
+        if (include) args.push(`--include=${include}`);
+        args.push(searchPath || ".");
+        const result = execFileSync("grep", args, {
           encoding: "utf-8",
           timeout: 30_000,
           maxBuffer: 1024 * 1024,
@@ -1381,69 +1381,68 @@ export function createTools(deps: ToolDeps) {
     handler: async ({ action, repo, title, body, labels, assignees, number, base, head, state, limit, review_action }) => {
       console.error(`[io] github tool called: ${action} on ${repo}`);
       try {
-        let cmd: string;
-        const r = `--repo ${repo}`;
+        let args: string[];
 
         switch (action) {
           case "create_issue": {
             if (!title) return "Error: title is required for create_issue";
-            cmd = `gh issue create ${r} --title "${title.replace(/"/g, '\\"')}"`;
-            if (body) cmd += ` --body "${body.replace(/"/g, '\\"')}"`;
-            if (labels?.length) cmd += ` --label "${labels.join(",")}"`;
-            if (assignees?.length) cmd += ` --assignee "${assignees.join(",")}"`;
+            args = ["issue", "create", "--repo", repo, "--title", title];
+            if (body) args.push("--body", body);
+            if (labels?.length) args.push("--label", labels.join(","));
+            if (assignees?.length) args.push("--assignee", assignees.join(","));
             break;
           }
           case "list_issues": {
-            cmd = `gh issue list ${r} --limit ${limit ?? 10}`;
-            if (state) cmd += ` --state ${state}`;
+            args = ["issue", "list", "--repo", repo, "--limit", String(limit ?? 10)];
+            if (state) args.push("--state", state);
             break;
           }
           case "view_issue": {
             if (!number) return "Error: number is required for view_issue";
-            cmd = `gh issue view ${number} ${r}`;
+            args = ["issue", "view", String(number), "--repo", repo];
             break;
           }
           case "comment_issue": {
             if (!number) return "Error: number is required for comment_issue";
             if (!body) return "Error: body is required for comment_issue";
-            cmd = `gh issue comment ${number} ${r} --body "${body.replace(/"/g, '\\"')}"`;
+            args = ["issue", "comment", String(number), "--repo", repo, "--body", body];
             break;
           }
           case "close_issue": {
             if (!number) return "Error: number is required for close_issue";
-            cmd = `gh issue close ${number} ${r}`;
+            args = ["issue", "close", String(number), "--repo", repo];
             break;
           }
           case "create_pr": {
             if (!title) return "Error: title is required for create_pr";
-            cmd = `gh pr create ${r} --title "${title.replace(/"/g, '\\"')}"`;
-            if (body) cmd += ` --body "${body.replace(/"/g, '\\"')}"`;
-            if (base) cmd += ` --base ${base}`;
-            if (head) cmd += ` --head ${head}`;
+            args = ["pr", "create", "--repo", repo, "--title", title];
+            if (body) args.push("--body", body);
+            if (base) args.push("--base", base);
+            if (head) args.push("--head", head);
             break;
           }
           case "list_prs": {
-            cmd = `gh pr list ${r} --limit ${limit ?? 10}`;
-            if (state) cmd += ` --state ${state}`;
+            args = ["pr", "list", "--repo", repo, "--limit", String(limit ?? 10)];
+            if (state) args.push("--state", state);
             break;
           }
           case "view_pr": {
             if (!number) return "Error: number is required for view_pr";
-            cmd = `gh pr view ${number} ${r}`;
+            args = ["pr", "view", String(number), "--repo", repo];
             break;
           }
           case "comment_pr": {
             if (!number) return "Error: number is required for comment_pr";
             if (!body) return "Error: body is required for comment_pr";
-            cmd = `gh pr comment ${number} ${r} --body "${body.replace(/"/g, '\\"')}"`;
+            args = ["pr", "comment", String(number), "--repo", repo, "--body", body];
             break;
           }
           case "review_pr": {
             if (!number) return "Error: number is required for review_pr";
             if (!review_action) return "Error: review_action is required for review_pr (approve, request-changes, or comment)";
-            cmd = `gh pr review ${number} ${r} --${review_action}`;
+            args = ["pr", "review", String(number), "--repo", repo, `--${review_action}`];
             if (body && (review_action === "request-changes" || review_action === "comment")) {
-              cmd += ` --body "${body.replace(/"/g, '\\"')}"`;
+              args.push("--body", body);
             }
             break;
           }
@@ -1451,7 +1450,7 @@ export function createTools(deps: ToolDeps) {
             return `Unknown action: ${action}`;
         }
 
-        const result = execSync(cmd, {
+        const result = execFileSync("gh", args, {
           encoding: "utf-8",
           timeout: 30_000,
           maxBuffer: 1024 * 1024,
