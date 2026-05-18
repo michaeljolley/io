@@ -121,6 +121,9 @@ export function addSquadAgent(
       .run(universeId, squadSlug);
   }
 
+  // Ensure universe is registered in runtime array (handles restart for custom universes)
+  getOrCreateUniverse(universeId);
+
   const existingAgents = listSquadAgents(squadSlug);
   const usedNames = existingAgents.map((a) => a.character_name);
   const character = nextCharacter(universeId, usedNames);
