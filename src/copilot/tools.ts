@@ -4,7 +4,7 @@ import { execSync, execFileSync } from "child_process";
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from "fs";
 import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
-import { UNIVERSES, getOrCreateUniverse } from "./universes.js";
+import { UNIVERSES, getOrCreateUniverse, generateUniverseRoster } from "./universes.js";
 import { createFeedEntry } from "../store/feed.js";
 import { validateCron, nextRun } from "./cron.js";
 import {
@@ -427,6 +427,9 @@ export function createTools(deps: ToolDeps) {
     }),
     handler: async ({ slug, name, project_path, universe }) => {
       try {
+        if (universe) {
+          await generateUniverseRoster(universe);
+        }
         deps.createSquad(slug, name, project_path, universe);
         const squad = deps.getSquad(slug);
         const universeName = squad?.universe ? getOrCreateUniverse(squad.universe).name : "random";

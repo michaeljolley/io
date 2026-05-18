@@ -449,6 +449,71 @@ export function getOrCreateUniverse(input: string): Universe {
   return custom;
 }
 
+
+
+/**
+ * Generate a universe roster using the LLM for unknown universes.
+ * Falls back to archetype characters if the LLM call fails.
+ * For known/well-known universes, returns them directly without an LLM call.
+ */
+export async function generateUniverseRoster(input: string): Promise<Universe> {
+  // First try synchronous resolution
+  const existing = getOrCreateUniverse(input);
+  // If it resolved to something other than archetypes, use it
+  const isArchetype = existing.characters[0]?.name === "Commander";
+  if (!isArchetype) return existing;
+
+  // Use LLM to generate real characters for the unknown universe
+  let session: { sendAndWait: (opts: { prompt: string }, timeout: number) => Promise<{ data: { content: string } } | undefined>; destroy: () => Promise<void> } | undefined;
+  try {
+    const { getClient } = await import("./client.js");
+    const { approveAll } = await import("@github/copilot-sdk");
+    const client = await getClient();
+    session = await client.createSession({
+      systemMessage: { mode: "replace", content: "You are a pop-culture expert. Generate character rosters for fictional universes. Respond ONLY with valid JSON, no markdown fencing." },
+      onPermissionRequest: approveAll,
+    });
+
+    const prompt = `Generate a roster of 8 characters from the universe "${input}". For each character provide their canonical name and a one-sentence personality description suitable for a software engineering team role.
+
+Return ONLY a JSON object with this exact shape:
+{"name":"<Universe Display Name>","tagline":"<iconic catchphrase or tagline>","characters":[{"name":"<Character Name>","personality":"<1-sentence personality description>"}]}
+
+Use well-known, iconic characters from this universe. The personality should reflect the actual character's traits.`;
+
+    const response = await session.sendAndWait({ prompt }, 30_000);
+    const rawContent = response?.data?.content ?? "";
+    const jsonStr = rawContent.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+    const parsed = JSON.parse(jsonStr);
+
+    if (parsed?.characters?.length > 0) {
+      const slug = slugify(input);
+      const universe: Universe = {
+        id: slug,
+        name: parsed.name || input,
+        tagline: parsed.tagline || `Welcome to ${input}.`,
+        characters: parsed.characters.slice(0, 8).map((c: { name: unknown; personality: unknown }) => ({
+          name: String(c.name),
+          personality: String(c.personality),
+        })),
+      };
+
+      // Replace the archetype entry with the real one
+      const idx = UNIVERSES.findIndex((u) => u.id === slug);
+      if (idx >= 0) UNIVERSES.splice(idx, 1);
+      UNIVERSES.push(universe);
+      return universe;
+    }
+  } catch (err) {
+    console.error(`[io] Failed to generate universe roster for "${input}":`, err);
+  } finally {
+    try { await session?.destroy(); } catch { /* best-effort cleanup */ }
+  }
+
+  // LLM failed — return the archetype fallback (already registered)
+  return existing;
+}
+
 /**
  * Get a universe by ID.
  */
