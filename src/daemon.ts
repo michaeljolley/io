@@ -13,6 +13,7 @@ import { backfillReviewVerdicts } from "./copilot/review-backfill.js";
 import { startScheduler, stopScheduler } from "./copilot/scheduler.js";
 import { startIoScheduler, stopIoScheduler } from "./copilot/io-scheduler.js";
 import { config } from "./config.js";
+import { startWatchdog } from "./watchdog.js";
 import { ensureWikiStructure } from "./wiki/fs.js";
 import { autoUpdate } from "./update.js";
 import { readdirSync, statSync, rmSync } from "fs";
@@ -161,6 +162,13 @@ export async function startDaemon(): Promise<void> {
   // Daily cleanup — prune schedule runs and notifications older than 30 days
   const PRUNE_INTERVAL_MS = 24 * 60 * 60 * 1000;
   const PRUNE_RETENTION_DAYS = 30;
+  // Start event loop watchdog
+  let stopWatchdog: (() => void) | undefined;
+  if (config.watchdogEnabled) {
+    stopWatchdog = startWatchdog();
+    console.error("[io] Event loop watchdog started");
+  }
+
   const pruneTimer = setInterval(() => {
     try {
       const runsDeleted = pruneOldScheduleRuns(PRUNE_RETENTION_DAYS);

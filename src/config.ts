@@ -23,6 +23,7 @@ export interface IOConfig {
   backgroundNotifyMode: "all" | "meaningful" | "off";
   backgroundNotifyTelegram: boolean;
   backgroundNotifyTui: boolean;
+  watchdogEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: IOConfig = {
@@ -32,6 +33,7 @@ const DEFAULT_CONFIG: IOConfig = {
   backgroundNotifyMode: "meaningful",
   backgroundNotifyTelegram: true,
   backgroundNotifyTui: true,
+  watchdogEnabled: true,
 };
 
 function loadConfig(): IOConfig {
