@@ -37,7 +37,34 @@
       </div>
     </div>
 
-    <!-- Filter tabs -->
+    <!-- Search bar -->
+    <div class="relative mb-3">
+      <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-txt-muted">
+        <FluentIcon
+          :paths='`<path d="M13.74 13.03a7.5 7.5 0 1 0-.71.71l3.63 3.63c.2.2.51.2.71 0a.5.5 0 0 0 0-.71l-3.63-3.63Zm.26-5.53a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/>`'
+          :size="14"
+        />
+      </div>
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search feed…"
+        class="w-full pl-8 pr-8 py-2 text-xs bg-surface-2/50 border border-edge rounded-xl text-txt-primary placeholder:text-txt-muted focus:outline-none focus:border-accent/40 focus:bg-surface-2 transition-all duration-150"
+      />
+      <button
+        v-if="searchQuery"
+        @click="searchQuery = ''"
+        class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-txt-muted hover:text-txt-primary transition-colors"
+        title="Clear search"
+      >
+        <FluentIcon
+          :paths='`<path d="m4.09 4.22.06-.07a.5.5 0 0 1 .63-.06l.07.06L10 9.29l5.15-5.14a.5.5 0 0 1 .63-.06l.07.06c.18.17.2.44.06.63l-.06.07L10.71 10l5.14 5.15c.18.17.2.44.06.63l-.06.07a.5.5 0 0 1-.63.06l-.07-.06L10 10.71l-5.15 5.14a.5.5 0 0 1-.63.06l-.07-.06a.5.5 0 0 1-.06-.63l.06-.07L9.29 10 4.15 4.85a.5.5 0 0 1-.06-.63l.06-.07-.06.07Z"/>`'
+          :size="12"
+        />
+      </button>
+    </div>
+
+    <!-- Filter tabs + Group-by-team toggle -->
     <div class="flex gap-1.5 mb-4 p-1 bg-surface-2/50 rounded-xl border border-edge">
       <button
         v-for="tab in tabs"
@@ -53,6 +80,21 @@
           v-if="tab.value !== 'all' && tabCount(tab.value) > 0"
           class="ml-1 font-mono text-[10px] opacity-70"
         >({{ tabCount(tab.value) }})</span>
+      </button>
+      <!-- Group by team toggle -->
+      <button
+        @click="groupByTeam = !groupByTeam"
+        class="flex items-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-150 shrink-0"
+        :class="groupByTeam
+          ? 'bg-accent/10 text-accent border border-accent/20'
+          : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-3/50 border border-transparent'"
+        title="Group by team"
+      >
+        <FluentIcon
+          :paths='`<path d="M8 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10-1a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM8 9.5a.5.5 0 0 1 .5.5v1h4a.5.5 0 0 1 .5.5v1h1.5a.5.5 0 0 1 0 1H14v1a.5.5 0 0 1-1 0v-3.5H7v3.5a.5.5 0 0 1-1 0v-1H4.5a.5.5 0 0 1 0-1H6v-1a.5.5 0 0 1 .5-.5h1V10a.5.5 0 0 1 .5-.5Z"/>`'
+          :size="12"
+        />
+        Team
       </button>
     </div>
 
@@ -79,8 +121,8 @@
       </p>
     </div>
 
-    <!-- Entry list -->
-    <ul v-else class="space-y-2 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
+    <!-- Entry list (flat, no grouping) -->
+    <ul v-else-if="!groupByTeam" class="space-y-2 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
       <li
         v-for="entry in filtered"
         :key="entry.id"
@@ -90,107 +132,117 @@
           selectMode && selected.has(entry.id) ? 'ring-1 ring-accent/40 bg-accent/5 border-accent/30' : ''
         ]"
       >
-        <!-- Card header -->
         <div
-          class="flex items-start gap-3 p-4"
-          :class="selectMode ? 'cursor-pointer' : 'cursor-pointer'"
+          class="flex items-start gap-3 p-4 cursor-pointer"
           @click="selectMode ? toggleSelect(entry.id) : toggleExpand(entry.id)"
         >
-          <!-- Selection circle (select mode only) -->
-          <div
-            v-if="selectMode"
-            class="mt-0.5 shrink-0"
-            @click.stop="toggleSelect(entry.id)"
-          >
+          <div v-if="selectMode" class="mt-0.5 shrink-0" @click.stop="toggleSelect(entry.id)">
             <div
               class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
-              :class="selected.has(entry.id)
-                ? 'border-accent bg-accent shadow-glow-sm'
-                : 'border-edge hover:border-accent/60'"
+              :class="selected.has(entry.id) ? 'border-accent bg-accent shadow-glow-sm' : 'border-edge hover:border-accent/60'"
             >
-              <FluentIcon
-                v-if="selected.has(entry.id)"
-                :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`'
-                :size="11"
-                class="text-surface-0"
-              />
+              <FluentIcon v-if="selected.has(entry.id)" :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="11" class="text-surface-0" />
             </div>
           </div>
-
-          <!-- Type icon -->
           <div class="mt-0.5 shrink-0">
-            <FluentIcon
-              v-if="entry.type === 'deliverable'"
-              :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`'
-              :size="16"
-              :class="entry.read_at ? 'text-txt-muted' : 'text-accent'"
-            />
-            <FluentIcon
-              v-else
-              :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`'
-              :size="16"
-              :class="entry.read_at ? 'text-txt-muted' : 'text-accent'"
-            />
+            <FluentIcon v-if="entry.type === 'deliverable'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
+            <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
           </div>
-
-          <!-- Unread dot -->
-          <span
-            v-if="!entry.read_at"
-            class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"
-          ></span>
+          <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
           <span v-else class="mt-2 w-1.5 h-1.5 rounded-full bg-edge shrink-0"></span>
-
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <span class="text-sm font-semibold text-txt-primary truncate leading-snug">{{ entry.title }}</span>
-              <span
-                v-if="entry.source_type"
-                class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0"
-              >{{ entry.source_type }}</span>
+              <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
             </div>
             <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
-            <!-- Body preview when collapsed -->
-            <p
-              v-if="!expanded.has(entry.id)"
-              class="text-xs text-txt-secondary line-clamp-2 leading-relaxed"
-            >{{ bodyPreview(entry.body) }}</p>
+            <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
           </div>
-
-          <!-- Per-item action buttons (hidden in select mode) -->
-          <div
-            v-if="!selectMode"
-            class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          >
-            <!-- Mark read -->
-            <button
-              v-if="!entry.read_at"
-              @click.stop="markRead(entry.id)"
-              class="p-1.5 rounded-lg text-txt-muted hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-all duration-150"
-              title="Mark as read"
-            >
+          <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button v-if="!entry.read_at" @click.stop="markRead(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-all duration-150" title="Mark as read">
               <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
             </button>
-            <!-- Delete -->
-            <button
-              @click.stop="deleteEntry(entry.id)"
-              :disabled="deleting.has(entry.id)"
-              class="p-1.5 rounded-lg text-txt-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-30 transition-all duration-150"
-              title="Delete"
-            >
+            <button @click.stop="deleteEntry(entry.id)" :disabled="deleting.has(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-30 transition-all duration-150" title="Delete">
               <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
             </button>
           </div>
         </div>
-
-        <!-- Expanded markdown body (only outside select mode) -->
         <div v-if="!selectMode && expanded.has(entry.id)" class="px-4 pb-4">
-          <div
-            class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed"
-            v-html="renderMarkdown(entry.body)"
-          ></div>
+          <div class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed" v-html="renderMarkdown(entry.body)"></div>
         </div>
       </li>
     </ul>
+
+    <!-- Grouped entry list -->
+    <div v-else class="space-y-3 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
+      <div v-for="group in groupedEntries" :key="group.key">
+        <!-- Group header -->
+        <button
+          @click="toggleGroup(group.key)"
+          class="w-full flex items-center gap-2 px-2 py-1.5 mb-1 text-left hover:bg-surface-3/30 rounded-lg transition-colors duration-150"
+        >
+          <FluentIcon
+            :paths='`<path d="M7.47 4.22a.75.75 0 0 1 1.06 0l5.25 5.25a.75.75 0 0 1-1.06 1.06L8 5.81 3.28 10.53a.75.75 0 0 1-1.06-1.06l5.25-5.25Z"/>`'
+            :size="12"
+            class="text-txt-muted transition-transform duration-150 shrink-0"
+            :class="collapsedGroups.has(group.key) ? '-rotate-90' : 'rotate-180'"
+          />
+          <span class="text-xs font-semibold text-txt-secondary uppercase tracking-wider">{{ group.label }}</span>
+          <span class="text-[10px] font-mono text-txt-muted">({{ group.entries.length }})</span>
+        </button>
+        <!-- Entries in this group -->
+        <ul v-if="!collapsedGroups.has(group.key)" class="space-y-2">
+          <li
+            v-for="entry in group.entries"
+            :key="entry.id"
+            class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in"
+            :class="[
+              entry.read_at ? '' : 'glow-inner',
+              selectMode && selected.has(entry.id) ? 'ring-1 ring-accent/40 bg-accent/5 border-accent/30' : ''
+            ]"
+          >
+            <div
+              class="flex items-start gap-3 p-4 cursor-pointer"
+              @click="selectMode ? toggleSelect(entry.id) : toggleExpand(entry.id)"
+            >
+              <div v-if="selectMode" class="mt-0.5 shrink-0" @click.stop="toggleSelect(entry.id)">
+                <div
+                  class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
+                  :class="selected.has(entry.id) ? 'border-accent bg-accent shadow-glow-sm' : 'border-edge hover:border-accent/60'"
+                >
+                  <FluentIcon v-if="selected.has(entry.id)" :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="11" class="text-surface-0" />
+                </div>
+              </div>
+              <div class="mt-0.5 shrink-0">
+                <FluentIcon v-if="entry.type === 'deliverable'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
+                <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
+              </div>
+              <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
+              <span v-else class="mt-2 w-1.5 h-1.5 rounded-full bg-edge shrink-0"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-sm font-semibold text-txt-primary truncate leading-snug">{{ entry.title }}</span>
+                  <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
+                </div>
+                <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
+                <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
+              </div>
+              <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button v-if="!entry.read_at" @click.stop="markRead(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-all duration-150" title="Mark as read">
+                  <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
+                </button>
+                <button @click.stop="deleteEntry(entry.id)" :disabled="deleting.has(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-30 transition-all duration-150" title="Delete">
+                  <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
+                </button>
+              </div>
+            </div>
+            <div v-if="!selectMode && expanded.has(entry.id)" class="px-4 pb-4">
+              <div class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed" v-html="renderMarkdown(entry.body)"></div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <!-- Bulk action bar -->
     <Transition
@@ -239,7 +291,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import FluentIcon from '../components/FluentIcon.vue'
 import { renderMarkdown } from '../lib/markdown'
 import { apiFetch } from '../lib/api'
@@ -271,14 +323,47 @@ const expanded = ref(new Set<number>())
 const deleting = ref(new Set<number>())
 const errorMsg = ref<string | null>(null)
 
+// Search
+const searchQuery = ref('')
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+// Group by team
+const groupByTeam = ref(false)
+const collapsedGroups = ref(new Set<string>())
+
 // Bulk select state
 const selectMode = ref(false)
 const selected = ref(new Set<number>())
 const bulkWorking = ref(false)
 
+/** Extract squad slug from "[slug] title" format, or null if not present. */
+function extractSquad(title: string): string | null {
+  const m = title.match(/^\[([^\]]+)\]/)
+  return m ? m[1] : null
+}
+
 const filtered = computed(() => {
   if (activeTab.value === 'all') return entries.value
   return entries.value.filter(e => e.type === activeTab.value)
+})
+
+const groupedEntries = computed(() => {
+  const map = new Map<string, FeedEntry[]>()
+  for (const entry of filtered.value) {
+    const key = extractSquad(entry.title) ?? '__ungrouped__'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(entry)
+  }
+  const groups: { key: string; label: string; entries: FeedEntry[] }[] = []
+  for (const [key, groupEntries] of map) {
+    groups.push({ key, label: key === '__ungrouped__' ? 'Ungrouped' : key, entries: groupEntries })
+  }
+  groups.sort((a, b) => {
+    if (a.key === '__ungrouped__') return 1
+    if (b.key === '__ungrouped__') return -1
+    return a.key.localeCompare(b.key)
+  })
+  return groups
 })
 
 const allSelected = computed(() =>
@@ -327,11 +412,20 @@ function toggleSelectAll() {
   }
 }
 
-async function loadEntries() {
+function toggleGroup(key: string) {
+  const next = new Set(collapsedGroups.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  collapsedGroups.value = next
+}
+
+async function loadEntries(search?: string) {
   loading.value = true
   errorMsg.value = null
   try {
-    const res = await apiFetch('/api/feed?limit=100')
+    const params = new URLSearchParams({ limit: '100' })
+    if (search) params.set('search', search)
+    const res = await apiFetch(`/api/feed?${params}`)
     if (res.ok) {
       const data = (await res.json()) as { entries: FeedEntry[] }
       entries.value = data.entries ?? []
@@ -438,5 +532,13 @@ async function bulkDelete() {
   }
 }
 
-onMounted(loadEntries)
+// Debounce search: reload entries 300ms after the user stops typing
+watch(searchQuery, (val) => {
+  if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    loadEntries(val.trim() || undefined)
+  }, 300)
+})
+
+onMounted(() => loadEntries())
 </script>
