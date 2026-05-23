@@ -53,7 +53,7 @@
                 : 'text-txt-secondary hover:text-txt-primary hover:bg-surface-3/40'
             ]"
             :title="collapsed ? item.label : undefined"
-            @click="item.name === 'feed' ? onFeedClick() : undefined"
+            @click="item.name === 'feed' ? onFeedClick() : item.name === 'inbox' ? onInboxClick() : undefined"
           >
             <!-- Active indicator bar -->
             <span
@@ -72,6 +72,14 @@
               :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
             >
               {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+            <!-- Inbox unread badge -->
+            <span
+              v-if="item.name === 'inbox' && inboxCount > 0"
+              class="absolute flex items-center justify-center bg-accent text-surface-1 text-[9px] font-bold rounded-full min-w-[16px] h-[16px] px-0.5 ring-2 ring-surface-1"
+              :class="collapsed ? 'top-0 right-0' : 'top-0.5 right-1'"
+            >
+              {{ inboxCount > 99 ? '99+' : inboxCount }}
             </span>
           </RouterLink>
         </li>
@@ -178,7 +186,7 @@
     :to="item.to"
     class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 transition-colors duration-150 touch-manipulation select-none"
     :class="isActive(item.name) ? 'text-accent' : 'text-txt-muted'"
-    @click="item.name === 'feed' ? onFeedClick() : undefined"
+    @click="item.name === 'feed' ? onFeedClick() : item.name === 'inbox' ? onInboxClick() : undefined"
     :aria-label="item.label"
   >
     <!-- Active top accent line -->
@@ -190,6 +198,10 @@
         v-if="item.name === 'feed' && unreadCount > 0"
         class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-red-500 text-white text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
       >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+      <span
+        v-if="item.name === 'inbox' && inboxCount > 0"
+        class="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] flex items-center justify-center bg-accent text-surface-1 text-[7px] font-bold rounded-full px-0.5 ring-1 ring-surface-0"
+      >{{ inboxCount > 9 ? '9+' : inboxCount }}</span>
     </span>
     <span class="text-[9px] leading-tight font-medium truncate max-w-full px-0.5">{{ item.label }}</span>
   </RouterLink>
@@ -210,6 +222,7 @@ const auth = useAuthStore()
 
 const version = ref('')
 const unreadCount = ref(0)
+const inboxCount = ref(0)
 const collapsed = ref(false)
 let notificationSource: EventSource | null = null
 
@@ -230,6 +243,7 @@ const navItems = [
   { to: '/wiki',          name: 'wiki',          icon: '<path d="M10 16c-.46.6-1.18 1-2 1H3.5A1.5 1.5 0 0 1 2 15.5v-11C2 3.67 2.67 3 3.5 3H8c.82 0 1.54.4 2 1 .46-.6 1.18-1 2-1h4.5c.83 0 1.5.67 1.5 1.5v11c0 .83-.67 1.5-1.5 1.5H12a2.5 2.5 0 0 1-2-1ZM3 4.5v11c0 .28.22.5.5.5H8c.83 0 1.5-.67 1.5-1.5v-9C9.5 4.67 8.83 4 8 4H3.5a.5.5 0 0 0-.5.5Zm7.5 10c0 .83.67 1.5 1.5 1.5h4.5a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5H12c-.83 0-1.5.67-1.5 1.5v9Z"/>', label: 'Wiki' },
   { to: '/schedules',     name: 'schedules',     icon: '<path d="M7 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2-2a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm4-5.5A2.5 2.5 0 0 0 14.5 3h-9A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9a2.5 2.5 0 0 0 2.5-2.5v-9ZM4 7h12v7.5c0 .83-.67 1.5-1.5 1.5h-9A1.5 1.5 0 0 1 4 14.5V7Zm1.5-3h9c.83 0 1.5.67 1.5 1.5V6H4v-.5C4 4.67 4.67 4 5.5 4Z"/>', label: 'Schedules' },
   { to: '/activity',      name: 'activity',      icon: '<path d="M16.52 9c.26 0 .48-.2.48-.46V8.5A6.5 6.5 0 0 0 10.5 2h-.04a.47.47 0 0 0-.46.48V8.5c0 .28.22.5.5.5h6.02ZM11 3.02A5.5 5.5 0 0 1 15.98 8H11V3.02ZM8 9V5.1A5 5 0 0 0 9 15v1a6 6 0 0 1-.5-11.98c.28-.02.5.2.5.48V9a1 1 0 0 0 1 1h4.5c.28 0 .5.22.48.5a6 6 0 0 1-.06.5H10a2 2 0 0 1-2-2Zm9 1a1 1 0 0 0-1 1v7a1 1 0 1 0 2 0v-7a1 1 0 0 0-1-1Zm-3 2a1 1 0 0 0-1 1v5a1 1 0 1 0 2 0v-5a1 1 0 0 0-1-1Zm-4 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0v-3Z"/>', label: 'Activity' },
+  { to: '/inbox',        name: 'inbox',         icon: '<path d="M2 6.25A2.25 2.25 0 0 1 4.25 4h11.5A2.25 2.25 0 0 1 18 6.25v7.5A2.25 2.25 0 0 1 15.75 16H4.25A2.25 2.25 0 0 1 2 13.75v-7.5Zm2.25-1a1 1 0 0 0-1 1v.388l6.75 4.5 6.75-4.5V6.25a1 1 0 0 0-1-1H4.25Zm12.5 2.834-6.294 4.196a.75.75 0 0 1-.812 0L3.25 8.084v5.666a1 1 0 0 0 1 1h11.5a1 1 0 0 0 1-1V8.084Z"/>', label: 'Inbox' },
 ]
 
 const userInitial = computed(() => {
@@ -258,6 +272,10 @@ async function handleSignOut() {
 
 function onFeedClick() {
   unreadCount.value = 0
+}
+
+function onInboxClick() {
+  inboxCount.value = 0
 }
 
 onMounted(async () => {
@@ -291,6 +309,14 @@ onMounted(async () => {
     if (res.ok) {
       const data = (await res.json()) as { count?: number }
       unreadCount.value = data.count ?? 0
+    }
+  } catch { /* best effort */ }
+
+  try {
+    const res = await apiFetch('/api/inbox/count')
+    if (res.ok) {
+      const data = (await res.json()) as { count?: number }
+      inboxCount.value = data.count ?? 0
     }
   } catch { /* best effort */ }
 
