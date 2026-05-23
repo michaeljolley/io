@@ -26,18 +26,18 @@
         <section class="mb-8">
           <h3 class="text-xs font-semibold text-txt-secondary uppercase tracking-wider mb-3">Active Agents</h3>
 
-          <div v-if="loading && agents.length === 0" class="flex items-center justify-center py-10">
+          <div v-if="loading && activeAgents.length === 0" class="flex items-center justify-center py-10">
             <div class="flex items-center gap-2 text-txt-muted text-sm">
               <span class="w-4 h-4 border-2 border-edge border-t-accent rounded-full animate-spin"></span>
               Loading agents…
             </div>
           </div>
-          <div v-else-if="agents.length === 0" class="text-txt-muted text-sm text-center py-10">
+          <div v-else-if="activeAgents.length === 0" class="text-txt-muted text-sm text-center py-10">
             No active agents
           </div>
           <div v-else class="grid gap-3">
             <div
-              v-for="agent in agents"
+              v-for="agent in activeAgents"
               :key="agent.slug + (agent.characterName || '')"
               class="group bg-surface-2/40 border rounded-xl p-4 transition-all duration-200"
               :class="agent.status === 'working'
@@ -375,6 +375,9 @@ interface AgentTask {
 }
 
 const agents = ref<Agent[]>([])
+
+/** Only show agents that are genuinely active (not idle). */
+const activeAgents = computed(() => agents.value.filter(a => a.status !== 'idle'))
 const tasks = ref<AgentTask[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
