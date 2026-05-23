@@ -14,7 +14,7 @@ import { requireAuth } from "./auth.js";
 import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "../store/schedules.js";
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
 import { getScheduleRuns } from "../store/schedule-runs.js";
-import { createFeedEntry, listFeedEntries, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, markFeedEntriesRead, deleteFeedEntries, type FeedEntryType } from "../store/feed.js";
+import { createFeedEntry, listFeedEntries, listFeedSquads, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, markFeedEntriesRead, deleteFeedEntries, type FeedEntryType } from "../store/feed.js";
 import { listInboxEntries, countInboxEntries, deleteInboxEntry } from "../store/inbox.js";
 import { listPages, readPage } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
@@ -154,7 +154,9 @@ export async function startApiServer(): Promise<void> {
       const rawLimit = req.query.limit;
       const parsed = typeof rawLimit === "string" ? Number.parseInt(rawLimit, 10) : NaN;
       const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 200) : 50;
-      const rows = listFeedEntries({ type, unreadOnly, limit });
+      const search = typeof req.query.search === "string" && req.query.search !== "" ? req.query.search : undefined;
+      const squad = typeof req.query.squad === "string" && req.query.squad !== "" ? req.query.squad : undefined;
+      const rows = listFeedEntries({ type, unreadOnly, limit, search, squad });
       const unreadCount = countUnreadFeedEntries(type);
       const entries = rows.map(({ id, type: entryType, title, body, created_at, read_at, source_type, source_ref }) => {
         let source: { type: string; [key: string]: unknown } | null = null;
@@ -174,6 +176,16 @@ export async function startApiServer(): Promise<void> {
       res.json({ entries, unreadCount });
     } catch (e) {
       console.error("Error listing feed entries:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.get("/feed/squads", (req: Request, res: Response) => {
+    try {
+      const squads = listFeedSquads();
+      res.json({ squads });
+    } catch (e) {
+      console.error("Error listing feed squads:", e);
       res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
