@@ -42,6 +42,8 @@ export function listFeedEntries(opts?: {
   type?: FeedEntryType;
   unreadOnly?: boolean;
   limit?: number;
+  search?: string;
+  squad?: string;
 }): FeedEntry[] {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
@@ -53,6 +55,15 @@ export function listFeedEntries(opts?: {
   if (opts?.unreadOnly) {
     conditions.push("read_at IS NULL");
   }
+  if (opts?.search) {
+    conditions.push("(title LIKE ? OR body LIKE ?)");
+    const term = `%${opts.search}%`;
+    params.push(term, term);
+  }
+  if (opts?.squad) {
+    conditions.push("title LIKE ?");
+    params.push(`[${opts.squad}] %`);
+  }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   const limit = opts?.limit ?? 50;
@@ -61,6 +72,18 @@ export function listFeedEntries(opts?: {
   return getDb()
     .prepare(`SELECT * FROM unified_feed ${where} ORDER BY created_at DESC, id DESC LIMIT ?`)
     .all(...params) as FeedEntry[];
+}
+
+export function listFeedSquads(): string[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT DISTINCT substr(title, 2, instr(title, ']') - 2) AS squad
+       FROM unified_feed
+       WHERE title LIKE '[%]%'
+       ORDER BY squad`,
+    )
+    .all() as { squad: string }[];
+  return rows.map((r) => r.squad);
 }
 
 export function countUnreadFeedEntries(type?: FeedEntryType): number {
