@@ -284,7 +284,7 @@
                 class="bg-surface-0/60 border border-edge rounded-lg divide-y divide-edge max-h-96 overflow-y-auto"
               >
                 <li
-                  v-for="(entry, idx) in activity"
+                  v-for="(entry, idx) in summaryActivity"
                   :key="`${entry.ts}-${idx}-${entry.rawType}`"
                   class="px-3 py-2 text-sm hover:bg-surface-2/40 cursor-pointer transition-colors"
                   @click="toggleActivityEntry(idx)"
@@ -401,6 +401,21 @@ const activity = ref<ActivityEntry[]>([])
 const activityLoading = ref(false)
 const showActivityDetails = ref(false)
 const expandedActivity = ref<Set<number>>(new Set())
+
+/**
+ * In the summary view, filter out noise events:
+ * - assistant.message events with empty/whitespace content
+ * - Successfully completed tool events (status=success, merged start+complete)
+ * When "Show details" is checked, all events are shown unfiltered for debugging.
+ */
+const summaryActivity = computed(() => {
+  if (showActivityDetails.value) return activity.value
+  return activity.value.filter(entry => {
+    if (entry.rawType === 'assistant.message' && (!entry.detail || !entry.detail.trim())) return false
+    if (entry.rawType.includes('tool.execution_complete') && entry.status === 'success') return false
+    return true
+  })
+})
 let activityEventSource: EventSource | null = null
 let activityRefreshTimer: ReturnType<typeof setTimeout> | null = null
 
