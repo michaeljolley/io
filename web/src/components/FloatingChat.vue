@@ -128,6 +128,15 @@
         v-if="hasUnread"
         class="absolute top-0 right-0 w-3 h-3 rounded-full bg-accent border-2 border-surface-2 shadow-glow-sm"
       ></span>
+      <!-- Activity pulse ring (visible when IO is thinking) -->
+      <span
+        v-if="store.isLoading"
+        class="absolute inset-0 rounded-full border-2 border-accent/60 animate-ping pointer-events-none"
+      ></span>
+      <span
+        v-if="store.isLoading"
+        class="absolute inset-0 rounded-full border border-accent/30 animate-pulse pointer-events-none"
+      ></span>
     </button>
   </div>
 </template>
