@@ -117,7 +117,7 @@
       </div>
       <p class="text-txt-muted text-sm font-medium">Nothing here yet</p>
       <p class="text-txt-muted/60 text-xs mt-1">
-        {{ activeTab === 'all' ? 'Your feed is empty' : activeTab === 'deliverable' ? 'No deliverables' : 'No notifications' }}
+        {{ activeTab === 'all' ? 'Your feed is empty' : activeTab === 'inbox' ? 'No inbox items' : 'No notifications' }}
       </p>
     </div>
 
@@ -145,7 +145,7 @@
             </div>
           </div>
           <div class="mt-0.5 shrink-0">
-            <FluentIcon v-if="entry.type === 'deliverable'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
+            <FluentIcon v-if="entry.type === 'inbox'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
             <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
           </div>
           <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
@@ -156,6 +156,11 @@
               <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
             </div>
             <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
+            <div v-if="entry.type === 'inbox' && (entry.squad_slug || entry.instance_id || entry.task_id)" class="flex flex-wrap items-center gap-1 mb-1">
+              <span v-if="entry.squad_slug" class="text-[10px] font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 shrink-0">{{ entry.squad_slug }}</span>
+              <span v-if="entry.instance_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">inst:{{ entry.instance_id.slice(0, 8) }}</span>
+              <span v-if="entry.task_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">task:{{ entry.task_id.slice(0, 8) }}</span>
+            </div>
             <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
           </div>
           <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -214,7 +219,7 @@
                 </div>
               </div>
               <div class="mt-0.5 shrink-0">
-                <FluentIcon v-if="entry.type === 'deliverable'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
+                <FluentIcon v-if="entry.type === 'inbox'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
                 <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
               </div>
               <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
@@ -225,6 +230,11 @@
                   <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
                 </div>
                 <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
+            <div v-if="entry.type === 'inbox' && (entry.squad_slug || entry.instance_id || entry.task_id)" class="flex flex-wrap items-center gap-1 mb-1">
+              <span v-if="entry.squad_slug" class="text-[10px] font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 shrink-0">{{ entry.squad_slug }}</span>
+              <span v-if="entry.instance_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">inst:{{ entry.instance_id.slice(0, 8) }}</span>
+              <span v-if="entry.task_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">task:{{ entry.task_id.slice(0, 8) }}</span>
+            </div>
                 <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
               </div>
               <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -298,21 +308,24 @@ import { apiFetch } from '../lib/api'
 
 interface FeedEntry {
   id: number
-  type: 'deliverable' | 'notification'
+  type: 'inbox' | 'notification'
   title: string
   body: string
   source_type: string | null
   source_ref: string | null
   created_at: string
   read_at: string | null
+  squad_slug: string | null
+  instance_id: string | null
+  task_id: string | null
   source?: { type?: string; [k: string]: unknown }
 }
 
-type TabValue = 'all' | 'deliverable' | 'notification'
+type TabValue = 'all' | 'inbox' | 'notification'
 
 const tabs: { label: string; value: TabValue }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Deliverables', value: 'deliverable' },
+  { label: 'Inbox', value: 'inbox' },
   { label: 'Notifications', value: 'notification' },
 ]
 
