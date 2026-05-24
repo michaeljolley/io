@@ -243,6 +243,7 @@ export function renderMarkdown(md: string): string {
     const li = line.match(/^[-*+]\s+(.+)/)
     if (li) {
       if (listType === 'ol') closeList()
+      closeBlockquote()
       if (!listType) { out.push('<ul class="list-disc list-inside my-2 space-y-1 pl-2">'); listType = 'ul' }
       out.push(`<li>${inlineFormat(li[1])}</li>`)
       continue
@@ -252,6 +253,7 @@ export function renderMarkdown(md: string): string {
     const oli = line.match(/^\d+\.\s+(.+)/)
     if (oli) {
       if (listType === 'ul') closeList()
+      closeBlockquote()
       if (!listType) { out.push('<ol class="list-decimal list-inside my-2 space-y-1 pl-2">'); listType = 'ol' }
       out.push(`<li>${inlineFormat(oli[1])}</li>`)
       continue

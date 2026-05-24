@@ -208,6 +208,29 @@ describe('renderMarkdown — blockquotes', () => {
     contains(html, '<blockquote ')
     contains(html, '</blockquote>')
   })
+
+  it('closes blockquote before unordered list with no blank line (regression #253)', () => {
+    const html = renderMarkdown('> quoted\n- item one\n- item two')
+    contains(html, '<blockquote ')
+    contains(html, '</blockquote>')
+    contains(html, '<ul ')
+    contains(html, '</ul>')
+    // blockquote must close before the list opens
+    const bqClose = html.indexOf('</blockquote>')
+    const ulOpen = html.indexOf('<ul ')
+    assert.ok(bqClose < ulOpen, 'blockquote must close before <ul> opens')
+  })
+
+  it('closes blockquote before ordered list with no blank line (regression #253)', () => {
+    const html = renderMarkdown('> quoted\n1. first\n2. second')
+    contains(html, '<blockquote ')
+    contains(html, '</blockquote>')
+    contains(html, '<ol ')
+    contains(html, '</ol>')
+    const bqClose = html.indexOf('</blockquote>')
+    const olOpen = html.indexOf('<ol ')
+    assert.ok(bqClose < olOpen, 'blockquote must close before <ol> opens')
+  })
 })
 
 // ── unordered lists ───────────────────────────────────────────────────────────
