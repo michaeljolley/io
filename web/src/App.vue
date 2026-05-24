@@ -25,11 +25,14 @@
         </transition>
       </RouterView>
     </main>
+
+    <FloatingChat />
   </div>
 </template>
 
 <script setup lang="ts">
 import AppNav from './components/AppNav.vue'
+import FloatingChat from './components/FloatingChat.vue'
 import { RouterView } from 'vue-router'
 </script>
 
