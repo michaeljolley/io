@@ -16,11 +16,12 @@ export function createTask(
   agentSlug: string,
   description: string,
   originChannel?: string,
+  instanceId?: string,
 ): AgentTask {
   const db = getDb();
   db.prepare(
-    "INSERT INTO agent_tasks (task_id, agent_slug, description, origin_channel) VALUES (?, ?, ?, ?)",
-  ).run(taskId, agentSlug, description, originChannel ?? null);
+    "INSERT INTO agent_tasks (task_id, agent_slug, description, origin_channel, instance_id) VALUES (?, ?, ?, ?, ?)",
+  ).run(taskId, agentSlug, description, originChannel ?? null, instanceId ?? null);
   return getTask(taskId)!;
 }
 

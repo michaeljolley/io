@@ -319,7 +319,7 @@ export interface ToolDeps {
     limit?: number,
   ) => Array<{ decision: string; context: string | null; created_at: string }>;
   updateSquadStatus: (slug: string, status: string) => void;
-  delegateToAgent: (squadSlug: string, task: string, onComplete: (taskId: string, result: string) => void, targetAgent?: string) => Promise<string>;
+  delegateToAgent: (squadSlug: string, task: string, onComplete: (taskId: string, result: string) => void, targetAgent?: string, instanceId?: string) => Promise<string>;
   getTask: (taskId: string) => { task_id: string; agent_slug: string; description: string; status: string; result: string | null } | undefined;
   getActiveAgentTasks: () => Array<{ taskId: string; agentSlug: string; description: string; status: string }>;
   addSquadAgent: (squadSlug: string, roleTitle: string, charter: string, modelTier?: string) => { character_name: string; role_title: string; personality: string | null; model_tier: string };
@@ -364,6 +364,7 @@ export interface ToolDeps {
   reconcileInstances: () => number;
   createWorktree: (projectPath: string, instanceId: string, branchName: string, baseBranch?: string) => string;
   removeWorktree: (projectPath: string, worktreePath: string) => void;
+  activeInstanceId?: string;  // Set when tools are executing within an instance context
 }
 
 
@@ -513,6 +514,11 @@ export function createTools(deps: ToolDeps) {
     }),
     handler: async ({ slug, decision, context }) => {
       try {
+        // If we're in an instance context, route to instance decisions
+        if (deps.activeInstanceId) {
+          deps.logInstanceDecision(deps.activeInstanceId, decision, context);
+          return `Decision logged for instance ${deps.activeInstanceId} (squad ${slug})`;
+        }
         deps.logDecision(slug, decision, context);
         return `Decision logged for squad ${slug}`;
       } catch (err) {
@@ -548,7 +554,7 @@ export function createTools(deps: ToolDeps) {
             createFeedEntry({ type: "deliverable", title: `[${slug}] Task result`, body: result });
             console.error(`[io] Task ${id} result routed to inbox`);
           }
-        }, agent);
+        }, agent, deps.activeInstanceId);
         const agentLabel = agent ? `agent "${agent}" in squad "${slug}"` : `squad "${slug}"`;
         const warningPrefix = coverage.warning
           ? `${coverage.warning} A dedicated lead and a QA reviewer should both hold veto power on PR promotion — fix gaps before promoting work.\n\n`
@@ -2024,7 +2030,38 @@ export function createTools(deps: ToolDeps) {
       return `Instance "${instance_id}" cleaned up and removed.`;
     },
   });
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup];
+
+  // ---------------------------------------------------------------------------
+  // Squad Instance context tools (#231 Phase 2)
+  // ---------------------------------------------------------------------------
+
+  const squadInstanceActivate = defineTool("squad_instance_activate", {
+    description: "Activate an instance context. After activation, delegated tasks and decisions are scoped to this instance until deactivated.",
+    skipPermission: true,
+    parameters: z.object({
+      instance_id: z.string().describe("Instance ID to activate"),
+    }),
+    handler: async ({ instance_id }) => {
+      const instance = deps.getInstance(instance_id);
+      if (!instance) return `Instance not found: ${instance_id}`;
+      if (instance.status !== "active") return `Instance is not active (status: ${instance.status})`;
+      deps.activeInstanceId = instance_id;
+      return `Instance context activated: ${instance_id}. Tasks and decisions will be scoped to this instance.`;
+    },
+  });
+
+  const squadInstanceDeactivate = defineTool("squad_instance_deactivate", {
+    description: "Deactivate the current instance context, returning to master squad scope.",
+    skipPermission: true,
+    parameters: z.object({}),
+    handler: async () => {
+      const prev = deps.activeInstanceId;
+      deps.activeInstanceId = undefined;
+      return prev ? `Instance context deactivated (was: ${prev})` : `No instance context was active.`;
+    },
+  });
+
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {

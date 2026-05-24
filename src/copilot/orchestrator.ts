@@ -125,7 +125,8 @@ function getToolDeps() {
         created_at: d.created_at,
       })),
     updateSquadStatus,
-    delegateToAgent,
+    delegateToAgent: (squadSlug: string, task: string, onComplete: (taskId: string, result: string) => void, targetAgent?: string, instanceId?: string) =>
+      delegateToAgent(squadSlug, task, onComplete, targetAgent, instanceId),
     getTask,
     getActiveAgentTasks: () =>
       getActiveAgentTasks().map((t) => ({
@@ -209,6 +210,7 @@ function getToolDeps() {
     reconcileInstances,
     createWorktree,
     removeWorktree,
+    activeInstanceId: undefined,
   };
 }
 

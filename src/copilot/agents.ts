@@ -244,6 +244,7 @@ export async function delegateToAgent(
   task: string,
   onComplete: (taskId: string, result: string) => void,
   targetAgent?: string,
+  instanceId?: string,
 ): Promise<string> {
   const squad = getSquad(squadSlug);
   if (!squad) {
@@ -301,7 +302,7 @@ export async function delegateToAgent(
 
   const taskId = randomUUID();
 
-  createTask(taskId, agentKey, task);
+  createTask(taskId, agentKey, task, undefined, instanceId);
   updateSquadStatus(squadSlug, "working");
   if (agent) updateAgentStatus(squadSlug, agent.character_name, "working");
 
