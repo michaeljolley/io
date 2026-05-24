@@ -2072,7 +2072,23 @@ export function createTools(deps: ToolDeps) {
     },
   });
 
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate];
+
+  const sendToInbox = defineTool("send_to_inbox", {
+    description: "Send a message directly to Michael's IO inbox. Use this to deliver results, reports, summaries, or any content that should appear in the inbox feed.",
+    skipPermission: true,
+    parameters: z.object({
+      title: z.string().describe("Short title for the inbox item"),
+      body: z.string().describe("Full content/body of the message (supports markdown)"),
+      squad_slug: z.string().optional().describe("Squad slug to prefix the title with (e.g. 'io-assistant')"),
+    }),
+    handler: async ({ title, body, squad_slug }) => {
+      const prefix = squad_slug ? `[${squad_slug}] ` : "";
+      createFeedEntry({ type: "deliverable", title: `${prefix}${title}`, body });
+      return "Message sent to inbox successfully.";
+    },
+  });
+
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {
