@@ -17,7 +17,7 @@ import { listSchedules, getSchedule, deleteSchedule, setScheduleEnabled } from "
 import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled } from "../store/io-schedules.js";
 import { getScheduleRuns } from "../store/schedule-runs.js";
 import { createFeedEntry, listFeedEntries, listFeedSquads, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, markFeedEntriesRead, deleteFeedEntries, type FeedEntryType } from "../store/feed.js";
-import { listInboxEntries, countInboxEntries, deleteInboxEntry } from "../store/inbox.js";
+
 import { listPages, readPage } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
@@ -410,7 +410,7 @@ export async function startApiServer(): Promise<void> {
   // Inbox endpoints
   api.get("/inbox/count", (_req: Request, res: Response) => {
     try {
-      const count = countInboxEntries();
+      const count = countUnreadFeedEntries("inbox");
       res.json({ count });
     } catch (e) {
       console.error("Error counting inbox entries:", e);
@@ -420,7 +420,7 @@ export async function startApiServer(): Promise<void> {
 
   api.get("/inbox", (_req: Request, res: Response) => {
     try {
-      const entries = listInboxEntries();
+      const entries = listFeedEntries({ type: "inbox" });
       res.json({ entries });
     } catch (e) {
       console.error("Error listing inbox entries:", e);
@@ -436,7 +436,7 @@ export async function startApiServer(): Promise<void> {
       return;
     }
     try {
-      const deleted = deleteInboxEntry(id);
+      const deleted = deleteFeedEntry(id);
       if (!deleted) {
         res.status(404).json({ error: "Inbox entry not found" });
         return;

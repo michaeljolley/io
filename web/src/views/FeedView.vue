@@ -64,24 +64,8 @@
       </button>
     </div>
 
-    <!-- Filter tabs + Group-by-team toggle -->
-    <div class="flex gap-1.5 mb-4 p-1 bg-surface-2/50 rounded-xl border border-edge">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        @click="activeTab = tab.value"
-        class="flex-1 text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-150"
-        :class="activeTab === tab.value
-          ? 'bg-accent/10 text-accent border border-accent/20'
-          : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-3/50 border border-transparent'"
-      >
-        {{ tab.label }}
-        <span
-          v-if="tab.value !== 'all' && tabCount(tab.value) > 0"
-          class="ml-1 font-mono text-[10px] opacity-70"
-        >({{ tabCount(tab.value) }})</span>
-      </button>
-      <!-- Group by team toggle -->
+    <!-- Group-by-team toggle -->
+    <div class="flex gap-1.5 mb-4">
       <button
         @click="groupByTeam = !groupByTeam"
         class="flex items-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-150 shrink-0"
@@ -117,7 +101,7 @@
       </div>
       <p class="text-txt-muted text-sm font-medium">Nothing here yet</p>
       <p class="text-txt-muted/60 text-xs mt-1">
-        {{ activeTab === 'all' ? 'Your feed is empty' : activeTab === 'inbox' ? 'No inbox items' : 'No notifications' }}
+        No notifications
       </p>
     </div>
 
@@ -321,17 +305,8 @@ interface FeedEntry {
   source?: { type?: string; [k: string]: unknown }
 }
 
-type TabValue = 'all' | 'inbox' | 'notification'
-
-const tabs: { label: string; value: TabValue }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Inbox', value: 'inbox' },
-  { label: 'Notifications', value: 'notification' },
-]
-
 const entries = ref<FeedEntry[]>([])
 const loading = ref(true)
-const activeTab = ref<TabValue>('all')
 const expanded = ref(new Set<number>())
 const deleting = ref(new Set<number>())
 const errorMsg = ref<string | null>(null)
@@ -356,8 +331,7 @@ function extractSquad(title: string): string | null {
 }
 
 const filtered = computed(() => {
-  if (activeTab.value === 'all') return entries.value
-  return entries.value.filter(e => e.type === activeTab.value)
+  return entries.value
 })
 
 const groupedEntries = computed(() => {
@@ -382,10 +356,6 @@ const groupedEntries = computed(() => {
 const allSelected = computed(() =>
   filtered.value.length > 0 && filtered.value.every(e => selected.value.has(e.id))
 )
-
-function tabCount(type: TabValue): number {
-  return entries.value.filter(e => e.type === type).length
-}
 
 function formatTime(ts: string): string {
   try {
@@ -436,7 +406,7 @@ async function loadEntries(search?: string) {
   loading.value = true
   errorMsg.value = null
   try {
-    const params = new URLSearchParams({ limit: '100' })
+    const params = new URLSearchParams({ limit: '100', type: 'notification' })
     if (search) params.set('search', search)
     const res = await apiFetch(`/api/feed?${params}`)
     if (res.ok) {
@@ -456,12 +426,11 @@ async function markRead(id: number) {
 }
 
 async function markAllRead() {
-  const typeParam = activeTab.value !== 'all' ? `?type=${activeTab.value}` : ''
   try {
-    await apiFetch(`/api/feed/read-all${typeParam}`, { method: 'POST' })
+    await apiFetch('/api/feed/read-all?type=notification', { method: 'POST' })
     const now = new Date().toISOString()
     for (const e of entries.value) {
-      if (!e.read_at && (activeTab.value === 'all' || e.type === activeTab.value)) {
+      if (!e.read_at) {
         e.read_at = now
       }
     }

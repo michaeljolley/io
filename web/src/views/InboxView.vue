@@ -56,6 +56,11 @@
             </button>
           </div>
         </div>
+        <div v-if="entry.squad_slug || entry.instance_id || entry.task_id" class="flex flex-wrap items-center gap-1 mt-1.5 mb-1">
+          <span v-if="entry.squad_slug" class="text-[10px] font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20">{{ entry.squad_slug }}</span>
+          <span v-if="entry.instance_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50">inst:{{ entry.instance_id }}</span>
+          <span v-if="entry.task_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50">task:{{ entry.task_id }}</span>
+        </div>
         <div
           class="mt-2 text-sm text-txt-secondary wiki-content prose-sm"
           v-html="renderMarkdown(entry.body)"
@@ -74,9 +79,15 @@ const INBOX_LAST_SEEN_KEY = 'inbox-last-seen-id'
 
 interface InboxEntry {
   id: number
+  type: string
   title: string
   body: string
   created_at: string
+  read_at: string | null
+  source_type: string | null
+  squad_slug: string | null
+  instance_id: string | null
+  task_id: string | null
 }
 
 const entries = ref<InboxEntry[]>([])
