@@ -4,7 +4,9 @@ import { existsSync, readFileSync } from "node:fs";
 import express, { type Request, type Response } from "express";
 import { config } from "../config.js";
 import { listSkills, installSkill, installSkillFromContent, removeSkill } from "../copilot/skills.js";
-import { listSquads, createSquad, listSquadAgents } from "../store/squads.js";
+import { listSquads, createSquad, listSquadAgents, getSquad } from "../store/squads.js";
+import { createInstance, getInstance, listInstances, updateInstanceStatus, getInstanceDecisions, mergeInstanceDecisions, buildContextSnapshot } from "../store/instances.js";
+import { createWorktree, removeWorktree } from "../store/worktrees.js";
 import { getAgentInfo, cancelAgentTask, getTaskEvents, subscribeToTaskEvents } from "../copilot/agents.js";
 import { summarize, summarizeEvent } from "../copilot/event-summary.js";
 import { abortOrchestrator } from "../copilot/orchestrator.js";
@@ -500,6 +502,114 @@ export async function startApiServer(): Promise<void> {
     } catch (e) {
       console.error("Error listing squad agents:", e);
       res.status(500).json({ error: "Failed to list squad agents" });
+    }
+  });
+
+  // Squad Instances
+  api.get("/squads/:slug/instances", (req: Request, res: Response) => {
+    try {
+      const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+      const includeCompleted = req.query.include_completed === "true";
+      const instances = listInstances(slug, { includeCompleted });
+      res.json({ instances });
+    } catch (e) {
+      console.error("Error listing instances:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/squads/:slug/instances", (req: Request, res: Response) => {
+    try {
+      const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+      const { issue_ref, base_branch } = req.body as { issue_ref?: string; base_branch?: string };
+      const squad = getSquad(slug);
+      if (!squad) { res.status(404).json({ error: "Squad not found" }); return; }
+
+      const sanitizedRef = (issue_ref ?? "task").replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
+      const instanceId = `${slug}--${sanitizedRef}`;
+      const branchName = `${slug}/instance/${sanitizedRef}`;
+
+      const contextSnapshot = buildContextSnapshot(slug);
+      const worktreePath = createWorktree(squad.project_path, instanceId, branchName, base_branch ?? "main");
+
+      const instance = createInstance({
+        id: instanceId,
+        masterSquadSlug: slug,
+        issueRef: issue_ref,
+        worktreePath,
+        branchName,
+        contextSnapshot,
+      });
+
+      updateInstanceStatus(instanceId, "active");
+      res.status(201).json({ instance: { ...instance, status: "active" } });
+    } catch (e) {
+      console.error("Error creating instance:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.get("/squads/:slug/instances/:id", (req: Request, res: Response) => {
+    try {
+      const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const instance = getInstance(id);
+      if (!instance || instance.master_squad_slug !== slug) {
+        res.status(404).json({ error: "Instance not found" }); return;
+      }
+      const decisions = getInstanceDecisions(id);
+      res.json({ instance, decisions });
+    } catch (e) {
+      console.error("Error getting instance:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/squads/:slug/instances/:id/complete", (req: Request, res: Response) => {
+    try {
+      const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const instance = getInstance(id);
+      if (!instance || instance.master_squad_slug !== slug) {
+        res.status(404).json({ error: "Instance not found" }); return;
+      }
+      if (instance.status === "done") {
+        res.json({ message: "Already completed", merged: 0 }); return;
+      }
+
+      updateInstanceStatus(id, "merging");
+      const merged = mergeInstanceDecisions(id, instance.master_squad_slug);
+
+      const squad = getSquad(instance.master_squad_slug);
+      if (squad) {
+        removeWorktree(squad.project_path, instance.worktree_path);
+      }
+
+      updateInstanceStatus(id, "done");
+      res.json({ message: "Instance completed", merged });
+    } catch (e) {
+      console.error("Error completing instance:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/squads/:slug/instances/:id/abort", (req: Request, res: Response) => {
+    try {
+      const slug = Array.isArray(req.params.slug) ? req.params.slug[0] : req.params.slug;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const instance = getInstance(id);
+      if (!instance || instance.master_squad_slug !== slug) {
+        res.status(404).json({ error: "Instance not found" }); return;
+      }
+      if (instance.status === "done" || instance.status === "failed") {
+        res.json({ message: `Already in terminal state: ${instance.status}` }); return;
+      }
+
+      updateInstanceStatus(id, "failed");
+      res.json({ message: "Instance aborted", worktree_path: instance.worktree_path });
+    } catch (e) {
+      console.error("Error aborting instance:", e);
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   });
 
