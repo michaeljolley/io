@@ -37,6 +37,7 @@ import { resetClient } from "./client.js";
 import { delegateToAgent, getActiveAgentTasks, clearAgentInMemorySession } from "./agents.js";
 import { saveConfig } from "../config.js";
 import { checkForUpdate } from "../update.js";
+import { startInstanceWatchdog } from "../instance-watchdog.js";
 import {
   createInstance,
   getInstance,
@@ -528,6 +529,7 @@ export async function initOrchestrator(copilotClient: CopilotClient): Promise<vo
   if (reconciledInstances > 0) {
     console.error(`[orchestrator] Reconciled ${reconciledInstances} stale instance(s) on startup`);
   }
+  startInstanceWatchdog();
   clearStaleTasks();
 
   // Validate the configured model and resolve model tiers
