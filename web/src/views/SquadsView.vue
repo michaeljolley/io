@@ -211,6 +211,28 @@
                   </div>
                 </li>
               </ul>
+
+              <!-- Instances section -->
+              <div class="mt-4 pt-4 border-t border-edge/40">
+                <button
+                  type="button"
+                  @click="toggleInstances(squad.slug)"
+                  class="flex items-center gap-1.5 mb-3 text-[10px] text-txt-muted hover:text-txt-secondary transition-colors duration-150"
+                >
+                  <FluentIcon
+                    :paths='`<path d="M7.47 4.22a.75.75 0 0 1 1.06 0l5.25 5.25a.75.75 0 0 1-1.06 1.06L8 5.81 3.28 10.53a.75.75 0 0 1-1.06-1.06l5.25-5.25Z"/>`'
+                    :size="11"
+                    class="transition-transform duration-150"
+                    :class="instancesExpanded[squad.slug] ? 'rotate-180' : ''"
+                  />
+                  <span class="font-semibold uppercase tracking-wider">Instances</span>
+                </button>
+                <SquadInstances
+                  v-if="instancesExpanded[squad.slug]"
+                  :squad-slug="squad.slug"
+                  class="animate-fade-in"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -306,6 +328,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import FluentIcon from '../components/FluentIcon.vue'
+import SquadInstances from '../components/SquadInstances.vue'
 import { apiFetch, authenticatedUrl } from '../lib/api'
 
 interface Squad {
@@ -377,6 +400,7 @@ const creating = ref(false)
 const createError = ref<string | null>(null)
 
 const expanded = reactive<Record<string, boolean>>({})
+const instancesExpanded = reactive<Record<string, boolean>>({})
 const agentsBySquad = reactive<Record<string, SquadAgent[]>>({})
 
 function sortedAgents(agents: SquadAgent[]): SquadAgent[] {
@@ -534,6 +558,10 @@ const toggleSquad = async (slug: string) => {
   if (expanded[slug] && !agentsBySquad[slug] && !agentsLoading[slug]) {
     await loadAgents(slug)
   }
+}
+
+const toggleInstances = (slug: string) => {
+  instancesExpanded[slug] = !instancesExpanded[slug]
 }
 
 const loadAgents = async (slug: string, force = false) => {
