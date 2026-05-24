@@ -47,6 +47,8 @@ export function ensureInstanceTables(): void {
   `);
 }
 
+export const MAX_CONCURRENT_INSTANCES = 3;
+
 export function createInstance(input: {
   id: string;
   masterSquadSlug: string;
@@ -56,6 +58,14 @@ export function createInstance(input: {
   contextSnapshot?: string;
 }): SquadInstance {
   const db = getDb();
+  const activeCount = (
+    db
+      .prepare("SELECT COUNT(*) as cnt FROM squad_instances WHERE master_squad_slug = ? AND status NOT IN ('done', 'failed')")
+      .get(input.masterSquadSlug) as { cnt: number }
+  ).cnt;
+  if (activeCount >= MAX_CONCURRENT_INSTANCES) {
+    throw new Error(`Max concurrent instances (${MAX_CONCURRENT_INSTANCES}) reached for squad "${input.masterSquadSlug}"`);
+  }
   db.prepare(
     `INSERT INTO squad_instances (id, master_squad_slug, issue_ref, worktree_path, branch_name, status, context_snapshot)
      VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
