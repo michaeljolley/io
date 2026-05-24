@@ -154,6 +154,7 @@ const input = ref('')
 const messagesEl = ref<HTMLElement | null>(null)
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 const hasUnread = ref(false)
+const lastSeenCount = ref(store.messages.length)
 
 const streamCursorHtml = '<span class="stream-cursor"></span>'
 
@@ -164,6 +165,7 @@ const isStreaming = computed(() =>
 function openChat() {
   isOpen.value = true
   hasUnread.value = false
+  lastSeenCount.value = store.messages.length
   nextTick(() => scrollToBottom())
 }
 
@@ -175,12 +177,16 @@ function scrollToBottom() {
   })
 }
 
-// Auto-scroll on new messages when open
-watch(() => store.messages.length, () => {
+// Auto-scroll on new messages when open; only mark unread for new assistant messages
+watch(() => store.messages.length, (newLen) => {
   if (isOpen.value) {
     scrollToBottom()
-  } else if (store.messages.length > 0) {
-    hasUnread.value = true
+    lastSeenCount.value = newLen
+  } else {
+    const lastMsg = store.messages[newLen - 1]
+    if (newLen > lastSeenCount.value && lastMsg?.role === 'assistant') {
+      hasUnread.value = true
+    }
   }
 })
 
