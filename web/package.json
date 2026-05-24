@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --import tsx/esm --import ./css-noop-register.mjs --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@fluentui/svg-icons": "^1.1.326",

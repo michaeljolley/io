@@ -1,7 +1,7 @@
 {
   "name": "heyio",
   "version": "0.4.0",
-  "description": "IO — a personal AI assistant built on the GitHub Copilot SDK",
+  "description": "IO \u2014 a personal AI assistant built on the GitHub Copilot SDK",
   "bin": {
     "io": "dist/index.js"
   },
@@ -19,7 +19,7 @@
     "tui": "tsx src/tui/index.ts",
     "dev": "tsx --watch src/daemon.ts",
     "prepublishOnly": "npm run build:all",
-    "test": "node --import tsx --test 'src/**/*.test.ts'"
+    "test": "node --import tsx --test 'src/**/*.test.ts' && npm test --prefix web"
   },
   "engines": {
     "node": ">=22"
