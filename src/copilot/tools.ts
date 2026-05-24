@@ -1983,6 +1983,11 @@ export function createTools(deps: ToolDeps) {
 
         deps.updateInstanceStatus(instance_id, "done");
 
+        // Auto-deactivate if this was the active instance
+        if (deps.activeInstanceId === instance_id) {
+          deps.activeInstanceId = undefined;
+        }
+
         return `Instance "${instance_id}" completed.\n- ${merged} decision(s) merged to master squad "${instance.master_squad_slug}"\n- Worktree cleaned up`;
       } catch (err) {
         return `Error completing instance: ${err instanceof Error ? err.message : String(err)}`;
@@ -2004,6 +2009,12 @@ export function createTools(deps: ToolDeps) {
       }
 
       deps.updateInstanceStatus(instance_id, "failed");
+
+      // Auto-deactivate if this was the active instance
+      if (deps.activeInstanceId === instance_id) {
+        deps.activeInstanceId = undefined;
+      }
+
       return `Instance "${instance_id}" aborted. Worktree preserved at: ${instance.worktree_path}\nUse squad_instance_cleanup to remove it.`;
     },
   });
