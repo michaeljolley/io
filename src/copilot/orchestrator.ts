@@ -37,6 +37,20 @@ import { resetClient } from "./client.js";
 import { delegateToAgent, getActiveAgentTasks, clearAgentInMemorySession } from "./agents.js";
 import { saveConfig } from "../config.js";
 import { checkForUpdate } from "../update.js";
+import {
+  createInstance,
+  getInstance,
+  listInstances,
+  updateInstanceStatus,
+  logInstanceDecision,
+  getInstanceDecisions,
+  mergeInstanceDecisions,
+  deleteInstance,
+  buildContextSnapshot,
+  reconcileInstances,
+  ensureInstanceTables,
+} from "../store/instances.js";
+import { createWorktree, removeWorktree } from "../store/worktrees.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -182,6 +196,19 @@ function getToolDeps() {
     searchSkillsRegistry,
     saveConfig,
     checkForUpdate,
+    // Squad instance deps
+    createInstance,
+    getInstance,
+    listInstances,
+    updateInstanceStatus,
+    logInstanceDecision,
+    getInstanceDecisions,
+    mergeInstanceDecisions,
+    deleteInstance,
+    buildContextSnapshot,
+    reconcileInstances,
+    createWorktree,
+    removeWorktree,
   };
 }
 
@@ -494,6 +521,7 @@ async function processQueue(): Promise<void> {
 export async function initOrchestrator(copilotClient: CopilotClient): Promise<void> {
   client = copilotClient;
 
+  ensureInstanceTables();
   clearStaleTasks();
 
   // Validate the configured model and resolve model tiers

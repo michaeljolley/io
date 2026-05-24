@@ -179,6 +179,26 @@ GROUP BY agent_slug`,
     )`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_type ON unified_feed(type, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_unread ON unified_feed(read_at, created_at)`,
+    `CREATE TABLE IF NOT EXISTS squad_instances (
+      id TEXT PRIMARY KEY,
+      master_squad_slug TEXT NOT NULL,
+      issue_ref TEXT,
+      worktree_path TEXT NOT NULL,
+      branch_name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      context_snapshot TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME
+    )`,
+    `CREATE TABLE IF NOT EXISTS instance_decisions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      instance_id TEXT NOT NULL,
+      decision TEXT NOT NULL,
+      context TEXT,
+      merged_to_master INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `ALTER TABLE agent_tasks ADD COLUMN instance_id TEXT`,
   ];
 
   for (const migration of migrations) {

@@ -351,6 +351,19 @@ export interface ToolDeps {
   searchSkillsRegistry: (query: string) => Promise<Array<{ name: string; description: string; repoUrl: string }>>;
   saveConfig: (updates: Record<string, unknown>) => void;
   checkForUpdate: () => Promise<{ updateAvailable: boolean; current: string; latest: string }>;
+  // Squad instance deps
+  createInstance: (input: { id: string; masterSquadSlug: string; issueRef?: string; worktreePath: string; branchName: string; contextSnapshot?: string }) => { id: string; master_squad_slug: string; status: string; worktree_path: string; branch_name: string };
+  getInstance: (id: string) => { id: string; master_squad_slug: string; issue_ref: string | null; worktree_path: string; branch_name: string; status: string; context_snapshot: string | null; created_at: string; completed_at: string | null } | undefined;
+  listInstances: (masterSquadSlug: string, opts?: { includeCompleted?: boolean }) => Array<{ id: string; issue_ref: string | null; status: string; branch_name: string; created_at: string; completed_at: string | null }>;
+  updateInstanceStatus: (id: string, status: string) => void;
+  logInstanceDecision: (instanceId: string, decision: string, context?: string) => void;
+  getInstanceDecisions: (instanceId: string) => Array<{ decision: string; context: string | null; created_at: string; merged_to_master: number }>;
+  mergeInstanceDecisions: (instanceId: string, masterSquadSlug: string) => number;
+  deleteInstance: (id: string) => void;
+  buildContextSnapshot: (masterSquadSlug: string, limit?: number) => string;
+  reconcileInstances: () => number;
+  createWorktree: (projectPath: string, instanceId: string, branchName: string, baseBranch?: string) => string;
+  removeWorktree: (projectPath: string, worktreePath: string) => void;
 }
 
 
@@ -1847,7 +1860,169 @@ export function createTools(deps: ToolDeps) {
     },
   });
 
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github];
+
+  // ---------------------------------------------------------------------------
+  // Squad Instance tools (#231)
+  // ---------------------------------------------------------------------------
+
+  const squadInstanceCreate = defineTool("squad_instance_create", {
+    description: "Spawn a parallel instance of a squad to work on a separate issue. Creates a git worktree for file isolation and snapshots the squad's current decisions as context.",
+    skipPermission: true,
+    parameters: z.object({
+      squad_slug: z.string().describe("The squad to create an instance of"),
+      issue_ref: z.string().describe("Issue reference or label (e.g. '#231', 'refactor-auth')"),
+      base_branch: z.string().optional().describe("Branch to base the worktree on (default: 'main')"),
+    }),
+    handler: async ({ squad_slug, issue_ref, base_branch }) => {
+      const squad = deps.getSquad(squad_slug);
+      if (!squad) return `Squad not found: ${squad_slug}`;
+
+      const sanitizedRef = issue_ref.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
+      const instanceId = `${squad_slug}--${sanitizedRef}`;
+      const branchName = `${squad_slug}/instance/${sanitizedRef}`;
+
+      const existing = deps.getInstance(instanceId);
+      if (existing && existing.status !== "done" && existing.status !== "failed") {
+        return `Instance "${instanceId}" already exists (status: ${existing.status})`;
+      }
+
+      try {
+        const contextSnapshot = deps.buildContextSnapshot(squad_slug);
+        const worktreePath = deps.createWorktree(squad.projectPath, instanceId, branchName, base_branch ?? "main");
+
+        deps.createInstance({
+          id: instanceId,
+          masterSquadSlug: squad_slug,
+          issueRef: issue_ref,
+          worktreePath,
+          branchName,
+          contextSnapshot,
+        });
+
+        deps.updateInstanceStatus(instanceId, "active");
+
+        const inherited = JSON.parse(contextSnapshot) as unknown[];
+        return `Instance "${instanceId}" created.\nWorktree: ${worktreePath}\nBranch: ${branchName}\nStatus: active\nContext: ${inherited.length} decisions inherited`;
+      } catch (err) {
+        return `Error creating instance: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    },
+  });
+
+  const squadInstanceList = defineTool("squad_instance_list", {
+    description: "List active (and optionally completed) instances for a squad.",
+    skipPermission: true,
+    parameters: z.object({
+      squad_slug: z.string().describe("Squad slug"),
+      include_completed: z.boolean().optional().describe("Include done/failed instances (default: false)"),
+    }),
+    handler: async ({ squad_slug, include_completed }) => {
+      const instances = deps.listInstances(squad_slug, { includeCompleted: include_completed ?? false });
+      if (instances.length === 0) return `No instances for squad "${squad_slug}".`;
+
+      return instances.map(i =>
+        `- **${i.id}** [${i.status}] — ${i.issue_ref ?? "no issue"} (branch: ${i.branch_name}, created: ${i.created_at})`
+      ).join("\n");
+    },
+  });
+
+  const squadInstanceStatus = defineTool("squad_instance_status", {
+    description: "Get detailed status of a specific squad instance.",
+    skipPermission: true,
+    parameters: z.object({
+      instance_id: z.string().describe("Instance ID (e.g. 'my-squad--issue-42')"),
+    }),
+    handler: async ({ instance_id }) => {
+      const instance = deps.getInstance(instance_id);
+      if (!instance) return `Instance not found: ${instance_id}`;
+
+      const decisions = deps.getInstanceDecisions(instance_id);
+
+      return [
+        `## Instance: ${instance.id}`,
+        `- Squad: ${instance.master_squad_slug}`,
+        `- Issue: ${instance.issue_ref ?? "none"}`,
+        `- Status: ${instance.status}`,
+        `- Branch: ${instance.branch_name}`,
+        `- Worktree: ${instance.worktree_path}`,
+        `- Created: ${instance.created_at}`,
+        instance.completed_at ? `- Completed: ${instance.completed_at}` : null,
+        `- Decisions: ${decisions.length} (${decisions.filter(d => d.merged_to_master).length} merged)`,
+      ].filter(Boolean).join("\n");
+    },
+  });
+
+  const squadInstanceComplete = defineTool("squad_instance_complete", {
+    description: "Complete a squad instance: merge its decisions back to the master squad and clean up the worktree.",
+    skipPermission: true,
+    parameters: z.object({
+      instance_id: z.string().describe("Instance ID to complete"),
+    }),
+    handler: async ({ instance_id }) => {
+      const instance = deps.getInstance(instance_id);
+      if (!instance) return `Instance not found: ${instance_id}`;
+      if (instance.status === "done") return `Instance already completed.`;
+
+      try {
+        deps.updateInstanceStatus(instance_id, "merging");
+
+        const merged = deps.mergeInstanceDecisions(instance_id, instance.master_squad_slug);
+
+        const squad = deps.getSquad(instance.master_squad_slug);
+        if (squad) {
+          deps.removeWorktree(squad.projectPath, instance.worktree_path);
+        }
+
+        deps.updateInstanceStatus(instance_id, "done");
+
+        return `Instance "${instance_id}" completed.\n- ${merged} decision(s) merged to master squad "${instance.master_squad_slug}"\n- Worktree cleaned up`;
+      } catch (err) {
+        return `Error completing instance: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    },
+  });
+
+  const squadInstanceAbort = defineTool("squad_instance_abort", {
+    description: "Abort a squad instance, marking it as failed. Worktree is preserved for debugging.",
+    skipPermission: true,
+    parameters: z.object({
+      instance_id: z.string().describe("Instance ID to abort"),
+    }),
+    handler: async ({ instance_id }) => {
+      const instance = deps.getInstance(instance_id);
+      if (!instance) return `Instance not found: ${instance_id}`;
+      if (instance.status === "done" || instance.status === "failed") {
+        return `Instance already in terminal state: ${instance.status}`;
+      }
+
+      deps.updateInstanceStatus(instance_id, "failed");
+      return `Instance "${instance_id}" aborted. Worktree preserved at: ${instance.worktree_path}\nUse squad_instance_cleanup to remove it.`;
+    },
+  });
+
+  const squadInstanceCleanup = defineTool("squad_instance_cleanup", {
+    description: "Force-remove a failed instance's worktree and delete the instance record.",
+    skipPermission: true,
+    parameters: z.object({
+      instance_id: z.string().describe("Instance ID to clean up"),
+    }),
+    handler: async ({ instance_id }) => {
+      const instance = deps.getInstance(instance_id);
+      if (!instance) return `Instance not found: ${instance_id}`;
+      if (instance.status !== "done" && instance.status !== "failed") {
+        return `Cannot clean up instance in "${instance.status}" state. Abort it first.`;
+      }
+
+      const squad = deps.getSquad(instance.master_squad_slug);
+      if (squad) {
+        deps.removeWorktree(squad.projectPath, instance.worktree_path);
+      }
+
+      deps.deleteInstance(instance_id);
+      return `Instance "${instance_id}" cleaned up and removed.`;
+    },
+  });
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {
