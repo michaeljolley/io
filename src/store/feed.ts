@@ -1,6 +1,6 @@
 import { getDb } from "./db.js";
 
-export type FeedEntryType = "deliverable" | "notification";
+export type FeedEntryType = "inbox" | "notification";
 
 export interface FeedEntry {
   id: number;
@@ -9,6 +9,9 @@ export interface FeedEntry {
   body: string;
   source_type: string | null;
   source_ref: string | null;  // raw JSON string
+  squad_slug: string | null;
+  instance_id: string | null;
+  task_id: string | null;
   created_at: string;
   read_at: string | null;
 }
@@ -19,12 +22,15 @@ export function createFeedEntry(input: {
   body: string;
   source_type?: string;
   source_ref?: string | null;
+  squad_slug?: string | null;
+  instance_id?: string | null;
+  task_id?: string | null;
 }): FeedEntry {
   const db = getDb();
   const info = db
     .prepare(
-      `INSERT INTO unified_feed (type, title, body, source_type, source_ref)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO unified_feed (type, title, body, source_type, source_ref, squad_slug, instance_id, task_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       input.type,
@@ -32,6 +38,9 @@ export function createFeedEntry(input: {
       input.body,
       input.source_type ?? null,
       input.source_ref ?? null,
+      input.squad_slug ?? null,
+      input.instance_id ?? null,
+      input.task_id ?? null,
     );
   return db
     .prepare("SELECT * FROM unified_feed WHERE id = ?")
@@ -142,6 +151,7 @@ export function pruneOldFeedEntries(olderThanDays: number): number {
     .run(olderThanDays);
   return info.changes;
 }
+
 export function markFeedEntriesRead(ids: number[]): number {
   if (ids.length === 0) return 0;
   const placeholders = ids.map(() => "?").join(", ");

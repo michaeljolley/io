@@ -135,7 +135,7 @@ export async function startApiServer(): Promise<void> {
   api.get("/feed/count", (req: Request, res: Response) => {
     try {
       const rawType = req.query.type;
-      const type = rawType === "deliverable" || rawType === "notification"
+      const type = rawType === "inbox" || rawType === "notification"
         ? (rawType as FeedEntryType)
         : undefined;
       const count = countUnreadFeedEntries(type);
@@ -149,7 +149,7 @@ export async function startApiServer(): Promise<void> {
   api.get("/feed", (req: Request, res: Response) => {
     try {
       const rawType = req.query.type;
-      const type = rawType === "deliverable" || rawType === "notification"
+      const type = rawType === "inbox" || rawType === "notification"
         ? (rawType as FeedEntryType)
         : undefined;
       const unreadOnly = req.query.unread === "true";
@@ -290,7 +290,7 @@ export async function startApiServer(): Promise<void> {
   api.post("/feed/read-all", (req: Request, res: Response) => {
     try {
       const rawType = req.query.type;
-      const type = rawType === "deliverable" || rawType === "notification"
+      const type = rawType === "inbox" || rawType === "notification"
         ? (rawType as FeedEntryType)
         : undefined;
       const marked = markAllFeedEntriesRead(type);
@@ -359,8 +359,8 @@ export async function startApiServer(): Promise<void> {
       source_type?: unknown;
       source_ref?: unknown;
     };
-    if (type !== "deliverable" && type !== "notification") {
-      res.status(400).json({ error: "type must be 'deliverable' or 'notification'" });
+    if (type !== "inbox" && type !== "notification") {
+      res.status(400).json({ error: "type must be 'inbox' or 'notification'" });
       return;
     }
     if (!title || typeof title !== "string" || title.trim() === "") {

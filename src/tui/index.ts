@@ -150,7 +150,7 @@ function renderActivity(taskIdArg: string | undefined): void {
 }
 
 function renderInbox(): void {
-  const entries = listFeedEntries({ type: "deliverable" });
+  const entries = listFeedEntries({ type: "inbox" });
   if (entries.length === 0) {
     console.log("\u2705 Inbox is empty.");
     return;
@@ -233,7 +233,7 @@ export async function startTui(): Promise<void> {
         if (sub === "" ) {
           renderInbox();
         } else if (sub === "clear") {
-          const entries = listFeedEntries({ type: "deliverable" });
+          const entries = listFeedEntries({ type: "inbox" });
           let deleted = 0;
           for (const entry of entries) {
             if (deleteFeedEntry(entry.id)) deleted++;

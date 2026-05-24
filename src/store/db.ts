@@ -169,7 +169,7 @@ GROUP BY agent_slug`,
     )`,
     `CREATE TABLE IF NOT EXISTS unified_feed (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL CHECK(type IN ('deliverable', 'notification')),
+      type TEXT NOT NULL CHECK(type IN ('inbox', 'notification')),
       title TEXT NOT NULL,
       body TEXT NOT NULL,
       source_type TEXT,
@@ -200,6 +200,10 @@ GROUP BY agent_slug`,
     )`,
     `ALTER TABLE agent_tasks ADD COLUMN instance_id TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_instance_decisions_instance ON instance_decisions(instance_id, merged_to_master)`,
+    `UPDATE unified_feed SET type = 'inbox' WHERE type = 'deliverable'`,
+    `ALTER TABLE unified_feed ADD COLUMN squad_slug TEXT`,
+    `ALTER TABLE unified_feed ADD COLUMN instance_id TEXT`,
+    `ALTER TABLE unified_feed ADD COLUMN task_id TEXT`,
   ];
 
   for (const migration of migrations) {

@@ -45,8 +45,8 @@ beforeEach(() => {
 
 describe("createFeedEntry", () => {
   it("creates a deliverable entry with correct fields", () => {
-    const entry = createFeedEntry({ type: "deliverable", title: "Task done", body: "Here are the results." });
-    assert.equal(entry.type, "deliverable");
+    const entry = createFeedEntry({ type: "inbox", title: "Task done", body: "Here are the results." });
+    assert.equal(entry.type, "inbox");
     assert.equal(entry.title, "Task done");
     assert.equal(entry.body, "Here are the results.");
     assert.equal(entry.read_at, null);
@@ -75,7 +75,7 @@ describe("createFeedEntry", () => {
   });
 
   it("autoincrements ids", () => {
-    const a = createFeedEntry({ type: "deliverable", title: "A", body: "a" });
+    const a = createFeedEntry({ type: "inbox", title: "A", body: "a" });
     const b = createFeedEntry({ type: "notification", title: "B", body: "b" });
     assert.ok(b.id > a.id);
   });
@@ -85,7 +85,7 @@ describe("createFeedEntry", () => {
 
 describe("listFeedEntries", () => {
   it("returns all entries newest first", () => {
-    createFeedEntry({ type: "deliverable", title: "First", body: "x" });
+    createFeedEntry({ type: "inbox", title: "First", body: "x" });
     createFeedEntry({ type: "notification", title: "Second", body: "y" });
     const entries = listFeedEntries();
     assert.equal(entries.length, 2);
@@ -94,15 +94,15 @@ describe("listFeedEntries", () => {
   });
 
   it("filters by type=deliverable", () => {
-    createFeedEntry({ type: "deliverable", title: "D", body: "d" });
+    createFeedEntry({ type: "inbox", title: "D", body: "d" });
     createFeedEntry({ type: "notification", title: "N", body: "n" });
-    const entries = listFeedEntries({ type: "deliverable" });
+    const entries = listFeedEntries({ type: "inbox" });
     assert.equal(entries.length, 1);
-    assert.equal(entries[0].type, "deliverable");
+    assert.equal(entries[0].type, "inbox");
   });
 
   it("filters by type=notification", () => {
-    createFeedEntry({ type: "deliverable", title: "D", body: "d" });
+    createFeedEntry({ type: "inbox", title: "D", body: "d" });
     createFeedEntry({ type: "notification", title: "N", body: "n" });
     const entries = listFeedEntries({ type: "notification" });
     assert.equal(entries.length, 1);
@@ -139,22 +139,22 @@ describe("countUnreadFeedEntries", () => {
   });
 
   it("increments on insert", () => {
-    createFeedEntry({ type: "deliverable", title: "T", body: "b" });
+    createFeedEntry({ type: "inbox", title: "T", body: "b" });
     assert.equal(countUnreadFeedEntries(), 1);
     createFeedEntry({ type: "notification", title: "N", body: "b" });
     assert.equal(countUnreadFeedEntries(), 2);
   });
 
   it("decreases when marked read", () => {
-    const e = createFeedEntry({ type: "deliverable", title: "T", body: "b" });
+    const e = createFeedEntry({ type: "inbox", title: "T", body: "b" });
     markFeedEntryRead(e.id);
     assert.equal(countUnreadFeedEntries(), 0);
   });
 
   it("filters by type", () => {
-    createFeedEntry({ type: "deliverable", title: "D", body: "d" });
+    createFeedEntry({ type: "inbox", title: "D", body: "d" });
     createFeedEntry({ type: "notification", title: "N", body: "n" });
-    assert.equal(countUnreadFeedEntries("deliverable"), 1);
+    assert.equal(countUnreadFeedEntries("inbox"), 1);
     assert.equal(countUnreadFeedEntries("notification"), 1);
   });
 });
@@ -199,11 +199,11 @@ describe("markAllFeedEntriesRead", () => {
   });
 
   it("respects type filter — only marks matching type", () => {
-    createFeedEntry({ type: "deliverable", title: "D", body: "d" });
+    createFeedEntry({ type: "inbox", title: "D", body: "d" });
     createFeedEntry({ type: "notification", title: "N", body: "n" });
     const count = markAllFeedEntriesRead("notification");
     assert.equal(count, 1);
-    assert.equal(countUnreadFeedEntries("deliverable"), 1);
+    assert.equal(countUnreadFeedEntries("inbox"), 1);
     assert.equal(countUnreadFeedEntries("notification"), 0);
   });
 });
@@ -213,7 +213,7 @@ describe("markAllFeedEntriesRead", () => {
 describe("markFeedEntriesRead", () => {
   it("marks multiple entries read and returns change count", () => {
     const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
-    const b = createFeedEntry({ type: "deliverable", title: "B", body: "b" });
+    const b = createFeedEntry({ type: "inbox", title: "B", body: "b" });
     const c = createFeedEntry({ type: "notification", title: "C", body: "c" });
     const count = markFeedEntriesRead([a.id, b.id, c.id]);
     assert.equal(count, 3);
@@ -227,7 +227,7 @@ describe("markFeedEntriesRead", () => {
   });
 
   it("works correctly for a single id", () => {
-    const e = createFeedEntry({ type: "deliverable", title: "Solo", body: "b" });
+    const e = createFeedEntry({ type: "inbox", title: "Solo", body: "b" });
     assert.equal(markFeedEntriesRead([e.id]), 1);
     const entries = listFeedEntries();
     assert.ok(entries[0].read_at !== null);
@@ -262,14 +262,14 @@ describe("deleteFeedEntry", () => {
   });
 
   it("returns true and removes the entry", () => {
-    const e = createFeedEntry({ type: "deliverable", title: "T", body: "b" });
+    const e = createFeedEntry({ type: "inbox", title: "T", body: "b" });
     assert.equal(deleteFeedEntry(e.id), true);
     const entries = listFeedEntries();
     assert.equal(entries.find((x) => x.id === e.id), undefined);
   });
 
   it("second delete returns false (not idempotent)", () => {
-    const e = createFeedEntry({ type: "deliverable", title: "T", body: "b" });
+    const e = createFeedEntry({ type: "inbox", title: "T", body: "b" });
     deleteFeedEntry(e.id);
     assert.equal(deleteFeedEntry(e.id), false);
   });
@@ -280,7 +280,7 @@ describe("deleteFeedEntry", () => {
 describe("deleteFeedEntries", () => {
   it("deletes multiple entries and returns change count", () => {
     const a = createFeedEntry({ type: "notification", title: "A", body: "a" });
-    const b = createFeedEntry({ type: "deliverable", title: "B", body: "b" });
+    const b = createFeedEntry({ type: "inbox", title: "B", body: "b" });
     const c = createFeedEntry({ type: "notification", title: "C", body: "c" });
     const count = deleteFeedEntries([a.id, b.id, c.id]);
     assert.equal(count, 3);
@@ -307,7 +307,7 @@ describe("deleteFeedEntries", () => {
   });
 
   it("mix of existing and non-existent ids — only deletes what exists", () => {
-    const e = createFeedEntry({ type: "deliverable", title: "Real", body: "b" });
+    const e = createFeedEntry({ type: "inbox", title: "Real", body: "b" });
     const count = deleteFeedEntries([e.id, 9999]);
     assert.equal(count, 1);
     assert.deepEqual(listFeedEntries(), []);

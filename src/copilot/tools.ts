@@ -551,7 +551,7 @@ export function createTools(deps: ToolDeps) {
         const taskId = await deps.delegateToAgent(slug, task, (id, result) => {
           console.error(`[io] Agent task ${id} completed for squad ${slug}`);
           if (shouldRouteToInbox(task)) {
-            createFeedEntry({ type: "deliverable", title: `[${slug}] Task result`, body: result });
+            createFeedEntry({ type: "inbox", title: `[${slug}] Task result`, body: result, squad_slug: slug });
             console.error(`[io] Task ${id} result routed to inbox`);
           }
         }, agent, deps.activeInstanceId);
@@ -2080,15 +2080,43 @@ export function createTools(deps: ToolDeps) {
       title: z.string().describe("Short title for the inbox item"),
       body: z.string().describe("Full content/body of the message (supports markdown)"),
       squad_slug: z.string().optional().describe("Squad slug to prefix the title with (e.g. 'io-assistant')"),
+      instance_id: z.string().optional().describe("Instance ID if this message is from a squad instance"),
+      task_id: z.string().optional().describe("Task ID associated with this message"),
     }),
-    handler: async ({ title, body, squad_slug }) => {
+    handler: async ({ title, body, squad_slug, instance_id, task_id }) => {
       const prefix = squad_slug ? `[${squad_slug}] ` : "";
-      createFeedEntry({ type: "deliverable", title: `${prefix}${title}`, body });
+      createFeedEntry({
+        type: "inbox",
+        title: `${prefix}${title}`,
+        body,
+        squad_slug: squad_slug ?? null,
+        instance_id: instance_id ?? null,
+        task_id: task_id ?? null,
+      });
       return "Message sent to inbox successfully.";
     },
   });
 
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox];
+  const sendNotification = defineTool("send_notification", {
+    description: "Send a short status notification to the IO feed. Use for brief updates, alerts, and FYIs (one sentence). For longer content, use send_to_inbox instead.",
+    skipPermission: true,
+    parameters: z.object({
+      message: z.string().describe("Short notification message (one sentence)"),
+      squad_slug: z.string().optional().describe("Squad slug for context"),
+    }),
+    handler: async ({ message, squad_slug }) => {
+      const prefix = squad_slug ? `[${squad_slug}] ` : "";
+      createFeedEntry({
+        type: "notification",
+        title: `${prefix}${message}`,
+        body: message,
+        squad_slug: squad_slug ?? null,
+      });
+      return "Notification sent.";
+    },
+  });
+
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox, sendNotification];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {

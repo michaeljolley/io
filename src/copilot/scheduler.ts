@@ -91,7 +91,7 @@ async function fireSchedule(schedule: SquadSchedule): Promise<void> {
   try {
     await delegateToAgent(squad.slug, prompt, (_taskId, result) => {
       if (shouldRouteToInbox(prompt)) {
-        createFeedEntry({ type: "deliverable", title: `[${squad.slug}] ${schedule.name}`, body: result });
+        createFeedEntry({ type: "inbox", title: `[${squad.slug}] ${schedule.name}`, body: result });
         console.error(`[io] Schedule ${schedule.id} result routed to inbox`);
         completeScheduleRun(run.id, 0);
       } else {
