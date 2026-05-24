@@ -267,7 +267,7 @@ export function getDecisions(
 ): SquadDecision[] {
   return getDb()
     .prepare(
-      "SELECT * FROM squad_decisions WHERE squad_slug = ? ORDER BY created_at DESC LIMIT ?",
+      "SELECT * FROM squad_decisions WHERE squad_slug = ? ORDER BY created_at DESC, id DESC LIMIT ?",
     )
     .all(squadSlug, limit) as SquadDecision[];
 }
