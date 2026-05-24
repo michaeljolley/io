@@ -162,6 +162,7 @@ export function renderMarkdown(md: string): string {
   const out: string[] = []
   let inCode = false
   let listType: 'ul' | 'ol' | null = null
+  let inBlockquote = false
   let inTable = false
   let codeLines: string[] = []
   let codeLang = ''
@@ -177,6 +178,10 @@ export function renderMarkdown(md: string): string {
       tableLines = []
       inTable = false
     }
+  }
+
+  function closeBlockquote() {
+    if (inBlockquote) { out.push('</blockquote>'); inBlockquote = false }
   }
 
   for (const line of lines) {
@@ -226,13 +231,13 @@ export function renderMarkdown(md: string): string {
     const h3 = line.match(/^###\s+(.+)/)
     const h2 = line.match(/^##\s+(.+)/)
     const h1 = line.match(/^#\s+(.+)/)
-    if (h4) { closeList(); out.push(`<h4 class="text-sm font-semibold text-gray-200 mt-4 mb-1">${inlineFormat(h4[1])}</h4>`); continue }
-    if (h3) { closeList(); out.push(`<h3 class="text-base font-semibold text-gray-100 mt-5 mb-2">${inlineFormat(h3[1])}</h3>`); continue }
-    if (h2) { closeList(); out.push(`<h2 class="text-lg font-bold text-gray-100 mt-6 mb-2 pb-1 border-b border-gray-800">${inlineFormat(h2[1])}</h2>`); continue }
-    if (h1) { closeList(); out.push(`<h1 class="text-xl font-bold text-gray-100 mt-6 mb-3">${inlineFormat(h1[1])}</h1>`); continue }
+    if (h4) { closeList(); closeBlockquote(); out.push(`<h4 class="text-sm font-semibold text-gray-200 mt-4 mb-1">${inlineFormat(h4[1])}</h4>`); continue }
+    if (h3) { closeList(); closeBlockquote(); out.push(`<h3 class="text-base font-semibold text-gray-100 mt-5 mb-2">${inlineFormat(h3[1])}</h3>`); continue }
+    if (h2) { closeList(); closeBlockquote(); out.push(`<h2 class="text-lg font-bold text-gray-100 mt-6 mb-2 pb-1 border-b border-gray-800">${inlineFormat(h2[1])}</h2>`); continue }
+    if (h1) { closeList(); closeBlockquote(); out.push(`<h1 class="text-xl font-bold text-gray-100 mt-6 mb-3">${inlineFormat(h1[1])}</h1>`); continue }
 
     // Horizontal rule
-    if (/^---+$/.test(line.trim())) { closeList(); out.push('<hr class="border-gray-800 my-4" />'); continue }
+    if (/^---+$/.test(line.trim())) { closeList(); closeBlockquote(); out.push('<hr class="border-gray-800 my-4" />'); continue }
 
     // Unordered list items
     const li = line.match(/^[-*+]\s+(.+)/)
@@ -252,14 +257,25 @@ export function renderMarkdown(md: string): string {
       continue
     }
 
+    // Blockquote lines
+    const bq = line.match(/^>\s?(.*)/)
+    if (bq) {
+      closeList()
+      if (!inBlockquote) { out.push('<blockquote class="border-l-2 border-txt-muted pl-3 my-2 text-txt-muted italic">'); inBlockquote = true }
+      out.push(`<p class="my-0">${inlineFormat(bq[1])}</p>`)
+      continue
+    }
+
     // Blank line
     if (line.trim() === '') {
       closeList()
+      closeBlockquote()
       out.push('<div class="my-2"></div>')
       continue
     }
 
     closeList()
+    closeBlockquote()
     out.push(`<p class="my-1">${inlineFormat(line)}</p>`)
   }
 
@@ -271,6 +287,7 @@ export function renderMarkdown(md: string): string {
   }
   closeTable()
   closeList()
+  closeBlockquote()
 
   return out.join('\n')
 }

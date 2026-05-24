@@ -162,12 +162,51 @@ describe('renderMarkdown — fenced code blocks', () => {
 // ── blockquotes ───────────────────────────────────────────────────────────────
 
 describe('renderMarkdown — blockquotes', () => {
-  it('treats > prefix as plain text (blockquotes not implemented in this renderer)', () => {
-    // The renderer does not have a blockquote handler; > lines are rendered
-    // as paragraphs with the > entity-escaped. This test documents current behavior.
+  it('renders a single-line blockquote', () => {
     const html = renderMarkdown('> This is a quote')
-    contains(html, '&gt;')
+    contains(html, '<blockquote ')
+    contains(html, '</blockquote>')
     contains(html, 'This is a quote')
+    notContains(html, '&gt; This')
+  })
+
+  it('groups consecutive > lines into one blockquote', () => {
+    const html = renderMarkdown('> line one\n> line two\n> line three')
+    // Only one opening and one closing blockquote tag
+    assert.equal((html.match(/<blockquote/g) ?? []).length, 1)
+    assert.equal((html.match(/<\/blockquote>/g) ?? []).length, 1)
+    contains(html, 'line one')
+    contains(html, 'line two')
+    contains(html, 'line three')
+  })
+
+  it('applies inline formatting inside blockquotes', () => {
+    const html = renderMarkdown('> **bold** and *italic* text')
+    contains(html, '<blockquote ')
+    contains(html, '<strong>bold</strong>')
+    contains(html, '<em>italic</em>')
+  })
+
+  it('closes blockquote when followed by normal text', () => {
+    const html = renderMarkdown('> quoted\n\nParagraph after')
+    contains(html, '</blockquote>')
+    contains(html, 'Paragraph after')
+    // The blockquote must be closed before the paragraph
+    const bqClose = html.indexOf('</blockquote>')
+    const para = html.indexOf('Paragraph after')
+    assert.ok(bqClose < para, 'blockquote must close before paragraph')
+  })
+
+  it('handles bare > line (empty blockquote line)', () => {
+    const html = renderMarkdown('>')
+    contains(html, '<blockquote ')
+    contains(html, '</blockquote>')
+  })
+
+  it('closes blockquote at EOF without trailing blank line', () => {
+    const html = renderMarkdown('> last line')
+    contains(html, '<blockquote ')
+    contains(html, '</blockquote>')
   })
 })
 
