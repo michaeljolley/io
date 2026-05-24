@@ -18,7 +18,7 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm ci
+        run: npm ci && npm ci --prefix web
 
       - name: Type check (Vue)
         run: npx vue-tsc --noEmit -p web/tsconfig.json
