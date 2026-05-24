@@ -305,4 +305,7 @@ async function sendMessage() {
 .floating-chat-md :deep(code) { font-family: 'JetBrains Mono', monospace; }
 .floating-chat-md :deep(a) { color: #22d3ee; }
 .floating-chat-md :deep(a:hover) { text-decoration: underline; }
+.floating-chat-md :deep(ol) { list-style-type: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.floating-chat-md :deep(ul) { list-style-type: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.floating-chat-md :deep(li) { margin: 0.25em 0; }
 </style>

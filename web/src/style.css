@@ -110,3 +110,20 @@ body {
     box-shadow: inset 0 1px 0 rgba(34, 211, 238, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   }
 }
+
+/* ── wiki-content markdown list styles ────────── */
+/* Tailwind preflight resets list-style and padding; restore them for rendered markdown */
+
+.wiki-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.wiki-content ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.wiki-content li {
+  margin: 0.25em 0;
+}
