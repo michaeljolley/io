@@ -1877,6 +1877,8 @@ export function createTools(deps: ToolDeps) {
       const squad = deps.getSquad(squad_slug);
       if (!squad) return `Squad not found: ${squad_slug}`;
 
+      // Deterministic ID: allows idempotent re-creation if an instance for
+      // the same issue_ref previously completed or failed.
       const sanitizedRef = issue_ref.replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
       const instanceId = `${squad_slug}--${sanitizedRef}`;
       const branchName = `${squad_slug}/instance/${sanitizedRef}`;
@@ -1968,10 +1970,10 @@ export function createTools(deps: ToolDeps) {
 
         const merged = deps.mergeInstanceDecisions(instance_id, instance.master_squad_slug);
 
+        // Clean up worktree — use squad's project_path if available, fall back to stored path
         const squad = deps.getSquad(instance.master_squad_slug);
-        if (squad) {
-          deps.removeWorktree(squad.projectPath, instance.worktree_path);
-        }
+        const projectPath = squad?.projectPath ?? instance.worktree_path.replace(/\/\.io-worktrees\/.*$/, "");
+        deps.removeWorktree(projectPath, instance.worktree_path);
 
         deps.updateInstanceStatus(instance_id, "done");
 

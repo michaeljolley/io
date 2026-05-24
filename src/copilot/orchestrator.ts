@@ -522,6 +522,10 @@ export async function initOrchestrator(copilotClient: CopilotClient): Promise<vo
   client = copilotClient;
 
   ensureInstanceTables();
+  const reconciledInstances = reconcileInstances();
+  if (reconciledInstances > 0) {
+    console.error(`[orchestrator] Reconciled ${reconciledInstances} stale instance(s) on startup`);
+  }
   clearStaleTasks();
 
   // Validate the configured model and resolve model tiers

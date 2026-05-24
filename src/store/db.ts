@@ -199,6 +199,7 @@ GROUP BY agent_slug`,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
     `ALTER TABLE agent_tasks ADD COLUMN instance_id TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_instance_decisions_instance ON instance_decisions(instance_id, merged_to_master)`,
   ];
 
   for (const migration of migrations) {

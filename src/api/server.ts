@@ -532,14 +532,21 @@ export async function startApiServer(): Promise<void> {
       const contextSnapshot = buildContextSnapshot(slug);
       const worktreePath = createWorktree(squad.project_path, instanceId, branchName, base_branch ?? "main");
 
-      const instance = createInstance({
-        id: instanceId,
-        masterSquadSlug: slug,
-        issueRef: issue_ref,
-        worktreePath,
-        branchName,
-        contextSnapshot,
-      });
+      let instance;
+      try {
+        instance = createInstance({
+          id: instanceId,
+          masterSquadSlug: slug,
+          issueRef: issue_ref,
+          worktreePath,
+          branchName,
+          contextSnapshot,
+        });
+      } catch (createErr) {
+        // Roll back the worktree if DB insert fails (e.g. max instances exceeded)
+        removeWorktree(squad.project_path, worktreePath);
+        throw createErr;
+      }
 
       updateInstanceStatus(instanceId, "active");
       res.status(201).json({ instance: { ...instance, status: "active" } });
