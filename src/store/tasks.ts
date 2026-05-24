@@ -7,6 +7,7 @@ export interface AgentTask {
   status: string;
   result: string | null;
   origin_channel: string | null;
+  instance_id: string | null;
   started_at: string;
   completed_at: string | null;
 }
