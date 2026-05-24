@@ -161,14 +161,14 @@ export function renderMarkdown(md: string): string {
   const lines = md.split('\n')
   const out: string[] = []
   let inCode = false
-  let inList = false
+  let listType: 'ul' | 'ol' | null = null
   let inTable = false
   let codeLines: string[] = []
   let codeLang = ''
   let tableLines: string[] = []
 
   function closeList() {
-    if (inList) { out.push('</ul>'); inList = false }
+    if (listType) { out.push(`</${listType}>`); listType = null }
   }
 
   function closeTable() {
@@ -237,7 +237,8 @@ export function renderMarkdown(md: string): string {
     // Unordered list items
     const li = line.match(/^[-*+]\s+(.+)/)
     if (li) {
-      if (!inList) { out.push('<ul class="list-disc list-inside my-2 space-y-1 pl-2">'); inList = true }
+      if (listType === 'ol') closeList()
+      if (!listType) { out.push('<ul class="list-disc list-inside my-2 space-y-1 pl-2">'); listType = 'ul' }
       out.push(`<li>${inlineFormat(li[1])}</li>`)
       continue
     }
@@ -245,7 +246,8 @@ export function renderMarkdown(md: string): string {
     // Ordered list items
     const oli = line.match(/^\d+\.\s+(.+)/)
     if (oli) {
-      if (!inList) { out.push('<ol class="list-decimal list-inside my-2 space-y-1 pl-2">'); inList = true }
+      if (listType === 'ul') closeList()
+      if (!listType) { out.push('<ol class="list-decimal list-inside my-2 space-y-1 pl-2">'); listType = 'ol' }
       out.push(`<li>${inlineFormat(oli[1])}</li>`)
       continue
     }
