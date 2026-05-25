@@ -366,6 +366,7 @@ export interface ToolDeps {
   createWorktree: (projectPath: string, instanceId: string, branchName: string, baseBranch?: string) => string;
   removeWorktree: (projectPath: string, worktreePath: string) => void;
   activeInstanceId?: string;  // Set when tools are executing within an instance context
+  reloadMcpTools?: () => Promise<void>;
 }
 
 
@@ -2150,7 +2151,7 @@ export function createTools(deps: ToolDeps) {
       }
       config.servers.push({ name, command, args, url, env, enabled: true });
       saveMcpConfig(config);
-      return `MCP server "${name}" added. Restart IO or use mcp_server_reload to connect.`;
+      return `MCP server "${name}" added. Use mcp_server_reload to connect.`;
     },
   });
 
@@ -2166,7 +2167,7 @@ export function createTools(deps: ToolDeps) {
       if (idx === -1) return `Server "${name}" not found.`;
       config.servers.splice(idx, 1);
       saveMcpConfig(config);
-      return `MCP server "${name}" removed. Changes take effect on next restart or mcp_server_reload.`;
+      return `MCP server "${name}" removed. Use mcp_server_reload to apply.`;
     },
   });
 
@@ -2183,11 +2184,28 @@ export function createTools(deps: ToolDeps) {
       if (!server) return `Server "${name}" not found.`;
       server.enabled = enabled;
       saveMcpConfig(config);
-      return `MCP server "${name}" ${enabled ? "enabled" : "disabled"}. Changes take effect on next restart or mcp_server_reload.`;
+      return `MCP server "${name}" ${enabled ? "enabled" : "disabled"}. Use mcp_server_reload to apply changes.`;
     },
   });
 
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox, sendNotification, mcpServerList, mcpServerAdd, mcpServerRemove, mcpServerToggle];
+  const mcpServerReload = defineTool("mcp_server_reload", {
+    description: "Reload MCP server connections and tools. Call after adding, removing, or toggling servers to apply changes without restarting IO.",
+    skipPermission: true,
+    parameters: z.object({}),
+    handler: async () => {
+      if (!deps.reloadMcpTools) return "MCP reload not available in this context.";
+      try {
+        await deps.reloadMcpTools();
+        const config = loadMcpConfig();
+        const enabled = config.servers.filter(s => s.enabled !== false);
+        return `MCP tools reloaded. ${enabled.length} server(s) active.`;
+      } catch (err) {
+        return `Error reloading MCP tools: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    },
+  });
+
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox, sendNotification, mcpServerList, mcpServerAdd, mcpServerRemove, mcpServerToggle, mcpServerReload];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {

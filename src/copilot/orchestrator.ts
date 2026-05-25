@@ -215,6 +215,7 @@ function getToolDeps() {
     createWorktree,
     removeWorktree,
     activeInstanceId: undefined,
+    reloadMcpTools: initMcpTools,
   };
 }
 
