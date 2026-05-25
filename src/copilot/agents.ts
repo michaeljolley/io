@@ -902,6 +902,21 @@ function buildAgentTools(squadSlug: string, isLead = false) {
               teammateAgent,
               task,
             );
+
+            recordTaskEvent(childTaskId, {
+              ts: Date.now(),
+              type: "task.start",
+              data: { taskId: childTaskId, agentKey: childAgentKey, description: task },
+            });
+            const unsubChild = session.on((event: SessionEvent) => {
+              if (!STREAM_EVENT_TYPES.has(event.type)) return;
+              recordTaskEvent(childTaskId, {
+                ts: Date.now(),
+                type: event.type,
+                data: (event as { data?: unknown }).data ?? null,
+              });
+            });
+
             const envelopedTask = buildTaskPromptEnvelope(squadSlug, task);
             // Idle-reset timeout: 10min between progress events, 30min
             // hard cap. (Issue #53 — replaces #51's 30min wall-clock cap
@@ -921,9 +936,11 @@ function buildAgentTools(squadSlug: string, isLead = false) {
             updateAgentStatus(squadSlug, teammateAgent.character_name, "idle");
             if (sendResult.timedOut) {
               const stamped = `[teammate timed out — ${sendResult.timeoutReason === "idle" ? "idle reset" : "hard cap"}; last event: ${sendResult.lastEventType ?? "none"}]\n\n${result}`;
+              unsubChild();
               failTask(childTaskId, stamped);
               return stamped;
             }
+            unsubChild();
             completeTask(childTaskId, result);
             return result;
           } catch (err) {
