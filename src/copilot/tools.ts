@@ -6,6 +6,7 @@ import { join, dirname, resolve, sep } from "path";
 import { homedir } from "os";
 import { UNIVERSES, getOrCreateUniverse, generateUniverseRoster } from "./universes.js";
 import { createFeedEntry } from "../store/feed.js";
+import { loadMcpConfig, saveMcpConfig } from "../mcp/config.js";
 import { validateCron, nextRun } from "./cron.js";
 import {
   createIoSchedule,
@@ -2116,7 +2117,77 @@ export function createTools(deps: ToolDeps) {
     },
   });
 
-  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox, sendNotification];
+  const mcpServerList = defineTool("mcp_server_list", {
+    description: "List all configured MCP servers with their status (enabled/disabled, connected/disconnected).",
+    skipPermission: true,
+    parameters: z.object({}),
+    handler: async () => {
+      const config = loadMcpConfig();
+      if (config.servers.length === 0) return "No MCP servers configured. Add one with mcp_server_add.";
+      return config.servers.map(s => {
+        const status = s.enabled === false ? "disabled" : "enabled";
+        const transport = s.url ? `SSE: ${s.url}` : `stdio: ${s.command} ${(s.args ?? []).join(" ")}`;
+        return `- **${s.name}** [${status}] — ${transport}`;
+      }).join("\n");
+    },
+  });
+
+  const mcpServerAdd = defineTool("mcp_server_add", {
+    description: "Add a new MCP server to the configuration. Provide either command+args (stdio transport) or url (SSE transport).",
+    skipPermission: true,
+    parameters: z.object({
+      name: z.string().describe("Unique name for the server (e.g., 'figma', 'postgres')"),
+      command: z.string().optional().describe("Executable command for stdio transport (e.g., 'npx')"),
+      args: z.array(z.string()).optional().describe("Command arguments (e.g., ['-y', '@anthropic/mcp-server-figma'])"),
+      url: z.string().optional().describe("URL for SSE transport (e.g., 'http://localhost:3001/sse')"),
+      env: z.record(z.string(), z.string()).optional().describe("Environment variables for the server process"),
+    }),
+    handler: async ({ name, command, args, url, env }) => {
+      if (!command && !url) return "Error: provide either 'command' (stdio) or 'url' (SSE).";
+      const config = loadMcpConfig();
+      if (config.servers.some(s => s.name === name)) {
+        return `Error: server "${name}" already exists. Remove it first with mcp_server_remove.`;
+      }
+      config.servers.push({ name, command, args, url, env, enabled: true });
+      saveMcpConfig(config);
+      return `MCP server "${name}" added. Restart IO or use mcp_server_reload to connect.`;
+    },
+  });
+
+  const mcpServerRemove = defineTool("mcp_server_remove", {
+    description: "Remove an MCP server from the configuration by name.",
+    skipPermission: true,
+    parameters: z.object({
+      name: z.string().describe("Name of the server to remove"),
+    }),
+    handler: async ({ name }) => {
+      const config = loadMcpConfig();
+      const idx = config.servers.findIndex(s => s.name === name);
+      if (idx === -1) return `Server "${name}" not found.`;
+      config.servers.splice(idx, 1);
+      saveMcpConfig(config);
+      return `MCP server "${name}" removed. Changes take effect on next restart or mcp_server_reload.`;
+    },
+  });
+
+  const mcpServerToggle = defineTool("mcp_server_toggle", {
+    description: "Enable or disable an MCP server without removing it from the config.",
+    skipPermission: true,
+    parameters: z.object({
+      name: z.string().describe("Name of the server to toggle"),
+      enabled: z.boolean().describe("true to enable, false to disable"),
+    }),
+    handler: async ({ name, enabled }) => {
+      const config = loadMcpConfig();
+      const server = config.servers.find(s => s.name === name);
+      if (!server) return `Server "${name}" not found.`;
+      server.enabled = enabled;
+      saveMcpConfig(config);
+      return `MCP server "${name}" ${enabled ? "enabled" : "disabled"}. Changes take effect on next restart or mcp_server_reload.`;
+    },
+  });
+
+  return [wikiRead, wikiWrite, wikiSearch, wikiDelete, wikiList, squadCreate, squadRecall, squadStatus, squadLogDecision, squadDelegate, squadTaskStatus, squadDelete, squadAnalyze, squadAddAgent, squadAgents, squadRemoveAgent, squadResetAgent, squadSetLead, squadSetQA, squadTaskReviews, squadScheduleCreate, squadScheduleList, squadScheduleDelete, squadSchedulePause, squadScheduleResume, squadScheduleRunNow, scheduleCreate, scheduleList, scheduleDelete, schedulePause, scheduleResume, scheduleRunNow, skillList, skillInstall, skillRemove, skillSearch, configUpdate, checkUpdate, shell, fileOps, bash, readFile, viewTool, grepTool, strReplaceEditor, github, squadInstanceCreate, squadInstanceList, squadInstanceStatus, squadInstanceComplete, squadInstanceAbort, squadInstanceCleanup, squadInstanceActivate, squadInstanceDeactivate, sendToInbox, sendNotification, mcpServerList, mcpServerAdd, mcpServerRemove, mcpServerToggle];
 }
 
 function walkDirectory(dir: string, maxDepth = 3, depth = 0): string[] {

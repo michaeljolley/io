@@ -38,6 +38,9 @@ import { delegateToAgent, getActiveAgentTasks, clearAgentInMemorySession } from 
 import { saveConfig } from "../config.js";
 import { checkForUpdate } from "../update.js";
 import { startInstanceWatchdog } from "../instance-watchdog.js";
+import { loadMcpConfig, saveMcpConfig } from "../mcp/config.js";
+import { McpConnectionManager } from "../mcp/client.js";
+import { createMcpTools, type McpToolEntry } from "../mcp/registry.js";
 import {
   createInstance,
   getInstance,
@@ -215,9 +218,38 @@ function getToolDeps() {
   };
 }
 
+// MCP state — loaded at startup, refreshed on config change
+let mcpToolEntries: McpToolEntry[] = [];
+let mcpManager: McpConnectionManager | null = null;
+
+export async function initMcpTools(): Promise<void> {
+  const config = loadMcpConfig();
+  if (config.servers.length === 0) {
+    mcpToolEntries = [];
+    return;
+  }
+  if (!mcpManager) {
+    mcpManager = new McpConnectionManager();
+  } else {
+    await mcpManager.disconnectAll();
+  }
+  try {
+    mcpToolEntries = await createMcpTools(mcpManager, config);
+    console.error(`[mcp] Loaded ${mcpToolEntries.length} tool(s) from ${config.servers.filter(s => s.enabled !== false).length} server(s)`);
+  } catch (err) {
+    console.error("[mcp] Error loading MCP tools:", err instanceof Error ? err.message : err);
+    mcpToolEntries = [];
+  }
+}
+
+export function getMcpManager(): McpConnectionManager | null {
+  return mcpManager;
+}
+
 function getSessionConfig(): Pick<SessionConfig, "tools" | "skillDirectories"> {
   const tools = createTools(getToolDeps());
-  return { tools, skillDirectories: getSkillDirectories() };
+  const allTools = [...tools, ...mcpToolEntries.map(e => e.tool)];
+  return { tools: allTools, skillDirectories: getSkillDirectories() };
 }
 
 /** Hash of tool names + version — used to detect when tools change across updates. */
@@ -531,6 +563,9 @@ export async function initOrchestrator(copilotClient: CopilotClient): Promise<vo
   }
   startInstanceWatchdog();
   clearStaleTasks();
+
+  // Load MCP server tools
+  await initMcpTools();
 
   // Validate the configured model and resolve model tiers
   try {

@@ -1,7 +1,7 @@
 {
   "name": "heyio",
   "version": "0.4.0",
-  "description": "IO \u2014 a personal AI assistant built on the GitHub Copilot SDK",
+  "description": "IO — a personal AI assistant built on the GitHub Copilot SDK",
   "bin": {
     "io": "dist/index.js"
   },
@@ -42,6 +42,7 @@
   "homepage": "https://github.com/michaeljolley/io#readme",
   "dependencies": {
     "@github/copilot-sdk": "^0.2.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.6.2",
     "commander": "^14.0.0",
     "dotenv": "^17.3.1",
@@ -52,7 +53,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.3.0",
+    "@types/node": "^25.9.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.9"
