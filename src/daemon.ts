@@ -122,11 +122,12 @@ export async function startDaemon(): Promise<void> {
   console.log("[io] Orchestrator session ready");
 
   // Wire up API message handler
-  setApiHandler(async (text, connectionId, callback) => {
+  setApiHandler(async (text, connectionId, callback, attachments) => {
     await sendToOrchestrator(
       text,
       { type: "tui", connectionId },
       callback,
+      attachments,
     );
   });
 

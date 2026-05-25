@@ -1,11 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export interface MessageAttachment {
+  type: 'blob'
+  data: string
+  mimeType: string
+  displayName?: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   streaming?: boolean
+  attachments?: MessageAttachment[]
 }
 
 export const useChatStore = defineStore('chat', () => {

@@ -33,6 +33,7 @@ export type ApiMessageHandler = (
   text: string,
   connectionId: string,
   callback: (text: string, done: boolean) => void,
+  attachments?: Array<{ type: "blob"; data: string; mimeType: string; displayName?: string }>,
 ) => Promise<void>;
 
 let messageHandler: ApiMessageHandler | undefined;
@@ -68,7 +69,7 @@ export function broadcastNotificationToSSE(payload: BroadcastNotificationPayload
 export async function startApiServer(): Promise<void> {
   const app = express();
 
-  app.use(express.json());
+  app.use(express.json({ limit: "10mb" }));
 
   app.use((_req: Request, res: Response, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -898,11 +899,29 @@ export async function startApiServer(): Promise<void> {
 
   // Chat endpoints
   api.post("/message", async (req: Request, res: Response) => {
-    const { text } = req.body as { text?: string };
+    const { text, attachments } = req.body as { text?: string; attachments?: Array<{ type: "blob"; data: string; mimeType: string; displayName?: string }> };
 
     if (!text) {
       res.status(400).json({ error: "Missing 'text' in request body" });
       return;
+    }
+
+    if (attachments !== undefined) {
+      if (!Array.isArray(attachments)) {
+        res.status(400).json({ error: "'attachments' must be an array" });
+        return;
+      }
+      for (const att of attachments) {
+        if (!att.data || !att.mimeType) {
+          res.status(400).json({ error: "Each attachment must have 'data' and 'mimeType'" });
+          return;
+        }
+        // Reject single attachments whose base64 payload exceeds ~7MB (≈5MB raw)
+        if (att.data.length > 7 * 1024 * 1024) {
+          res.status(413).json({ error: "Attachment exceeds maximum allowed size of 5MB" });
+          return;
+        }
+      }
     }
 
     if (!messageHandler) {
@@ -923,7 +942,7 @@ export async function startApiServer(): Promise<void> {
       for (const conn of sseConnections) {
         conn.write(`data: ${ssePayload}\n\n`);
       }
-    });
+    }, attachments);
 
     res.json({ response: fullResponse });
   });
