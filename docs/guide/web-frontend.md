@@ -19,7 +19,10 @@ The dashboard includes the following views:
 - **Chat** — Real-time conversation with IO via Server-Sent Events (SSE) streaming
 - **Squads** — View and manage project squads. Each squad displays its 80s universe badge and a full **agent roster** showing character names, role titles, and status.
 - **Skills** — Browse and manage installed skills
-- **Agent Activity** — Monitor background agent tasks and their status. Shows the **character name** and role for each active agent.
+- **Feed** — Notification feed from squad activity and system events
+- **Inbox** — Personal inbox for direct messages and deliverables from squads
+- **MCP** — Manage MCP server connections: add/remove servers, enable/disable, and reload tools
+- **Agent Activity** — Monitor background agent tasks and their status. Shows the **character name** and role for each active agent. Click any active agent to open **Preview** mode and stream their live activity in real time.
 
 ## Port Configuration
 

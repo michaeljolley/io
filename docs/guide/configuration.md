@@ -39,10 +39,47 @@ IO is configured via a JSON file at `~/.io/config.json`. All fields are optional
 | `supabaseAnonKey`  | `string`  | —       | Supabase anonymous/public key                                      |
 | `authorizedEmail`  | `string`  | —       | Email address authorized to access the web portal                  |
 | `modelTiers`       | `object`  | —       | Model routing preferences with `high`, `medium`, `low` arrays      |
+| `backgroundNotifyMode` | `"all" \| "meaningful" \| "off"` | `"meaningful"` | Controls how often background task results are pushed as notifications |
+| `backgroundNotifyTelegram` | `boolean` | `true` | Send background task notifications via Telegram |
+| `backgroundNotifyTui` | `boolean` | `true` | Show background task notifications in TUI |
+| `watchdogEnabled` | `boolean` | `true` | Enable the daemon event loop watchdog (detects stalls) |
 
 ::: warning
 Always keep your bot token secret. Never commit `config.json` to version control.
 :::
+
+
+## MCP Configuration
+
+IO supports [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers, which expose additional tools to the orchestrator. MCP servers are configured in a separate file at `~/.io/mcp.json`.
+
+```jsonc
+{
+  "servers": [
+    {
+      "name": "figma",
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-figma"],
+      "env": { "FIGMA_TOKEN": "..." },
+      "enabled": true
+    },
+    {
+      "name": "postgres",
+      "url": "http://localhost:3001/sse",
+      "enabled": true
+    }
+  ]
+}
+```
+
+Each server entry supports:
+- **`name`** — unique identifier used to namespace the server's tools (e.g., `mcp_figma_*`)
+- **`command` + `args`** — stdio transport (runs a local process)
+- **`url`** — SSE transport (connects to a running HTTP server)
+- **`env`** — environment variables passed to the subprocess (stdio only)
+- **`enabled`** — set to `false` to disable without removing
+
+You can also manage MCP servers visually at the **`/mcp`** route in the web UI, or via the `mcp_server_*` tools. See the [MCP guide](/guide/mcp) for full details.
 
 ## Model Selection
 
@@ -101,6 +138,7 @@ IO stores all persistent data in `~/.io/`:
 ~/.io/
 ├── config.json          # Configuration
 ├── io.db                # SQLite database (squads, decisions, agents, state)
+├── mcp.json             # MCP server configuration
 ├── wiki/                # Knowledge wiki (markdown files)
 └── skills/              # Installed skills (SKILL.md files)
 ```

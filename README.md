@@ -19,6 +19,14 @@ A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on 
 - **GitHub Integration** — create, list, view, and comment on issues and PRs via the `github` tool
 - **Smart Model Routing** — automatically selects the best model for each task based on complexity
 - **Self-Updating** — checks for updates and can apply them automatically
+- **MCP Integration** — Connect to external MCP servers for additional tools (Figma, databases, APIs)
+- **Scheduling** — Cron-based scheduling for recurring tasks and squad stand-ups
+- **Squad Instances** — Parallel worktrees for concurrent work within a single squad
+- **Unified Feed** — Consolidated inbox and notification feed with web UI
+- **Telegram Attachments** — Send images/files via Telegram for vision-capable model processing
+- **Agent Preview** — Live streaming preview of any squad agent's activity in the web UI
+- **Squad Wiki** — Per-squad wiki context included in agent prompts and instance snapshots
+- **Instance Watchdog** — Monitors active/merging instances and auto-aborts stale ones
 
 ## 📋 Prerequisites
 
@@ -118,6 +126,10 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `supabaseUrl` | `string` | — | Supabase project URL (enables web portal authentication) |
 | `supabaseAnonKey` | `string` | — | Supabase anon/public API key |
 | `authorizedEmail` | `string` | — | Email address allowed to access the web portal |
+| `backgroundNotifyMode` | `string` | `"meaningful"` | Background task notification frequency: `"all"`, `"meaningful"`, or `"off"` |
+| `backgroundNotifyTelegram` | `boolean` | `true` | Send background task notifications via Telegram |
+| `backgroundNotifyTui` | `boolean` | `true` | Show background task notifications in TUI |
+| `watchdogEnabled` | `boolean` | `true` | Enable the daemon event loop watchdog |
 
 Each `modelTiers` list is a ranked preference — IO picks the first available model at startup.
 
@@ -152,6 +164,7 @@ All persistent data is stored under `~/.io/`:
 | `~/.io/wiki/` | Knowledge base (markdown files) |
 | `~/.io/io.db` | SQLite database (squads, tasks) |
 | `~/.io/skills/` | Installed skills |
+| `~/.io/mcp.json` | MCP server configuration |
 
 ## 🧩 Skills System
 
@@ -201,8 +214,8 @@ Squads are persistent project teams with **named specialist agents**. Each squad
 User → [Web UI / TUI / Telegram / HTTP API]
                 ↓
          Orchestrator (Copilot SDK)
-          ↕           ↕
-     Squad Manager   Wiki/Memory
+          ↕           ↕          ↕
+     Squad Manager   Wiki/Memory  MCP Servers
           ↓
      Named Agents (80s Characters)
 ```

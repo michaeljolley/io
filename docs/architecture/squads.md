@@ -69,6 +69,55 @@ Decisions are stored in the `squad_decisions` table and summarized when building
 
 The `getDecisionsSummary()` function formats the last 20 decisions into the agent's system prompt, providing an audit trail and enabling consistent decisions over time.
 
+
+## Squad Instances
+
+Squads support **parallel worktree instances** for concurrent work on separate tasks without blocking the main squad.
+
+### How Instances Work
+
+1. `squad_instance_create` creates a new git worktree at a temporary path alongside the project directory
+2. Each instance gets an **independent `CopilotSession`** — no contention with the main squad or other instances
+3. The instance receives a **context snapshot** at creation time containing:
+   - The squad's accumulated decision log
+   - Any squad-associated wiki pages (e.g., workflow rules, branch conventions)
+4. Work proceeds in the worktree; decisions are recorded in the instance's own `instance_decisions` table
+5. When complete, `squad_instance_complete` merges decisions back to the master squad's `squad_decisions` table and removes the worktree
+
+### Lifecycle
+
+```
+squad_instance_create  →  working
+       │
+  (tasks run in isolated worktree + session)
+       │
+squad_instance_complete  →  merging  →  completed
+  or
+squad_instance_abort     →  aborted
+```
+
+### Constraints
+
+- **Max 3 concurrent instances** per squad (enforced inside `createInstance()` with a COUNT query on non-terminal instances)
+- **Worktrees** share `.git` object storage with the main repo — lightweight, no full clone needed
+- **Decisions** are append-only with instance provenance; a SQLite transaction handles the merge-back to avoid races
+
+### Instance Watchdog
+
+A background watchdog monitors all non-terminal instances:
+- Instances with no task activity for **30 minutes** are marked stale
+- Instances stuck in `merging` state for more than **5 minutes** are aborted
+
+The watchdog runs on the same `setInterval` as the event loop health check. See [Architecture Overview](/architecture/overview) for details.
+
+### Context Snapshot
+
+At creation time, `buildContextSnapshot()` returns a JSON object with two keys:
+- **`decisions`** — last N decisions from the master squad's decision log
+- **`wiki`** (optional) — content of any wiki pages associated with the squad's project or slug
+
+This ensures instances inherit workflow rules stored in the wiki (branch naming conventions, PR labeling, build constraints) even if those rules haven't been promoted to the decision log.
+
 ## Key Source Files
 
 | File | Purpose |

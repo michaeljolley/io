@@ -87,6 +87,16 @@ SQLite database via `better-sqlite3` (`src/store/db.ts`), stored at `~/.io/io.db
 - **`squad_decisions`** — persistent decision log per squad
 - **`conversation_log`** — rolling log of user/assistant messages (capped at 1000 rows)
 - **`agent_tasks`** — background task tracking for squad agents
+- **`unified_feed`** — combined feed of notifications and inbox items (replaces separate inbox_entries)
+- **`squad_instances`** — parallel worktree instances for concurrent squad work
+- **`instance_decisions`** — append-only decision log per instance (merged back on completion)
+- **`squad_schedules`** — squad-scoped scheduled tasks
+- **`io_schedules`** — IO-level scheduled tasks
+- **`schedule_runs`** — execution history for scheduled tasks
+
+### Instance Watchdog
+
+`src/watchdog.ts` runs a background `setInterval` that monitors both the Node.js event loop and squad instances. **Event loop staleness** is detected by measuring how late each interval fires; a warning is logged at 30 s and the daemon exits at 60 s (overridable via `onFatal` for testing). **Instance staleness** is detected by checking the most recent `agent_tasks` activity for each non-terminal instance — instances with no task activity in the last 30 minutes are marked stale, and instances stuck in `merging` state for more than 5 minutes are aborted. The timer is `.unref()`'d so it never prevents clean shutdown.
 
 ### Interfaces
 

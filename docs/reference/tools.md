@@ -85,6 +85,68 @@ Each character comes with a personality description that influences the agent's 
 
 Delegation is not blocked by these warnings, but the gap should be fixed before promoting work. The team lead, QA reviewers, and test engineers (when designated as QA) all hold veto power on PR promotion — any rejection from any of them keeps the PR as a draft.
 
+### MCP Management Tools
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `mcp_server_list` | List configured MCP servers with enabled/disabled status | _(none)_ |
+| `mcp_server_add` | Add a new MCP server | `name: string`; `command?: string`; `args?: string[]`; `url?: string`; `env?: Record<string, string>` |
+| `mcp_server_remove` | Remove an MCP server by name | `name: string` |
+| `mcp_server_toggle` | Enable or disable an MCP server | `name: string` |
+| `mcp_server_reload` | Hot-reload MCP tools after config changes (without restarting IO) | _(none)_ |
+
+### Scheduling Tools
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `schedule_create` | Create a scheduled task (cron) | `name: string`; `cron: string` — cron expression; `task: string`; `enabled?: boolean` |
+| `schedule_list` | List all IO-level schedules | _(none)_ |
+| `schedule_delete` | Delete a schedule | `name: string` |
+| `schedule_pause` | Pause a schedule | `name: string` |
+| `schedule_resume` | Resume a paused schedule | `name: string` |
+| `schedule_run_now` | Immediately trigger a schedule | `name: string` |
+
+Squad-scoped equivalents (`squad_schedule_create`, `squad_schedule_list`, etc.) follow the same signatures but require a `slug: string` parameter and are scoped to a specific squad.
+
+### Squad Instance Tools
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `squad_instance_create` | Create a parallel git worktree instance for concurrent work | `slug: string`; `issue_ref?: string` |
+| `squad_instance_list` | List all instances for a squad | `slug: string` |
+| `squad_instance_status` | Get the status and details of an instance | `instance_id: string` |
+| `squad_instance_complete` | Complete an instance and merge its decisions back to the master squad | `instance_id: string` |
+| `squad_instance_abort` | Abort an active instance | `instance_id: string` |
+| `squad_instance_cleanup` | Remove an instance's git worktree | `instance_id: string` |
+| `squad_instance_activate` | Set the active instance context for subsequent tool calls | `instance_id: string` |
+| `squad_instance_deactivate` | Clear the active instance context | _(none)_ |
+
+### Feed & Inbox Tools
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `send_to_inbox` | Send a message directly to the user's inbox | `title: string`; `body: string`; `squad_slug?: string` |
+| `send_notification` | Create a notification in the activity feed | `title: string`; `body: string`; `source_type?: string` |
+
+### File & Code Tools
+
+These tools are available to squad agents for reading and modifying project files:
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `bash` | Run a bash command | `command: string`; `timeout_secs?: number`; `working_dir?: string` |
+| `read_file` | Read the full contents of a file | `path: string` |
+| `view` | View a file or directory with line numbers | `path: string`; `view_range?: [number, number]` |
+| `grep` | Search file contents using a regex pattern | `pattern: string`; `path?: string`; `include?: string` |
+| `str_replace_editor` | Make a precise string replacement in a file | `path: string`; `old_str: string`; `new_str: string` |
+
+### Configuration Tools
+
+| Tool | Description | Parameters |
+| --- | --- | --- |
+| `config_update` | Update a key in IO's configuration | `key: string`; `value: unknown` |
+| `check_update` | Check for and apply available IO updates | _(none)_ |
+
 ### Shell
 
 | Tool | Description | Parameters |

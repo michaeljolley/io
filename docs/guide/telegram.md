@@ -62,6 +62,28 @@ As the orchestrator generates a response, the bot edits its placeholder message 
 
 Telegram has a 4096-character message limit. IO automatically splits long messages into multiple chunks when sending proactive notifications.
 
+
+## Sending Images & Files
+
+IO's Telegram bot supports photo and document attachments. You can send an image or file alongside your message and IO will pass it to the underlying model.
+
+**How it works:**
+
+1. Send a photo or document to the bot (with or without a caption)
+2. IO acknowledges receipt, downloads the file from Telegram's servers, and converts it to base64
+3. Images are passed to vision-capable models as blob content blocks
+4. Text from any caption is used as the prompt text; if there is no caption, IO processes the attachment alone
+
+**Multiple images:** Each image in a multi-photo message is included as a separate content block in the same prompt.
+
+**File size limit:** Files larger than **5 MB** are rejected with a notification. Telegram normally restricts bot downloads to 20 MB, but IO enforces a lower 5 MB limit to keep context sizes manageable.
+
+**Document types:** Any file Telegram delivers as a `document` (PDFs, logs, code files, etc.) is supported. Binary files that cannot be meaningfully interpreted as text will be passed as-is — the model handles them as best it can.
+
+::: tip
+Vision-capable models (e.g. `claude-sonnet-4.6`, `claude-opus-4.7`) can analyze screenshots, design mockups, error screenshots, and diagrams directly — no manual description needed.
+:::
+
 ## Security
 
 Only the single user ID set in `authorizedUserId` can interact with the bot. Messages from any other user are silently ignored — no error message is sent back, and no processing occurs.
