@@ -5,6 +5,17 @@ import { join } from "path";
 
 export const MCP_CONFIG_PATH = join(IO_HOME, "mcp.json");
 
+// Mutable override for tests — mirrors the setDbPathForTests pattern.
+let _configPath = MCP_CONFIG_PATH;
+
+export function setMcpConfigPathForTests(path: string): void {
+  _configPath = path;
+}
+
+export function resetMcpConfigPath(): void {
+  _configPath = MCP_CONFIG_PATH;
+}
+
 export interface McpServerConfig {
   name: string;
   command?: string;
@@ -19,11 +30,11 @@ export interface McpConfig {
 }
 
 export function loadMcpConfig(): McpConfig {
-  if (!existsSync(MCP_CONFIG_PATH)) {
+  if (!existsSync(_configPath)) {
     return { servers: [] };
   }
   try {
-    const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
+    const raw = readFileSync(_configPath, "utf-8");
     const parsed = JSON.parse(raw);
     if (!parsed.servers || !Array.isArray(parsed.servers)) {
       return { servers: [] };
@@ -35,9 +46,9 @@ export function loadMcpConfig(): McpConfig {
 }
 
 export function saveMcpConfig(config: McpConfig): void {
-  const dir = dirname(MCP_CONFIG_PATH);
+  const dir = dirname(_configPath);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
-  writeFileSync(MCP_CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8");
+  writeFileSync(_configPath, JSON.stringify(config, null, 2), "utf-8");
 }
