@@ -2,98 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Base ──────────────────────────────────────── */
+html { color-scheme: dark; }
+body { @apply bg-bg-app text-text font-sans antialiased; }
 
-html {
-  color-scheme: dark;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
+* { scrollbar-width: thin; scrollbar-color: #252530 transparent; }
 
-body {
-  @apply bg-bg-app text-text font-sans antialiased;
-}
+::selection { background: rgba(0, 217, 255, 0.15); color: #00d9ff; }
+*:focus-visible { outline: none; box-shadow: 0 0 0 1px rgba(0,217,255,0.4); }
 
-/* ── Scrollbar ─────────────────────────────────── */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-border rounded-full;
-  border: 1px solid transparent;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-border-bright;
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #252530 transparent;
-}
-
-/* ── Selection ─────────────────────────────────── */
-
-::selection {
-  @apply bg-accent-cyan/20 text-accent-cyan;
-}
-
-/* ── Focus ring ────────────────────────────────── */
-
-*:focus-visible {
-  @apply outline-none ring-1 ring-accent-cyan/50 ring-offset-1 ring-offset-bg-app;
-}
-
-/* ── Global link style ─────────────────────────── */
-
-a {
-  @apply transition-colors duration-150;
-}
-
-/* ── Smooth page transitions ───────────────────── */
-
-.view-enter-active {
-  animation: viewIn 0.2s ease-out;
-}
-
-@keyframes viewIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ── Utility: glass surface ────────────────────── */
-
-@layer utilities {
-  .glass {
-    @apply bg-bg-card/80 backdrop-blur-sm border border-border;
-  }
-}
-
-/* ── wiki-content markdown list styles ────────── */
-/* Tailwind preflight resets list-style and padding; restore them for rendered markdown */
-
-.wiki-content ol {
-  list-style-type: decimal;
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-}
-.wiki-content ul {
-  list-style-type: disc;
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-}
-.wiki-content li {
-  margin: 0.25em 0;
-}
+.wiki-content ol { list-style-type: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.wiki-content ul { list-style-type: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.wiki-content li { margin: 0.25em 0; }
+.wiki-content h1,.wiki-content h2,.wiki-content h3 { @apply text-text font-semibold mt-4 mb-2; }
+.wiki-content h1 { @apply text-lg; }
+.wiki-content h2 { @apply text-base; }
+.wiki-content h3 { @apply text-sm; }
+.wiki-content p { @apply mb-3; }
+.wiki-content a { @apply text-accent-cyan hover:underline; }
+.wiki-content code { @apply bg-bg-elevated border border-border rounded px-1 text-xs font-mono text-accent-cyan; }
+.wiki-content pre { @apply bg-bg-elevated border border-border rounded-lg p-4 overflow-x-auto mb-3; }
+.wiki-content pre code { @apply border-0 bg-transparent p-0; }
+.wiki-content table { @apply w-full border-collapse mb-3 text-sm; }
+.wiki-content th { @apply text-left text-text-muted text-xs uppercase tracking-wider pb-2 border-b border-border; }
+.wiki-content td { @apply py-2 border-b border-border; }
+.wiki-content blockquote { @apply border-l-2 border-accent-cyan/40 pl-3 text-text-muted italic my-2; }

@@ -1,32 +1,24 @@
 <template>
-  <nav
-    class="shrink-0 w-[39px] bg-bg-surface border-r border-border flex-col items-center py-2 gap-0.5 z-30"
-    :class="[visible ? 'flex' : 'hidden md:flex']"
-  >
-    <router-link
-      v-for="item in navItems"
-      :key="item.name"
-      :to="item.to"
-      class="relative w-[39px] h-[39px] flex items-center justify-center transition-colors duration-150 group"
-      :class="isActive(item.name) ? 'text-accent-cyan' : 'text-text-muted hover:text-text'"
-      :title="item.label"
-      @click="$emit('navigate')"
-    >
-      <!-- Active indicator bar -->
-      <span
-        v-if="isActive(item.name)"
-        class="absolute left-0 top-[8px] bottom-[8px] w-[3px] rounded-r bg-accent-cyan"
-      ></span>
-      <svg viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px]" v-html="item.icon" aria-hidden="true"></svg>
-      <!-- Inbox badge -->
-      <span
-        v-if="item.name === 'inbox' && inboxCount > 0"
-        class="absolute top-1 right-1 min-w-3 h-3 flex items-center justify-center rounded-full bg-accent-red text-white text-[8px] font-bold px-0.5"
-      >{{ inboxCount > 9 ? '9+' : inboxCount }}</span>
+  <Teleport to="body">
+    <div v-if="visible" class="fixed inset-0 z-50 md:hidden flex" @click.self="$emit('navigate')">
+      <div class="absolute inset-0 bg-black/60" @click="$emit('navigate')"></div>
+      <nav class="relative w-48 h-full bg-bg-surface border-r border-border flex flex-col py-2 overflow-y-auto">
+        <router-link v-for="item in navItems" :key="item.to" :to="item.to" @click="$emit('navigate')" class="flex items-center gap-3 px-4 py-2.5 text-xs transition-colors" :class="isActive(item.name) ? 'text-accent-cyan bg-bg-elevated' : 'text-text-muted hover:text-text hover:bg-bg-elevated'">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" v-html="item.icon"></svg>
+          {{ item.label }}
+          <span v-if="item.name === 'inbox' && inboxCount > 0" class="ml-auto w-2 h-2 rounded-full bg-accent-red"></span>
+        </router-link>
+      </nav>
+    </div>
+  </Teleport>
+  <aside class="hidden md:flex shrink-0 w-[39px] flex-col items-center py-2 gap-0.5 bg-bg-surface border-r border-border relative">
+    <router-link v-for="item in navItems" :key="item.to" :to="item.to" :title="item.label" class="relative flex items-center justify-center w-[39px] h-[39px] transition-colors" :class="isActive(item.name) ? 'text-accent-cyan' : 'text-text-muted hover:text-text hover:bg-bg-elevated'">
+      <span v-if="isActive(item.name)" class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[23px] bg-accent-cyan rounded-r"></span>
+      <svg class="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="currentColor" v-html="item.icon"></svg>
+      <span v-if="item.name === 'inbox' && inboxCount > 0" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-accent-red"></span>
     </router-link>
-  </nav>
+  </aside>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'

@@ -1,26 +1,23 @@
 <template>
-  <footer class="shrink-0 h-[30px] flex items-center justify-between px-4 bg-bg-surface border-t border-border text-xs select-none">
-    <!-- Left -->
-    <div class="flex items-center gap-3 text-text-muted">
-      <span class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-accent-green"></span>
-        Connected
-      </span>
-      <span>·</span>
-      <span>{{ squadCount }} squads · {{ agentCount }} agents</span>
+  <div class="shrink-0 h-[30px] bg-bg-surface border-t border-border flex items-center justify-between px-4 gap-4">
+    <div class="flex items-center gap-2 text-[11px] min-w-0">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent-green"></span>
+      <span class="text-text-muted">Connected</span>
+      <span class="text-border-bright">·</span>
+      <span class="text-text-muted">{{ squadCount }} squad{{ squadCount !== 1 ? 's' : '' }}</span>
+      <span class="text-border-bright">·</span>
+      <span class="text-accent-purple">{{ agentCount }} agent{{ agentCount !== 1 ? 's' : '' }}</span>
       <template v-if="instanceInfo">
-        <span>·</span>
-        <span class="text-accent-purple">{{ instanceInfo }}</span>
+        <span class="text-border-bright">·</span>
+        <span class="text-text-muted truncate">{{ instanceInfo }}</span>
       </template>
     </div>
-    <!-- Right -->
-    <div class="flex items-center gap-1.5 text-text-muted">
-      <svg viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v4.5c0 .2.08.39.22.53l3 3a.75.75 0 1 0 1.06-1.06l-2.78-2.78V5Z" clip-rule="evenodd"/></svg>
-      <span>Last sync: {{ lastSyncText }}</span>
+    <div class="text-[11px] text-text-muted flex items-center gap-1.5 shrink-0">
+      <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd"/></svg>
+      Last sync: {{ lastSyncText }}
     </div>
-  </footer>
+  </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { apiFetch } from '../lib/api'

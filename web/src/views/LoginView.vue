@@ -1,68 +1,25 @@
 <template>
-  <div class="relative flex items-center justify-center h-screen bg-surface-0 overflow-hidden">
-    <!-- Atmospheric glows -->
-    <div class="pointer-events-none absolute inset-0">
-      <div class="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-accent/[0.04] rounded-full blur-[120px]"></div>
-      <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-dim/[0.06] rounded-full blur-[100px]"></div>
-    </div>
-
-    <div class="relative w-full max-w-sm mx-4 animate-fade-in">
-      <!-- Glass card -->
-      <div class="glass rounded-2xl border border-edge p-8 shadow-glow">
-        <!-- IO brand mark -->
-        <div class="flex flex-col items-center mb-8">
-          <div class="w-14 h-14 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4 shadow-glow-sm">
-            <span class="text-accent font-mono font-bold text-2xl tracking-tighter">IO</span>
-          </div>
-          <h1 class="text-xl font-semibold text-txt-primary tracking-tight">Welcome back</h1>
-          <p class="text-sm text-txt-muted mt-1">Sign in to continue</p>
+  <div class="min-h-screen bg-bg-app flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 text-center">
+        <div class="text-accent-cyan font-mono font-bold text-3xl tracking-tight mb-1">IO</div>
+        <p class="text-text-muted text-sm">Mission Control</p>
+      </div>
+      <div class="bg-bg-card border border-border rounded-xl p-6 space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-xs text-text-muted">Email</label>
+          <input v-model="email" type="email" autocomplete="email" placeholder="you@example.com" class="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:border-accent-cyan/50 outline-none transition-colors" />
         </div>
-
-        <form @submit.prevent="handleSignIn" class="space-y-5">
-          <div>
-            <label for="email" class="block text-xs font-medium text-txt-secondary mb-1.5 tracking-wide uppercase">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              required
-              autocomplete="email"
-              class="w-full px-3.5 py-2.5 bg-surface-0/60 border border-edge rounded-xl text-txt-primary placeholder-txt-muted text-sm focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 focus:shadow-glow-sm transition-all duration-200"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label for="password" class="block text-xs font-medium text-txt-secondary mb-1.5 tracking-wide uppercase">Password</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              required
-              autocomplete="current-password"
-              class="w-full px-3.5 py-2.5 bg-surface-0/60 border border-edge rounded-xl text-txt-primary placeholder-txt-muted text-sm focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 focus:shadow-glow-sm transition-all duration-200"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div v-if="error" class="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5">
-            <FluentIcon :paths='`<path d="m4.09 4.22.06-.07a.5.5 0 0 1 .63-.06l.07.06L10 9.29l5.15-5.14a.5.5 0 0 1 .63-.06l.07.06c.18.17.2.44.06.63l-.06.07L10.71 10l5.14 5.15c.18.17.2.44.06.63l-.06.07a.5.5 0 0 1-.63.06l-.07-.06L10 10.71l-5.15 5.14a.5.5 0 0 1-.63.06l-.07-.06a.5.5 0 0 1-.06-.63l.06-.07L9.29 10 4.15 4.85a.5.5 0 0 1-.06-.63l.06-.07-.06.07Z"/>`' :size="16" class="shrink-0" />
-            {{ error }}
-          </div>
-
-          <button
-            type="submit"
-            :disabled="auth.loading"
-            class="w-full py-2.5 px-4 bg-accent hover:bg-accent-glow disabled:opacity-50 disabled:cursor-not-allowed text-surface-0 font-semibold text-sm rounded-xl transition-all duration-200 shadow-glow-sm hover:shadow-glow"
-          >
-            {{ auth.loading ? 'Signing in…' : 'Sign in' }}
-          </button>
-        </form>
+        <div class="space-y-1.5">
+          <label class="text-xs text-text-muted">Password</label>
+          <input v-model="password" type="password" autocomplete="current-password" placeholder="••••••••" @keydown.enter="handleSignIn" class="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:border-accent-cyan/50 outline-none transition-colors" />
+        </div>
+        <p v-if="error" class="text-xs text-accent-red">{{ error }}</p>
+        <button @click="handleSignIn" class="w-full bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan text-sm font-medium rounded-lg py-2.5 hover:bg-accent-cyan/20 transition-colors">Sign In</button>
       </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 import FluentIcon from '../components/FluentIcon.vue'

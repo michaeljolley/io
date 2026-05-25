@@ -1,292 +1,44 @@
 <template>
-  <div class="relative flex flex-col h-full p-3 sm:p-6">
-    <!-- Header -->
-    <div class="flex justify-between items-start mb-4">
+  <div class="p-5 space-y-4">
+    <div class="flex items-center justify-between gap-3">
       <div>
-        <h2 class="text-xl font-semibold text-txt-primary tracking-tight">Feed</h2>
-        <p class="text-xs text-txt-muted mt-0.5">Messages, results &amp; notifications</p>
+        <h1 class="text-base font-semibold text-text">Activity Feed</h1>
+        <p class="text-xs text-text-muted mt-1">Recent notifications across IO.</p>
       </div>
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <!-- Select all / Deselect all (only in select mode) -->
-        <button
-          v-if="selectMode && filtered.length > 0"
-          @click="toggleSelectAll"
-          class="text-xs text-txt-secondary hover:text-txt-primary transition-colors font-medium"
-        >
-          {{ allSelected ? 'Deselect all' : 'Select all' }}
-        </button>
-        <!-- Mark all read (hidden in select mode) -->
-        <button
-          v-if="!selectMode && entries.length > 0"
-          @click="markAllRead"
-          class="text-xs text-accent hover:text-accent-glow transition-colors font-medium"
-        >
-          Mark all read
-        </button>
-        <!-- Select / Cancel toggle -->
-        <button
-          v-if="entries.length > 0"
-          @click="toggleSelectMode"
-          class="text-xs px-2.5 py-1 rounded-lg border transition-all duration-150 font-medium"
-          :class="selectMode
-            ? 'text-accent border-accent/30 bg-accent/10 hover:bg-accent/20'
-            : 'text-txt-muted border-edge hover:text-txt-secondary hover:border-edge-bright hover:bg-surface-3/40'"
-        >
-          {{ selectMode ? 'Cancel' : 'Select' }}
-        </button>
+        <button @click="markAllRead" class="text-xs px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated transition-colors">Mark all read</button>
+        <button @click="groupByTeam = !groupByTeam" class="text-xs px-2.5 py-1 rounded-md border transition-colors" :class="groupByTeam ? 'border-accent-cyan/30 text-accent-cyan bg-accent-cyan/5' : 'border-border text-text-muted hover:text-text hover:bg-bg-elevated'">Group by team</button>
+        <button @click="toggleSelectMode" class="text-xs px-2.5 py-1 rounded-md border transition-colors" :class="selectMode ? 'border-accent-cyan/30 text-accent-cyan bg-accent-cyan/5' : 'border-border text-text-muted hover:text-text hover:bg-bg-elevated'">{{ selectMode ? 'Done selecting' : 'Select' }}</button>
       </div>
     </div>
-
-    <!-- Search bar -->
-    <div class="relative mb-3">
-      <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-txt-muted">
-        <FluentIcon
-          :paths='`<path d="M13.74 13.03a7.5 7.5 0 1 0-.71.71l3.63 3.63c.2.2.51.2.71 0a.5.5 0 0 0 0-.71l-3.63-3.63Zm.26-5.53a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/>`'
-          :size="14"
-        />
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg>
+      <input v-model="searchQuery" placeholder="Search feed..." class="w-full bg-bg-elevated border border-border rounded-lg pl-9 pr-8 py-2 text-sm text-text placeholder:text-text-muted focus:border-accent-cyan/40 outline-none transition-colors" />
+      <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text text-base leading-none">&times;</button>
+    </div>
+    <div v-if="selectMode" class="flex items-center justify-between gap-2 bg-bg-card border border-border rounded-lg px-3 py-2">
+      <div class="flex items-center gap-2 text-xs text-text-muted"><button @click="toggleSelectAll" class="text-accent-cyan hover:text-accent-cyan/80">{{ allSelected ? 'Clear selection' : 'Select all' }}</button><span>·</span><span>{{ selected.size }} selected</span></div>
+      <div class="flex items-center gap-2"><button @click="bulkMarkRead" :disabled="!selected.size || bulkWorking" class="text-xs px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated disabled:opacity-40 transition-colors">Mark read</button><button @click="bulkDelete" :disabled="!selected.size || bulkWorking" class="text-xs px-2.5 py-1 rounded-md border border-accent-red/30 text-accent-red hover:bg-accent-red/10 disabled:opacity-40 transition-colors">Delete</button></div>
+    </div>
+    <div v-if="loading" class="py-12 text-center text-text-muted text-sm">Loading...</div>
+    <div v-else-if="errorMsg" class="text-accent-red text-sm">{{ errorMsg }}</div>
+    <template v-else-if="groupByTeam">
+      <div v-for="group in groupedEntries" :key="group.key" class="space-y-1.5">
+        <button @click="toggleGroup(group.key)" class="flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors w-full text-left"><svg :class="collapsedGroups.has(group.key) ? '' : 'rotate-90'" class="w-3 h-3 transition-transform shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg><span class="font-mono text-text-secondary">{{ group.label }}</span><span class="text-text-muted">({{ group.entries.length }})</span></button>
+        <div v-if="!collapsedGroups.has(group.key)" class="pl-5 space-y-1"><FeedEntryCard v-for="entry in group.entries" :key="entry.id" :entry="entry" :select-mode="selectMode" :selected="selected.has(entry.id)" :expanded="expanded.has(entry.id)" :unread="!entry.read_at" :deleting="deleting.has(entry.id)" @select="toggleSelect(entry.id)" @expand="toggleExpand(entry.id)" @read="markRead(entry.id)" @delete="deleteEntry(entry.id)" /></div>
       </div>
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search feed…"
-        class="w-full pl-8 pr-8 py-2 text-xs bg-surface-2/50 border border-edge rounded-xl text-txt-primary placeholder:text-txt-muted focus:outline-none focus:border-accent/40 focus:bg-surface-2 transition-all duration-150"
-      />
-      <button
-        v-if="searchQuery"
-        @click="searchQuery = ''"
-        class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-txt-muted hover:text-txt-primary transition-colors"
-        title="Clear search"
-      >
-        <FluentIcon
-          :paths='`<path d="m4.09 4.22.06-.07a.5.5 0 0 1 .63-.06l.07.06L10 9.29l5.15-5.14a.5.5 0 0 1 .63-.06l.07.06c.18.17.2.44.06.63l-.06.07L10.71 10l5.14 5.15c.18.17.2.44.06.63l-.06.07a.5.5 0 0 1-.63.06l-.07-.06L10 10.71l-5.15 5.14a.5.5 0 0 1-.63.06l-.07-.06a.5.5 0 0 1-.06-.63l.06-.07L9.29 10 4.15 4.85a.5.5 0 0 1-.06-.63l.06-.07-.06.07Z"/>`'
-          :size="12"
-        />
-      </button>
-    </div>
-
-    <!-- Group-by-team toggle -->
-    <div class="flex gap-1.5 mb-4">
-      <button
-        @click="groupByTeam = !groupByTeam"
-        class="flex items-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg transition-all duration-150 shrink-0"
-        :class="groupByTeam
-          ? 'bg-accent/10 text-accent border border-accent/20'
-          : 'text-txt-muted hover:text-txt-secondary hover:bg-surface-3/50 border border-transparent'"
-        title="Group by team"
-      >
-        <FluentIcon
-          :paths='`<path d="M8 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm-5 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10-1a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM8 9.5a.5.5 0 0 1 .5.5v1h4a.5.5 0 0 1 .5.5v1h1.5a.5.5 0 0 1 0 1H14v1a.5.5 0 0 1-1 0v-3.5H7v3.5a.5.5 0 0 1-1 0v-1H4.5a.5.5 0 0 1 0-1H6v-1a.5.5 0 0 1 .5-.5h1V10a.5.5 0 0 1 .5-.5Z"/>`'
-          :size="12"
-        />
-        Team
-      </button>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <div class="flex items-center gap-3 text-txt-muted text-sm">
-        <div class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>
-        Loading…
-      </div>
-    </div>
-
-    <!-- Empty state -->
-    <div v-else-if="filtered.length === 0" class="flex-1 flex flex-col items-center justify-center">
-      <div class="w-14 h-14 rounded-xl bg-surface-2 border border-edge flex items-center justify-center mb-4">
-        <FluentIcon
-          :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`'
-          :size="28"
-          class="text-txt-muted"
-        />
-      </div>
-      <p class="text-txt-muted text-sm font-medium">Nothing here yet</p>
-      <p class="text-txt-muted/60 text-xs mt-1">
-        No notifications
-      </p>
-    </div>
-
-    <!-- Entry list (flat, no grouping) -->
-    <ul v-else-if="!groupByTeam" class="space-y-2 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
-      <li
-        v-for="entry in filtered"
-        :key="entry.id"
-        class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in"
-        :class="[
-          entry.read_at ? '' : 'glow-inner',
-          selectMode && selected.has(entry.id) ? 'ring-1 ring-accent/40 bg-accent/5 border-accent/30' : ''
-        ]"
-      >
-        <div
-          class="flex items-start gap-3 p-4 cursor-pointer"
-          @click="selectMode ? toggleSelect(entry.id) : toggleExpand(entry.id)"
-        >
-          <div v-if="selectMode" class="mt-0.5 shrink-0" @click.stop="toggleSelect(entry.id)">
-            <div
-              class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
-              :class="selected.has(entry.id) ? 'border-accent bg-accent shadow-glow-sm' : 'border-edge hover:border-accent/60'"
-            >
-              <FluentIcon v-if="selected.has(entry.id)" :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="11" class="text-surface-0" />
-            </div>
-          </div>
-          <div class="mt-0.5 shrink-0">
-            <FluentIcon v-if="entry.type === 'inbox'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
-            <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
-          </div>
-          <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
-          <span v-else class="mt-2 w-1.5 h-1.5 rounded-full bg-edge shrink-0"></span>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="text-sm font-semibold text-txt-primary truncate leading-snug">{{ entry.title }}</span>
-              <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
-            </div>
-            <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
-            <div v-if="entry.type === 'inbox' && (entry.squad_slug || entry.instance_id || entry.task_id)" class="flex flex-wrap items-center gap-1 mb-1">
-              <span v-if="entry.squad_slug" class="text-[10px] font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 shrink-0">{{ entry.squad_slug }}</span>
-              <span v-if="entry.instance_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">inst:{{ entry.instance_id.slice(0, 8) }}</span>
-              <span v-if="entry.task_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">task:{{ entry.task_id.slice(0, 8) }}</span>
-            </div>
-            <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
-          </div>
-          <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button v-if="!entry.read_at" @click.stop="markRead(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-all duration-150" title="Mark as read">
-              <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
-            </button>
-            <button @click.stop="deleteEntry(entry.id)" :disabled="deleting.has(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-30 transition-all duration-150" title="Delete">
-              <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
-            </button>
-          </div>
-        </div>
-        <div v-if="!selectMode && expanded.has(entry.id)" class="px-4 pb-4">
-          <div class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed" v-html="renderMarkdown(entry.body)"></div>
-        </div>
-      </li>
-    </ul>
-
-    <!-- Grouped entry list -->
-    <div v-else class="space-y-3 overflow-y-auto flex-1 pr-1" :class="selectMode && selected.size > 0 ? 'pb-16' : ''">
-      <div v-for="group in groupedEntries" :key="group.key">
-        <!-- Group header -->
-        <button
-          @click="toggleGroup(group.key)"
-          class="w-full flex items-center gap-2 px-2 py-1.5 mb-1 text-left hover:bg-surface-3/30 rounded-lg transition-colors duration-150"
-        >
-          <FluentIcon
-            :paths='`<path d="M7.47 4.22a.75.75 0 0 1 1.06 0l5.25 5.25a.75.75 0 0 1-1.06 1.06L8 5.81 3.28 10.53a.75.75 0 0 1-1.06-1.06l5.25-5.25Z"/>`'
-            :size="12"
-            class="text-txt-muted transition-transform duration-150 shrink-0"
-            :class="collapsedGroups.has(group.key) ? '-rotate-90' : 'rotate-180'"
-          />
-          <span class="text-xs font-semibold text-txt-secondary uppercase tracking-wider">{{ group.label }}</span>
-          <span class="text-[10px] font-mono text-txt-muted">({{ group.entries.length }})</span>
-        </button>
-        <!-- Entries in this group -->
-        <ul v-if="!collapsedGroups.has(group.key)" class="space-y-2">
-          <li
-            v-for="entry in group.entries"
-            :key="entry.id"
-            class="group bg-surface-2/50 border border-edge rounded-xl hover:border-edge-bright hover:shadow-card transition-all duration-200 overflow-hidden animate-fade-in"
-            :class="[
-              entry.read_at ? '' : 'glow-inner',
-              selectMode && selected.has(entry.id) ? 'ring-1 ring-accent/40 bg-accent/5 border-accent/30' : ''
-            ]"
-          >
-            <div
-              class="flex items-start gap-3 p-4 cursor-pointer"
-              @click="selectMode ? toggleSelect(entry.id) : toggleExpand(entry.id)"
-            >
-              <div v-if="selectMode" class="mt-0.5 shrink-0" @click.stop="toggleSelect(entry.id)">
-                <div
-                  class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150"
-                  :class="selected.has(entry.id) ? 'border-accent bg-accent shadow-glow-sm' : 'border-edge hover:border-accent/60'"
-                >
-                  <FluentIcon v-if="selected.has(entry.id)" :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="11" class="text-surface-0" />
-                </div>
-              </div>
-              <div class="mt-0.5 shrink-0">
-                <FluentIcon v-if="entry.type === 'inbox'" :paths='`<path d="M6 3a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6Zm10 7h-3.5a.5.5 0 0 0-.5.5v.01a1.75 1.75 0 0 1-.03.3c-.04.2-.1.46-.23.72-.13.25-.3.49-.57.66-.26.18-.63.31-1.17.31-.54 0-.9-.13-1.17-.3a1.7 1.7 0 0 1-.57-.67A2.57 2.57 0 0 1 8 10.5v-.01a.5.5 0 0 0-.5-.5H4V6c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v4ZM4 11h3.05c.05.26.14.62.32.97.18.38.47.76.9 1.06.45.29 1.02.47 1.73.47s1.28-.18 1.72-.47c.44-.3.73-.68.91-1.06.18-.35.27-.7.32-.97H16v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
-                <FluentIcon v-else :paths='`<path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1 .06.17l.01.08.01.13a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.26-.03l-.13-.04a1 1 0 0 1-.6-1.05l.02-.13.05-.13L4 11.4V7.57A5.9 5.9 0 0 1 10 2Zm1.5 13h-3v.15a1.5 1.5 0 0 0 1.36 1.34l.14.01c.78 0 1.42-.6 1.5-1.36V15ZM10 3a4.9 4.9 0 0 0-4.98 4.38L5 7.6V11.5l-.04.2L4 14h12l-.96-2.3-.04-.2V7.61A4.9 4.9 0 0 0 10 3Z"/>`' :size="16" :class="entry.read_at ? 'text-txt-muted' : 'text-accent'" />
-              </div>
-              <span v-if="!entry.read_at" class="mt-2 w-1.5 h-1.5 rounded-full bg-accent shadow-glow-sm shrink-0"></span>
-              <span v-else class="mt-2 w-1.5 h-1.5 rounded-full bg-edge shrink-0"></span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-0.5">
-                  <span class="text-sm font-semibold text-txt-primary truncate leading-snug">{{ entry.title }}</span>
-                  <span v-if="entry.source_type" class="text-[10px] font-mono tracking-wider uppercase text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">{{ entry.source_type }}</span>
-                </div>
-                <p class="text-[10px] text-txt-muted mb-1">{{ formatTime(entry.created_at) }}</p>
-            <div v-if="entry.type === 'inbox' && (entry.squad_slug || entry.instance_id || entry.task_id)" class="flex flex-wrap items-center gap-1 mb-1">
-              <span v-if="entry.squad_slug" class="text-[10px] font-mono text-accent/80 bg-accent/10 px-1.5 py-0.5 rounded border border-accent/20 shrink-0">{{ entry.squad_slug }}</span>
-              <span v-if="entry.instance_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">inst:{{ entry.instance_id.slice(0, 8) }}</span>
-              <span v-if="entry.task_id" class="text-[10px] font-mono text-txt-muted bg-surface-0/60 px-1.5 py-0.5 rounded border border-edge/50 shrink-0">task:{{ entry.task_id.slice(0, 8) }}</span>
-            </div>
-                <p v-if="!expanded.has(entry.id)" class="text-xs text-txt-secondary line-clamp-2 leading-relaxed">{{ bodyPreview(entry.body) }}</p>
-              </div>
-              <div v-if="!selectMode" class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <button v-if="!entry.read_at" @click.stop="markRead(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-accent hover:bg-accent/10 border border-transparent hover:border-accent/20 transition-all duration-150" title="Mark as read">
-                  <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
-                </button>
-                <button @click.stop="deleteEntry(entry.id)" :disabled="deleting.has(entry.id)" class="p-1.5 rounded-lg text-txt-muted hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 disabled:opacity-30 transition-all duration-150" title="Delete">
-                  <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
-                </button>
-              </div>
-            </div>
-            <div v-if="!selectMode && expanded.has(entry.id)" class="px-4 pb-4">
-              <div class="text-sm text-txt-secondary bg-surface-0/60 rounded-xl p-4 border border-edge/50 wiki-content leading-relaxed" v-html="renderMarkdown(entry.body)"></div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Bulk action bar -->
-    <Transition
-      enter-active-class="transition-all duration-200 ease-out"
-      enter-from-class="opacity-0 translate-y-4"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition-all duration-150 ease-in"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 translate-y-4"
-    >
-      <div
-        v-if="selectMode && selected.size > 0"
-        class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-surface-3 border border-edge-bright shadow-card backdrop-blur-sm z-20"
-      >
-        <span class="text-xs font-semibold text-txt-secondary mr-1 whitespace-nowrap">
-          {{ selected.size }} selected
-        </span>
-        <button
-          @click="bulkMarkRead"
-          :disabled="bulkWorking"
-          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 disabled:opacity-40 transition-all duration-150"
-        >
-          <FluentIcon :paths='`<path d="M3.37 10.17a.5.5 0 0 0-.74.66l4 4.5c.19.22.52.23.72.02l10.5-10.5a.5.5 0 0 0-.7-.7L7.02 14.27l-3.65-4.1Z"/>`' :size="14" />
-          Mark read
-        </button>
-        <button
-          @click="bulkDelete"
-          :disabled="bulkWorking"
-          class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-40 transition-all duration-150"
-        >
-          <FluentIcon :paths='`<path d="M8.5 4h3a1.5 1.5 0 0 0-3 0Zm-1 0a2.5 2.5 0 0 1 5 0h5a.5.5 0 0 1 0 1h-1.05l-1.2 10.34A3 3 0 0 1 12.27 18H7.73a3 3 0 0 1-2.98-2.66L3.55 5H2.5a.5.5 0 0 1 0-1h5ZM5.74 15.23A2 2 0 0 0 7.73 17h4.54a2 2 0 0 0 1.99-1.77L15.44 5H4.56l1.18 10.23ZM8.5 7.5c.28 0 .5.22.5.5v6a.5.5 0 0 1-1 0V8c0-.28.22-.5.5-.5ZM12 8a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V8Z"/>`' :size="14" />
-          Delete
-        </button>
-      </div>
-    </Transition>
-
-    <!-- Error banner -->
-    <div
-      v-if="errorMsg"
-      class="mt-3 flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5"
-    >
-      <FluentIcon :paths='`<path d="m4.09 4.22.06-.07a.5.5 0 0 1 .63-.06l.07.06L10 9.29l5.15-5.14a.5.5 0 0 1 .63-.06l.07.06c.18.17.2.44.06.63l-.06.07L10.71 10l5.14 5.15c.18.17.2.44.06.63l-.06.07a.5.5 0 0 1-.63.06l-.07-.06L10 10.71l-5.15 5.14a.5.5 0 0 1-.63.06l-.07-.06a.5.5 0 0 1-.06-.63l.06-.07L9.29 10 4.15 4.85a.5.5 0 0 1-.06-.63l.06-.07-.06.07Z"/>`' :size="16" class="shrink-0" />
-      {{ errorMsg }}
-    </div>
+      <div v-if="!groupedEntries.length" class="py-12 text-center text-text-muted text-sm">No entries</div>
+    </template>
+    <template v-else>
+      <div class="space-y-1"><FeedEntryCard v-for="entry in filtered" :key="entry.id" :entry="entry" :select-mode="selectMode" :selected="selected.has(entry.id)" :expanded="expanded.has(entry.id)" :unread="!entry.read_at" :deleting="deleting.has(entry.id)" @select="toggleSelect(entry.id)" @expand="toggleExpand(entry.id)" @read="markRead(entry.id)" @delete="deleteEntry(entry.id)" /></div>
+      <div v-if="!filtered.length" class="py-12 text-center text-text-muted text-sm">No entries</div>
+    </template>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import FluentIcon from '../components/FluentIcon.vue'
+import FeedEntryCard from '../components/FeedEntryCard.vue'
 import { renderMarkdown } from '../lib/markdown'
 import { apiFetch } from '../lib/api'
 
