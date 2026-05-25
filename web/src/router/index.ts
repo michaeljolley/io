@@ -8,6 +8,7 @@ import FeedView from '../views/FeedView.vue'
 import InboxView from '../views/InboxView.vue'
 import WikiView from '../views/WikiView.vue'
 import LoginView from '../views/LoginView.vue'
+import McpView from '../views/McpView.vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
@@ -66,6 +67,11 @@ const router = createRouter({
     {
       path: '/notifications',
       redirect: '/feed',
+    },
+    {
+      path: '/mcp',
+      name: 'mcp',
+      component: McpView,
     },
   ],
 })

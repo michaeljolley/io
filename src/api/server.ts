@@ -4,6 +4,8 @@ import { existsSync, readFileSync } from "node:fs";
 import express, { type Request, type Response } from "express";
 import { config } from "../config.js";
 import { listSkills, installSkill, installSkillFromContent, removeSkill } from "../copilot/skills.js";
+import { loadMcpConfig, saveMcpConfig } from "../mcp/config.js";
+import { initMcpTools } from "../copilot/orchestrator.js";
 import { listSquads, createSquad, listSquadAgents, getSquad } from "../store/squads.js";
 import { createInstance, getInstance, listInstances, updateInstanceStatus, getInstanceDecisions, mergeInstanceDecisions, buildContextSnapshot } from "../store/instances.js";
 import { createWorktree, removeWorktree } from "../store/worktrees.js";
@@ -974,6 +976,71 @@ export async function startApiServer(): Promise<void> {
     app.use(express.static(WEB_DIST));
     console.log("[io] Web frontend enabled");
   }
+
+  // ── MCP server management endpoints ────────────────────────────────────────
+
+  api.get("/mcp/servers", (_req: Request, res: Response) => {
+    try {
+      const config = loadMcpConfig();
+      res.json({ servers: config.servers });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/mcp/servers", (req: Request, res: Response) => {
+    const { name, command, args, url, env } = req.body as {
+      name?: string; command?: string; args?: string[]; url?: string; env?: Record<string, string>
+    };
+    if (!name) { res.status(400).json({ error: "name is required" }); return; }
+    if (!command && !url) { res.status(400).json({ error: "command or url is required" }); return; }
+    try {
+      const config = loadMcpConfig();
+      if (config.servers.find(s => s.name === name)) {
+        res.status(409).json({ error: "server already exists" }); return;
+      }
+      config.servers.push({ name, command, args, url, env, enabled: true });
+      saveMcpConfig(config);
+      res.status(201).json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.delete("/mcp/servers/:name", (req: Request, res: Response) => {
+    try {
+      const config = loadMcpConfig();
+      const idx = config.servers.findIndex(s => s.name === req.params.name);
+      if (idx === -1) { res.status(404).json({ error: "server not found" }); return; }
+      config.servers.splice(idx, 1);
+      saveMcpConfig(config);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.patch("/mcp/servers/:name/toggle", (req: Request, res: Response) => {
+    try {
+      const config = loadMcpConfig();
+      const server = config.servers.find(s => s.name === req.params.name);
+      if (!server) { res.status(404).json({ error: "server not found" }); return; }
+      server.enabled = server.enabled === false ? true : false;
+      saveMcpConfig(config);
+      res.json({ ok: true, enabled: server.enabled });
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+
+  api.post("/mcp/reload", async (_req: Request, res: Response) => {
+    try {
+      await initMcpTools();
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : "reload failed" });
+    }
+  });
 
   // SPA fallback for browser navigation: when the web frontend is built,
   // serve index.html for any GET request that accepts HTML and isn't an API
