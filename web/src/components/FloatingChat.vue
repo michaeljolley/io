@@ -7,6 +7,7 @@
     leave-active-class="transition-opacity duration-100"
     leave-from-class="opacity-100"
     leave-to-class="opacity-0"
+    @after-enter="focusInput"
   >
     <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="isOpen = false">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true"></div>
@@ -143,6 +144,10 @@ function open() {
   hasUnread.value = false
   lastSeenCount.value = store.messages.length
   nextTick(() => scrollToBottom())
+}
+
+function focusInput() {
+  inputEl.value?.focus()
 }
 
 defineExpose({ open, isOpen, hasUnread })
