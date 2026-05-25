@@ -908,41 +908,44 @@ function buildAgentTools(squadSlug: string, isLead = false) {
               type: "task.start",
               data: { taskId: childTaskId, agentKey: childAgentKey, description: task },
             });
-            const unsubChild = session.on((event: SessionEvent) => {
-              if (!STREAM_EVENT_TYPES.has(event.type)) return;
-              recordTaskEvent(childTaskId, {
-                ts: Date.now(),
-                type: event.type,
-                data: (event as { data?: unknown }).data ?? null,
+            let unsubChild: (() => void) | undefined;
+            try {
+              unsubChild = session.on((event: SessionEvent) => {
+                if (!STREAM_EVENT_TYPES.has(event.type)) return;
+                recordTaskEvent(childTaskId, {
+                  ts: Date.now(),
+                  type: event.type,
+                  data: (event as { data?: unknown }).data ?? null,
+                });
               });
-            });
 
-            const envelopedTask = buildTaskPromptEnvelope(squadSlug, task);
-            // Idle-reset timeout: 10min between progress events, 30min
-            // hard cap. (Issue #53 — replaces #51's 30min wall-clock cap
-            // that still killed agents mid-tool-call when they had
-            // long-running shell work between assistant messages.)
-            const sendResult = await sendWithIdleTimeout(session, envelopedTask, {
-              idleMs: 10 * 60_000,
-              hardCapMs: 30 * 60_000,
-              onIdleTimeout: ({ lastEventType }) => {
-                console.error(
-                  `[io] Teammate ${teammateAgent.character_name} idle (last event: ${lastEventType ?? "none"}) — aborting.`,
-                );
-              },
-            });
-            const result =
-              sendResult.content || "(teammate returned no output)";
-            updateAgentStatus(squadSlug, teammateAgent.character_name, "idle");
-            if (sendResult.timedOut) {
-              const stamped = `[teammate timed out — ${sendResult.timeoutReason === "idle" ? "idle reset" : "hard cap"}; last event: ${sendResult.lastEventType ?? "none"}]\n\n${result}`;
-              unsubChild();
-              failTask(childTaskId, stamped);
-              return stamped;
+              const envelopedTask = buildTaskPromptEnvelope(squadSlug, task);
+              // Idle-reset timeout: 10min between progress events, 30min
+              // hard cap. (Issue #53 — replaces #51's 30min wall-clock cap
+              // that still killed agents mid-tool-call when they had
+              // long-running shell work between assistant messages.)
+              const sendResult = await sendWithIdleTimeout(session, envelopedTask, {
+                idleMs: 10 * 60_000,
+                hardCapMs: 30 * 60_000,
+                onIdleTimeout: ({ lastEventType }) => {
+                  console.error(
+                    `[io] Teammate ${teammateAgent.character_name} idle (last event: ${lastEventType ?? "none"}) — aborting.`,
+                  );
+                },
+              });
+              const result =
+                sendResult.content || "(teammate returned no output)";
+              updateAgentStatus(squadSlug, teammateAgent.character_name, "idle");
+              if (sendResult.timedOut) {
+                const stamped = `[teammate timed out — ${sendResult.timeoutReason === "idle" ? "idle reset" : "hard cap"}; last event: ${sendResult.lastEventType ?? "none"}]\n\n${result}`;
+                failTask(childTaskId, stamped);
+                return stamped;
+              }
+              completeTask(childTaskId, result);
+              return result;
+            } finally {
+              try { unsubChild?.(); } catch { /* best-effort cleanup */ }
             }
-            unsubChild();
-            completeTask(childTaskId, result);
-            return result;
           } catch (err) {
             updateAgentStatus(squadSlug, teammateAgent.character_name, "error");
             const message = err instanceof Error ? err.message : String(err);
