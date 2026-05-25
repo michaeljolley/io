@@ -7,29 +7,47 @@ export default {
   theme: {
     extend: {
       colors: {
-        /* Layered surfaces — deep blue-black base */
+        /* ── NEW design tokens ── */
+        bg: {
+          app: '#0a0a0f',
+          surface: '#0f0f16',
+          card: '#121218',
+          elevated: '#1a1a24',
+        },
+        border: {
+          DEFAULT: '#252530',
+          bright: '#3a3a48',
+        },
+        'accent-cyan': '#00d9ff',
+        'accent-purple': '#c4a7ff',
+        'accent-red': '#ff3864',
+        'accent-green': '#5fff87',
+        text: {
+          DEFAULT: '#ffffff',
+          secondary: '#e8e8ed',
+          muted: '#8a8a99',
+        },
+
+        /* ── Compatibility aliases (old tokens) ── */
         surface: {
-          0: '#060a13',
-          1: '#0c1220',
-          2: '#131b2e',
-          3: '#1a2540',
+          0: '#0a0a0f',
+          1: '#0f0f16',
+          2: '#121218',
+          3: '#1a1a24',
         },
-        /* Borders with blue undertone */
         edge: {
-          DEFAULT: '#1e2d4a',
-          bright: '#2a3f65',
+          DEFAULT: '#252530',
+          bright: '#3a3a48',
         },
-        /* Cyan accent — terminal-cursor glow */
         accent: {
-          DEFAULT: '#22d3ee',
-          dim: '#0e7490',
-          glow: '#06b6d4',
+          DEFAULT: '#00d9ff',
+          dim: '#0080a0',
+          glow: '#00d9ff',
         },
-        /* Text hierarchy */
         txt: {
-          primary: '#e2e8f0',
-          secondary: '#8b9dc3',
-          muted: '#4a5f88',
+          primary: '#ffffff',
+          secondary: '#e8e8ed',
+          muted: '#8a8a99',
         },
       },
       fontFamily: {
@@ -41,10 +59,10 @@ export default {
         '2xl': '1rem',
       },
       boxShadow: {
-        glow: '0 0 20px -4px rgba(34, 211, 238, 0.15)',
-        'glow-sm': '0 0 10px -2px rgba(34, 211, 238, 0.1)',
-        card: '0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(30, 45, 74, 0.5)',
-        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(42, 63, 101, 0.7)',
+        glow: '0 0 20px -4px rgba(0, 217, 255, 0.15)',
+        'glow-sm': '0 0 10px -2px rgba(0, 217, 255, 0.1)',
+        card: '0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(37, 37, 48, 0.5)',
+        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(58, 58, 72, 0.7)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
