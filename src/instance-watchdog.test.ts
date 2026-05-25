@@ -84,6 +84,24 @@ describe("instance watchdog", () => {
     });
   });
 
+
+    it("skips active instances whose latest task status is done (#261)", () => {
+      const db = getDb();
+      db.prepare(`
+        INSERT INTO squad_instances (id, master_squad_slug, worktree_path, branch_name, status, created_at)
+        VALUES (?, ?, ?, ?, 'active', datetime('now', '-60 minutes'))
+      `).run("test-squad--task-done", "test-squad", "/tmp/wt7", "test-squad/instance/task-done");
+
+      // The instance's task completed successfully
+      db.prepare(`
+        INSERT INTO agent_tasks (task_id, agent_slug, description, status, instance_id, started_at, completed_at)
+        VALUES (?, ?, ?, 'done', ?, datetime('now', '-35 minutes'), datetime('now', '-34 minutes'))
+      `).run("task-done-1", "agent-1", "Finished work", "test-squad--task-done");
+
+      // Would be stale by time (34min idle > 30min threshold) but latest task is done
+      const stale = findStaleInstances(30 * 60_000);
+      assert.strictEqual(stale.length, 0);
+    });
   describe("startInstanceWatchdog", () => {
     it("calls onAbort for stale instances and stops cleanly", async () => {
       const db = getDb();

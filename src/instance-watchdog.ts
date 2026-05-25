@@ -34,6 +34,17 @@ export function findStaleInstances(thresholdMs: number): Array<{ instance: Squad
   const stale: Array<{ instance: SquadInstance; idleMs: number }> = [];
 
   for (const instance of activeInstances) {
+    // Skip instances whose most recent task completed successfully —
+    // auto-complete in agents.ts handles these (#261)
+    const latestTaskStatus = db.prepare(`
+      SELECT status FROM agent_tasks
+      WHERE instance_id = ?
+      ORDER BY COALESCE(completed_at, started_at) DESC
+      LIMIT 1
+    `).get(instance.id) as { status: string } | undefined;
+
+    if (latestTaskStatus?.status === "done") continue;
+
     // Find the most recent task activity for this instance
     const lastActivity = db.prepare(`
       SELECT MAX(COALESCE(completed_at, started_at)) AS last_ts

@@ -43,6 +43,13 @@ import {
   getTask,
   cancelTask,
 } from "../store/tasks.js";
+import {
+  getInstance,
+  updateInstanceStatus,
+  mergeInstanceDecisions,
+} from "../store/instances.js";
+import { removeWorktree } from "../store/worktrees.js";
+import { createFeedEntry } from "../store/feed.js";
 import { SESSIONS_DIR } from "../paths.js";
 import { getUniverse } from "./universes.js";
 
@@ -239,6 +246,42 @@ ${task}
 ${tail}`;
 }
 
+/**
+ * Auto-complete a squad instance after its task finishes successfully.
+ * Merges decisions back to master, cleans up worktree, sends notification.
+ */
+function autoCompleteInstance(instanceId: string): void {
+  try {
+    const instance = getInstance(instanceId);
+    if (!instance) return;
+    if (instance.status === "done" || instance.status === "failed") return;
+
+    updateInstanceStatus(instanceId, "merging");
+    const merged = mergeInstanceDecisions(instanceId, instance.master_squad_slug);
+
+    // Clean up worktree
+    const projectPath = instance.worktree_path.replace(/\/\.io-worktrees\/.*$/, "");
+    try {
+      removeWorktree(projectPath, instance.worktree_path);
+    } catch (err) {
+      console.error(`[io] Failed to remove worktree for instance ${instanceId}:`, err);
+    }
+
+    updateInstanceStatus(instanceId, "done");
+
+    createFeedEntry({
+      type: "notification",
+      title: `[${instance.master_squad_slug}] Instance auto-completed`,
+      body: `Instance "${instanceId}" auto-completed after task finished. ${merged} decision(s) merged to master squad.`,
+      source_type: "instance-auto-complete",
+    });
+
+    console.error(`[io] Instance "${instanceId}" auto-completed — ${merged} decisions merged`);
+  } catch (err) {
+    console.error(`[io] Error auto-completing instance ${instanceId}:`, err);
+  }
+}
+
 export async function delegateToAgent(
   squadSlug: string,
   task: string,
@@ -361,6 +404,10 @@ export async function delegateToAgent(
       }
       const result = sendResult.content || "Task completed (no output)";
       completeTask(taskId, result);
+      // Auto-complete the instance if this task was associated with one (#261)
+      if (instanceId) {
+        autoCompleteInstance(instanceId);
+      }
       updateSquadStatus(squadSlug, "idle");
       if (agent) updateAgentStatus(squadSlug, agent.character_name, "idle");
       recordTaskEvent(taskId, { ts: Date.now(), type: "task.done", data: { result } });
