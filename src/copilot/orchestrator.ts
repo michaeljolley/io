@@ -67,10 +67,18 @@ export type MessageSource =
 
 export type MessageCallback = (text: string, done: boolean) => void;
 
+export interface Attachment {
+  type: "blob";
+  data: string; // base64
+  mimeType: string;
+  displayName?: string;
+}
+
 interface QueuedMessage {
   prompt: string;
   source: MessageSource;
   callback: MessageCallback;
+  attachments?: Attachment[];
   resolve: () => void;
   reject: (err: Error) => void;
 }
@@ -438,6 +446,7 @@ function invalidateSession(): void {
 async function executeOnSession(
   prompt: string,
   callback: MessageCallback,
+  attachments?: Attachment[],
 ): Promise<string> {
   const session = await ensureOrchestratorSession();
 
@@ -449,7 +458,9 @@ async function executeOnSession(
   });
 
   try {
-    const result = await session.sendAndWait({ prompt }, SEND_TIMEOUT_MS);
+    const sendPayload: { prompt: string; attachments?: Attachment[] } = { prompt };
+    if (attachments && attachments.length > 0) sendPayload.attachments = attachments;
+    const result = await session.sendAndWait(sendPayload, SEND_TIMEOUT_MS);
     unsubDelta();
 
     const finalText = result?.data.content ?? accumulated;
@@ -513,7 +524,7 @@ async function processQueue(): Promise<void> {
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const response = await executeOnSession(taggedPrompt, msg.callback);
+          const response = await executeOnSession(taggedPrompt, msg.callback, msg.attachments);
           logConversation("assistant", response, sourceLabel(msg.source));
           msg.resolve();
           lastError = undefined;
@@ -616,11 +627,12 @@ export async function sendToOrchestrator(
   prompt: string,
   source: MessageSource,
   callback: MessageCallback,
+  attachments?: Attachment[],
 ): Promise<void> {
   logConversation("user", prompt, sourceLabel(source));
 
   return new Promise<void>((resolve, reject) => {
-    messageQueue.push({ prompt, source, callback, resolve, reject });
+    messageQueue.push({ prompt, source, callback, attachments, resolve, reject });
     processQueue();
   });
 }

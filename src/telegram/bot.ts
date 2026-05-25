@@ -1,18 +1,35 @@
 import { Bot } from "grammy";
 import { config } from "../config.js";
+import type { Attachment } from "../copilot/orchestrator.js";
+
+export type { Attachment };
 
 const TELEGRAM_MAX_LENGTH = 4096;
 const EDIT_DEBOUNCE_MS = 500;
+const FILE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024; // 5MB
 
 export type TelegramMessageHandler = (
   text: string,
   chatId: number,
   messageId: number,
   callback: (text: string, done: boolean) => void,
+  attachments?: Attachment[],
 ) => Promise<void>;
 
 let bot: Bot | undefined;
 let messageHandler: TelegramMessageHandler | undefined;
+
+async function downloadTelegramFile(
+  botInstance: Bot,
+  fileId: string,
+): Promise<{ data: string; mimeType: string; size: number }> {
+  const file = await botInstance.api.getFile(fileId);
+  const url = `https://api.telegram.org/file/bot${config.telegramBotToken}/${file.file_path}`;
+  const response = await fetch(url);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const mimeType = response.headers.get("content-type") ?? "application/octet-stream";
+  return { data: buffer.toString("base64"), mimeType, size: buffer.length };
+}
 
 export function setMessageHandler(handler: TelegramMessageHandler): void {
   messageHandler = handler;
@@ -106,6 +123,173 @@ export function createBot(): void {
       const message = err instanceof Error ? err.message : String(err);
       console.error("[io] Error handling message:", message);
       await editReply("An error occurred while processing your message.");
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Photo handler
+  // ---------------------------------------------------------------------------
+  bot.on("message:photo", async (ctx) => {
+    const userId = ctx.from?.id;
+    if (config.authorizedUserId && userId !== config.authorizedUserId) return;
+    if (!messageHandler || !bot) {
+      console.error("[io] No message handler registered");
+      return;
+    }
+
+    // Telegram sends an array of sizes — last element is the highest resolution
+    const photos = ctx.message.photo;
+    const photo = photos[photos.length - 1];
+    const chatId = ctx.chat.id;
+    const messageId = ctx.message.message_id;
+    const caption = ctx.message.caption ?? "";
+
+    await ctx.replyWithChatAction("typing");
+    const ack = await ctx.reply("📎 Processing attachment…");
+
+    try {
+      const { data, mimeType, size } = await downloadTelegramFile(bot, photo.file_id);
+
+      if (size > FILE_SIZE_LIMIT_BYTES) {
+        await ctx.api.editMessageText(chatId, ack.message_id, "⚠️ File too large (max 5MB). Attachment not processed.");
+        return;
+      }
+
+      const attachment: Attachment = { type: "blob", data, mimeType, displayName: "photo.jpg" };
+      const placeholder = await ctx.reply("…");
+      let accumulated = "";
+      let lastEditTime = 0;
+      let pendingEdit: ReturnType<typeof setTimeout> | undefined;
+
+      const editReply = async (content: string) => {
+        try {
+          const truncated = content.length > TELEGRAM_MAX_LENGTH
+            ? content.slice(0, TELEGRAM_MAX_LENGTH - 20) + "\n\n[…truncated]"
+            : content;
+          await ctx.api.editMessageText(chatId, placeholder.message_id, truncated);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (!message.includes("message is not modified")) {
+            console.error("[io] Failed to edit message:", message);
+          }
+        }
+      };
+
+      await ctx.api.deleteMessage(chatId, ack.message_id);
+      await messageHandler(caption, chatId, messageId, (chunk, done) => {
+        accumulated += chunk;
+        if (done) {
+          if (pendingEdit) { clearTimeout(pendingEdit); pendingEdit = undefined; }
+          return;
+        }
+        const now = Date.now();
+        const timeSinceLastEdit = now - lastEditTime;
+        if (timeSinceLastEdit >= EDIT_DEBOUNCE_MS) {
+          lastEditTime = now;
+          void editReply(accumulated);
+        } else if (!pendingEdit) {
+          pendingEdit = setTimeout(() => {
+            pendingEdit = undefined;
+            lastEditTime = Date.now();
+            void editReply(accumulated);
+          }, EDIT_DEBOUNCE_MS - timeSinceLastEdit);
+        }
+      }, [attachment]);
+
+      if (pendingEdit) clearTimeout(pendingEdit);
+      if (accumulated.length > 0) await editReply(accumulated);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[io] Error handling photo:", message);
+      await ctx.api.editMessageText(chatId, ack.message_id, "An error occurred while processing the attachment.");
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Document handler
+  // ---------------------------------------------------------------------------
+  bot.on("message:document", async (ctx) => {
+    const userId = ctx.from?.id;
+    if (config.authorizedUserId && userId !== config.authorizedUserId) return;
+    if (!messageHandler || !bot) {
+      console.error("[io] No message handler registered");
+      return;
+    }
+
+    const doc = ctx.message.document;
+    const chatId = ctx.chat.id;
+    const messageId = ctx.message.message_id;
+    const caption = ctx.message.caption ?? "";
+
+    // Reject oversized files before downloading (file_size may be undefined for large files)
+    if (doc.file_size !== undefined && doc.file_size > FILE_SIZE_LIMIT_BYTES) {
+      await ctx.reply("⚠️ File too large (max 5MB). Attachment not processed.");
+      return;
+    }
+
+    await ctx.replyWithChatAction("typing");
+    const ack = await ctx.reply("📎 Processing attachment…");
+
+    try {
+      const { data, mimeType, size } = await downloadTelegramFile(bot, doc.file_id);
+
+      if (size > FILE_SIZE_LIMIT_BYTES) {
+        await ctx.api.editMessageText(chatId, ack.message_id, "⚠️ File too large (max 5MB). Attachment not processed.");
+        return;
+      }
+
+      const attachment: Attachment = {
+        type: "blob",
+        data,
+        mimeType,
+        displayName: doc.file_name ?? "document",
+      };
+      const placeholder = await ctx.reply("…");
+      let accumulated = "";
+      let lastEditTime = 0;
+      let pendingEdit: ReturnType<typeof setTimeout> | undefined;
+
+      const editReply = async (content: string) => {
+        try {
+          const truncated = content.length > TELEGRAM_MAX_LENGTH
+            ? content.slice(0, TELEGRAM_MAX_LENGTH - 20) + "\n\n[…truncated]"
+            : content;
+          await ctx.api.editMessageText(chatId, placeholder.message_id, truncated);
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (!message.includes("message is not modified")) {
+            console.error("[io] Failed to edit message:", message);
+          }
+        }
+      };
+
+      await ctx.api.deleteMessage(chatId, ack.message_id);
+      await messageHandler(caption, chatId, messageId, (chunk, done) => {
+        accumulated += chunk;
+        if (done) {
+          if (pendingEdit) { clearTimeout(pendingEdit); pendingEdit = undefined; }
+          return;
+        }
+        const now = Date.now();
+        const timeSinceLastEdit = now - lastEditTime;
+        if (timeSinceLastEdit >= EDIT_DEBOUNCE_MS) {
+          lastEditTime = now;
+          void editReply(accumulated);
+        } else if (!pendingEdit) {
+          pendingEdit = setTimeout(() => {
+            pendingEdit = undefined;
+            lastEditTime = Date.now();
+            void editReply(accumulated);
+          }, EDIT_DEBOUNCE_MS - timeSinceLastEdit);
+        }
+      }, [attachment]);
+
+      if (pendingEdit) clearTimeout(pendingEdit);
+      if (accumulated.length > 0) await editReply(accumulated);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[io] Error handling document:", message);
+      await ctx.api.editMessageText(chatId, ack.message_id, "An error occurred while processing the attachment.");
     }
   });
 

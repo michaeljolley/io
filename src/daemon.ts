@@ -135,11 +135,12 @@ export async function startDaemon(): Promise<void> {
 
   // Wire up Telegram handler
   if (config.telegramEnabled) {
-    setTelegramHandler(async (text, chatId, messageId, callback) => {
+    setTelegramHandler(async (text, chatId, messageId, callback, attachments) => {
       await sendToOrchestrator(
         text,
         { type: "telegram", chatId, messageId },
         callback,
+        attachments,
       );
     });
     createBot();
