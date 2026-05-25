@@ -177,3 +177,15 @@ export function writeLogFile(content: string): void {
 export function getWikiDir(): string {
   return WIKI_DIR;
 }
+
+/**
+ * Read all wiki pages for a squad by slug.
+ * Returns array of { path, content } for pages under pages/squads/{slug}/.
+ */
+export function readSquadWikiPages(slug: string): Array<{ path: string; content: string }> {
+  const prefix = `pages/squads/${slug}/`;
+  return listPages()
+    .filter(p => p.startsWith(prefix))
+    .map(p => ({ path: p, content: readPage(p) ?? "" }))
+    .filter(entry => entry.content.length > 0);
+}

@@ -1,6 +1,7 @@
 import { getDb } from "./db.js";
 import { getDecisions } from "./squads.js";
 import { worktreeExists } from "./worktrees.js";
+import { readSquadWikiPages } from "../wiki/fs.js";
 
 export interface SquadInstance {
   id: string;
@@ -167,9 +168,17 @@ export function deleteInstance(id: string): void {
  */
 export function buildContextSnapshot(masterSquadSlug: string, limit: number = 30): string {
   const decisions = getDecisions(masterSquadSlug, limit);
-  return JSON.stringify(
-    decisions.map((d) => ({ decision: d.decision, context: d.context, created_at: d.created_at })),
-  );
+  const wikiPages = readSquadWikiPages(masterSquadSlug);
+
+  const snapshot: Record<string, unknown> = {
+    decisions: decisions.map((d) => ({ decision: d.decision, context: d.context, created_at: d.created_at })),
+  };
+
+  if (wikiPages.length > 0) {
+    snapshot.wiki = wikiPages.map(p => ({ path: p.path, content: p.content }));
+  }
+
+  return JSON.stringify(snapshot);
 }
 
 /**

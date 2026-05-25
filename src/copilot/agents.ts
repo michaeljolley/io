@@ -52,6 +52,7 @@ import { removeWorktree } from "../store/worktrees.js";
 import { createFeedEntry } from "../store/feed.js";
 import { SESSIONS_DIR } from "../paths.js";
 import { getUniverse } from "./universes.js";
+import { readSquadWikiPages } from "../wiki/fs.js";
 
 export interface AgentInfo {
   slug: string;
@@ -531,6 +532,10 @@ async function getOrCreateAgentSession(
   const squad = getSquad(squadSlug)!;
   const client = await getClient();
   const decisions = getDecisionsSummary(squadSlug);
+  const wikiPages = readSquadWikiPages(squadSlug);
+  const wikiSection = wikiPages.length > 0
+    ? `\n\n## Squad Wiki\n${wikiPages.map(p => `### ${p.path}\n${p.content}`).join("\n\n")}`
+    : "";
 
   console.error(`[io] Agent ${agent.character_name}: using model "${model}" (agent tier: ${agentTier}, task tier: ${taskTier}, effective: ${effectiveTier})`);
 
@@ -601,7 +606,7 @@ ${agent.charter ?? "General-purpose agent. Handle tasks as they come."}
 - **Path**: ${squad.project_path}
 
 ## Past Decisions
-${decisions}${leadSection}
+${decisions}${leadSection}${wikiSection}
 
 ## Repository Hygiene
 Before you make ANY code changes, you MUST sync your working copy with the remote default branch and work from a fresh feature branch. This prevents the merge conflicts the team hit on PRs like #45.
@@ -667,6 +672,10 @@ async function getOrCreateSession(
   const squad = getSquad(squadSlug)!;
   const client = await getClient();
   const decisions = getDecisionsSummary(squadSlug);
+  const wikiPages = readSquadWikiPages(squadSlug);
+  const wikiSection = wikiPages.length > 0
+    ? `\n\n## Squad Wiki\n${wikiPages.map(p => `### ${p.path}\n${p.content}`).join("\n\n")}`
+    : "";
   const agentTools = buildAgentTools(squadSlug);
   const model = getModelForTask(taskDescription ?? "", squad.model);
 

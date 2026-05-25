@@ -298,21 +298,22 @@ describe("deleteInstance", () => {
 // ── buildContextSnapshot ──────────────────────────────────────────────────────
 
 describe("buildContextSnapshot", () => {
-  it("returns a JSON array of recent squad decisions", () => {
+  it("returns a JSON object with decisions array", () => {
     logDecision("test-squad", "use TypeScript everywhere", "consistency");
     logDecision("test-squad", "prefer functional style");
 
     const snapshot = buildContextSnapshot("test-squad");
-    const parsed = JSON.parse(snapshot) as Array<{ decision: string; context: string | null; created_at: string }>;
+    const parsed = JSON.parse(snapshot) as { decisions: Array<{ decision: string; context: string | null; created_at: string }> };
 
-    assert.ok(Array.isArray(parsed));
-    assert.equal(parsed.length, 2);
-    assert.ok(parsed.some((d) => d.decision === "use TypeScript everywhere"));
+    assert.ok(Array.isArray(parsed.decisions));
+    assert.equal(parsed.decisions.length, 2);
+    assert.ok(parsed.decisions.some((d) => d.decision === "use TypeScript everywhere"));
   });
 
-  it("returns an empty JSON array for a squad with no decisions", () => {
+  it("returns empty decisions array for a squad with no decisions", () => {
     const snapshot = buildContextSnapshot("test-squad");
-    assert.deepEqual(JSON.parse(snapshot), []);
+    const parsed = JSON.parse(snapshot) as { decisions: unknown[] };
+    assert.deepEqual(parsed.decisions, []);
   });
 
   it("respects the limit parameter", () => {
@@ -320,8 +321,26 @@ describe("buildContextSnapshot", () => {
       logDecision("test-squad", `decision ${i}`);
     }
     const snapshot = buildContextSnapshot("test-squad", 5);
-    const parsed = JSON.parse(snapshot) as unknown[];
-    assert.equal(parsed.length, 5);
+    const parsed = JSON.parse(snapshot) as { decisions: unknown[] };
+    assert.equal(parsed.decisions.length, 5);
+  });
+
+  it("includes wiki pages when they exist", async () => {
+    const { writePage, deletePage } = await import("../wiki/fs.js");
+    const testSlug = `test-squad-snap-${Date.now()}`;
+    const pagePath = `pages/squads/${testSlug}/rules.md`;
+    try {
+      writePage(pagePath, "# Rules\nNo force push.");
+      logDecision(testSlug, "test decision");
+      const snapshot = buildContextSnapshot(testSlug);
+      const parsed = JSON.parse(snapshot) as { decisions: unknown[]; wiki?: Array<{ path: string; content: string }> };
+      assert.ok(parsed.wiki);
+      assert.equal(parsed.wiki!.length, 1);
+      assert.equal(parsed.wiki![0].path, pagePath);
+      assert.ok(parsed.wiki![0].content.includes("No force push"));
+    } finally {
+      deletePage(pagePath);
+    }
   });
 });
 
