@@ -56,27 +56,52 @@ export class McpConnectionManager {
   }
 
   async listTools(config: McpServerConfig): Promise<McpTool[]> {
-    const client = await this.getClient(config);
-    const result = await client.listTools();
-    return (result.tools ?? []).map((t) => ({
-      name: t.name,
-      description: t.description,
-      inputSchema: t.inputSchema as Record<string, unknown> | undefined,
-    }));
+    const execute = async () => {
+      const client = await this.getClient(config);
+      const result = await client.listTools();
+      return (result.tools ?? []).map((t) => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema as Record<string, unknown> | undefined,
+      }));
+    };
+
+    try {
+      return await execute();
+    } catch (err) {
+      console.error(`[mcp] listTools failed for ${config.name}, attempting reconnect:`, err instanceof Error ? err.message : err);
+      this.connections.delete(config.name);
+      return await execute();
+    }
   }
 
   async callTool(config: McpServerConfig, toolName: string, args: Record<string, unknown>): Promise<unknown> {
-    const client = await this.getClient(config);
-    const result = await client.callTool({ name: toolName, arguments: args });
-    // MCP returns content as an array of content blocks
-    if (result.content && Array.isArray(result.content)) {
-      return result.content
-        .map((block: { type?: string; text?: string }) =>
-          block.type === "text" ? block.text : JSON.stringify(block),
-        )
-        .join("\n");
+    const execute = async () => {
+      const client = await this.getClient(config);
+      const result = await client.callTool({ name: toolName, arguments: args });
+      // MCP returns content as an array of content blocks
+      if (result.content && Array.isArray(result.content)) {
+        return result.content
+          .map((block: { type?: string; text?: string }) =>
+            block.type === "text" ? block.text : JSON.stringify(block),
+          )
+          .join("\n");
+      }
+      return result.content ?? result;
+    };
+
+    try {
+      return await execute();
+    } catch (err) {
+      // Connection likely dead — clear and retry once
+      console.error(`[mcp] Tool call failed for ${config.name}/${toolName}, attempting reconnect:`, err instanceof Error ? err.message : err);
+      this.connections.delete(config.name);
+      try {
+        return await execute();
+      } catch (retryErr) {
+        throw new Error(`MCP tool ${config.name}/${toolName} failed after reconnect: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`);
+      }
     }
-    return result.content ?? result;
   }
 
   async disconnect(name: string): Promise<void> {
