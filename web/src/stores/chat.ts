@@ -16,6 +16,7 @@ export type ChatMessage = {
   streaming: boolean
   createdAt: string
   kind?: string
+  attachments?: ChatAttachment[]
 }
 
 export const useChatStore = defineStore('chat', () => {
