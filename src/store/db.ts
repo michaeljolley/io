@@ -179,6 +179,7 @@ GROUP BY agent_slug`,
     )`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_type ON unified_feed(type, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_unread ON unified_feed(read_at, created_at)`,
+    `ALTER TABLE squads ADD COLUMN color TEXT`,
     `CREATE TABLE IF NOT EXISTS squad_instances (
       id TEXT PRIMARY KEY,
       master_squad_slug TEXT NOT NULL,
@@ -220,6 +221,7 @@ GROUP BY agent_slug`,
     `DROP TABLE unified_feed_old`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_type ON unified_feed(type, created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_unified_feed_unread ON unified_feed(read_at, created_at)`,
+    `ALTER TABLE squads ADD COLUMN color TEXT`,
   ];
 
   for (const migration of migrations) {
@@ -248,6 +250,32 @@ GROUP BY agent_slug`,
     }
   } catch {
     // Migration failed (e.g. old tables don't exist yet on a fresh install) — safe to ignore
+  }
+
+  // One-time migration: assign colors to existing squads that have none
+  try {
+    const colorMigrated = db.prepare("SELECT value FROM io_state WHERE key = 'squad_colors_migrated'").get() as { value: string } | undefined;
+    if (!colorMigrated) {
+      const palette = [
+        "#ff6b35", "#ffd000", "#5fff87", "#c4a7ff", "#00d9ff",
+        "#ff9800", "#9c27b0", "#2196f3", "#e91e63", "#00bcd4",
+        "#8bc34a", "#ff5722",
+      ];
+      const uncolored = db.prepare("SELECT slug FROM squads WHERE color IS NULL ORDER BY id ASC").all() as { slug: string }[];
+      const usedColors = new Set((db.prepare("SELECT color FROM squads WHERE color IS NOT NULL").all() as { color: string }[]).map(r => r.color));
+      const update = db.prepare("UPDATE squads SET color = ? WHERE slug = ?");
+      let idx = 0;
+      for (const { slug } of uncolored) {
+        const available = palette.filter(c => !usedColors.has(c));
+        const color = available.length > 0 ? available[0] : palette[idx % palette.length];
+        update.run(color, slug);
+        usedColors.add(color);
+        idx++;
+      }
+      db.prepare("INSERT OR REPLACE INTO io_state (key, value) VALUES ('squad_colors_migrated', '1')").run();
+    }
+  } catch {
+    // Safe to ignore on fresh install
   }
 
   return db;

@@ -444,3 +444,65 @@ describe("setSquadQA", () => {
     assert.equal(getSquadAgent("test-squad", agent.character_name)?.is_qa, 0);
   });
 });
+
+// ── pickSquadColor / squad color assignment ───────────────────────────────────
+
+import { pickSquadColor, SQUAD_COLOR_PALETTE } from "./squads.js";
+
+describe("pickSquadColor", () => {
+  it("returns a palette color for empty squad list", () => {
+    const color = pickSquadColor([]);
+    assert.ok(SQUAD_COLOR_PALETTE.includes(color as typeof SQUAD_COLOR_PALETTE[number]));
+  });
+
+  it("returns an unused color when some are taken", () => {
+    const taken = [SQUAD_COLOR_PALETTE[0]!, SQUAD_COLOR_PALETTE[1]!];
+    const color = pickSquadColor(taken);
+    assert.ok(!taken.includes(color));
+    assert.ok(SQUAD_COLOR_PALETTE.includes(color as typeof SQUAD_COLOR_PALETTE[number]));
+  });
+
+  it("cycles through palette when all colors are taken", () => {
+    const allTaken = [...SQUAD_COLOR_PALETTE];
+    const color = pickSquadColor(allTaken);
+    // Should fall back to cycling — result is still a valid palette color
+    assert.ok(SQUAD_COLOR_PALETTE.includes(color as typeof SQUAD_COLOR_PALETTE[number]));
+  });
+
+  it("ignores null values in existing colors", () => {
+    const withNulls: (string | null)[] = [null, null, SQUAD_COLOR_PALETTE[0]!];
+    const color = pickSquadColor(withNulls);
+    assert.notEqual(color, SQUAD_COLOR_PALETTE[0]!);
+  });
+});
+
+describe("createSquad — color assignment", () => {
+  it("assigns a non-null color on creation", () => {
+    const squad = createSquad("color-squad-1", "Color Squad 1", "/tmp/test");
+    assert.ok(squad.color !== null && squad.color !== undefined);
+  });
+
+  it("assigns colors from the palette", () => {
+    const squad = createSquad("color-squad-2", "Color Squad 2", "/tmp/test");
+    assert.ok(SQUAD_COLOR_PALETTE.includes(squad.color as typeof SQUAD_COLOR_PALETTE[number]));
+  });
+
+  it("assigns distinct colors to two squads", () => {
+    const a = createSquad("color-squad-3", "Squad A", "/tmp/test");
+    const b = createSquad("color-squad-4", "Squad B", "/tmp/test");
+    assert.notEqual(a.color, b.color);
+  });
+
+  it("all squads up to palette size get distinct colors", () => {
+    const slugs: string[] = [];
+    for (let i = 0; i < SQUAD_COLOR_PALETTE.length; i++) {
+      const slug = `palette-squad-${i}`;
+      slugs.push(slug);
+      createSquad(slug, `Squad ${i}`, "/test");
+    }
+    const squads = slugs.map(s => getSquad(s)!);
+    const colors = squads.map(s => s.color);
+    const uniqueColors = new Set(colors);
+    assert.equal(uniqueColors.size, SQUAD_COLOR_PALETTE.length);
+  });
+});

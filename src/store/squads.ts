@@ -2,6 +2,38 @@ import { getDb } from "./db.js";
 import { nextCharacter, randomUniverse, getUniverse, getOrCreateUniverse } from "../copilot/universes.js";
 import type { Character, Universe } from "../copilot/universes.js";
 
+// ---------------------------------------------------------------------------
+// Squad color palette — universe-inspired distinct colors
+// ---------------------------------------------------------------------------
+
+export const SQUAD_COLOR_PALETTE: readonly string[] = [
+  "#ff6b35", // A-Team orange
+  "#ffd000", // Thundercats gold
+  "#5fff87", // GI Joe green
+  "#c4a7ff", // Ghostbusters purple
+  "#00d9ff", // Transformers cyan
+  "#ff9800", // extra amber
+  "#9c27b0", // extra violet
+  "#2196f3", // extra blue
+  "#e91e63", // extra pink
+  "#00bcd4", // extra teal
+  "#8bc34a", // extra lime
+  "#ff5722", // extra deep-orange
+] as const;
+
+/**
+ * Pick a color for a new squad. Prefers an unused palette color; when all
+ * are taken, cycles through the palette by position (modular assignment).
+ * This guarantees we never throw and always return a valid hex color.
+ */
+export function pickSquadColor(existingColors: (string | null)[]): string {
+  const used = new Set(existingColors.filter(Boolean) as string[]);
+  const unused = SQUAD_COLOR_PALETTE.filter((c) => !used.has(c));
+  if (unused.length > 0) return unused[0]!;
+  // All palette colors taken — cycle by squad count
+  return SQUAD_COLOR_PALETTE[used.size % SQUAD_COLOR_PALETTE.length]!;
+}
+
 export interface Squad {
   id: number;
   slug: string;
@@ -10,6 +42,7 @@ export interface Squad {
   copilot_session_id: string | null;
   model: string | null;
   universe: string | null;
+  color: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -48,9 +81,11 @@ export function createSquad(
   const universe = universeId
     ? getOrCreateUniverse(universeId).id
     : randomUniverse().id;
+  const existingSquads = listSquads();
+  const color = pickSquadColor(existingSquads.map((s) => s.color));
   db.prepare(
-    "INSERT INTO squads (slug, name, project_path, universe) VALUES (?, ?, ?, ?)",
-  ).run(slug, name, projectPath, universe);
+    "INSERT INTO squads (slug, name, project_path, universe, color) VALUES (?, ?, ?, ?, ?)",
+  ).run(slug, name, projectPath, universe, color);
   return getSquad(slug)!;
 }
 
