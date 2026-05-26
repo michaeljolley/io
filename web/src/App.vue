@@ -20,6 +20,8 @@ const floatingChat = ref<{ open: () => void } | null>(null)
 const feedOpen = ref(false)
 const unreadCount = ref(0)
 const lastSyncAt = ref<string | null>(null)
+const logoutError = ref('')
+const logoutLoading = ref(false)
 const metrics = ref({
   squads: 0,
   agents: 0,
@@ -40,6 +42,22 @@ function handleShortcut(event: KeyboardEvent) {
   if ((event.metaKey || event.ctrlKey) && event.key === '.') {
     event.preventDefault()
     openChat()
+  }
+}
+
+async function handleLogout() {
+  logoutLoading.value = true
+  logoutError.value = ''
+
+  try {
+    const result = await auth.logout()
+    if (!result.success) {
+      logoutError.value = result.error || 'Logout failed'
+      logoutLoading.value = false
+    }
+  } catch (error) {
+    logoutError.value = error instanceof Error ? error.message : 'Logout failed'
+    logoutLoading.value = false
   }
 }
 
@@ -106,8 +124,29 @@ onUnmounted(() => {
             <span class="text-xs font-medium">Feed</span>
             <span v-if="unreadCount > 0" class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive font-mono text-[9px] font-bold text-white">{{ unreadCount }}</span>
           </button>
+          <button
+            class="flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm text-muted-foreground transition-all hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive disabled:opacity-50"
+            :disabled="logoutLoading"
+            @click="handleLogout"
+            title="Sign out"
+          >
+            <AppIcon name="log-out" class="h-4 w-4" />
+            <span class="text-xs font-medium">{{ logoutLoading ? 'Signing out...' : 'Sign Out' }}</span>
+          </button>
         </div>
       </div>
+
+      <!-- Error message -->
+      <transition enter-active-class="duration-200 ease-out" enter-from-class="translate-y-0 opacity-0" enter-to-class="translate-y-1 opacity-100" leave-active-class="duration-150 ease-in" leave-from-class="translate-y-1 opacity-100" leave-to-class="translate-y-0 opacity-0">
+        <div v-if="logoutError" class="shrink-0 border-b border-destructive/50 bg-destructive/10 px-5 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm text-destructive">{{ logoutError }}</span>
+            <button class="text-destructive/50 hover:text-destructive" @click="logoutError = ''">
+              <AppIcon name="x" class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </transition>
 
       <!-- Main layout -->
       <div class="flex min-h-0 flex-1 overflow-hidden">
