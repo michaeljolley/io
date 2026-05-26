@@ -1,9 +1,12 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useRouter } from 'vue-router'
 import type { Session, User } from '@supabase/supabase-js'
+import { apiFetch } from '@/lib/api'
 import { getAuthConfig, getSupabase } from '@/lib/supabase'
 
 export const useAuthStore = defineStore('auth', () => {
+  const router = useRouter()
   const user = ref<User | null>(null)
   const session = ref<Session | null>(null)
   const initialized = ref(false)
@@ -86,6 +89,40 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = null
   }
 
+  async function logout() {
+    loading.value = true
+    try {
+      // Call backend logout endpoint
+      await apiFetch('/api/logout', { method: 'POST' }).catch(() => {
+        // Logout still proceeds even if backend call fails
+      })
+
+      // Clear auth state
+      user.value = null
+      session.value = null
+
+      // Clear localStorage token if present
+      localStorage.removeItem('token')
+      localStorage.removeItem('supabase.auth.token')
+
+      // Sign out from Supabase if enabled
+      if (authEnabled.value) {
+        const supabase = await getSupabase()
+        await supabase?.auth.signOut().catch(() => {
+          // Continue even if Supabase signOut fails
+        })
+      }
+
+      // Redirect to login
+      await router.push('/login')
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Logout failed' }
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function getAccessToken() {
     if (!authEnabled.value) {
       return null
@@ -113,6 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
     init,
     signIn,
     signOut,
+    logout,
     getAccessToken,
   }
 })
