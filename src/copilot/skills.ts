@@ -370,3 +370,91 @@ export async function searchSkillsRegistry(
     return [];
   }
 }
+
+/**
+ * Update a skill's metadata (name and/or description).
+ * Rewrites the SKILL.md file with the updated frontmatter while preserving content.
+ * Throws if the skill doesn't exist.
+ */
+export function updateSkill(
+  slug: string,
+  updates: Partial<{ name?: string; description?: string }>,
+): SkillInfo {
+  const skillDir = join(SKILLS_DIR, slug);
+  if (!existsSync(skillDir)) {
+    throw new Error(`Skill not found: ${slug}`);
+  }
+
+  const skillMdPath = join(skillDir, "SKILL.md");
+  if (!existsSync(skillMdPath)) {
+    throw new Error(`SKILL.md not found for skill: ${slug}`);
+  }
+
+  const currentContent = readFileSync(skillMdPath, "utf-8");
+  const { name: currentName, description: currentDescription } = parseSkillMd(currentContent);
+
+  // Use provided updates or fall back to current values
+  const newName = updates.name ?? currentName;
+  const newDescription = updates.description ?? currentDescription;
+
+  // Rebuild SKILL.md with new metadata
+  // Keep everything after the description intact (preserve any extra content)
+  const lines = currentContent.split(/\r?\n/);
+  const newLines: string[] = [];
+
+  // Add the new heading
+  newLines.push(`# ${newName}`);
+  newLines.push("");
+
+  // Add the new description
+  if (newDescription) {
+    newLines.push(newDescription);
+    newLines.push("");
+  }
+
+  // Find where the original description ends and append the rest
+  let foundHeading = false;
+  let skippedDescription = false;
+  let blankLinesSeen = 0;
+
+  for (const line of lines) {
+    if (!foundHeading) {
+      if (line.match(/^#\s+(.+)/)) {
+        foundHeading = true;
+      }
+      continue;
+    }
+
+    if (!skippedDescription) {
+      if (line.trim() === "") {
+        blankLinesSeen++;
+        if (blankLinesSeen >= 2) {
+          skippedDescription = true;
+        }
+      } else {
+        blankLinesSeen = 0;
+      }
+      continue;
+    }
+
+    // We're past the description now
+    newLines.push(line);
+  }
+
+  const newContent = newLines.join("\n");
+  writeFileSync(skillMdPath, newContent, "utf-8");
+
+  return {
+    name: newName,
+    slug,
+    description: newDescription,
+    path: skillDir,
+  };
+}
+
+/**
+ * Delete a skill (alias for removeSkill for consistency with other store modules).
+ */
+export function deleteSkill(slug: string): boolean {
+  return removeSkill(slug);
+}
