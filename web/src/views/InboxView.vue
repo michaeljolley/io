@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { apiFetch } from '@/lib/api'
 import { formatRelativeTime } from '@/lib/mission-control'
+import { renderMarkdown } from '@/lib/markdown'
 
 type InboxEntry = {
   id: number
@@ -76,7 +77,7 @@ onMounted(refresh)
       <div class="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <template v-if="selected">
           <div class="grid gap-5 lg:grid-cols-[1fr_220px]">
-            <article class="rounded-lg border border-white/[0.06] bg-sidebar/60 px-5 py-5 text-sm leading-7 text-foreground/75">{{ selected.body }}</article>
+            <article class="wiki-content rounded-lg border border-white/[0.06] bg-sidebar/60 px-5 py-5 text-sm leading-7 text-foreground/75" v-html="renderMarkdown(selected.body)" />
             <aside class="rounded-lg border border-white/[0.06] bg-sidebar/60 px-5 py-5 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground/55">
               <div>source</div>
               <div class="mt-2 text-foreground">{{ selected.source_type ?? 'inbox' }}</div>
