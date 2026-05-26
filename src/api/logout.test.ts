@@ -145,9 +145,8 @@ describe("Logout API Endpoint", () => {
       const { status } = await req("POST", port, "/api/logout", {
         Authorization: "NotBearer token",
       });
-      // NotBearer will pass through as a valid token in the mock auth
-      // so this should succeed. A real Supabase auth would fail.
-      assert.equal(status, 200);
+      // NotBearer does not start with "Bearer " prefix, so validation fails
+      assert.equal(status, 401);
     });
   });
 });
