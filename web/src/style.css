@@ -22,7 +22,7 @@
   --border: #252530;
   --sidebar: #0f0f16;
   --status-idle: #8a8a99;
-  --status-working: #00d9ff;
+  --status-working: #5fff87;
   --status-error: #ff3864;
   --status-success: #5fff87;
   --universe-ateam: #ff6b35;
@@ -51,7 +51,7 @@
   --border-rgb: 37 37 48;
   --sidebar-rgb: 15 15 22;
   --status-idle-rgb: 138 138 153;
-  --status-working-rgb: 0 217 255;
+  --status-working-rgb: 95 255 135;
   --status-error-rgb: 255 56 100;
   --status-success-rgb: 95 255 135;
   --universe-ateam-rgb: 255 107 53;
