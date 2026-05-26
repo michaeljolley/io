@@ -103,22 +103,15 @@ export async function startApiServer(): Promise<void> {
   api.use(requireAuth);
 
   // Auth: Logout endpoint
-  api.post("/logout", (req: Request, res: Response) => {
+  // At this point, the requireAuth middleware has already validated the token.
+  // We just need to confirm the logout was successful.
+  api.post("/logout", (_req: Request, res: Response) => {
     try {
-      // Extract token from Authorization header for potential future token revocation
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
-
-      if (!token) {
-        res.status(401).json({ error: "Missing authorization token" });
-        return;
-      }
-
       // Token invalidation approach:
       // Supabase JWT tokens are short-lived (1 hour by default). Since we don't maintain
       // a token blacklist, logout on the client side (clearing localStorage) is sufficient.
       // In a production system with token revocation, the token would be added to a blacklist here.
-      // For now, we simply confirm the logout and rely on client-side token removal.
+      // For now, we simply confirm the logout was successful.
 
       res.json({ status: "logged_out" });
     } catch (e) {

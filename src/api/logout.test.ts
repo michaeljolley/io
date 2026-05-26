@@ -62,28 +62,26 @@ function createTestServer(): express.Application {
       res.status(401).json({ error: "Invalid or expired token" });
       return;
     }
+
+    // If no token at all, fail auth
+    if (!token) {
+      res.status(401).json({ error: "Missing or invalid authorization" });
+      return;
+    }
     
     // Otherwise, pass through (mock valid auth)
     next();
   });
 
-  // Logout endpoint
-  app.post("/api/logout", (req: Request, res: Response) => {
+  // Logout endpoint (simplified - relies on middleware for auth validation)
+  app.post("/api/logout", (_req: Request, res: Response) => {
     try {
-      // Extract token from Authorization header for potential future token revocation
-      const authHeader = req.headers.authorization;
-      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
-
-      if (!token) {
-        res.status(401).json({ error: "Missing authorization token" });
-        return;
-      }
-
+      // At this point, the auth middleware has already validated the token.
       // Token invalidation approach:
       // Supabase JWT tokens are short-lived (1 hour by default). Since we don't maintain
       // a token blacklist, logout on the client side (clearing localStorage) is sufficient.
       // In a production system with token revocation, the token would be added to a blacklist here.
-      // For now, we simply confirm the logout and rely on client-side token removal.
+      // For now, we simply confirm the logout was successful.
 
       res.json({ status: "logged_out" });
     } catch (e) {
@@ -112,7 +110,7 @@ describe("Logout API Endpoint", () => {
   });
 
   describe("POST /api/logout", () => {
-    it("returns 200 with logged_out status on successful logout", async () => {
+    it("returns 200 with logged_out status on successful logout with valid token", async () => {
       const { status, body } = await req("POST", port, "/api/logout", {
         Authorization: "Bearer valid-token-12345",
       });
@@ -120,13 +118,13 @@ describe("Logout API Endpoint", () => {
       assert.equal((body as { status: string }).status, "logged_out");
     });
 
-    it("returns 401 when no Authorization header is provided", async () => {
+    it("returns 401 when no Authorization header is provided (caught by auth middleware)", async () => {
       const { status, body } = await req("POST", port, "/api/logout");
       assert.equal(status, 401);
       assert.ok((body as { error: string }).error.includes("Missing"));
     });
 
-    it("returns 401 when Authorization header is invalid", async () => {
+    it("returns 401 when Authorization header contains invalid token", async () => {
       const { status, body } = await req("POST", port, "/api/logout", {
         Authorization: "Bearer invalid",
       });
@@ -134,18 +132,18 @@ describe("Logout API Endpoint", () => {
       assert.ok((body as { error: string }).error);
     });
 
-    it("accepts Bearer token format", async () => {
+    it("accepts Bearer token format with JWT-like structure", async () => {
       const { status } = await req("POST", port, "/api/logout", {
         Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
       });
       assert.equal(status, 200);
     });
 
-    it("returns error for malformed Authorization header", async () => {
+    it("returns 401 for malformed Authorization header (not Bearer format)", async () => {
       const { status } = await req("POST", port, "/api/logout", {
         Authorization: "NotBearer token",
       });
-      // NotBearer does not start with "Bearer " prefix, so validation fails
+      // NotBearer does not start with "Bearer " prefix, so token is undefined, auth fails
       assert.equal(status, 401);
     });
   });
