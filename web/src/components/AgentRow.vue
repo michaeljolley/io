@@ -10,7 +10,6 @@ const props = defineProps<{
 }>()
 
 const expanded = ref(false)
-const modelLabel = computed(() => (props.agent.model_tier ?? 'medium').toUpperCase())
 const charterText = computed(() => props.agent.charter || props.agent.role_title || 'No charter available.')
 </script>
 
@@ -22,7 +21,6 @@ const charterText = computed(() => props.agent.charter || props.agent.role_title
       <div class="flex shrink-0 gap-1">
         <span v-if="agent.is_lead" class="rounded bg-primary/10 px-1 py-0.5 font-mono text-[9px] leading-none text-primary">LEAD</span>
         <span v-if="agent.is_qa" class="rounded bg-status-success/10 px-1 py-0.5 font-mono text-[9px] leading-none text-status-success">QA</span>
-        <span class="rounded bg-white/5 px-1 py-0.5 font-mono text-[9px] uppercase leading-none text-muted-foreground">{{ modelLabel }}</span>
       </div>
       <div class="min-w-0 flex-1">
         <span v-if="agent.current_task" class="block truncate font-mono text-[11px] text-foreground/60">↳ {{ agent.current_task }}</span>
