@@ -20,7 +20,7 @@ import { listIoSchedules, getIoSchedule, deleteIoSchedule, setIoScheduleEnabled 
 import { getScheduleRuns } from "../store/schedule-runs.js";
 import { createFeedEntry, listFeedEntries, listFeedSquads, countUnreadFeedEntries, markFeedEntryRead, markAllFeedEntriesRead, deleteFeedEntry, markFeedEntriesRead, deleteFeedEntries, type FeedEntryType } from "../store/feed.js";
 
-import { listPages, readPage } from "../wiki/fs.js";
+import { listPages, readPage, writePage, deletePage, assertPagePath } from "../wiki/fs.js";
 import { runScheduleNow } from "../copilot/scheduler.js";
 import { runIoScheduleNow } from "../copilot/io-scheduler.js";
 
@@ -970,7 +970,7 @@ export async function startApiServer(): Promise<void> {
 
   api.get("/wiki/*path", (req: Request, res: Response) => {
     try {
-      const pagePath = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
+      const pagePath = Array.isArray(req.params.path) ? req.params.path.join("/") : req.params.path;
       if (!pagePath) {
         res.status(400).json({ error: "Missing page path" });
         return;
@@ -985,6 +985,98 @@ export async function startApiServer(): Promise<void> {
       console.error("Error reading wiki page:", e);
       res.status(500).json({ error: "Failed to read wiki page" });
     }
+  });
+
+  // Create a new wiki page
+  api.post("/wiki", (req: Request, res: Response) => {
+    try {
+      const { path: pagePath, content } = req.body as { path?: string; content?: string };
+      if (!pagePath || typeof pagePath !== "string") {
+        res.status(400).json({ error: "Missing page path" });
+        return;
+      }
+      if (content === undefined || typeof content !== "string") {
+        res.status(400).json({ error: "Missing page content" });
+        return;
+      }
+      try {
+        assertPagePath(pagePath);
+      } catch (e) {
+        res.status(400).json({ error: (e as Error).message });
+        return;
+      }
+      if (readPage(pagePath) !== undefined) {
+        res.status(409).json({ error: "Page already exists" });
+        return;
+      }
+      writePage(pagePath, content);
+      res.status(201).json({ path: pagePath, content });
+    } catch (e) {
+      console.error("Error creating wiki page:", e);
+      res.status(500).json({ error: "Failed to create wiki page" });
+    }
+  });
+
+  // Update an existing wiki page
+  api.put("/wiki/*path", (req: Request, res: Response) => {
+    try {
+      const pagePath = Array.isArray(req.params.path) ? req.params.path.join("/") : req.params.path;
+      if (!pagePath) {
+        res.status(400).json({ error: "Missing page path" });
+        return;
+      }
+      const { content } = req.body as { content?: string };
+      if (content === undefined || typeof content !== "string") {
+        res.status(400).json({ error: "Missing page content" });
+        return;
+      }
+      try {
+        assertPagePath(pagePath);
+      } catch (e) {
+        res.status(400).json({ error: (e as Error).message });
+        return;
+      }
+      if (readPage(pagePath) === undefined) {
+        res.status(404).json({ error: "Page not found" });
+        return;
+      }
+      writePage(pagePath, content);
+      res.json({ path: pagePath, content });
+    } catch (e) {
+      console.error("Error updating wiki page:", e);
+      res.status(500).json({ error: "Failed to update wiki page" });
+    }
+  });
+
+  // Delete a wiki page
+  api.delete("/wiki/*path", (req: Request, res: Response) => {
+    try {
+      const pagePath = Array.isArray(req.params.path) ? req.params.path.join("/") : req.params.path;
+      if (!pagePath) {
+        res.status(400).json({ error: "Missing page path" });
+        return;
+      }
+      try {
+        assertPagePath(pagePath);
+      } catch (e) {
+        res.status(400).json({ error: (e as Error).message });
+        return;
+      }
+      const deleted = deletePage(pagePath);
+      if (!deleted) {
+        res.status(404).json({ error: "Page not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (e) {
+      console.error("Error deleting wiki page:", e);
+      res.status(500).json({ error: "Failed to delete wiki page" });
+    }
+  });
+
+  // Get available wiki categories
+  api.get("/wiki-categories", (_req: Request, res: Response) => {
+    res.json({ categories: ["preferences", "projects", "people", "general", "squads"] });
   });
 
   // Mount API at /api (for frontend)
