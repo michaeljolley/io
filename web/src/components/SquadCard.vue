@@ -4,19 +4,18 @@ import AppIcon from '@/components/AppIcon.vue'
 import AgentRow from '@/components/AgentRow.vue'
 import InstancePill from '@/components/InstancePill.vue'
 import StatusIndicator from '@/components/StatusIndicator.vue'
-import { universeColor, withAlpha, type SquadCardModel } from '@/lib/mission-control'
+import { withAlpha, type SquadCardModel } from '@/lib/mission-control'
 
 const props = defineProps<{
   squad: SquadCardModel
 }>()
 
-const color = computed(() => universeColor(props.squad.universe))
 const runningInstances = computed(() => props.squad.instances.filter((instance) => instance.status === 'running').length)
 </script>
 
 <template>
   <article class="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
-    <div class="h-px" :style="{ backgroundColor: color, opacity: 0.6 }" />
+    <div class="h-px" :style="{ backgroundColor: squad.color, opacity: 0.6 }" />
     <div class="px-4 pb-2.5 pt-3">
       <div class="mb-2 flex items-start justify-between gap-2">
         <div class="flex min-w-0 items-center gap-2">
@@ -24,14 +23,14 @@ const runningInstances = computed(() => props.squad.instances.filter((instance) 
           <h3 class="truncate text-sm font-semibold">{{ squad.name }}</h3>
           <span v-if="squad.unread_count > 0" class="shrink-0 rounded-full bg-destructive px-1.5 py-0.5 font-mono text-[9px] font-bold text-white">{{ squad.unread_count }}</span>
         </div>
-        <span class="shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color, backgroundColor: withAlpha(color, 0.15) }">{{ squad.universe }}</span>
+        <span class="shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: squad.color, backgroundColor: withAlpha(squad.color, 0.15) }">{{ squad.universe }}</span>
       </div>
       <div class="truncate font-mono text-[10px] text-muted-foreground/50">{{ squad.project_path }}</div>
     </div>
 
     <div class="mx-3 border-t border-border/50" />
     <div class="px-2 py-1.5">
-      <AgentRow v-for="agent in squad.agents" :key="agent.character_name" :agent="agent" :universe-color="color" />
+      <AgentRow v-for="agent in squad.agents" :key="agent.character_name" :agent="agent" :squad-color="squad.color" />
     </div>
 
     <template v-if="squad.instances.length">

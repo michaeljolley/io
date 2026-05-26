@@ -43,6 +43,7 @@ export type SquadCardModel = {
   name: string
   project_path: string
   universe: string
+  color: string
   status: UiStatus
   unread_count: number
   agents: SquadAgent[]

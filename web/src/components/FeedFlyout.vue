@@ -3,14 +3,14 @@ import { computed, ref, watch } from 'vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { apiFetch } from '@/lib/api'
 import { renderMarkdown } from '@/lib/markdown'
-import { formatRelativeTime, titleizeSlug, universeColor, withAlpha, type FeedEntry } from '@/lib/mission-control'
+import { formatRelativeTime, titleizeSlug, withAlpha, type FeedEntry } from '@/lib/mission-control'
 
-type SquadLookup = Record<string, { name: string; universe?: string | null }>
+type SquadLookup = Record<string, { name: string; universe?: string | null; color: string }>
 
 type FeedGroup = {
   key: string
   label: string
-  universe?: string | null
+  color: string
   entries: FeedEntry[]
 }
 
@@ -36,7 +36,7 @@ const groupedEntries = computed<FeedGroup[]>(() => {
       grouped.set(key, {
         key,
         label: meta?.name ?? titleizeSlug(key),
-        universe: meta?.universe,
+        color: meta?.color ?? '#8a8a99',
         entries: [],
       })
     }
@@ -58,8 +58,8 @@ async function refresh() {
     }
 
     if (squadsResponse.ok) {
-      const payload = await squadsResponse.json() as { squads: Array<{ slug?: string; id?: string; name: string; universe?: string | null }> }
-      squads.value = Object.fromEntries(payload.squads.map((squad) => [squad.slug ?? squad.id ?? squad.name.toLowerCase(), { name: squad.name, universe: squad.universe }]))
+      const payload = await squadsResponse.json() as { squads: Array<{ slug?: string; id?: string; name: string; universe?: string | null; color?: string }> }
+      squads.value = Object.fromEntries(payload.squads.map((squad) => [squad.slug ?? squad.id ?? squad.name.toLowerCase(), { name: squad.name, universe: squad.universe, color: squad.color ?? '#8a8a99' }]))
     }
   } finally {
     loading.value = false
@@ -108,7 +108,7 @@ watch(() => props.open, (value) => {
           <div v-else>
             <section v-for="group in groupedEntries" :key="group.key" class="border-b border-border/40 last:border-b-0">
               <div class="sticky top-0 z-10 border-b border-border/40 bg-sidebar/95 px-5 py-2 backdrop-blur">
-                <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: universeColor(group.universe), backgroundColor: withAlpha(universeColor(group.universe), 0.15) }">{{ group.label }}</span>
+                <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: group.color, backgroundColor: withAlpha(group.color, 0.15) }">{{ group.label }}</span>
               </div>
               <div>
                 <article v-for="entry in group.entries" :key="entry.id" class="cursor-pointer px-5 py-3.5 transition-colors hover:bg-white/[0.02]" :class="!entry.read_at ? 'bg-white/[0.015]' : ''" @click="toggleEntry(entry)">
@@ -118,23 +118,18 @@ watch(() => props.open, (value) => {
                       <div v-else class="h-1.5 w-1.5" />
                     </div>
                     <div class="min-w-0 flex-1">
-                      <div class="mb-1 flex flex-wrap items-center gap-1.5">
-                        <span class="font-mono text-[10px] text-muted-foreground/50">{{ entry.source_ref ?? entry.instance_id ?? entry.task_id ?? entry.type }}</span>
-                        <span class="font-mono text-[10px] text-muted-foreground/40">·</span>
-                        <span class="text-[10px] text-muted-foreground/50">{{ entry.source_type ?? 'IO' }}</span>
+                      <div class="flex items-start justify-between gap-1">
+                        <h4 class="text-xs font-medium leading-tight text-foreground">{{ entry.title }}</h4>
+                        <span class="shrink-0 font-mono text-[9px] text-muted-foreground/40">{{ formatRelativeTime(entry.created_at) }}</span>
                       </div>
-                      <div class="mb-1 text-sm leading-snug" :class="!entry.read_at ? 'text-foreground' : 'text-foreground/70'">{{ entry.title }}</div>
-                      <div class="flex items-center justify-between gap-2">
-                        <span class="font-mono text-[10px] text-muted-foreground/40">{{ formatRelativeTime(entry.created_at) }}</span>
-                        <span v-if="entry.body" class="text-[10px] text-primary/60">{{ expandedId === entry.id ? '▲ collapse' : '▼ details' }}</span>
-                      </div>
-                      <transition enter-active-class="duration-150 ease-out" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="duration-100 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
-                        <div v-if="expandedId === entry.id && entry.body" class="mt-2.5 rounded border border-white/[0.06] bg-black/30 p-3 text-xs text-foreground/60">
-                          <div class="wiki-content text-xs font-mono leading-relaxed" v-html="renderMarkdown(entry.body)" />
-                        </div>
-                      </transition>
+                      <div v-if="entry.body" class="mt-1 max-w-xs text-[11px] leading-relaxed text-foreground/50">{{ entry.body.slice(0, 200) }}</div>
                     </div>
                   </div>
+                  <transition enter-active-class="duration-150 ease-out" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="duration-100 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
+                    <div v-if="expandedId === entry.id && entry.body" class="mt-2 rounded border border-white/[0.06] bg-white/[0.03] p-3">
+                      <div class="wiki-content text-xs" v-html="renderMarkdown(entry.body)" />
+                    </div>
+                  </transition>
                 </article>
               </div>
             </section>

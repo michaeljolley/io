@@ -2,14 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { apiFetch } from '@/lib/api'
 import { renderMarkdown } from '@/lib/markdown'
-import { formatRelativeTime, titleizeSlug, universeColor, withAlpha, type FeedEntry } from '@/lib/mission-control'
+import { formatRelativeTime, titleizeSlug, withAlpha, type FeedEntry } from '@/lib/mission-control'
 
-type SquadLookup = Record<string, { name: string; universe?: string | null }>
+type SquadLookup = Record<string, { name: string; universe?: string | null; color: string }>
 
 type FeedGroup = {
   key: string
   label: string
-  universe?: string | null
+  color: string
   entries: FeedEntry[]
 }
 
@@ -27,7 +27,7 @@ const groups = computed<FeedGroup[]>(() => {
       grouped.set(key, {
         key,
         label: meta?.name ?? titleizeSlug(key),
-        universe: meta?.universe,
+        color: meta?.color ?? '#8a8a99',
         entries: [],
       })
     }
@@ -48,8 +48,8 @@ async function loadFeed() {
       entries.value = (await feedResponse.json() as { entries: FeedEntry[] }).entries
     }
     if (squadsResponse.ok) {
-      const payload = await squadsResponse.json() as { squads: Array<{ slug?: string; id?: string; name: string; universe?: string | null }> }
-      squads.value = Object.fromEntries(payload.squads.map((squad) => [squad.slug ?? squad.id ?? squad.name.toLowerCase(), { name: squad.name, universe: squad.universe }]))
+      const payload = await squadsResponse.json() as { squads: Array<{ slug?: string; id?: string; name: string; universe?: string | null; color?: string }> }
+      squads.value = Object.fromEntries(payload.squads.map((squad) => [squad.slug ?? squad.id ?? squad.name.toLowerCase(), { name: squad.name, universe: squad.universe, color: squad.color ?? '#8a8a99' }]))
     }
   } finally {
     loading.value = false
@@ -83,7 +83,7 @@ onMounted(loadFeed)
       <div v-else class="space-y-4">
         <section v-for="group in groups" :key="group.key" class="overflow-hidden rounded-lg border border-border bg-card">
           <div class="border-b border-border/50 px-5 py-3">
-            <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: universeColor(group.universe), backgroundColor: withAlpha(universeColor(group.universe), 0.15) }">{{ group.label }}</span>
+            <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: group.color, backgroundColor: withAlpha(group.color, 0.15) }">{{ group.label }}</span>
           </div>
           <article v-for="entry in group.entries" :key="entry.id" class="cursor-pointer border-b border-border/40 px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.02]" :class="!entry.read_at ? 'bg-white/[0.015]' : ''" @click="toggleEntry(entry)">
             <div class="flex items-start gap-3">
