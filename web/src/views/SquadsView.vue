@@ -123,11 +123,11 @@ onMounted(loadSquads)
   <div class="h-full overflow-y-auto p-5">
     <div v-if="error" class="mb-4 rounded-lg border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">{{ error }}</div>
 
-    <div v-if="loading && !squads.length" class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    <div v-if="loading && !squads.length" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <div v-for="index in 6" :key="index" class="h-64 animate-pulse rounded-lg border border-border bg-card/60" />
     </div>
 
-    <div v-else-if="squads.length" class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+    <div v-else-if="squads.length" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <SquadCard v-for="squad in squads" :key="squad.id" :squad="squad" />
     </div>
 

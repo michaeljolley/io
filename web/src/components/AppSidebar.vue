@@ -72,7 +72,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <aside class="flex w-12 shrink-0 flex-col items-center border-r border-border bg-sidebar py-3">
+  <aside class="hidden w-12 shrink-0 flex-col items-center border-r border-border bg-sidebar py-3 md:flex">
     <div class="flex flex-col gap-1">
       <RouterLink v-for="item in primaryItems" :key="item.to" :to="item.to" class="group relative flex h-9 w-9 items-center justify-center rounded-lg transition-all" :class="isActive(item) ? 'bg-primary/15 text-primary' : 'text-muted-foreground/50 hover:bg-white/[0.04] hover:text-foreground'">
         <AppIcon :name="item.icon" class="h-4 w-4" />

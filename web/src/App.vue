@@ -5,6 +5,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 import FeedFlyout from '@/components/FeedFlyout.vue'
 import FloatingChat from '@/components/FloatingChat.vue'
+import MobileNav from '@/components/MobileNav.vue'
 import { apiFetch } from '@/lib/api'
 import { formatRelativeTime, type SquadSummary } from '@/lib/mission-control'
 import { useAuthStore } from '@/stores/auth'
@@ -89,14 +90,18 @@ onUnmounted(() => {
 <template>
   <div class="dark flex h-full flex-col overflow-hidden bg-background text-foreground">
     <template v-if="shellVisible">
-      <div class="flex shrink-0 items-center justify-between border-b border-border bg-sidebar px-5 py-3">
-        <div class="flex items-center gap-4">
-          <div class="select-none pl-1 font-mono text-xl font-bold tracking-tight text-primary text-glow-cyan">IO</div>
-          <div class="h-4 w-px bg-border" />
-          <div class="font-mono text-xs text-muted-foreground">Mission Control · Developer AI Assistant</div>
+      <!-- Top bar -->
+      <div class="flex shrink-0 items-center justify-between border-b border-border bg-sidebar px-4 py-3 md:px-5">
+        <div class="flex items-center gap-3 md:gap-4">
+          <div class="select-none font-mono text-xl font-bold tracking-tight text-primary text-glow-cyan">IO</div>
+          <div class="hidden h-4 w-px bg-border md:block" />
+          <div class="hidden font-mono text-xs text-muted-foreground md:block">Mission Control · Developer AI Assistant</div>
         </div>
         <div class="flex items-center gap-2">
-          <button class="relative flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-foreground" @click="feedOpen = true">
+          <button
+            class="relative flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+            @click="feedOpen = true"
+          >
             <AppIcon name="message" class="h-4 w-4" />
             <span class="text-xs font-medium">Feed</span>
             <span v-if="unreadCount > 0" class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive font-mono text-[9px] font-bold text-white">{{ unreadCount }}</span>
@@ -104,16 +109,19 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Main layout -->
       <div class="flex min-h-0 flex-1 overflow-hidden">
         <AppSidebar />
         <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <div class="min-h-0 flex-1 overflow-hidden">
+          <!-- Content area — bottom padding on mobile to clear MobileNav -->
+          <div class="min-h-0 flex-1 overflow-hidden pb-[calc(env(safe-area-inset-bottom)+3.5rem)] md:pb-0">
             <RouterView />
           </div>
         </div>
       </div>
 
-      <div class="shrink-0 border-t border-border bg-sidebar px-5 py-2">
+      <!-- Status bar — desktop only -->
+      <div class="hidden shrink-0 border-t border-border bg-sidebar px-5 py-2 md:block">
         <div class="flex items-center justify-between font-mono text-[11px]">
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-1.5">
@@ -137,6 +145,9 @@ onUnmounted(() => {
 
       <FeedFlyout :open="feedOpen" @close="feedOpen = false" />
       <FloatingChat ref="floatingChat" />
+
+      <!-- Mobile bottom nav -->
+      <MobileNav />
     </template>
 
     <div v-else class="h-full">

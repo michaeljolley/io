@@ -53,7 +53,7 @@ watch(signature, async () => {
 </script>
 
 <template>
-  <div class="h-full overflow-y-auto p-5">
+  <div class="h-full overflow-y-auto p-3 md:p-5">
     <section class="mx-auto flex h-full max-w-[980px] flex-col overflow-hidden rounded-lg border border-border bg-card">
       <div class="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
         <div>

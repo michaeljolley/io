@@ -90,7 +90,7 @@ watch(() => props.open, (value) => {
     </transition>
 
     <transition enter-active-class="duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
-      <aside v-if="open" class="fixed inset-y-0 right-0 z-50 flex w-[420px] max-w-[calc(100vw-1rem)] flex-col border-l border-border bg-sidebar">
+      <aside v-if="open" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-sidebar md:w-[420px]">
         <div class="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
           <div class="flex items-center gap-2">
             <AppIcon name="message" class="h-4 w-4 text-primary" />
