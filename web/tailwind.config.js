@@ -4,36 +4,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: {
-          app: '#0a0a0f',
-          surface: '#0f0f16',
-          card: '#121218',
-          elevated: '#1a1a24',
-        },
-        border: {
-          DEFAULT: '#252530',
-          bright: '#3a3a48',
-        },
-        'accent-cyan': '#00d9ff',
-        'accent-purple': '#c4a7ff',
-        'accent-red': '#ff3864',
-        'accent-green': '#5fff87',
-        text: {
-          DEFAULT: '#ffffff',
-          secondary: '#e8e8ed',
-          muted: '#8a8a99',
-        },
-        surface: { 0: '#0a0a0f', 1: '#0f0f16', 2: '#121218', 3: '#1a1a24' },
-        edge: { DEFAULT: '#252530', bright: '#3a3a48' },
-        accent: { DEFAULT: '#00d9ff', dim: '#0080a0', glow: '#00d9ff' },
-        txt: { primary: '#ffffff', secondary: '#e8e8ed', muted: '#8a8a99' },
+        obsidian: '#0a0a0f',
+        surface: '#0f0f16',
+        panel: '#121218',
+        elevated: '#1a1a24',
+        line: '#252530',
+        bright: '#3a3a48',
+        cyan: '#00d9ff',
+        violet: '#c4a7ff',
+        danger: '#ff3864',
+        success: '#5fff87',
+        ink: '#f5f7ff',
+        mist: '#8f90a6',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'Consolas', 'monospace'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
-      animation: { 'fade-in': 'fadeIn 0.15s ease-out' },
-      keyframes: { fadeIn: { from: { opacity: '0', transform: 'translateY(4px)' }, to: { opacity: '1', transform: 'translateY(0)' } } },
+      boxShadow: {
+        glow: '0 0 0 1px rgba(0, 217, 255, 0.22), 0 0 32px rgba(0, 217, 255, 0.08)',
+        violet: '0 0 0 1px rgba(196, 167, 255, 0.18), 0 24px 48px rgba(17, 17, 28, 0.65)',
+      },
+      backgroundImage: {
+        grid: 'linear-gradient(rgba(58,58,72,0.24) 1px, transparent 1px), linear-gradient(90deg, rgba(58,58,72,0.24) 1px, transparent 1px)',
+      },
+      keyframes: {
+        pulseLine: {
+          '0%, 100%': { opacity: '0.35' },
+          '50%': { opacity: '1' },
+        },
+        rise: {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'pulse-line': 'pulseLine 1.6s ease-in-out infinite',
+        rise: 'rise 240ms ease-out',
+      },
     },
   },
   plugins: [],

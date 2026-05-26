@@ -1,28 +1,49 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-let supabaseClient: SupabaseClient | null = null
-let authConfig: { authEnabled: boolean; supabaseUrl: string | null; supabaseAnonKey: string | null } | null = null
+export type AuthConfig = {
+  authEnabled: boolean
+  supabaseUrl?: string
+  supabaseAnonKey?: string
+}
 
-export async function getAuthConfig() {
+let authConfig: AuthConfig | null = null
+let supabaseClient: SupabaseClient | null = null
+
+export async function getAuthConfig(): Promise<AuthConfig> {
   if (authConfig) return authConfig
+
   try {
-    const res = await fetch('/api/auth/config')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const config = await res.json() as { authEnabled: boolean; supabaseUrl: string | null; supabaseAnonKey: string | null }
-    authConfig = config  // Only cache on success
+    const response = await fetch('/api/auth/config')
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const payload = await response.json() as {
+      authEnabled: boolean
+      supabaseUrl?: string | null
+      supabaseAnonKey?: string | null
+    }
+
+    authConfig = {
+      authEnabled: payload.authEnabled,
+      supabaseUrl: payload.supabaseUrl ?? undefined,
+      supabaseAnonKey: payload.supabaseAnonKey ?? undefined,
+    }
+
     return authConfig
   } catch {
-    // Return a safe default but don't cache — next call will retry
-    return { authEnabled: false, supabaseUrl: null, supabaseAnonKey: null }
+    return { authEnabled: false }
   }
 }
 
 export async function getSupabase(): Promise<SupabaseClient | null> {
   if (supabaseClient) return supabaseClient
+
   const config = await getAuthConfig()
   if (!config.authEnabled || !config.supabaseUrl || !config.supabaseAnonKey) {
     return null
   }
+
   supabaseClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
     auth: {
       persistSession: true,
@@ -30,5 +51,6 @@ export async function getSupabase(): Promise<SupabaseClient | null> {
       detectSessionInUrl: true,
     },
   })
+
   return supabaseClient
 }

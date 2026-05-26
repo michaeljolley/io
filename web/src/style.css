@@ -1,32 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html { color-scheme: dark; }
-body { @apply bg-bg-app text-text font-sans antialiased; }
+:root {
+  color-scheme: dark;
+  --app-bg: #0a0a0f;
+  --surface: #0f0f16;
+  --panel: #121218;
+  --elevated: #1a1a24;
+  --line: #252530;
+  --line-bright: #3a3a48;
+  --cyan: #00d9ff;
+  --violet: #c4a7ff;
+  --danger: #ff3864;
+  --success: #5fff87;
+  --text: #f5f7ff;
+  --muted: #8f90a6;
+}
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
-* { scrollbar-width: thin; scrollbar-color: #252530 transparent; }
+@layer base {
+  * {
+    @apply border-line;
+  }
 
-::selection { background: rgba(0, 217, 255, 0.15); color: #00d9ff; }
-*:focus-visible { outline: none; box-shadow: 0 0 0 1px rgba(0,217,255,0.4); }
+  html,
+  body,
+  #app {
+    @apply m-0 h-full bg-obsidian text-ink antialiased;
+  }
 
-.wiki-content ol { list-style-type: decimal; padding-left: 1.5em; margin: 0.5em 0; }
-.wiki-content ul { list-style-type: disc; padding-left: 1.5em; margin: 0.5em 0; }
-.wiki-content li { margin: 0.25em 0; }
-.wiki-content h1,.wiki-content h2,.wiki-content h3 { @apply text-text font-semibold mt-4 mb-2; }
-.wiki-content h1 { @apply text-lg; }
-.wiki-content h2 { @apply text-base; }
-.wiki-content h3 { @apply text-sm; }
-.wiki-content p { @apply mb-3; }
-.wiki-content a { @apply text-accent-cyan hover:underline; }
-.wiki-content code { @apply bg-bg-elevated border border-border rounded px-1 text-xs font-mono text-accent-cyan; }
-.wiki-content pre { @apply bg-bg-elevated border border-border rounded-lg p-4 overflow-x-auto mb-3; }
-.wiki-content pre code { @apply border-0 bg-transparent p-0; }
-.wiki-content table { @apply w-full border-collapse mb-3 text-sm; }
-.wiki-content th { @apply text-left text-text-muted text-xs uppercase tracking-wider pb-2 border-b border-border; }
-.wiki-content td { @apply py-2 border-b border-border; }
-.wiki-content blockquote { @apply border-l-2 border-accent-cyan/40 pl-3 text-text-muted italic my-2; }
+  body {
+    background-image:
+      radial-gradient(circle at top left, rgba(0, 217, 255, 0.08), transparent 28%),
+      radial-gradient(circle at top right, rgba(196, 167, 255, 0.09), transparent 22%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    @apply outline-none;
+  }
+
+  ::selection {
+    background: rgba(0, 217, 255, 0.28);
+    color: #ffffff;
+  }
+}
+
+@layer utilities {
+  .panel-shell {
+    @apply border border-line bg-panel/90 backdrop-blur;
+  }
+
+  .focus-ring {
+    @apply focus:border-cyan focus:ring-2 focus:ring-cyan/20;
+  }
+
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 4px);
+    opacity: 0.15;
+    mix-blend-mode: soft-light;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0f16;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid #0f0f16;
+  background: #2d2e3d;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #45475a;
+}
+
+.wiki-content {
+  @apply text-sm leading-7 text-slate-200;
+}
+
+.wiki-content h1,
+.wiki-content h2,
+.wiki-content h3,
+.wiki-content h4 {
+  @apply mb-3 mt-6 font-semibold text-white;
+}
+
+.wiki-content h1 {
+  @apply text-3xl;
+}
+
+.wiki-content h2 {
+  @apply text-2xl;
+}
+
+.wiki-content h3 {
+  @apply text-xl;
+}
+
+.wiki-content p,
+.wiki-content ul,
+.wiki-content ol,
+.wiki-content blockquote,
+.wiki-content pre,
+.wiki-content table {
+  @apply mb-4;
+}
+
+.wiki-content ul,
+.wiki-content ol {
+  @apply pl-5;
+}
+
+.wiki-content li {
+  @apply mb-1;
+}
+
+.wiki-content a {
+  @apply text-cyan underline decoration-cyan/40 underline-offset-4 hover:decoration-cyan;
+}
+
+.wiki-content blockquote {
+  @apply border-l-2 border-violet bg-elevated/70 px-4 py-3 text-slate-200;
+}
+
+.wiki-content pre {
+  @apply overflow-x-auto rounded-2xl border border-line bg-black/50 p-4;
+}
+
+.wiki-content code {
+  font-family: 'JetBrains Mono', monospace;
+}

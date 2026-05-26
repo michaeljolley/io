@@ -1,44 +1,85 @@
-<template>
-  <Transition name="cmdbar">
-    <div v-if="!props.chatOpen" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 w-[360px]">
-      <button @click="openChat" class="w-full flex items-center gap-2.5 bg-bg-surface border border-border rounded-full px-4 py-2 text-text-muted hover:border-border-bright hover:text-text transition-colors cursor-text group">
-        <svg class="w-3.5 h-3.5 shrink-0 text-text-muted group-hover:text-accent-cyan transition-colors" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg>
-        <span class="flex-1 text-left text-sm">Command IO...</span>
-        <kbd class="text-[10px] font-mono bg-bg-elevated border border-border rounded px-1.5 py-0.5 text-text-muted">{{ isMac ? '⌘K' : 'Ctrl K' }}</kbd>
-      </button>
-    </div>
-  </Transition>
-</template>
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
-const props = defineProps<{ chatOpen: boolean }>()
-const emit = defineEmits<{ open: [] }>()
+const props = defineProps<{ open: boolean }>()
+const emit = defineEmits<{
+  (event: 'close'): void
+  (event: 'open-chat'): void
+}>()
 
-const isMac = ref(false)
+const router = useRouter()
+const query = ref('')
+const input = ref<HTMLInputElement | null>(null)
 
-function openChat() {
-  emit('open')
-}
+const commands = [
+  { label: 'Open chat', detail: 'Jump to /chat', to: '/chat' },
+  { label: 'View squads', detail: 'Project crews, branches, and decisions', to: '/squads' },
+  { label: 'Inspect activity', detail: 'Task list and live event stream', to: '/activity' },
+  { label: 'Review feed', detail: 'Notifications and durable updates', to: '/feed' },
+  { label: 'Open inbox', detail: 'Operator-facing inbox messages', to: '/inbox' },
+  { label: 'Browse schedules', detail: 'Cron schedules and run history', to: '/schedules' },
+  { label: 'Browse skills', detail: 'Installed skill markdown', to: '/skills' },
+  { label: 'Browse wiki', detail: 'Workspace docs and reference', to: '/wiki' },
+  { label: 'Manage MCP', detail: 'Server transports and toggles', to: '/mcp' },
+  { label: 'Open quick chat', detail: 'Floating prompt surface', action: 'chat' as const },
+]
 
-function handleKey(e: KeyboardEvent) {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault()
-    if (!props.chatOpen) openChat()
-  }
-}
-
-onMounted(() => {
-  isMac.value = navigator.platform.toUpperCase().includes('MAC')
-  document.addEventListener('keydown', handleKey)
+const filtered = computed(() => {
+  const needle = query.value.trim().toLowerCase()
+  if (!needle) return commands
+  return commands.filter((command) => `${command.label} ${command.detail}`.toLowerCase().includes(needle))
 })
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKey)
+function runCommand(command: (typeof commands)[number]) {
+  if (command.action === 'chat') {
+    emit('open-chat')
+  } else if (command.to) {
+    router.push(command.to)
+  }
+  emit('close')
+}
+
+watch(() => props.open, async (value) => {
+  if (value) {
+    query.value = ''
+    await nextTick()
+    input.value?.focus()
+  }
 })
 </script>
 
-<style scoped>
-.cmdbar-enter-active, .cmdbar-leave-active { transition: opacity 0.15s, transform 0.15s; }
-.cmdbar-enter-from, .cmdbar-leave-to { opacity: 0; transform: translate(-50%, 8px); }
-</style>
+<template>
+  <div v-if="open" class="absolute inset-0 z-40 flex items-start justify-center bg-black/60 px-4 py-20 backdrop-blur-sm" @click.self="emit('close')">
+    <div class="w-full max-w-2xl rounded-[28px] border border-cyan/35 bg-[#09090d]/96 shadow-glow">
+      <div class="border-b border-line px-5 py-4">
+        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">command bar</div>
+        <input
+          ref="input"
+          v-model="query"
+          class="mt-3 w-full border-none bg-transparent text-2xl font-semibold text-white placeholder:text-slate-500"
+          placeholder="route, surface, or action"
+          @keydown.esc.prevent="emit('close')"
+          @keydown.enter.prevent="filtered[0] && runCommand(filtered[0])"
+        />
+      </div>
+      <div class="max-h-[420px] overflow-y-auto p-3">
+        <button
+          v-for="command in filtered"
+          :key="command.label"
+          class="mb-2 flex w-full items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3 text-left transition hover:border-cyan hover:bg-cyan/10"
+          @click="runCommand(command)"
+        >
+          <span>
+            <span class="block text-sm font-medium text-white">{{ command.label }}</span>
+            <span class="block font-mono text-[11px] uppercase tracking-[0.18em] text-mist">{{ command.detail }}</span>
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-cyan">run</span>
+        </button>
+        <div v-if="!filtered.length" class="rounded-2xl border border-dashed border-line px-4 py-10 text-center font-mono text-xs uppercase tracking-[0.25em] text-mist">
+          no command match
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

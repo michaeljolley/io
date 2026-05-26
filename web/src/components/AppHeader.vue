@@ -1,43 +1,77 @@
-<template>
-  <header class="shrink-0 h-11 bg-bg-surface border-b border-border flex items-center justify-between px-4">
-    <div class="flex items-center gap-0 min-w-0">
-      <button class="md:hidden w-7 h-7 flex items-center justify-center rounded text-text-muted hover:text-text mr-2" @click="$emit('toggle-sidebar')">
-        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 5A.75.75 0 0 1 2.75 9h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 9.75Zm0 5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
-      </button>
-      <span class="text-accent-cyan font-mono font-bold text-lg tracking-tight select-none">IO</span>
-      <div class="w-px h-3.5 bg-border mx-3"></div>
-      <span class="text-text-muted text-xs tracking-wide hidden sm:block truncate">Mission Control · Developer AI Assistant</span>
-    </div>
-    <router-link to="/feed" class="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-text-muted hover:text-text hover:bg-bg-elevated transition-colors" @click="onFeedClick">
-      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5.92 5.92 0 0 1 5.98 5.36l.02.22V11.4l.92 2.22a1 1 0 0 1-.75.97l-.11.02L16 15h-3.5v.17a2.5 2.5 0 0 1-5 0V15H4a1 1 0 0 1-.86-1.5l.92-2.1V7.57A5.9 5.9 0 0 1 10 2Z"/></svg>
-      <span class="text-xs">Feed</span>
-      <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-accent-red text-text text-[9px] font-bold leading-none px-1">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-    </router-link>
-  </header>
-</template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { apiFetch } from '../lib/api'
-import { useAuthStore } from '../stores/auth'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-defineEmits<{ 'toggle-sidebar': [] }>()
+const emit = defineEmits<{
+  (event: 'open-command'): void
+  (event: 'open-chat'): void
+}>()
 
+const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
-const unreadCount = ref(0)
+const now = ref(new Date())
+let timer = 0
 
-function onFeedClick() {
-  unreadCount.value = 0
+const title = computed(() => String(route.meta.title ?? 'Mission Control'))
+const subtitle = computed(() => String(route.meta.subtitle ?? 'Operational surface'))
+const initials = computed(() => auth.user?.email?.slice(0, 2).toUpperCase() ?? 'IO')
+
+async function signOut() {
+  await auth.signOut()
+  router.push('/login')
 }
 
-onMounted(async () => {
-  await auth.init()
-  if (auth.authEnabled && !auth.user) return
-  try {
-    const res = await apiFetch('/api/feed/count')
-    if (res.ok) {
-      const data = (await res.json()) as { count?: number }
-      unreadCount.value = data.count ?? 0
-    }
-  } catch { /* best effort */ }
+onMounted(() => {
+  timer = window.setInterval(() => {
+    now.value = new Date()
+  }, 1000)
+})
+
+onUnmounted(() => {
+  window.clearInterval(timer)
 })
 </script>
+
+<template>
+  <header class="relative z-10 px-4 pt-4">
+    <div class="panel-shell flex items-center justify-between gap-4 rounded-[22px] border-b border-cyan/40 bg-surface/90 px-5 py-3 shadow-glow">
+      <div class="min-w-0">
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-[11px] uppercase tracking-[0.35em] text-cyan">{{ route.name }}</span>
+          <span class="rounded-full border border-violet/40 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-violet">live surface</span>
+        </div>
+        <div class="mt-2 flex flex-wrap items-end gap-x-4 gap-y-1">
+          <h1 class="text-2xl font-semibold tracking-tight text-white">{{ title }}</h1>
+          <p class="font-mono text-xs text-mist">{{ subtitle }}</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden rounded-2xl border border-line bg-black/25 px-3 py-2 text-right font-mono text-[11px] text-mist xl:block">
+          <div>{{ now.toLocaleDateString() }}</div>
+          <div class="text-cyan">{{ now.toLocaleTimeString() }}</div>
+        </div>
+        <button class="rounded-2xl border border-line bg-panel px-3 py-2 font-mono text-xs text-mist transition hover:border-cyan hover:text-white" @click="emit('open-command')">
+          ⌘K Command
+        </button>
+        <button class="rounded-2xl border border-cyan/40 bg-cyan/10 px-3 py-2 font-mono text-xs text-cyan transition hover:bg-cyan/20" @click="emit('open-chat')">
+          Quick chat
+        </button>
+        <div class="flex items-center gap-3 rounded-2xl border border-line bg-panel px-3 py-2">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-violet/40 bg-violet/10 font-mono text-xs font-semibold text-violet">
+            {{ initials }}
+          </div>
+          <div class="hidden min-w-0 sm:block">
+            <div class="max-w-44 truncate text-sm text-white">{{ auth.user?.email ?? 'guest mode' }}</div>
+            <div class="font-mono text-[11px] uppercase tracking-[0.24em] text-mist">operator</div>
+          </div>
+          <button class="rounded-xl border border-line px-2 py-1 font-mono text-[11px] text-mist transition hover:border-danger hover:text-danger" @click="signOut">
+            sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+</template>

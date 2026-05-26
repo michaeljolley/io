@@ -1,345 +1,137 @@
-<template>
-  <div class="h-full p-5"><div class="h-full flex overflow-hidden bg-bg-card border border-border rounded-lg"><div class="w-72 shrink-0 bg-bg-surface border-r border-border flex flex-col overflow-hidden"><div class="px-4 h-11 border-b border-border flex items-center justify-between shrink-0"><span class="text-sm font-medium text-text">Activity</span><span v-if="activeAgents.length" class="flex items-center gap-1.5 text-[11px] text-accent-cyan"><span class="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse"></span>{{ activeAgents.length }} active</span></div><div class="flex-1 overflow-y-auto"><div v-if="loading && !tasks.length" class="p-4 text-text-muted text-xs text-center">Loading...</div><button v-for="task in tasks" :key="task.task_id" @click="openTask(task.task_id)" class="w-full text-left px-4 py-3 border-b border-border transition-colors hover:bg-bg-elevated/50 relative" :class="selectedTaskId === task.task_id ? 'bg-bg-elevated' : ''"><span v-if="selectedTaskId === task.task_id" class="absolute left-0 top-0 h-full w-[3px] bg-accent-cyan rounded-r"></span><div class="flex items-center justify-between mb-1 gap-2"><span :class="taskStatusClass(task.status)" class="text-[9px] px-1.5 py-0.5 rounded-sm font-mono border">{{ task.status }}</span><span class="text-[10px] text-text-muted font-mono shrink-0">{{ formatShortTime(task.started_at) }}</span></div><p class="text-xs text-text truncate">{{ task.description }}</p><p class="text-[10px] text-text-muted font-mono truncate mt-0.5">{{ task.agent_slug }}</p></button><div v-if="!loading && !tasks.length" class="p-4 text-text-muted text-xs text-center">No tasks</div></div></div><div class="flex-1 flex flex-col overflow-hidden"><div v-if="!selectedTaskId" class="flex-1 flex items-center justify-center text-text-muted text-sm">Select a task to view activity</div><template v-else><div class="h-11 shrink-0 border-b border-border flex items-center justify-between px-4 gap-4"><div class="flex items-center gap-2 min-w-0"><span v-if="selectedTask" :class="taskStatusClass(selectedTask.status)" class="text-[9px] px-1.5 py-0.5 rounded-sm font-mono border shrink-0">{{ selectedTask.status }}</span><span v-if="durationLabel" class="text-[11px] text-text-muted font-mono shrink-0">{{ durationLabel }}</span><span class="text-sm text-text truncate">{{ selectedTask?.description ?? '...' }}</span></div><div class="flex items-center gap-2 shrink-0"><button v-if="selectedTask?.status === 'running'" @click="stopTask(selectedTask.task_id)" :disabled="stoppingTaskIds.has(selectedTask.task_id)" class="text-[11px] px-2 py-1 rounded border border-accent-red/30 text-accent-red hover:bg-accent-red/10 disabled:opacity-40 transition-colors">Cancel</button><button @click="closeTask" class="w-7 h-7 flex items-center justify-center rounded-md text-text-muted hover:text-text hover:bg-bg-elevated transition-colors"><svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg></button></div></div><div class="flex-1 overflow-y-auto p-4 space-y-4"><div v-if="detailLoading" class="text-text-muted text-xs text-center py-4">Loading task details...</div><div v-else-if="detailError" class="text-accent-red text-xs">{{ detailError }}</div><div class="flex items-center gap-2"><label class="flex items-center gap-1.5 text-[11px] text-text-muted cursor-pointer"><input v-model="showActivityDetails" type="checkbox" class="w-3 h-3 accent-accent-cyan rounded" />Show all events</label><span v-if="selectedTask?.completed_at" class="text-[11px] text-text-muted font-mono">Completed {{ formatDateTime(selectedTask.completed_at) }}</span></div><div v-if="activityLoading" class="text-text-muted text-xs text-center py-4">Loading activity...</div><div v-else class="space-y-1"><div v-for="(entry, idx) in summaryActivity" :key="idx" @click="toggleActivityEntry(idx)" class="rounded-md px-3 py-2 bg-bg-card border border-border hover:border-border-bright transition-colors cursor-pointer"><div class="flex items-start gap-2"><span class="text-base shrink-0 mt-0.5">{{ entry.icon }}</span><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><span :class="activityKindClass(entry)" class="text-xs flex-1 truncate">{{ entry.summary }}</span><span class="text-[10px] text-text-muted font-mono shrink-0">{{ formatActivityTime(entry.ts) }}</span></div><div v-if="(showActivityDetails || expandedActivity.has(idx)) && entry.detail" class="mt-1.5 text-[11px] text-text-secondary font-mono whitespace-pre-wrap border-t border-border pt-1.5 max-h-40 overflow-y-auto">{{ entry.detail }}</div></div></div></div><div v-if="!summaryActivity.length" class="text-text-muted text-xs text-center py-4">No activity</div></div><div v-if="selectedTask?.result" class="bg-bg-card border border-border rounded-lg p-4"><p class="text-[11px] text-text-muted uppercase tracking-wider mb-2">Result</p><div class="wiki-content text-sm" v-html="renderMarkdown(selectedTask.result)"></div></div></div></template></div></div></div>
-</template>
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { apiFetch, authenticatedUrl } from '../lib/api'
-import { renderMarkdown } from '../lib/markdown'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { apiFetch, authenticatedUrl } from '@/lib/api'
 
-interface Agent {
-  slug: string
-  name: string
-  characterName?: string
-  roleTitle?: string
-  universe?: string
-  status: 'idle' | 'working' | 'error'
-  currentTask?: string
-  currentTaskId?: string
-  model?: string
-}
-
-interface AgentTask {
+type TaskSummary = {
   task_id: string
   agent_slug: string
   description: string
   status: string
-  result: string | null
-  origin_channel: string | null
-  started_at: string
-  completed_at: string | null
+  result?: string | null
+  origin_channel?: string | null
+  started_at?: string | null
+  completed_at?: string | null
 }
 
-const agents = ref<Agent[]>([])
+const tasks = ref<TaskSummary[]>([])
+const selectedId = ref('')
+const detail = ref<Record<string, unknown> | null>(null)
+const activity = ref<Record<string, unknown>[]>([])
+const liveEvents = ref<string[]>([])
+const search = ref('')
+let source: EventSource | null = null
 
-/** Only show agents that are genuinely active (not idle). */
-const activeAgents = computed(() => agents.value.filter(a => a.status !== 'idle'))
-const tasks = ref<AgentTask[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
-const stoppingTaskIds = ref<Set<string>>(new Set())
-
-const selectedTaskId = ref<string | null>(null)
-const selectedTask = ref<AgentTask | null>(null)
-const detailLoading = ref(false)
-const detailError = ref<string | null>(null)
-
-interface ActivityEntry {
-  ts: number
-  kind: 'message' | 'reasoning' | 'tool' | 'outcome' | 'system'
-  icon: string
-  summary: string
-  detail?: string
-  rawType: string
-  raw: unknown
-  toolCallId?: string
-  status?: 'pending' | 'success' | 'error'
-}
-
-const activity = ref<ActivityEntry[]>([])
-const activityLoading = ref(false)
-const showActivityDetails = ref(false)
-const expandedActivity = ref<Set<number>>(new Set())
-
-/**
- * In the summary view, filter out noise events:
- * - assistant.message events with empty/whitespace content
- * - Successfully completed tool events (status=success, merged start+complete)
- * When "Show details" is checked, all events are shown unfiltered for debugging.
- */
-const summaryActivity = computed(() => {
-  if (showActivityDetails.value) return activity.value
-  return activity.value.filter(entry => {
-    if (entry.rawType === 'assistant.message' && (!entry.detail || !entry.detail.trim())) return false
-    if (entry.rawType.includes('tool.execution_complete') && entry.status === 'success') return false
-    return true
-  })
-})
-let activityEventSource: EventSource | null = null
-let activityRefreshTimer: ReturnType<typeof setTimeout> | null = null
-
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-const formatTime = (date: Date) => {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-  })
-}
-
-const formatDateTime = (value: string) => {
-  if (!value) return ''
-  const iso = value.includes('T') ? value : value.replace(' ', 'T') + 'Z'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
-}
-
-const statusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'running': return 'bg-accent/10 text-accent border border-accent/20'
-    case 'done': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-    case 'failed': return 'bg-red-500/10 text-red-400 border border-red-500/20'
-    case 'cancelled': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-    default: return 'bg-surface-3/50 text-txt-muted border border-edge'
-  }
-}
-
-const taskStatusClass = (status: string) => {
-  switch (status) {
-    case 'running': return 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30'
-    case 'done': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-    case 'failed': return 'bg-red-500/10 text-red-400 border-red-500/30'
-    case 'cancelled': return 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-    default: return 'bg-bg-elevated text-text-muted border-border'
-  }
-}
-
-const formatShortTime = (val: string) => {
-  if (!val) return ''
-  const iso = val.includes('T') ? val : val.replace(' ', 'T') + 'Z'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return val
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-}
-
-const durationLabel = computed(() => {
-  if (!selectedTask.value) return null
-  const start = selectedTask.value.started_at
-  const end = selectedTask.value.completed_at
-  if (!start || !end) return null
-  const startMs = new Date(start.includes('T') ? start : start.replace(' ', 'T') + 'Z').getTime()
-  const endMs = new Date(end.includes('T') ? end : end.replace(' ', 'T') + 'Z').getTime()
-  if (Number.isNaN(startMs) || Number.isNaN(endMs)) return null
-  const seconds = Math.max(0, Math.round((endMs - startMs) / 1000))
-  if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}m ${s}s`
+const filteredTasks = computed(() => {
+  const needle = search.value.trim().toLowerCase()
+  if (!needle) return tasks.value
+  return tasks.value.filter((task) => `${task.task_id} ${task.agent_slug} ${task.description} ${task.status}`.toLowerCase().includes(needle))
 })
 
-const stopTask = async (taskId: string) => {
-  if (stoppingTaskIds.value.has(taskId)) return
-  stoppingTaskIds.value = new Set(stoppingTaskIds.value).add(taskId)
-  try {
-    await apiFetch(`/api/tasks/${encodeURIComponent(taskId)}/cancel`, { method: 'POST' })
-    await refreshAll()
-    if (selectedTaskId.value === taskId) {
-      await loadTaskDetail(taskId)
-    }
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to stop task'
-  } finally {
-    const next = new Set(stoppingTaskIds.value)
-    next.delete(taskId)
-    stoppingTaskIds.value = next
-  }
-}
-
-const refreshAgents = async () => {
-  try {
-    const response = await apiFetch('/api/agents')
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-    const data = (await response.json()) as { agents: Agent[] }
-    agents.value = data.agents
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load agents'
-  }
-}
-
-const refreshTasks = async () => {
-  try {
-    const response = await apiFetch('/api/tasks?limit=50')
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-    const data = (await response.json()) as { tasks: AgentTask[] }
-    tasks.value = data.tasks
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load tasks'
-  }
-}
-
-const refreshAll = async () => {
-  loading.value = true
-  error.value = null
-  try {
-    await Promise.all([refreshAgents(), refreshTasks()])
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadTaskDetail = async (taskId: string) => {
-  detailLoading.value = true
-  detailError.value = null
-  try {
-    const response = await apiFetch(`/api/tasks/${encodeURIComponent(taskId)}`)
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    const data = (await response.json()) as { task: AgentTask }
-    selectedTask.value = data.task
-  } catch (e) {
-    detailError.value = e instanceof Error ? e.message : 'Failed to load task'
-    selectedTask.value = null
-  } finally {
-    detailLoading.value = false
-  }
-}
-
-const formatActivityTime = (ts: number) => {
-  if (!ts) return ''
-  const d = new Date(ts)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
-}
-
-const formatRaw = (raw: unknown) => {
-  try {
-    return JSON.stringify(raw, null, 2)
-  } catch {
-    return String(raw)
-  }
-}
-
-const activityKindClass = (entry: ActivityEntry) => {
-  if (entry.status === 'success') return 'text-emerald-300'
-  if (entry.status === 'error') return 'text-red-300'
-  if (entry.status === 'pending') return 'text-accent'
-  switch (entry.kind) {
-    case 'message': return 'text-txt-primary'
-    case 'reasoning': return 'text-purple-300'
-    case 'tool': return 'text-blue-300'
-    case 'outcome': return 'text-amber-300'
-    default: return 'text-txt-secondary'
-  }
-}
-
-const toggleActivityEntry = (idx: number) => {
-  if (showActivityDetails.value) return
-  const next = new Set(expandedActivity.value)
-  if (next.has(idx)) next.delete(idx)
-  else next.add(idx)
-  expandedActivity.value = next
-}
-
-const loadActivity = async (taskId: string, opts: { initial?: boolean } = {}) => {
-  if (opts.initial) activityLoading.value = true
-  try {
-    const response = await apiFetch(`/api/tasks/${encodeURIComponent(taskId)}/activity`)
-    if (!response.ok) return
-    const data = (await response.json()) as { activity: ActivityEntry[] }
-    activity.value = data.activity ?? []
-  } catch {
-    // Non-fatal
-  } finally {
-    if (opts.initial) activityLoading.value = false
-  }
-}
-
-const scheduleActivityRefresh = (taskId: string) => {
-  if (activityRefreshTimer) return
-  activityRefreshTimer = setTimeout(() => {
-    activityRefreshTimer = null
-    if (selectedTaskId.value === taskId) loadActivity(taskId)
-  }, 250)
-}
-
-const startActivityStream = async (taskId: string) => {
-  stopActivityStream()
-  loadActivity(taskId, { initial: true })
-  try {
-    activityEventSource = new EventSource(await authenticatedUrl(`/api/tasks/${encodeURIComponent(taskId)}/events`))
-    activityEventSource.onmessage = () => {
-      scheduleActivityRefresh(taskId)
-    }
-    activityEventSource.onerror = () => {
-      // EventSource auto-reconnects
-    }
-  } catch {
-    activityEventSource = null
-  }
-}
-
-const stopActivityStream = () => {
-  if (activityEventSource) {
-    activityEventSource.close()
-    activityEventSource = null
-  }
-  if (activityRefreshTimer) {
-    clearTimeout(activityRefreshTimer)
-    activityRefreshTimer = null
-  }
-}
-
-const openTask = (taskId: string) => {
-  selectedTaskId.value = taskId
-  selectedTask.value = null
-  activity.value = []
-  expandedActivity.value = new Set()
-  loadTaskDetail(taskId)
-  startActivityStream(taskId)
-}
-
-const closeTask = () => {
-  selectedTaskId.value = null
-  selectedTask.value = null
-  detailError.value = null
-  activity.value = []
-  expandedActivity.value = new Set()
-  stopActivityStream()
-}
-
-const onKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && selectedTaskId.value) closeTask()
-}
-
-watch(selectedTaskId, (val) => {
-  if (val) {
-    document.addEventListener('keydown', onKeydown)
-  } else {
-    document.removeEventListener('keydown', onKeydown)
-  }
-})
-
-onMounted(() => {
-  refreshAll()
-  refreshInterval = setInterval(refreshAll, 5000)
-})
-
-watch(
-  () => selectedTask.value?.status,
-  (status) => {
-    if (status && status !== 'running') {
-      if (selectedTaskId.value) loadActivity(selectedTaskId.value)
-      stopActivityStream()
+async function loadTasks() {
+  const response = await apiFetch('/api/tasks')
+  if (response.ok) {
+    tasks.value = (await response.json() as { tasks: TaskSummary[] }).tasks
+    if (!selectedId.value && tasks.value[0]) {
+      await selectTask(tasks.value[0].task_id)
     }
   }
-)
+}
 
+async function attachStream(taskId: string) {
+  source?.close()
+  liveEvents.value = []
+  const url = await authenticatedUrl(`/api/tasks/${encodeURIComponent(taskId)}/events`)
+  source = new EventSource(url)
+  source.onmessage = (event) => {
+    liveEvents.value = [...liveEvents.value.slice(-120), event.data]
+  }
+  source.onerror = () => {
+    source?.close()
+    source = null
+  }
+}
+
+async function selectTask(taskId: string) {
+  selectedId.value = taskId
+  const [detailResponse, activityResponse] = await Promise.all([
+    apiFetch(`/api/tasks/${encodeURIComponent(taskId)}`),
+    apiFetch(`/api/tasks/${encodeURIComponent(taskId)}/activity`),
+  ])
+
+  detail.value = detailResponse.ok ? await detailResponse.json() as Record<string, unknown> : null
+  activity.value = activityResponse.ok ? (await activityResponse.json() as { activity?: Record<string, unknown>[] }).activity ?? [] : []
+  await attachStream(taskId)
+}
+
+async function cancelTask() {
+  if (!selectedId.value) return
+  await apiFetch(`/api/tasks/${encodeURIComponent(selectedId.value)}/cancel`, { method: 'POST' })
+  await selectTask(selectedId.value)
+  await loadTasks()
+}
+
+onMounted(loadTasks)
 onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-  document.removeEventListener('keydown', onKeydown)
-  stopActivityStream()
+  source?.close()
 })
 </script>
+
+<template>
+  <div class="grid h-full min-h-0 gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
+    <section class="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
+      <div class="border-b border-line px-5 py-4">
+        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">task lanes</div>
+        <input v-model="search" class="focus-ring mt-4 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white" placeholder="filter by agent, id, or status" />
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto p-3">
+        <button
+          v-for="task in filteredTasks"
+          :key="task.task_id"
+          class="mb-2 w-full rounded-[22px] border px-4 py-4 text-left transition"
+          :class="selectedId === task.task_id ? 'border-cyan bg-cyan/10' : 'border-line bg-panel hover:border-bright hover:bg-elevated'"
+          @click="selectTask(task.task_id)"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="truncate text-sm font-medium text-white">{{ task.description }}</div>
+              <div class="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-mist">{{ task.agent_slug }} · {{ task.task_id }}</div>
+            </div>
+            <div class="font-mono text-[11px] uppercase tracking-[0.18em]" :class="task.status === 'completed' ? 'text-success' : task.status === 'failed' ? 'text-danger' : 'text-cyan'">{{ task.status }}</div>
+          </div>
+          <div class="mt-3 font-mono text-[11px] text-slate-400">{{ task.started_at ? new Date(task.started_at).toLocaleString() : 'queued' }}</div>
+        </button>
+      </div>
+    </section>
+
+    <section class="grid min-h-0 gap-4 lg:grid-rows-[auto_minmax(180px,0.7fr)_minmax(0,1fr)]">
+      <div class="rounded-[28px] border border-violet/35 bg-surface/95 p-5 shadow-violet">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-violet">task detail</div>
+            <div class="mt-2 text-2xl font-semibold text-white">{{ selectedId || 'Select a task' }}</div>
+          </div>
+          <button class="rounded-2xl border border-danger/40 px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-danger" :disabled="!selectedId" @click="cancelTask">cancel task</button>
+        </div>
+        <pre class="mt-4 overflow-x-auto rounded-2xl border border-line bg-black/30 p-4 font-mono text-xs leading-6 text-slate-200">{{ detail ? JSON.stringify(detail, null, 2) : 'No task selected.' }}</pre>
+      </div>
+
+      <div class="min-h-0 overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
+        <div class="border-b border-line px-5 py-4 font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">activity log</div>
+        <div class="h-full overflow-y-auto p-4">
+          <article v-for="(entry, index) in activity" :key="index" class="mb-3 rounded-[20px] border border-line bg-panel px-4 py-3 font-mono text-xs text-slate-200">
+            <pre class="whitespace-pre-wrap break-words">{{ JSON.stringify(entry, null, 2) }}</pre>
+          </article>
+          <div v-if="selectedId && !activity.length" class="rounded-[20px] border border-dashed border-line px-4 py-12 text-center font-mono text-xs uppercase tracking-[0.24em] text-mist">no activity reported</div>
+        </div>
+      </div>
+
+      <div class="min-h-0 overflow-hidden rounded-[28px] border border-cyan/35 bg-surface/95 shadow-glow">
+        <div class="border-b border-line px-5 py-4 font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">live event preview</div>
+        <div class="h-full overflow-y-auto px-5 py-4 font-mono text-xs leading-6 text-slate-200">
+          <div v-for="(line, index) in liveEvents" :key="index" class="border-b border-line/50 py-2">{{ line }}</div>
+          <div v-if="selectedId && !liveEvents.length" class="py-8 text-center uppercase tracking-[0.24em] text-mist">waiting for live events</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>

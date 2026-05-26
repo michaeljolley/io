@@ -1,69 +1,60 @@
-<template>
-  <div class="shrink-0 h-[30px] bg-bg-surface border-t border-border flex items-center justify-between px-4 gap-4">
-    <div class="flex items-center gap-2 text-[11px] min-w-0">
-      <span class="w-1.5 h-1.5 rounded-full bg-accent-green"></span>
-      <span class="text-text-muted">Connected</span>
-      <span class="text-border-bright">·</span>
-      <span class="text-text-muted">{{ squadCount }} squad{{ squadCount !== 1 ? 's' : '' }}</span>
-      <span class="text-border-bright">·</span>
-      <span class="text-accent-purple">{{ agentCount }} agent{{ agentCount !== 1 ? 's' : '' }}</span>
-      <template v-if="instanceInfo">
-        <span class="text-border-bright">·</span>
-        <span class="text-text-muted truncate">{{ instanceInfo }}</span>
-      </template>
-    </div>
-    <div class="text-[11px] text-text-muted flex items-center gap-1.5 shrink-0">
-      <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd"/></svg>
-      Last sync: {{ lastSyncText }}
-    </div>
-  </div>
-</template>
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { apiFetch } from '../lib/api'
-import { useAuthStore } from '../stores/auth'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { apiFetch } from '@/lib/api'
 
-const auth = useAuthStore()
-const squadCount = ref(0)
-const agentCount = ref(0)
-const instanceInfo = ref('')
-const lastSyncText = ref('just now')
-let lastSyncTime = Date.now()
-let ticker: ReturnType<typeof setInterval> | null = null
-
-function updateSyncText() {
-  const secs = Math.floor((Date.now() - lastSyncTime) / 1000)
-  if (secs < 10) lastSyncText.value = 'just now'
-  else if (secs < 60) lastSyncText.value = `${secs}s ago`
-  else lastSyncText.value = `${Math.floor(secs / 60)}m ago`
+type StatusPayload = {
+  version?: string
+  skills?: number
+  squads?: number
+  instances?: number
+  uptime?: number
 }
 
-async function fetchStatus() {
+const status = ref<StatusPayload>({})
+const state = ref('syncing')
+let timer = 0
+
+function formatUptime(value?: number) {
+  const total = Math.max(0, Math.floor(value ?? 0))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const seconds = total % 60
+  return [hours, minutes, seconds].map((part) => String(part).padStart(2, '0')).join(':')
+}
+
+async function refresh() {
   try {
-    const res = await apiFetch('/api/squads')
-    if (res.ok) {
-      const data = (await res.json()) as { squads?: Array<{ agents_count?: number; instances_active?: number; instances_total?: number }> }
-      const squads = data.squads ?? []
-      squadCount.value = squads.length
-      agentCount.value = squads.reduce((sum, s) => sum + (s.agents_count ?? 0), 0)
-      const activeInst = squads.reduce((sum, s) => sum + (s.instances_active ?? 0), 0)
-      const totalInst = squads.reduce((sum, s) => sum + (s.instances_total ?? 0), 0)
-      if (totalInst > 0) instanceInfo.value = `${activeInst}/${totalInst} instances active`
-      else instanceInfo.value = ''
-    }
-  } catch { /* best effort */ }
-  lastSyncTime = Date.now()
-  updateSyncText()
+    const response = await apiFetch('/api/status')
+    if (!response.ok) throw new Error('status failed')
+    status.value = await response.json() as StatusPayload
+    state.value = 'online'
+  } catch {
+    state.value = 'offline'
+  }
 }
 
-onMounted(async () => {
-  await auth.init()
-  if (auth.authEnabled && !auth.user) return
-  fetchStatus()
-  ticker = setInterval(updateSyncText, 10000)
+onMounted(() => {
+  refresh()
+  timer = window.setInterval(refresh, 20000)
 })
 
 onUnmounted(() => {
-  if (ticker) clearInterval(ticker)
+  window.clearInterval(timer)
 })
 </script>
+
+<template>
+  <footer class="border-t border-line/80 bg-[#09090d]/95 px-4 py-2">
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.18em] text-mist">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full" :class="state === 'online' ? 'animate-pulse-line bg-success' : state === 'offline' ? 'bg-danger' : 'bg-cyan'" />
+        <span>{{ state }}</span>
+      </div>
+      <div>version <span class="text-slate-100">{{ status.version ?? '—' }}</span></div>
+      <div>skills <span class="text-cyan">{{ status.skills ?? '—' }}</span></div>
+      <div>squads <span class="text-violet">{{ status.squads ?? '—' }}</span></div>
+      <div>instances <span class="text-white">{{ status.instances ?? '—' }}</span></div>
+      <div>uptime <span class="text-success">{{ formatUptime(status.uptime) }}</span></div>
+    </div>
+  </footer>
+</template>

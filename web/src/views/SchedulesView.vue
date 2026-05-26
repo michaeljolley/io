@@ -1,183 +1,144 @@
-<template>
-  <div class="p-5 space-y-5">
-    <h1 class="text-base font-semibold text-text">Schedules</h1>
-    <div v-if="loading" class="py-12 text-center text-text-muted text-sm">Loading...</div>
-    <div v-else-if="error" class="text-accent-red text-sm">{{ error }}</div>
-    <template v-else>
-      <section v-if="ioSchedules.length" class="space-y-2"><h2 class="text-[11px] text-text-muted uppercase tracking-wider font-medium">IO Schedules</h2><div v-for="s in ioSchedules" :key="s.id" class="bg-bg-card border border-border rounded-lg p-4 space-y-3"><div class="flex items-start justify-between gap-3"><div class="flex items-center gap-2.5 min-w-0"><span :class="s.enabled ? 'bg-accent-green' : 'bg-text-muted/40'" class="w-2 h-2 rounded-full shrink-0 mt-0.5"></span><div class="min-w-0"><p class="text-sm text-text font-medium truncate">{{ s.name }}</p><div class="flex items-center gap-2 mt-0.5"><code class="text-[10px] font-mono text-accent-cyan bg-accent-cyan/10 px-1.5 py-0.5 rounded">{{ s.cron_expr }}</code></div></div></div></div><div v-if="s.last_run_at || s.next_run_at" class="flex items-center gap-3 text-[11px] text-text-muted flex-wrap"><span v-if="s.last_run_at">Last: {{ formatDate(s.last_run_at) }}</span><span v-if="s.next_run_at">Next: {{ formatDate(s.next_run_at) }}</span></div><div><button @click="togglePrompt('io', s.id)" class="text-[11px] text-text-muted hover:text-text transition-colors">{{ promptExpanded.has(`io-${s.id}`) ? '▾ Hide prompt' : '▸ Show prompt' }}</button><pre v-if="promptExpanded.has(`io-${s.id}`)" class="mt-2 text-[11px] font-mono text-text-secondary bg-bg-elevated border border-border rounded p-3 whitespace-pre-wrap max-h-28 overflow-y-auto">{{ s.prompt }}</pre></div><div class="flex items-center gap-2 flex-wrap"><button @click="runNow('io', s.id)" :disabled="mutating.has(`io-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 disabled:opacity-40 transition-colors">Run now</button><button @click="s.enabled ? pauseSchedule('io', s.id) : resumeSchedule('io', s.id)" :disabled="mutating.has(`io-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated disabled:opacity-40 transition-colors">{{ s.enabled ? 'Pause' : 'Resume' }}</button><button @click="deleteSchedule('io', s.id, s.name)" :disabled="mutating.has(`io-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/30 text-accent-red hover:bg-accent-red/10 disabled:opacity-40 transition-colors">Delete</button><button @click="toggleHistory('io', s.id)" class="text-[11px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated transition-colors">History</button></div><div v-if="historyOpen.get(`io-${s.id}`)" class="border-t border-border pt-3 space-y-1"><p v-if="historyLoading.has(`io-${s.id}`)" class="text-[11px] text-text-muted">Loading...</p><p v-else-if="!(historyData.get(`io-${s.id}`) ?? []).length" class="text-[11px] text-text-muted">No runs recorded</p><div v-else v-for="run in historyData.get(`io-${s.id}`) ?? []" :key="run.id" class="flex items-center gap-2 text-[11px]"><span :class="runDotClass(run.status)" class="w-1.5 h-1.5 rounded-full shrink-0"></span><span :class="runStatusClass(run.status)" class="font-mono px-1.5 py-0.5 rounded border">{{ run.status }}</span><span class="text-text-muted">{{ formatDate(run.started_at) }}</span><span v-if="run.error_text" class="text-accent-red truncate">{{ run.error_text }}</span></div></div></div></section>
-      <section v-if="squadSchedules.length" class="space-y-2"><h2 class="text-[11px] text-text-muted uppercase tracking-wider font-medium">Squad Schedules</h2><div v-for="s in squadSchedules" :key="s.id" class="bg-bg-card border border-border rounded-lg p-4 space-y-3"><div class="flex items-start justify-between gap-3"><div class="flex items-center gap-2.5 min-w-0"><span :class="s.enabled ? 'bg-accent-green' : 'bg-text-muted/40'" class="w-2 h-2 rounded-full shrink-0 mt-0.5"></span><div class="min-w-0"><p class="text-sm text-text font-medium truncate">{{ s.name }}</p><div class="flex items-center gap-2 mt-0.5 flex-wrap"><code class="text-[10px] font-mono text-accent-cyan bg-accent-cyan/10 px-1.5 py-0.5 rounded">{{ s.cron_expr }}</code><span class="text-[10px] font-mono text-accent-purple bg-accent-purple/10 px-1.5 py-0.5 rounded border border-accent-purple/20">{{ s.squad_slug }}</span></div></div></div></div><div v-if="s.last_run_at || s.next_run_at" class="flex items-center gap-3 text-[11px] text-text-muted flex-wrap"><span v-if="s.last_run_at">Last: {{ formatDate(s.last_run_at) }}</span><span v-if="s.next_run_at">Next: {{ formatDate(s.next_run_at) }}</span></div><div><button @click="togglePrompt('squads', s.id)" class="text-[11px] text-text-muted hover:text-text transition-colors">{{ promptExpanded.has(`squads-${s.id}`) ? '▾ Hide prompt' : '▸ Show prompt' }}</button><pre v-if="promptExpanded.has(`squads-${s.id}`)" class="mt-2 text-[11px] font-mono text-text-secondary bg-bg-elevated border border-border rounded p-3 whitespace-pre-wrap max-h-28 overflow-y-auto">{{ s.prompt }}</pre></div><div class="flex items-center gap-2 flex-wrap"><button @click="runNow('squads', s.id)" :disabled="mutating.has(`squads-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-accent-cyan/30 text-accent-cyan hover:bg-accent-cyan/10 disabled:opacity-40 transition-colors">Run now</button><button @click="s.enabled ? pauseSchedule('squads', s.id) : resumeSchedule('squads', s.id)" :disabled="mutating.has(`squads-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated disabled:opacity-40 transition-colors">{{ s.enabled ? 'Pause' : 'Resume' }}</button><button @click="deleteSchedule('squads', s.id, s.name)" :disabled="mutating.has(`squads-${s.id}`)" class="text-[11px] px-2.5 py-1 rounded-md border border-accent-red/30 text-accent-red hover:bg-accent-red/10 disabled:opacity-40 transition-colors">Delete</button><button @click="toggleHistory('squads', s.id)" class="text-[11px] px-2.5 py-1 rounded-md border border-border text-text-muted hover:text-text hover:bg-bg-elevated transition-colors">History</button></div><div v-if="historyOpen.get(`squads-${s.id}`)" class="border-t border-border pt-3 space-y-1"><p v-if="historyLoading.has(`squads-${s.id}`)" class="text-[11px] text-text-muted">Loading...</p><p v-else-if="!(historyData.get(`squads-${s.id}`) ?? []).length" class="text-[11px] text-text-muted">No runs recorded</p><div v-else v-for="run in historyData.get(`squads-${s.id}`) ?? []" :key="run.id" class="flex items-center gap-2 text-[11px]"><span :class="runDotClass(run.status)" class="w-1.5 h-1.5 rounded-full shrink-0"></span><span :class="runStatusClass(run.status)" class="font-mono px-1.5 py-0.5 rounded border">{{ run.status }}</span><span class="text-text-muted">{{ formatDate(run.started_at) }}</span><span v-if="run.error_text" class="text-accent-red truncate">{{ run.error_text }}</span></div></div></div></section>
-      <p v-if="!ioSchedules.length && !squadSchedules.length" class="py-12 text-center text-text-muted text-sm">No schedules configured</p>
-    </template>
-  </div>
-</template>
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import FluentIcon from '../components/FluentIcon.vue'
-import { apiFetch } from '../lib/api'
+import { computed, onMounted, ref } from 'vue'
+import { apiFetch } from '@/lib/api'
 
-interface IoSchedule {
-  id: number
+type Schedule = {
+  id: string | number
   name: string
   cron_expr: string
   prompt: string
-  notes: string | null
-  enabled: number
+  notes?: string
+  enabled: boolean
   created_at: string
-  last_run_at: string | null
-  next_run_at: string | null
+  last_run_at?: string | null
+  next_run_at?: string | null
+  squad_slug?: string
 }
 
-interface SquadSchedule {
-  id: number
-  squad_slug: string
-  name: string
-  cron_expr: string
-  prompt: string
-  notes: string | null
-  enabled: number
-  created_at: string
-  last_run_at: string | null
-  next_run_at: string | null
-}
-
-interface ScheduleRun {
-  id: number
-  schedule_type: string
-  schedule_id: number
-  schedule_name: string
-  squad_slug: string | null
+type ScheduleRun = {
+  id: string | number
   status: string
-  error_text: string | null
-  notification_id: number | null
   started_at: string
-  completed_at: string | null
+  completed_at?: string | null
+  error_text?: string | null
 }
 
-const ioSchedules = ref<IoSchedule[]>([])
-const squadSchedules = ref<SquadSchedule[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
-const mutating = ref(new Set<string>())
+const scope = ref<'io' | 'squads'>('io')
+const schedules = ref<{ io: Schedule[]; squads: Schedule[] }>({ io: [], squads: [] })
+const selectedId = ref<string>('')
+const runs = ref<ScheduleRun[]>([])
 
-const historyOpen = ref(new Map<string, boolean>())
-const historyData = ref(new Map<string, ScheduleRun[]>())
-const historyLoading = ref(new Set<string>())
-const promptExpanded = ref(new Set<string>())
+const activeSchedules = computed(() => schedules.value[scope.value])
+const selected = computed(() => activeSchedules.value.find((item) => String(item.id) === selectedId.value) ?? null)
 
-function formatDate(iso: string): string {
-  const normalized = iso.includes('T') || iso.endsWith('Z') ? iso : iso.replace(' ', 'T') + 'Z'
-  return new Date(normalized).toLocaleString()
-}
-
-function runDotClass(status: string): string {
-  if (status === 'done') return 'bg-emerald-400'
-  if (status === 'failed') return 'bg-red-400'
-  return 'bg-accent animate-pulse'
-}
-
-function runStatusClass(status: string): string {
-  if (status === 'done') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-  if (status === 'failed') return 'bg-red-500/10 text-red-400 border-red-500/20'
-  return 'bg-accent/10 text-accent border-accent/20'
-}
-
-function togglePrompt(ns: 'io' | 'squads', id: number): void {
-  const key = `${ns}-${id}`
-  const next = new Set(promptExpanded.value)
-  if (next.has(key)) next.delete(key)
-  else next.add(key)
-  promptExpanded.value = next
-}
-
-async function toggleHistory(ns: 'io' | 'squads', id: number): Promise<void> {
-  const key = `${ns}-${id}`
-  const isOpen = historyOpen.value.get(key) ?? false
-
-  const nextOpen = new Map(historyOpen.value)
-  nextOpen.set(key, !isOpen)
-  historyOpen.value = nextOpen
-
-  if (!isOpen && !historyData.value.has(key)) {
-    const nextLoading = new Set(historyLoading.value)
-    nextLoading.add(key)
-    historyLoading.value = nextLoading
-
-    try {
-      const res = await apiFetch(`/api/schedules/${ns}/${id}/runs?limit=25`)
-      if (res.ok) {
-        const data = (await res.json()) as { runs: ScheduleRun[] }
-        const nextData = new Map(historyData.value)
-        nextData.set(key, data.runs ?? [])
-        historyData.value = nextData
-      }
-    } catch { /* best effort */ } finally {
-      const next = new Set(historyLoading.value)
-      next.delete(key)
-      historyLoading.value = next
+async function loadSchedules() {
+  const response = await apiFetch('/api/schedules')
+  if (response.ok) {
+    schedules.value = await response.json() as { io: Schedule[]; squads: Schedule[] }
+    if (!selectedId.value && activeSchedules.value[0]) {
+      selectedId.value = String(activeSchedules.value[0].id)
+      await loadRuns()
     }
   }
 }
 
-async function fetchSchedules(): Promise<void> {
-  loading.value = true
-  error.value = null
-  historyData.value = new Map()
-  try {
-    const res = await apiFetch('/api/schedules')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = (await res.json()) as { io: IoSchedule[]; squads: SquadSchedule[] }
-    ioSchedules.value = data.io
-    squadSchedules.value = data.squads
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load schedules'
-  } finally {
-    loading.value = false
+async function loadRuns() {
+  if (!selected.value) {
+    runs.value = []
+    return
+  }
+  const response = await apiFetch(`/api/schedules/${scope.value}/${selected.value.id}/runs`)
+  if (response.ok) {
+    runs.value = (await response.json() as { runs: ScheduleRun[] }).runs
   }
 }
 
-async function mutate(key: string, fn: () => Promise<void>): Promise<void> {
-  if (mutating.value.has(key)) return
-  mutating.value = new Set(mutating.value).add(key)
-  try {
-    await fn()
-    await fetchSchedules()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Action failed'
-  } finally {
-    const next = new Set(mutating.value)
-    next.delete(key)
-    mutating.value = next
-  }
+async function action(actionName: 'pause' | 'resume' | 'run-now') {
+  if (!selected.value) return
+  await apiFetch(`/api/schedules/${scope.value}/${selected.value.id}/${actionName}`, { method: 'POST' })
+  await Promise.all([loadSchedules(), loadRuns()])
 }
 
-async function pauseSchedule(ns: 'io' | 'squads', id: number): Promise<void> {
-  await mutate(`${ns}-${id}`, async () => {
-    const res = await apiFetch(`/api/schedules/${ns}/${id}/pause`, { method: 'POST' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  })
+async function removeSchedule() {
+  if (!selected.value) return
+  await apiFetch(`/api/schedules/${scope.value}/${selected.value.id}`, { method: 'DELETE' })
+  selectedId.value = ''
+  runs.value = []
+  await loadSchedules()
 }
 
-async function resumeSchedule(ns: 'io' | 'squads', id: number): Promise<void> {
-  await mutate(`${ns}-${id}`, async () => {
-    const res = await apiFetch(`/api/schedules/${ns}/${id}/resume`, { method: 'POST' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  })
-}
-
-async function runNow(ns: 'io' | 'squads', id: number): Promise<void> {
-  await mutate(`${ns}-${id}`, async () => {
-    const res = await apiFetch(`/api/schedules/${ns}/${id}/run-now`, { method: 'POST' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  })
-}
-
-async function deleteSchedule(ns: 'io' | 'squads', id: number, name: string): Promise<void> {
-  if (!window.confirm(`Delete schedule '${name}'?`)) return
-  await mutate(`${ns}-${id}`, async () => {
-    const res = await apiFetch(`/api/schedules/${ns}/${id}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  })
-}
-
-onMounted(fetchSchedules)
+onMounted(loadSchedules)
 </script>
+
+<template>
+  <div class="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section class="min-h-0 overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
+      <div class="border-b border-line px-5 py-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">schedule matrix</div>
+            <div class="mt-2 flex gap-2">
+              <button class="rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em]" :class="scope === 'io' ? 'border-cyan bg-cyan/10 text-cyan' : 'border-line text-mist'" @click="scope = 'io'; selectedId = String(schedules.io[0]?.id ?? ''); loadRuns()">io</button>
+              <button class="rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em]" :class="scope === 'squads' ? 'border-violet bg-violet/10 text-violet' : 'border-line text-mist'" @click="scope = 'squads'; selectedId = String(schedules.squads[0]?.id ?? ''); loadRuns()">squads</button>
+            </div>
+          </div>
+          <button class="rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-mist transition hover:border-cyan hover:text-cyan" @click="loadSchedules">refresh</button>
+        </div>
+      </div>
+      <div class="min-h-0 overflow-y-auto px-4 py-4">
+        <div class="space-y-3">
+          <button
+            v-for="schedule in activeSchedules"
+            :key="schedule.id"
+            class="grid w-full items-center gap-3 rounded-[24px] border px-4 py-4 text-left transition lg:grid-cols-[180px_minmax(0,1fr)_220px]"
+            :class="selectedId === String(schedule.id) ? 'border-cyan bg-cyan/8' : 'border-line bg-panel hover:border-bright hover:bg-elevated'"
+            @click="selectedId = String(schedule.id); loadRuns()"
+          >
+            <div>
+              <div class="font-mono text-xl text-cyan">{{ schedule.cron_expr }}</div>
+              <div class="mt-1 font-mono text-[11px] uppercase tracking-[0.18em]" :class="schedule.enabled ? 'text-success' : 'text-danger'">{{ schedule.enabled ? 'enabled' : 'paused' }}</div>
+            </div>
+            <div>
+              <div class="text-sm font-medium text-white">{{ schedule.name }}</div>
+              <div class="mt-2 line-clamp-2 text-sm leading-6 text-slate-300">{{ schedule.prompt }}</div>
+            </div>
+            <div class="font-mono text-xs text-mist">
+              <div>last {{ schedule.last_run_at ? new Date(schedule.last_run_at).toLocaleString() : '—' }}</div>
+              <div class="mt-2">next {{ schedule.next_run_at ? new Date(schedule.next_run_at).toLocaleString() : '—' }}</div>
+              <div v-if="schedule.squad_slug" class="mt-2 text-violet">{{ schedule.squad_slug }}</div>
+            </div>
+          </button>
+          <div v-if="!activeSchedules.length" class="rounded-[24px] border border-dashed border-line px-4 py-16 text-center font-mono text-xs uppercase tracking-[0.24em] text-mist">no schedules in this scope</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-violet/35 bg-surface/95 shadow-violet">
+      <div class="border-b border-line px-5 py-4">
+        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-violet">run inspector</div>
+        <div class="mt-2 text-2xl font-semibold text-white">{{ selected?.name ?? 'Select a schedule' }}</div>
+      </div>
+      <div class="border-b border-line px-5 py-4" v-if="selected">
+        <div class="grid grid-cols-2 gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-mist">
+          <button class="rounded-2xl border border-line bg-panel px-3 py-3 transition hover:border-cyan hover:text-cyan" @click="action(selected.enabled ? 'pause' : 'resume')">{{ selected.enabled ? 'pause' : 'resume' }}</button>
+          <button class="rounded-2xl border border-cyan/40 bg-cyan/10 px-3 py-3 text-cyan" @click="action('run-now')">run now</button>
+          <button class="col-span-2 rounded-2xl border border-danger/40 px-3 py-3 text-danger" @click="removeSchedule">delete</button>
+        </div>
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto p-4">
+        <div class="space-y-3">
+          <article v-for="run in runs" :key="run.id" class="rounded-[22px] border border-line bg-panel px-4 py-4">
+            <div class="flex items-center justify-between gap-3 font-mono text-xs uppercase tracking-[0.18em]">
+              <span :class="run.status === 'success' ? 'text-success' : run.status === 'error' ? 'text-danger' : 'text-cyan'">{{ run.status }}</span>
+              <span class="text-mist">{{ run.id }}</span>
+            </div>
+            <div class="mt-3 text-sm text-slate-200">started {{ new Date(run.started_at).toLocaleString() }}</div>
+            <div class="mt-1 text-sm text-slate-300">completed {{ run.completed_at ? new Date(run.completed_at).toLocaleString() : '—' }}</div>
+            <div v-if="run.error_text" class="mt-3 rounded-2xl border border-danger/30 bg-danger/10 px-3 py-3 text-sm text-danger">{{ run.error_text }}</div>
+          </article>
+          <div v-if="selected && !runs.length" class="rounded-[22px] border border-dashed border-line px-4 py-12 text-center font-mono text-xs uppercase tracking-[0.24em] text-mist">no run history yet</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>

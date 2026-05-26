@@ -1,54 +1,55 @@
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '@/stores/auth'
 import { getSupabase } from './supabase'
 
-/**
- * Wrapper around fetch() that injects the Supabase Bearer token
- * when auth is enabled.
- */
-export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
+
+function resolveApiPath(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  return API_BASE ? `${API_BASE}${normalized}` : normalized
+}
+
+export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const auth = useAuthStore()
+  const target = resolveApiPath(path)
+  const headers = new Headers(init?.headers)
   const token = await auth.getAccessToken()
 
-  const headers = new Headers(init?.headers)
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const res = await fetch(input, { ...init, headers })
+  const response = await fetch(target, { ...init, headers })
 
-  // On 401, try to refresh the Supabase session before giving up.
-  // This handles the race where the access token expires during a background
-  // token-refresh — Supabase would have auto-refreshed, but the in-flight
-  // request already got a 401.  One retry is enough; we never loop.
-  if (res.status === 401 && auth.authEnabled) {
+  if (response.status === 401 && auth.authEnabled) {
     const supabase = await getSupabase()
     if (supabase) {
       const { data, error } = await supabase.auth.refreshSession()
       if (data.session) {
-        // Retry the original request with the fresh token
         const retryHeaders = new Headers(init?.headers)
         retryHeaders.set('Authorization', `Bearer ${data.session.access_token}`)
-        return fetch(input, { ...init, headers: retryHeaders })
+        return fetch(target, { ...init, headers: retryHeaders })
       }
-      // Only sign out when refresh explicitly returns no session with no error.
-      // If there was a network error, don't nuke the session — it may recover.
       if (!error) {
         await auth.signOut()
       }
     }
   }
 
-  return res
+  return response
 }
 
-/**
- * Build an EventSource URL with the access token as a query param.
- * The server can read `req.query.token` for SSE endpoints.
- */
 export async function authenticatedUrl(path: string): Promise<string> {
   const auth = useAuthStore()
   const token = await auth.getAccessToken()
-  if (!token) return path
-  const sep = path.includes('?') ? '&' : '?'
-  return `${path}${sep}token=${encodeURIComponent(token)}`
+  const resolved = resolveApiPath(path)
+  const url = /^https?:\/\//i.test(resolved)
+    ? new URL(resolved)
+    : new URL(resolved, window.location.origin)
+
+  if (token) {
+    url.searchParams.set('token', token)
+  }
+
+  return url.toString()
 }
