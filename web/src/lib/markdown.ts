@@ -40,6 +40,30 @@ hljs.registerLanguage('yml', yaml)
 hljs.registerLanguage('markdown', markdown)
 hljs.registerLanguage('md', markdown)
 
+/**
+ * Detects if a string appears to be HTML entities and unescapes them if needed.
+ * This handles cases where content may have been HTML-encoded multiple times.
+ */
+function normalizeHtmlEncoding(text: string): string {
+  // If text contains common HTML entity patterns, it's likely pre-escaped
+  if (/&(lt|gt|amp|quot|apos|#);/.test(text)) {
+    // Check if it looks like it was pre-escaped (contains &lt; &gt; etc.)
+    // Unescape once to normalize
+    const temp = text
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+    // Only return the unescaped version if it looks like valid HTML tags
+    // Otherwise return original to avoid breaking legitimate content
+    if (/<[a-z]/i.test(temp)) {
+      return temp
+    }
+  }
+  return text
+}
+
 function inlineFormat(text: string): string {
   return text
     // Escape HTML entities first — must happen before any tag insertion
@@ -157,6 +181,9 @@ export function extractFrontmatter(md: string): { frontmatter: Record<string, st
 
 export function renderMarkdown(md: string): string {
   if (!md) return ''
+  
+  // Normalize pre-escaped HTML entities
+  md = normalizeHtmlEncoding(md)
 
   const lines = md.split('\n')
   const out: string[] = []
