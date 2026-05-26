@@ -87,5 +87,22 @@ defineProps<{ name: string }>()
     <template v-else-if="name === 'circle'">
       <circle cx="12" cy="12" r="4.25" fill="currentColor" stroke="none" />
     </template>
+    <template v-else-if="name === 'log-out'">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </template>
+    <template v-else-if="name === 'pencil'">
+      <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </template>
+    <template v-else-if="name === 'alert-circle'">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </template>
+    <template v-else>
+      <circle cx="12" cy="12" r="8" stroke-dasharray="2 2" />
+    </template>
   </svg>
 </template>
