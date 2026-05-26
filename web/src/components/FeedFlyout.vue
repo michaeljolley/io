@@ -89,7 +89,7 @@ watch(() => props.open, (value) => {
       <div v-if="open" class="fixed inset-0 z-40 bg-black/40" @click="emit('close')" />
     </transition>
 
-    <transition enter-active-class="duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
+    <transition enter-active-class="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
       <aside v-if="open" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-sidebar md:w-[420px]">
         <div class="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
           <div class="flex items-center gap-2">

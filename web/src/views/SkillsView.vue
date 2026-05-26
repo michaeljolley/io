@@ -60,7 +60,7 @@ onMounted(loadSkills)
         </div>
         <div class="overflow-hidden rounded-lg border border-border">
           <div v-for="(skill, index) in entries" :key="skill.slug" class="flex items-center gap-3 bg-card px-4 py-2.5 transition-colors hover:bg-card/80" :class="index > 0 ? 'border-t border-border/50' : ''">
-            <code class="w-40 shrink-0 font-mono text-xs text-foreground/80">{{ skill.name }}</code>
+            <code class="w-36 shrink-0 break-all font-mono text-xs text-foreground/80">{{ skill.name }}</code>
             <span class="flex-1 text-xs leading-relaxed text-muted-foreground">{{ skill.description }}</span>
             <span class="shrink-0 font-mono text-[9px] text-muted-foreground/30">built-in</span>
             <button type="button" class="relative h-4 w-8 shrink-0 rounded-full transition-colors" :class="enabled[skill.slug] ? 'bg-primary' : 'bg-white/10'" @click="toggleSkill(skill.slug)">

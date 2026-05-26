@@ -61,7 +61,7 @@ defineExpose({ open, isOpen })
 </script>
 
 <template>
-  <div class="fixed bottom-0 right-0 z-50 flex w-full flex-col md:bottom-4 md:right-4 md:w-[360px]">
+  <div class="fixed bottom-14 right-0 z-50 flex w-full flex-col md:bottom-10 md:right-4 md:w-[360px]">
     <transition enter-active-class="duration-200 ease-out" enter-from-class="translate-y-2 scale-[0.97] opacity-0" enter-to-class="translate-y-0 scale-100 opacity-100" leave-active-class="duration-150 ease-in" leave-from-class="translate-y-0 scale-100 opacity-100" leave-to-class="translate-y-2 scale-[0.97] opacity-0">
       <div v-if="isOpen" class="flex h-[380px] flex-col overflow-hidden rounded-t-xl border border-border border-b-0 bg-sidebar">
         <div class="flex shrink-0 items-center justify-between border-b border-border/50 px-4 py-2.5">
