@@ -804,7 +804,7 @@ export function createTools(deps: ToolDeps) {
       console.error(`[io] squad_add_agent called: ${slug} — ${role_title}`);
       try {
         const agent = deps.addSquadAgent(slug, role_title, charter, model_tier);
-        return `Agent added to squad "${slug}":\n- **${agent.character_name}** — ${agent.role_title}\n- Personality: ${agent.personality}\n- Model tier: ${agent.model_tier}`;
+        return `Agent added to squad "${slug}":\n- **${agent.character_name}** — ${agent.role_title}\n- Personality: ${agent.personality}\n- Model: dynamic (task-based)`;
       } catch (err) {
         return `Error adding agent: ${err instanceof Error ? err.message : String(err)}`;
       }
@@ -854,7 +854,7 @@ export function createTools(deps: ToolDeps) {
         const statsStr = st.task_count === 0
           ? " — 📊 never delegated"
           : ` — 📊 ${st.task_count} ${st.task_count === 1 ? "task" : "tasks"} · last ${formatRelativeTime(st.last_delegated_at)}`;
-        return `- **${a.character_name}**${leadBadge}${qaBadge} — ${a.role_title} (${a.model_tier}) — ${a.status}${statsStr}${a.personality ? `\n  _${a.personality}_` : ""}`;
+        return `- **${a.character_name}**${leadBadge}${qaBadge} — ${a.role_title} (dynamic) — ${a.status}${statsStr}${a.personality ? `\n  _${a.personality}_` : ""}`;
       });
 
       const coverage = assessSquadCoverage(agents);

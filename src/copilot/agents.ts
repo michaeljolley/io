@@ -495,11 +495,10 @@ async function getOrCreateAgentSession(
 ): Promise<CopilotSession> {
   const key = agentSessionKey(squadSlug, agent.character_name);
 
-  // Determine model based on task complexity vs agent's default tier
+  // Determine model: task complexity is sole determinant when task context exists;
+  // stored model_tier is only a fallback for ad-hoc sessions without task context.
   const agentTier = agent.model_tier as Tier;
-  const taskTier = taskDescription ? classifyComplexity(taskDescription) : agentTier;
-  const tierRank: Record<Tier, number> = { high: 3, medium: 2, low: 1 };
-  const effectiveTier = tierRank[taskTier] >= tierRank[agentTier] ? taskTier : agentTier;
+  const effectiveTier = taskDescription ? classifyComplexity(taskDescription) : agentTier;
   const model = getModelForTier(effectiveTier);
 
   // If we have a cached session, check if the model matches AND the agent
@@ -537,7 +536,7 @@ async function getOrCreateAgentSession(
     ? `\n\n## Squad Wiki\n${wikiPages.map(p => `### ${p.path}\n${p.content}`).join("\n\n")}`
     : "";
 
-  console.error(`[io] Agent ${agent.character_name}: using model "${model}" (agent tier: ${agentTier}, task tier: ${taskTier}, effective: ${effectiveTier})`);
+  console.error(`[io] Agent ${agent.character_name}: using model "${model}" (stored tier: ${agentTier}, effective: ${effectiveTier})`);
 
   const universeName = squad.universe
     ? getUniverse(squad.universe)?.name ?? squad.universe
