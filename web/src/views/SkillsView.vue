@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import SettingsTabs from '@/components/SettingsTabs.vue'
 import { apiFetch } from '@/lib/api'
-import { renderMarkdown } from '@/lib/markdown'
+import { categorizeSkill } from '@/lib/mission-control'
 
 type SkillSummary = {
   name: string
@@ -10,138 +11,64 @@ type SkillSummary = {
   path: string
 }
 
-type SkillDetail = {
-  slug: string
-  content: string
+const categoryColors: Record<string, string> = {
+  'File System': '#00d9ff',
+  'Code Intelligence': '#5fff87',
+  'Git & CI': '#c4a7ff',
+  Communication: '#ffd000',
 }
 
 const skills = ref<SkillSummary[]>([])
-const selectedSlug = ref('')
-const detail = ref<SkillDetail | null>(null)
-const query = ref('')
-const url = ref('')
-const pasteName = ref('skill.md')
-const pasteContent = ref('')
-const busy = ref(false)
+const enabled = ref<Record<string, boolean>>({})
 
-const filteredSkills = computed(() => {
-  const needle = query.value.trim().toLowerCase()
-  if (!needle) return skills.value
-  return skills.value.filter((skill) => `${skill.name} ${skill.slug} ${skill.description}`.toLowerCase().includes(needle))
+const groupedSkills = computed(() => {
+  const map = new Map<string, SkillSummary[]>()
+  for (const skill of skills.value) {
+    const category = categorizeSkill(skill.name, skill.path)
+    map.set(category, [...(map.get(category) ?? []), skill])
+  }
+  return [...map.entries()]
 })
 
 async function loadSkills() {
   const response = await apiFetch('/api/skills')
-  if (response.ok) {
-    skills.value = (await response.json() as { skills: SkillSummary[] }).skills
-    if (!selectedSlug.value && skills.value[0]) {
-      selectedSlug.value = skills.value[0].slug
-    }
+  if (!response.ok) return
+  skills.value = (await response.json() as { skills: SkillSummary[] }).skills
+  enabled.value = Object.fromEntries(skills.value.map((skill) => [skill.slug, enabled.value[skill.slug] ?? true]))
+}
+
+function toggleSkill(slug: string) {
+  enabled.value = {
+    ...enabled.value,
+    [slug]: !enabled.value[slug],
   }
 }
-
-async function loadDetail(slug: string) {
-  if (!slug) return
-  const response = await apiFetch(`/api/skills/${encodeURIComponent(slug)}`)
-  if (response.ok) {
-    detail.value = await response.json() as SkillDetail
-  }
-}
-
-async function installFromUrl() {
-  if (!url.value.trim()) return
-  busy.value = true
-  await apiFetch('/api/skills', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: url.value.trim() }),
-  })
-  url.value = ''
-  await loadSkills()
-  busy.value = false
-}
-
-async function pasteSkill() {
-  if (!pasteContent.value.trim()) return
-  busy.value = true
-  await apiFetch('/api/skills/paste', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content: pasteContent.value, filename: pasteName.value }),
-  })
-  pasteContent.value = ''
-  await loadSkills()
-  busy.value = false
-}
-
-async function removeSkill() {
-  if (!selectedSlug.value) return
-  busy.value = true
-  await apiFetch(`/api/skills/${encodeURIComponent(selectedSlug.value)}`, { method: 'DELETE' })
-  selectedSlug.value = ''
-  detail.value = null
-  await loadSkills()
-  busy.value = false
-}
-
-watch(selectedSlug, (slug) => {
-  loadDetail(slug)
-})
 
 onMounted(loadSkills)
 </script>
 
 <template>
-  <div class="grid h-full min-h-0 gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-    <section class="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
-      <div class="border-b border-line px-5 py-4">
-        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">skill registry</div>
-        <input v-model="query" class="focus-ring mt-4 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white placeholder:text-slate-500" placeholder="filter skills" />
-      </div>
-      <div class="min-h-0 flex-1 overflow-y-auto p-3">
-        <button
-          v-for="skill in filteredSkills"
-          :key="skill.slug"
-          class="mb-2 w-full rounded-[22px] border px-4 py-4 text-left transition"
-          :class="selectedSlug === skill.slug ? 'border-cyan bg-cyan/10' : 'border-line bg-panel hover:border-bright hover:bg-elevated'"
-          @click="selectedSlug = skill.slug"
-        >
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="text-sm font-medium text-white">{{ skill.name }}</div>
-              <div class="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-cyan">{{ skill.slug }}</div>
-            </div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.16em] text-mist">{{ skill.path }}</div>
-          </div>
-          <div class="mt-2 text-sm leading-6 text-slate-300">{{ skill.description }}</div>
-        </button>
-      </div>
-    </section>
-
-    <section class="grid min-h-0 gap-4 lg:grid-rows-[auto_minmax(0,1fr)]">
-      <div class="grid gap-4 lg:grid-cols-2">
-        <div class="rounded-[28px] border border-violet/35 bg-surface/95 p-5 shadow-violet">
-          <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-violet">install from url</div>
-          <input v-model="url" class="focus-ring mt-4 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white" placeholder="https://…/SKILL.md" @keydown.enter.prevent="installFromUrl" />
-          <button class="mt-3 rounded-2xl border border-violet/40 bg-violet/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-violet" :disabled="busy" @click="installFromUrl">install</button>
+  <SettingsTabs active="skills">
+    <div class="max-w-2xl space-y-6">
+      <p class="text-xs text-muted-foreground">Enable or disable capabilities available to IO agents. Built-in skills cannot be removed here; the toggles model the operator deck from the reference design.</p>
+      <div v-for="[category, entries] in groupedSkills" :key="category">
+        <div class="mb-2 flex items-center gap-2">
+          <div class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: categoryColors[category] ?? '#00d9ff' }" />
+          <span class="font-mono text-[10px] font-semibold uppercase tracking-wider" :style="{ color: categoryColors[category] ?? '#00d9ff' }">{{ category }}</span>
+          <div class="h-px flex-1 bg-border/40" />
+          <span class="font-mono text-[10px] text-muted-foreground/40">{{ entries.filter((skill) => enabled[skill.slug]).length }}/{{ entries.length }}</span>
         </div>
-        <div class="rounded-[28px] border border-line bg-surface/95 p-5">
-          <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">paste skill</div>
-          <input v-model="pasteName" class="focus-ring mt-4 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white" placeholder="filename.md" />
-          <textarea v-model="pasteContent" rows="5" class="focus-ring mt-3 w-full rounded-2xl border border-line bg-panel px-4 py-3 font-mono text-sm text-white" placeholder="markdown content" />
-          <div class="mt-3 flex justify-between gap-3">
-            <button class="rounded-2xl border border-cyan/40 bg-cyan/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-cyan" :disabled="busy" @click="pasteSkill">save skill</button>
-            <button class="rounded-2xl border border-danger/40 px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-danger" :disabled="busy || !selectedSlug" @click="removeSkill">delete selected</button>
+        <div class="overflow-hidden rounded-lg border border-border">
+          <div v-for="(skill, index) in entries" :key="skill.slug" class="flex items-center gap-3 bg-card px-4 py-2.5 transition-colors hover:bg-card/80" :class="index > 0 ? 'border-t border-border/50' : ''">
+            <code class="w-40 shrink-0 font-mono text-xs text-foreground/80">{{ skill.name }}</code>
+            <span class="flex-1 text-xs leading-relaxed text-muted-foreground">{{ skill.description }}</span>
+            <span class="shrink-0 font-mono text-[9px] text-muted-foreground/30">built-in</span>
+            <button type="button" class="relative h-4 w-8 shrink-0 rounded-full transition-colors" :class="enabled[skill.slug] ? 'bg-primary' : 'bg-white/10'" @click="toggleSkill(skill.slug)">
+              <span class="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform" :class="enabled[skill.slug] ? 'translate-x-4' : 'translate-x-0'" />
+            </button>
           </div>
         </div>
       </div>
-
-      <div class="min-h-0 overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
-        <div class="border-b border-line px-5 py-4">
-          <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">{{ detail?.slug ?? 'select a skill' }}</div>
-        </div>
-        <div class="wiki-content min-h-0 h-full overflow-y-auto px-6 py-6" v-html="renderMarkdown(detail?.content ?? 'Select a skill from the registry to inspect its markdown.')" />
-      </div>
-    </section>
-  </div>
+    </div>
+  </SettingsTabs>
 </template>

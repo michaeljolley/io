@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import WikiTreeNode from '@/components/WikiTreeNode.vue'
 import { apiFetch } from '@/lib/api'
 import { renderMarkdown } from '@/lib/markdown'
-
-type WikiPage = {
-  path: string
-  title: string
-}
+import { buildWikiTree, type WikiPageSummary } from '@/lib/mission-control'
 
 type WikiDetail = {
   path: string
   content: string
 }
 
-const pages = ref<WikiPage[]>([])
+const pages = ref<WikiPageSummary[]>([])
 const selectedPath = ref('')
 const detail = ref<WikiDetail | null>(null)
 const query = ref('')
@@ -24,22 +21,22 @@ const filteredPages = computed(() => {
   return pages.value.filter((page) => `${page.path} ${page.title}`.toLowerCase().includes(needle))
 })
 
+const tree = computed(() => buildWikiTree(filteredPages.value))
+
 async function loadPages() {
   const response = await apiFetch('/api/wiki')
-  if (response.ok) {
-    pages.value = (await response.json() as { pages: WikiPage[] }).pages
-    if (!selectedPath.value && pages.value[0]) {
-      selectedPath.value = pages.value[0].path
-    }
+  if (!response.ok) return
+  pages.value = (await response.json() as { pages: WikiPageSummary[] }).pages
+  if (!selectedPath.value && pages.value[0]) {
+    selectedPath.value = pages.value[0].path
   }
 }
 
 async function loadDetail(path: string) {
   if (!path) return
   const response = await apiFetch(`/api/wiki/${encodeURIComponent(path)}`)
-  if (response.ok) {
-    detail.value = await response.json() as WikiDetail
-  }
+  if (!response.ok) return
+  detail.value = await response.json() as WikiDetail
 }
 
 watch(selectedPath, (path) => {
@@ -50,31 +47,18 @@ onMounted(loadPages)
 </script>
 
 <template>
-  <div class="grid h-full min-h-0 gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-    <section class="flex min-h-0 flex-col overflow-hidden rounded-[28px] border border-line bg-surface/95">
-      <div class="border-b border-line px-5 py-4">
-        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-cyan">wiki index</div>
-        <input v-model="query" class="focus-ring mt-4 w-full rounded-2xl border border-line bg-panel px-4 py-3 text-sm text-white placeholder:text-slate-500" placeholder="filter page path or title" />
-      </div>
-      <div class="min-h-0 flex-1 overflow-y-auto p-3">
-        <button
-          v-for="page in filteredPages"
-          :key="page.path"
-          class="mb-2 w-full rounded-[22px] border px-4 py-3 text-left transition"
-          :class="selectedPath === page.path ? 'border-cyan bg-cyan/10' : 'border-line bg-panel hover:border-bright hover:bg-elevated'"
-          @click="selectedPath = page.path"
-        >
-          <div class="text-sm font-medium text-white">{{ page.title }}</div>
-          <div class="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-mist">{{ page.path }}</div>
-        </button>
-      </div>
-    </section>
+  <div class="flex h-full overflow-hidden">
+    <aside class="w-52 shrink-0 overflow-y-auto border-r border-border px-2 py-4">
+      <input v-model="query" class="mb-3 w-full rounded border border-border bg-sidebar px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/35" placeholder="Filter pages" />
+      <WikiTreeNode v-for="node in tree" :key="node.id" :node="node" :selected-path="selectedPath" @select="selectedPath = $event" />
+    </aside>
 
-    <section class="min-h-0 overflow-hidden rounded-[28px] border border-line bg-[#09090d]/96">
-      <div class="border-b border-line px-5 py-4">
-        <div class="font-mono text-[10px] uppercase tracking-[0.35em] text-violet">{{ detail?.path ?? 'select a wiki page' }}</div>
+    <section class="flex-1 overflow-y-auto">
+      <div v-if="detail" class="max-w-2xl px-8 py-6">
+        <h2 class="mb-5 text-xl font-semibold">{{ detail.path }}</h2>
+        <div class="wiki-content" v-html="renderMarkdown(detail.content)" />
       </div>
-      <div class="wiki-content h-full overflow-y-auto px-6 py-6" v-html="renderMarkdown(detail?.content ?? '# Wiki\n\nSelect a page to render content.')" />
+      <div v-else class="flex h-full items-center justify-center font-mono text-sm text-muted-foreground/40">Select an article</div>
     </section>
   </div>
 </template>
