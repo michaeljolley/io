@@ -90,7 +90,7 @@ watch(() => props.open, (value) => {
     </transition>
 
     <transition enter-active-class="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" enter-from-class="translate-x-full" enter-to-class="translate-x-0" leave-active-class="transition-transform duration-200 ease-in" leave-from-class="translate-x-0" leave-to-class="translate-x-full">
-      <aside v-if="open" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-sidebar md:w-[420px]">
+      <aside v-if="open" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-gray-950 md:w-[420px]">
         <div class="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
           <div class="flex items-center gap-2">
             <AppIcon name="message" class="h-4 w-4 text-primary" />
@@ -107,7 +107,7 @@ watch(() => props.open, (value) => {
           <div v-else-if="!groupedEntries.length" class="px-5 py-8 font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground/50">No feed activity.</div>
           <div v-else>
             <section v-for="group in groupedEntries" :key="group.key" class="border-b border-border/40 last:border-b-0">
-              <div class="sticky top-0 z-10 border-b border-border/40 bg-sidebar/95 px-5 py-2 backdrop-blur">
+              <div class="sticky top-0 z-10 border-b border-border/40 bg-gray-950 px-5 py-2 backdrop-blur">
                 <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :style="{ color: group.color, backgroundColor: withAlpha(group.color, 0.15) }">{{ group.label }}</span>
               </div>
               <div>
