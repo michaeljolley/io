@@ -51,7 +51,6 @@ async function addSchedule() {
   };
   if (newSchedule.value.type === "squad") {
     if (!newSchedule.value.squad_id) return;
-    body.squad_id = newSchedule.value.squad_id;
     body.agenda = newSchedule.value.agenda;
   } else {
     body.prompt = newSchedule.value.prompt;

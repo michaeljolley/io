@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, basename, resolve } from "node:path";
+import { join, basename, resolve, sep } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { PATHS } from "../paths.js";
@@ -99,7 +99,7 @@ export async function createSkill(slug: string, content: string): Promise<void> 
   // child of the skills directory (not above or beside it).
   const skillsRoot = resolve(PATHS.skills);
   const dest = resolve(skillsRoot, cleanSlug);
-  if (!dest.startsWith(skillsRoot + "/")) {
+  if (!dest.startsWith(skillsRoot + sep)) {
     throw new Error("Invalid skill slug.");
   }
 
