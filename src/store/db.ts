@@ -169,6 +169,45 @@ function runMigrations(db: Database.Database): void {
     }
     setSchemaVersion(db, 4);
   }
+
+  if (version < 5) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+        content TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'web',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_conversation_id
+        ON conversation_messages(conversation_id);
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_created_at
+        ON conversation_messages(created_at);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS conversation_messages_fts
+        USING fts5(content, content=conversation_messages, content_rowid=rowid);
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_insert
+        AFTER INSERT ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_update
+        AFTER UPDATE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_delete
+        AFTER DELETE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+        END;
+    `);
+    setSchemaVersion(db, 5);
+  }
 }
 
 function getSchemaVersion(db: Database.Database): number {
