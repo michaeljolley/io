@@ -2,7 +2,7 @@ import type { CopilotClient, CopilotSession } from "@github/copilot-sdk";
 import { approveAll } from "@github/copilot-sdk";
 import { getClient } from "./client.js";
 import { loadConfig } from "../config.js";
-import { getLeadForSquad, getAgentsForSquad, updateAgentStatus } from "../store/squads.js";
+import { getLeadForSquad, getAgentsForSquad, updateAgentStatus, getSquad } from "../store/squads.js";
 import { createTask, updateTaskStatus } from "../store/tasks.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
@@ -107,8 +107,10 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
   updateAgentStatus(lead.id, "idle");
 
   // Post to feed
+  const squad = getSquad(squadId);
+  const squadSource = squad ? `squad-${squad.slug}` : `squad-${squadId}`;
   postFeedItem(
-    `squad-${squadId}`,
+    squadSource,
     `Task completed by ${lead.character_name}`,
     result.slice(0, 2000)
   );
