@@ -2,11 +2,13 @@
 import { ref, onMounted } from "vue";
 import { apiGet } from "@/lib/api";
 import { Users, GitBranch } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface Squad {
   id: string;
   name: string;
   universe: string;
+  color: string;
   repo_url: string | null;
   created_at: string;
 }
@@ -58,11 +60,14 @@ function getAgentsForSquad(squadId: string) {
         v-for="squad in squads"
         :key="squad.id"
         :to="`/squads/${squad.id}`"
-        class="block rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors"
+        class="block rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors border-l-4"
+        :style="{ borderLeftColor: squad.color }"
       >
         <div class="flex items-start justify-between">
-          <div>
-            <h3 class="font-semibold">{{ squad.name }}</h3>
+          <div class="min-w-0">
+            <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium" :style="getSquadLabelStyle(squad.color)">
+              {{ squad.name }}
+            </span>
             <p class="text-sm text-muted-foreground mt-0.5">{{ squad.universe }}</p>
           </div>
           <span class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">

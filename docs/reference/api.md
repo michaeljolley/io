@@ -100,12 +100,22 @@ List installed skills.
 
 ### `POST /api/skills`
 
-Install a skill from a git repository.
+Install or create a skill. Two modes are supported:
 
-**Body:**
+**Install from a git repository:**
 ```json
 { "url": "https://github.com/user/my-skill.git" }
 ```
+
+**Create directly with markdown content:**
+```json
+{
+  "slug": "my-skill",
+  "content": "# My Skill\n\nDescribe the skill here..."
+}
+```
+
+The `slug` is sanitised to lowercase alphanumeric characters and hyphens. The skill is saved to `~/.io/skills/<slug>/SKILL.md`.
 
 ### `DELETE /api/skills/:slug`
 
@@ -150,8 +160,10 @@ Create a schedule.
 
 **Body:**
 ```json
-{ "type": "io", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
+{ "type": "io", "squad_id": "your-squad-id", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
 ```
+
+`squad_id` is required for all schedules.
 
 ### `PUT /api/schedules/:id`
 

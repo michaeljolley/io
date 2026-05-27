@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { Inbox, Check, Trash2 } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface FeedItem {
   id: string;
@@ -13,7 +14,14 @@ interface FeedItem {
   created_at: string;
 }
 
+interface Squad {
+  id: string;
+  name: string;
+  color: string;
+}
+
 const items = ref<FeedItem[]>([]);
+const squads = ref<Squad[]>([]);
 const unreadCount = ref(0);
 const filter = ref<"all" | "unread">("all");
 const loading = ref(true);
@@ -28,6 +36,11 @@ async function loadFeed() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadSquads() {
+  const data = await apiGet("/squads");
+  squads.value = data.squads;
 }
 
 async function markRead(id: string) {
@@ -49,7 +62,25 @@ function toggle(id: string) {
   if (expandedId.value === id) markRead(id);
 }
 
-onMounted(loadFeed);
+function getSquadForSource(source: string): Squad | undefined {
+  if (!source.startsWith("squad-")) return undefined;
+  const squadId = source.slice("squad-".length);
+  return squads.value.find((s) => s.id === squadId);
+}
+
+const decoratedItems = computed(() =>
+  items.value.map((item) => {
+    const squad = getSquadForSource(item.source);
+    return { ...item, squad };
+  })
+);
+
+onMounted(async () => {
+  await Promise.all([loadFeed(), loadSquads()]);
+});
+function getSourceLabel(item: FeedItem & { squad?: Squad }): string {
+  return item.squad?.name ?? item.source;
+}
 </script>
 
 <template>
@@ -78,7 +109,7 @@ onMounted(loadFeed);
 
     <div v-else class="space-y-2">
       <div
-        v-for="item in items"
+        v-for="item in decoratedItems"
         :key="item.id"
         class="border border-border rounded-lg overflow-hidden"
         :class="{ 'border-l-2 border-l-primary': !item.read }"
@@ -89,8 +120,12 @@ onMounted(loadFeed);
         >
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <span class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-                {{ item.source }}
+              <span
+                class="text-xs px-2 py-0.5 rounded-full"
+                :class="{ 'bg-secondary text-secondary-foreground': !item.squad }"
+                :style="item.squad ? getSquadLabelStyle(item.squad.color) : {}"
+              >
+                {{ getSourceLabel(item) }}
               </span>
               <span class="text-sm font-medium truncate" :class="{ 'font-bold': !item.read }">
                 {{ item.title }}
