@@ -7,6 +7,7 @@ import { buildSystemMessage } from "./system-message.js";
 import { createTools } from "./tools.js";
 import { loadSkillDirectories } from "./skills.js";
 import { resetClient } from "./client.js";
+import { addAuditEntry } from "../store/audit-log.js";
 
 let orchestratorSession: CopilotSession | undefined;
 let sessionCreatePromise: Promise<CopilotSession> | undefined;
@@ -118,6 +119,11 @@ export async function sendToOrchestrator(
   source: string,
   callback: MessageCallback
 ): Promise<void> {
+  addAuditEntry(
+    "message_received",
+    `Message from ${source}: ${prompt.slice(0, 200)}`,
+    { source, prompt: prompt.slice(0, 1000) }
+  );
   messageQueue.push({ prompt, source, callback });
   if (!processing) processQueue();
 }
