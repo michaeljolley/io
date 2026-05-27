@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, basename, resolve } from "node:path";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { PATHS } from "../paths.js";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface SkillInfo {
   name: string;
@@ -51,7 +51,7 @@ export async function addSkill(url: string): Promise<void> {
     throw new Error(`Skill "${slug}" is already installed.`);
   }
 
-  await execAsync(`git clone --depth 1 ${url} ${dest}`);
+  await execFileAsync("git", ["clone", "--depth", "1", "--", url, dest]);
 
   // Verify SKILL.md exists
   if (!existsSync(join(dest, "SKILL.md"))) {
