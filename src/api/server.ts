@@ -259,7 +259,21 @@ export async function startApiServer(config: Config): Promise<void> {
   });
 
   app.post("/api/schedules", (req, res) => {
-    const schedule = createSchedule(req.body);
+    const { type, cron, squad_id, agenda, prompt } = req.body ?? {};
+    if (type !== "squad" && type !== "io") {
+      res.status(400).json({ error: "type must be 'squad' or 'io'" });
+      return;
+    }
+    if (!cron || typeof cron !== "string") {
+      res.status(400).json({ error: "cron is required" });
+      return;
+    }
+    if (!squad_id || typeof squad_id !== "string" || !squad_id.trim()) {
+      res.status(400).json({ error: "squad_id is required" });
+      return;
+    }
+
+    const schedule = createSchedule({ type, cron, squad_id, agenda, prompt });
     res.json(schedule);
   });
 

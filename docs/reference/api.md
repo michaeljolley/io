@@ -150,8 +150,10 @@ Create a schedule.
 
 **Body:**
 ```json
-{ "type": "io", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
+{ "type": "io", "squad_id": "your-squad-id", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
 ```
+
+`squad_id` is required for all schedules.
 
 ### `PUT /api/schedules/:id`
 
