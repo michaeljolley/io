@@ -39,6 +39,7 @@ import {
 } from "../store/token-usage.js";
 import { DEFAULT_MODEL_PRICING } from "../copilot/token-tracker.js";
 import { randomUUID } from "node:crypto";
+import { validateMessageAttachments } from "../chat/attachments.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,7 +60,7 @@ function broadcast(event: string, data: any): void {
 
 export async function startApiServer(config: Config): Promise<void> {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: "30mb" }));
 
   // Serve static web frontend
   const webDistPath = resolve(__dirname, "..", "..", "web-dist");
@@ -98,16 +99,23 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // --- Chat ---
   app.post("/api/message", async (req, res) => {
-    const { prompt, conversationId: clientConvId } = req.body;
+    const { prompt, conversationId: clientConvId, attachments: rawAttachments } = req.body;
     if (!prompt || typeof prompt !== "string") {
       res.status(400).json({ error: "prompt is required" });
       return;
     }
 
+    const validation = validateMessageAttachments(rawAttachments);
+    if (!validation.ok) {
+      res.status(400).json({ error: validation.error });
+      return;
+    }
+
+    const attachments = validation.attachments;
     const conversationId = (typeof clientConvId === "string" && clientConvId) ? clientConvId : randomUUID();
 
     // Persist the user message
-    saveMessage(conversationId, "user", prompt, "web");
+    saveMessage(conversationId, "user", prompt, "web", attachments);
 
     // Stream response via SSE, send final to HTTP response
     await sendToOrchestrator(prompt, "web", (content, done) => {
@@ -117,7 +125,7 @@ export async function startApiServer(config: Config): Promise<void> {
         saveMessage(conversationId, "assistant", content, "web");
         res.json({ content, conversationId });
       }
-    });
+    }, attachments);
   });
 
   // --- History ---

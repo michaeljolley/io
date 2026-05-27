@@ -14,6 +14,7 @@ import { PATHS } from "../paths.js";
 import { createSquadTools } from "./squad-tools.js";
 import { loadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
+import { buildAttachmentSummary, type MessageAttachment, toCopilotBlobAttachments } from "../chat/attachments.js";
 
 // Registry of active agent sessions keyed by task ID
 const activeSessions = new Map<string, CopilotSession>();
@@ -44,7 +45,8 @@ export async function stopTask(taskId: string): Promise<void> {
 export async function delegateTask(
   squadId: string,
   task: string,
-  instanceId?: string
+  instanceId?: string,
+  attachments: MessageAttachment[] = []
 ): Promise<string> {
   const lead = getLeadForSquad(squadId);
   if (!lead) {
@@ -152,6 +154,11 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
         agent: lead.character_name,
         role: lead.role_title,
         task,
+        attachments: attachments.map((attachment) => ({
+          name: attachment.name,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+        })),
       });
 
       // Capture streaming message deltas and broadcast via SSE
@@ -172,7 +179,10 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 
       try {
         const response = await session.sendAndWait(
-          { prompt: `Task delegated to you:\n\n${task}` },
+          {
+            prompt: `Task delegated to you:\n\n${task}${buildAttachmentSummary(attachments)}`,
+            attachments: toCopilotBlobAttachments(attachments),
+          },
           600_000
         );
         result = response?.data?.content ?? "Task completed (no response content).";

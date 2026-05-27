@@ -16,8 +16,23 @@ Send a message to the orchestrator.
 
 **Body:**
 ```json
-{ "prompt": "Hello, IO!" }
+{
+  "prompt": "What is in this screenshot?",
+  "conversationId": "optional-conversation-id",
+  "attachments": [
+    {
+      "name": "screen.png",
+      "mimeType": "image/png",
+      "size": 245121,
+      "content": "<base64>"
+    }
+  ]
+}
 ```
+
+`attachments` is optional. Limits:
+- `10MB` max per file
+- `25MB` max total per message
 
 **Response:**
 ```json

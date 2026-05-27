@@ -21,6 +21,12 @@ Only the `authorizedEmail` address is allowed to sign in.
 ### Chat
 The primary interface — a real-time conversation with the IO orchestrator. Messages stream in token-by-token via Server-Sent Events.
 
+You can attach files (including images) via the paperclip button or drag-and-drop. Attachments are sent with chat context and forwarded to Copilot sessions for multimodal prompts.
+
+Attachment limits:
+- **10MB max per file**
+- **25MB max total per message**
+
 ### Squads
 Overview of all project squads. Click a squad card to see its agent roster, active instances, and recent tasks.
 

@@ -4,6 +4,7 @@ import { getLeadForSquad, getAgentsForSquad, getSquad, type Agent } from "../sto
 import { selectModel } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
 import { attachTokenTracker } from "./token-tracker.js";
+import { buildAttachmentSummary, type MessageAttachment, toCopilotBlobAttachments } from "../chat/attachments.js";
 
 interface MeetingResult {
   plan: string;
@@ -87,7 +88,8 @@ ${agent.persona ? `\n## Your Style:\n${agent.persona}` : ""}
 
 export async function planningMeeting(
   squadId: string,
-  task: string
+  task: string,
+  attachments: MessageAttachment[] = []
 ): Promise<MeetingResult> {
   const lead = getLeadForSquad(squadId);
   if (!lead) {
@@ -119,7 +121,10 @@ export async function planningMeeting(
 
       try {
         const response = await session.sendAndWait(
-          { prompt: "Please provide your planning input for this task." },
+          {
+            prompt: `Please provide your planning input for this task.${buildAttachmentSummary(attachments)}`,
+            attachments: toCopilotBlobAttachments(attachments),
+          },
           60_000
         );
         return {
@@ -164,7 +169,10 @@ export async function planningMeeting(
   try {
     const prompt = `Here is the input gathered from your team:\n\n${inputsSummary}\n\nNow synthesize this into a clear, structured action plan.`;
     const response = await facilitatorSession.sendAndWait(
-      { prompt },
+      {
+        prompt,
+        attachments: toCopilotBlobAttachments(attachments),
+      },
       120_000
     );
     plan = response?.data?.content ?? "Planning meeting completed but no plan was produced.";
@@ -182,9 +190,10 @@ export async function planningMeeting(
 export async function squadMeeting(
   squadId: string,
   task: string,
-  executeAfter: boolean
+  executeAfter: boolean,
+  attachments: MessageAttachment[] = []
 ): Promise<string> {
-  const result = await planningMeeting(squadId, task);
+  const result = await planningMeeting(squadId, task, attachments);
 
   const summary = `## Planning Meeting Complete\n\n**Participants:** ${result.participants.join(", ")}\n\n${result.plan}`;
 
@@ -203,7 +212,7 @@ export async function squadMeeting(
   // Execute: delegate with the plan as additional context
   const { delegateTask } = await import("./agents.js");
   const enrichedTask = `${task}\n\n---\n## Approved Plan (from team meeting)\n${result.plan}`;
-  const execResult = await delegateTask(squadId, enrichedTask);
+  const execResult = await delegateTask(squadId, enrichedTask, undefined, attachments);
 
   return `Meeting held, then executed.\n\n${summary}\n\n---\n## Execution Result\n${execResult}`;
 }

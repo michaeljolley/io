@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./db.js";
+import type { MessageAttachment } from "../chat/attachments.js";
 
 export interface ConversationMessage {
   id: string;
@@ -7,6 +8,7 @@ export interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
   source: string;
+  attachments: MessageAttachment[];
   createdAt: string;
 }
 
@@ -24,6 +26,7 @@ interface RawMessage {
   role: string;
   content: string;
   source: string;
+  attachments?: string;
   created_at: string;
 }
 
@@ -35,6 +38,16 @@ interface RawSummary {
   updated_at: string;
 }
 
+function parseAttachments(value: string | undefined): MessageAttachment[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as MessageAttachment[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function toMessage(row: RawMessage): ConversationMessage {
   return {
     id: row.id,
@@ -42,6 +55,7 @@ function toMessage(row: RawMessage): ConversationMessage {
     role: row.role as "user" | "assistant",
     content: row.content,
     source: row.source,
+    attachments: parseAttachments(row.attachments),
     createdAt: row.created_at,
   };
 }
@@ -60,13 +74,14 @@ export function saveMessage(
   conversationId: string,
   role: "user" | "assistant",
   content: string,
-  source: string
+  source: string,
+  attachments: MessageAttachment[] = []
 ): ConversationMessage {
   const db = getDb();
   const id = randomUUID();
   db.prepare(
-    "INSERT INTO conversation_messages (id, conversation_id, role, content, source) VALUES (?, ?, ?, ?, ?)"
-  ).run(id, conversationId, role, content, source);
+    "INSERT INTO conversation_messages (id, conversation_id, role, content, source, attachments) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(id, conversationId, role, content, source, JSON.stringify(attachments));
   const row = db
     .prepare("SELECT * FROM conversation_messages WHERE id = ?")
     .get(id) as RawMessage;

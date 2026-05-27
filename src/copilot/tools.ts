@@ -178,13 +178,24 @@ export function createTools(): Tool<any>[] {
       }),
       handler: async ({ squad_id, task, instance_id }) => {
         const { delegateTask } = await import("./agents.js");
+        const { getActiveMessageAttachments } = await import("./orchestrator.js");
+        const attachments = getActiveMessageAttachments();
         addAuditEntry(
           "task_delegated",
           `Task delegated to squad ${squad_id}: ${task.slice(0, 200)}`,
-          { squad_id, task: task.slice(0, 1000), instance_id },
+          {
+            squad_id,
+            task: task.slice(0, 1000),
+            instance_id,
+            attachments: attachments.map((attachment) => ({
+              name: attachment.name,
+              mimeType: attachment.mimeType,
+              size: attachment.size,
+            })),
+          },
           { squad_id }
         );
-        const result = await delegateTask(squad_id, task, instance_id);
+        const result = await delegateTask(squad_id, task, instance_id, attachments);
         return result;
       },
     }),
@@ -201,13 +212,24 @@ export function createTools(): Tool<any>[] {
       }),
       handler: async ({ squad_id, task, execute_after }) => {
         const { squadMeeting } = await import("./ceremonies.js");
+        const { getActiveMessageAttachments } = await import("./orchestrator.js");
+        const attachments = getActiveMessageAttachments();
         addAuditEntry(
           "squad_meeting",
           `Planning meeting started for squad ${squad_id}: ${task.slice(0, 200)}`,
-          { squad_id, task: task.slice(0, 1000), execute_after },
+          {
+            squad_id,
+            task: task.slice(0, 1000),
+            execute_after,
+            attachments: attachments.map((attachment) => ({
+              name: attachment.name,
+              mimeType: attachment.mimeType,
+              size: attachment.size,
+            })),
+          },
           { squad_id }
         );
-        return await squadMeeting(squad_id, task, execute_after);
+        return await squadMeeting(squad_id, task, execute_after, attachments);
       },
     }),
 

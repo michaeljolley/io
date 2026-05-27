@@ -39,15 +39,22 @@ Daemon Start
 Messages are processed sequentially:
 
 ```
-sendToOrchestrator(prompt, source, callback)
+sendToOrchestrator(prompt, source, callback, attachments?)
   └─ Enqueue → processQueue()
        └─ executeOnSession()
             ├─ Subscribe to "assistant.message_delta" (streaming)
-            ├─ session.sendAndWait(taggedPrompt, 600_000ms)
+            ├─ session.sendAndWait({ prompt: taggedPrompt, attachments }, 600_000ms)
             └─ callback(finalContent, true)
 ```
 
 Each message is tagged with its source: `[via telegram]`, `[via web]`, `[via scheduler]`, etc.
+
+
+## Attachments + Multimodal Flow
+
+Web chat attachments are validated at the API boundary and passed through the orchestrator queue as `MessageAttachment[]` objects (`name`, `mimeType`, `size`, `content`).
+
+At send time, attachments are converted to Copilot SDK blob attachments so vision-capable models can receive image bytes directly. The current message attachments are also made available to orchestrator tool handlers, so squad delegation/meeting tool calls can pass the same attachment payload to squad lead sessions.
 
 ## Streaming
 

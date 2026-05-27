@@ -1,18 +1,89 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch } from "vue";
+import { computed, ref, nextTick, onMounted, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
-import { Send, Square } from "lucide-vue-next";
+import { Send, Square, Paperclip, X, Image as ImageIcon, FileText } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
+import {
+  fileToMessageAttachment,
+  formatAttachmentSize,
+  isImageAttachment,
+  MAX_ATTACHMENT_BYTES,
+  MAX_TOTAL_ATTACHMENT_BYTES,
+  toDataUrl,
+  type MessageAttachment,
+  validateAttachmentSizes,
+} from "@/lib/attachments";
 
 const chat = useChatStore();
 const input = ref("");
+const composerError = ref("");
 const messagesContainer = ref<HTMLElement>();
+const fileInput = ref<HTMLInputElement>();
+const pendingAttachments = ref<MessageAttachment[]>([]);
+const isDragging = ref(false);
+
+const totalPendingAttachmentBytes = computed(() =>
+  pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
+);
+
+const canSend = computed(
+  () =>
+    !chat.isStreaming &&
+    (input.value.trim().length > 0 || pendingAttachments.value.length > 0)
+);
+
+async function queueAttachments(files: FileList | null): Promise<void> {
+  if (!files || files.length === 0) return;
+
+  composerError.value = "";
+  const parsed: MessageAttachment[] = [];
+
+  try {
+    for (const file of Array.from(files)) {
+      parsed.push(await fileToMessageAttachment(file));
+    }
+  } catch (err: any) {
+    composerError.value = err?.message ?? "Unable to read one or more files.";
+    return;
+  }
+
+  const next = [...pendingAttachments.value, ...parsed];
+  const validation = validateAttachmentSizes(next);
+  if (!validation.ok) {
+    composerError.value = validation.error;
+    return;
+  }
+
+  pendingAttachments.value = next;
+  if (fileInput.value) fileInput.value.value = "";
+}
+
+function removeAttachment(index: number): void {
+  pendingAttachments.value.splice(index, 1);
+  composerError.value = "";
+}
+
+function openPicker(): void {
+  fileInput.value?.click();
+}
+
+function handleFileInput(event: Event): void {
+  const target = event.target as HTMLInputElement | null;
+  void queueAttachments(target?.files ?? null);
+}
 
 async function send() {
+  if (!canSend.value) return;
+
   const text = input.value.trim();
-  if (!text || chat.isStreaming) return;
+  const attachments = [...pendingAttachments.value];
+  const prompt = text || "Please review the attached file(s).";
+
   input.value = "";
-  await chat.sendMessage(text);
+  pendingAttachments.value = [];
+  composerError.value = "";
+
+  await chat.sendMessage(prompt, attachments);
 }
 
 function scrollToBottom() {
@@ -26,6 +97,22 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
     send();
   }
+}
+
+function onDragOver(event: DragEvent): void {
+  event.preventDefault();
+  isDragging.value = true;
+}
+
+function onDragLeave(event: DragEvent): void {
+  event.preventDefault();
+  isDragging.value = false;
+}
+
+async function onDrop(event: DragEvent): Promise<void> {
+  event.preventDefault();
+  isDragging.value = false;
+  await queueAttachments(event.dataTransfer?.files ?? null);
 }
 
 // Auto-scroll whenever messages change (new message, streaming content updates)
@@ -75,6 +162,26 @@ onMounted(() => scrollToBottom());
               : 'bg-muted text-foreground'
           "
         >
+          <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
+            <div
+              v-for="(attachment, idx) in msg.attachments"
+              :key="`${msg.id}-${idx}`"
+              class="rounded border border-border/50 p-2 bg-background/70 text-foreground"
+            >
+              <img
+                v-if="isImageAttachment(attachment)"
+                :src="toDataUrl(attachment)"
+                :alt="attachment.name"
+                class="max-h-44 rounded mb-1 object-contain"
+              />
+              <div class="flex items-center gap-2 text-xs">
+                <ImageIcon v-if="isImageAttachment(attachment)" class="w-3.5 h-3.5" />
+                <FileText v-else class="w-3.5 h-3.5" />
+                <span class="truncate">{{ attachment.name }}</span>
+                <span class="opacity-70">{{ formatAttachmentSize(attachment.size) }}</span>
+              </div>
+            </div>
+          </div>
           <MarkdownContent v-if="msg.content" :content="msg.content" :class="msg.role === 'user' ? 'prose-invert' : ''" />
           <span v-else class="text-muted-foreground">...</span>
           <div
@@ -86,8 +193,53 @@ onMounted(() => scrollToBottom());
     </div>
 
     <!-- Input -->
-    <div class="border-t border-border p-4">
+    <div
+      class="border-t border-border p-4"
+      :class="isDragging ? 'bg-accent/40' : ''"
+      @dragover="onDragOver"
+      @dragleave="onDragLeave"
+      @drop="onDrop"
+    >
+      <input
+        ref="fileInput"
+        type="file"
+        multiple
+        class="hidden"
+        @change="handleFileInput"
+      />
+
+      <div v-if="pendingAttachments.length > 0" class="mb-2 space-y-2">
+        <div class="flex flex-wrap gap-2">
+          <div
+            v-for="(attachment, idx) in pendingAttachments"
+            :key="`${attachment.name}-${idx}`"
+            class="flex items-center gap-2 rounded border border-border px-2 py-1 text-xs bg-muted"
+          >
+            <ImageIcon v-if="isImageAttachment(attachment)" class="w-3.5 h-3.5" />
+            <FileText v-else class="w-3.5 h-3.5" />
+            <span class="max-w-[170px] truncate">{{ attachment.name }}</span>
+            <span class="opacity-70">{{ formatAttachmentSize(attachment.size) }}</span>
+            <button class="hover:text-destructive" @click="removeAttachment(idx)">
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        <p class="text-xs text-muted-foreground">
+          {{ formatAttachmentSize(totalPendingAttachmentBytes) }} attached · Max per file {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} · Max total {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }}
+        </p>
+      </div>
+
+      <p v-if="composerError" class="text-xs text-destructive mb-2">{{ composerError }}</p>
+
       <div class="flex gap-2 items-end">
+        <button
+          class="rounded-md border border-input p-2 hover:bg-accent disabled:opacity-50"
+          :disabled="chat.isStreaming"
+          @click="openPicker"
+          title="Attach files"
+        >
+          <Paperclip class="w-4 h-4" />
+        </button>
         <textarea
           v-model="input"
           @keydown="handleKeydown"
@@ -97,7 +249,7 @@ onMounted(() => scrollToBottom());
         ></textarea>
         <button
           @click="send"
-          :disabled="!input.trim() || chat.isStreaming"
+          :disabled="!canSend"
           class="rounded-md bg-primary text-primary-foreground p-2 hover:bg-primary/90 disabled:opacity-50 transition-colors"
         >
           <Send v-if="!chat.isStreaming" class="w-4 h-4" />

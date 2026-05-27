@@ -251,6 +251,14 @@ function runMigrations(db: Database.Database): void {
     `);
     setSchemaVersion(db, 7);
   }
+
+  if (version < 8) {
+    db.exec(`
+      ALTER TABLE conversation_messages
+        ADD COLUMN attachments TEXT NOT NULL DEFAULT '[]';
+    `);
+    setSchemaVersion(db, 8);
+  }
 }
 
 function getSchemaVersion(db: Database.Database): number {

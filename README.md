@@ -11,6 +11,7 @@ A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on 
 - **Copilot SDK Integration** — powered by GitHub's Copilot SDK for LLM conversations with tool calling
 - **Multi-Interface** — Web dashboard + Telegram bot + HTTP API
 - **Web Frontend** — Vue 3 dashboard with chat, squad management, skills, and agent activity views
+- **Web Chat Attachments** — Attach images/files in web chat (10MB per file, 25MB per message) with multimodal handoff
 - **Persistent Memory** — wiki-based knowledge base stored at `~/.io/wiki/`
 - **Squad System** — persistent project teams with **named specialist agents** themed from pop culture universes (dynamically selected at squad creation)
 - **Skills** — modular skill system; install from git repos or the [skills.sh](https://skills.sh) registry

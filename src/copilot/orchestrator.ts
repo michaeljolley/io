@@ -1,7 +1,6 @@
 import type { CopilotClient, CopilotSession } from "@github/copilot-sdk";
 import { approveAll } from "@github/copilot-sdk";
 import { getDb } from "../store/db.js";
-import { PATHS } from "../paths.js";
 import { loadConfig } from "../config.js";
 import { buildSystemMessage } from "./system-message.js";
 import { createTools } from "./tools.js";
@@ -9,10 +8,16 @@ import { loadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { resetClient } from "./client.js";
 import { addAuditEntry } from "../store/audit-log.js";
+import {
+  buildAttachmentSummary,
+  type MessageAttachment,
+  toCopilotBlobAttachments,
+} from "../chat/attachments.js";
 
 let orchestratorSession: CopilotSession | undefined;
 let sessionCreatePromise: Promise<CopilotSession> | undefined;
 let healthCheckInterval: ReturnType<typeof setInterval> | undefined;
+let activeMessageAttachments: MessageAttachment[] = [];
 
 interface OrchestratorOptions {
   selfEdit: boolean;
@@ -24,6 +29,7 @@ interface QueuedMessage {
   prompt: string;
   source: string;
   callback: MessageCallback;
+  attachments: MessageAttachment[];
 }
 
 const messageQueue: QueuedMessage[] = [];
@@ -119,14 +125,23 @@ function startHealthCheck(client: CopilotClient, opts: OrchestratorOptions): voi
 export async function sendToOrchestrator(
   prompt: string,
   source: string,
-  callback: MessageCallback
+  callback: MessageCallback,
+  attachments: MessageAttachment[] = []
 ): Promise<void> {
   addAuditEntry(
     "message_received",
     `Message from ${source}: ${prompt.slice(0, 200)}`,
-    { source, prompt: prompt.slice(0, 1000) }
+    {
+      source,
+      prompt: prompt.slice(0, 1000),
+      attachments: attachments.map((attachment) => ({
+        name: attachment.name,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+      })),
+    }
   );
-  messageQueue.push({ prompt, source, callback });
+  messageQueue.push({ prompt, source, callback, attachments });
   if (!processing) processQueue();
 }
 
@@ -153,7 +168,9 @@ async function executeOnSession(msg: QueuedMessage): Promise<void> {
     return;
   }
 
-  const taggedPrompt = `[via ${msg.source}] ${msg.prompt}`;
+  activeMessageAttachments = msg.attachments;
+
+  const taggedPrompt = `[via ${msg.source}] ${msg.prompt}${buildAttachmentSummary(msg.attachments)}`;
   let accumulated = "";
 
   const unsubscribe = orchestratorSession.on("assistant.message_delta", (event: any) => {
@@ -164,12 +181,16 @@ async function executeOnSession(msg: QueuedMessage): Promise<void> {
 
   try {
     const response = await orchestratorSession.sendAndWait(
-      { prompt: taggedPrompt },
+      {
+        prompt: taggedPrompt,
+        attachments: toCopilotBlobAttachments(msg.attachments),
+      },
       600_000
     );
     const finalContent = response?.data?.content ?? accumulated;
     msg.callback(finalContent, true);
   } finally {
+    activeMessageAttachments = [];
     unsubscribe();
   }
 }
@@ -186,4 +207,8 @@ export function feedAgentResult(
 
 export function getOrchestratorSession(): CopilotSession | undefined {
   return orchestratorSession;
+}
+
+export function getActiveMessageAttachments(): MessageAttachment[] {
+  return activeMessageAttachments;
 }
