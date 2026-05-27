@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
 import { Clock, Plus, Trash2 } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface Schedule {
   id: string;
@@ -17,6 +18,7 @@ interface Schedule {
 interface Squad {
   id: string;
   name: string;
+  color: string;
 }
 
 const schedules = ref<Schedule[]>([]);
@@ -48,6 +50,7 @@ async function addSchedule() {
     squad_id: newSchedule.value.squad_id,
   };
   if (newSchedule.value.type === "squad") {
+    if (!newSchedule.value.squad_id) return;
     body.agenda = newSchedule.value.agenda;
   } else {
     body.prompt = newSchedule.value.prompt;
@@ -56,6 +59,18 @@ async function addSchedule() {
   schedules.value.push(schedule);
   showAdd.value = false;
 }
+
+function getSquadById(squadId: string | null): Squad | undefined {
+  if (!squadId) return undefined;
+  return squads.value.find((s) => s.id === squadId);
+}
+
+const decoratedSchedules = computed(() =>
+  filteredSchedules().map((schedule) => ({
+    ...schedule,
+    squad: getSquadById(schedule.squad_id),
+  }))
+);
 
 async function toggleSchedule(schedule: Schedule) {
   const enabled = !schedule.enabled;
@@ -154,9 +169,14 @@ function getSquadName(squadId: string | null): string {
     </div>
 
     <div v-else class="space-y-2">
-      <div v-for="schedule in filteredSchedules()" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
+      <div v-for="schedule in decoratedSchedules" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
         <div>
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
+          <div v-if="schedule.squad" class="mt-1">
+            <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(schedule.squad.color)">
+              {{ schedule.squad.name }}
+            </span>
+          </div>
           <div class="text-xs text-muted-foreground mt-0.5">
             {{ schedule.type === 'squad' ? `Agenda: ${schedule.agenda}` : schedule.prompt.slice(0, 60) }}
           </div>

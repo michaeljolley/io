@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { PATHS } from "../paths.js";
+import { pickSquadColor } from "./squad-colors.js";
 
 let db: Database.Database | undefined;
 
@@ -154,6 +155,23 @@ function runMigrations(db: Database.Database): void {
 
   if (version < 4) {
     db.exec(`
+      ALTER TABLE squads ADD COLUMN color TEXT;
+    `);
+    const squads = db
+      .prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
+      .all() as { id: string }[];
+    const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
+    const usedColors: string[] = [];
+    for (let i = 0; i < squads.length; i++) {
+      const color = pickSquadColor(usedColors);
+      usedColors.push(color);
+      update.run(color, squads[i].id);
+    }
+    setSchemaVersion(db, 4);
+  }
+
+  if (version < 5) {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS conversation_messages (
         id TEXT PRIMARY KEY,
         conversation_id TEXT NOT NULL,
@@ -188,7 +206,7 @@ function runMigrations(db: Database.Database): void {
           INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
         END;
     `);
-    setSchemaVersion(db, 4);
+    setSchemaVersion(db, 5);
   }
 }
 

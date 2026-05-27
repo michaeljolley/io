@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft, User, Shield, FlaskConical, Eye } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 import AgentActivityPreview from "@/components/AgentActivityPreview.vue";
 
 const route = useRoute();
@@ -48,7 +49,9 @@ onMounted(async () => {
 
     <template v-else-if="squad">
       <div class="mb-6">
-        <h1 class="text-2xl font-bold">{{ squad.name }}</h1>
+        <span class="inline-flex items-center text-sm px-2.5 py-1 rounded-full font-medium mb-2 w-fit" :style="getSquadLabelStyle(squad.color)">
+          {{ squad.name }}
+        </span>
         <p class="text-muted-foreground">{{ squad.universe }}</p>
       </div>
 
