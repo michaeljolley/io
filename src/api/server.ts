@@ -130,7 +130,9 @@ export async function startApiServer(config: Config): Promise<void> {
   });
 
   // --- Feed ---
-  app.get("/api/feed", (req, res) => {    const unreadOnly = req.query.unread === "true";    const source = req.query.source as string | undefined;
+  app.get("/api/feed", (req, res) => {
+    const unreadOnly = req.query.unread === "true";
+    const source = req.query.source as string | undefined;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     res.json({
