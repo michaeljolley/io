@@ -12,6 +12,7 @@ import {
   BookOpen,
   Settings,
   LogOut,
+  ClipboardList,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -22,6 +23,7 @@ const navItems = [
   { name: "Chat", icon: MessageSquare, path: "/" },
   { name: "Squads", icon: Users, path: "/squads" },
   { name: "Feed", icon: Inbox, path: "/feed" },
+  { name: "Audit Log", icon: ClipboardList, path: "/audit-log" },
   { name: "Skills", icon: Puzzle, path: "/skills" },
   { name: "MCP Servers", icon: Server, path: "/mcp" },
   { name: "Schedules", icon: Clock, path: "/schedules" },

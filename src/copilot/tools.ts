@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { defineTool } from "@github/copilot-sdk";
 import type { Tool } from "@github/copilot-sdk";
+import { addAuditEntry } from "../store/audit-log.js";
 
 export function createTools(): Tool<any>[] {
   return [
@@ -107,7 +108,14 @@ export function createTools(): Tool<any>[] {
           }
         }
 
-        return `Squad "${name}" created with universe "${universe}". ID: ${squad.id}, Slug: ${squad.slug}. Wiki path: ~/.io/wiki/squads/${squad.slug}/${cloneMsg}`;
+        const msg = `Squad "${name}" created with universe "${universe}". ID: ${squad.id}, Slug: ${squad.slug}. Wiki path: ~/.io/wiki/squads/${squad.slug}/${cloneMsg}`;
+        addAuditEntry(
+          "squad_created",
+          `Squad "${name}" created (universe: ${universe})`,
+          { squad_id: squad.id, name, universe, repo_url },
+          { squad_id: squad.id }
+        );
+        return msg;
       },
     }),
 
@@ -155,6 +163,12 @@ export function createTools(): Tool<any>[] {
       }),
       handler: async ({ squad_id, task, instance_id }) => {
         const { delegateTask } = await import("./agents.js");
+        addAuditEntry(
+          "task_delegated",
+          `Task delegated to squad ${squad_id}: ${task.slice(0, 200)}`,
+          { squad_id, task: task.slice(0, 1000), instance_id },
+          { squad_id }
+        );
         const result = await delegateTask(squad_id, task, instance_id);
         return result;
       },
@@ -172,6 +186,12 @@ export function createTools(): Tool<any>[] {
       }),
       handler: async ({ squad_id, task, execute_after }) => {
         const { squadMeeting } = await import("./ceremonies.js");
+        addAuditEntry(
+          "squad_meeting",
+          `Planning meeting started for squad ${squad_id}: ${task.slice(0, 200)}`,
+          { squad_id, task: task.slice(0, 1000), execute_after },
+          { squad_id }
+        );
         return await squadMeeting(squad_id, task, execute_after);
       },
     }),
@@ -353,11 +373,23 @@ export function createTools(): Tool<any>[] {
             maxBuffer: 1024 * 1024,
             env: { ...process.env, GH_PROMPT_DISABLED: "1" },
           });
-          return stdout.trim() || "(no output)";
+          const output = stdout.trim() || "(no output)";
+          addAuditEntry(
+            "shell_command",
+            `Command: ${command.slice(0, 200)}`,
+            { command, cwd, output: output.slice(0, 500), exit_code: 0 }
+          );
+          return output;
         } catch (err: any) {
           const stderr = err.stderr?.toString().trim() ?? "";
           const stdout = err.stdout?.toString().trim() ?? "";
-          return `Error (exit ${err.code}): ${stderr || stdout || err.message}`;
+          const output = `Error (exit ${err.code}): ${stderr || stdout || err.message}`;
+          addAuditEntry(
+            "shell_command",
+            `Command: ${command.slice(0, 200)}`,
+            { command, cwd, output: output.slice(0, 500), exit_code: err.code ?? 1 }
+          );
+          return output;
         }
       },
     }),
