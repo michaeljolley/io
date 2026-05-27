@@ -1,4 +1,4 @@
-import { listSchedules, updateScheduleLastRun } from "../store/schedules.js";
+import { listSchedules, updateScheduleLastRun, type Schedule } from "../store/schedules.js";
 import { sendToOrchestrator } from "./orchestrator.js";
 
 let ioSchedulerInterval: ReturnType<typeof setInterval> | undefined;
@@ -17,15 +17,24 @@ function checkIoSchedules(): void {
   for (const schedule of schedules) {
     if (!schedule.enabled) continue;
     if (!isDue(schedule.cron, schedule.last_run, now)) continue;
+    if (!schedule.squad_id) {
+      console.warn(`[io-scheduler] Schedule ${schedule.id} skipped: missing squad_id.`);
+      continue;
+    }
 
     updateScheduleLastRun(schedule.id);
 
-    sendToOrchestrator(schedule.prompt, "io-scheduler", (_text, done) => {
+    sendToOrchestrator(buildSquadScopedPrompt(schedule), "io-scheduler", (_text, done) => {
       if (done) {
         console.log(`[io-scheduler] Schedule ${schedule.id} completed.`);
       }
     });
   }
+}
+
+export function buildSquadScopedPrompt(schedule: Pick<Schedule, "squad_id" | "prompt">): string {
+  const squadId = schedule.squad_id ?? "unknown";
+  return `[Squad Schedule] Run for squad ${squadId}. Prompt: ${schedule.prompt}`;
 }
 
 function isDue(cron: string, lastRun: string | null, now: Date): boolean {
