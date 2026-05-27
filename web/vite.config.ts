@@ -1,25 +1,22 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [vue()],
-  build: {
-    outDir: path.resolve(__dirname, '../web-dist'),
-    emptyOutDir: true,
-  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": resolve(__dirname, "src"),
     },
+  },
+  build: {
+    outDir: "../web-dist",
+    emptyOutDir: true,
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:3170',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
-      },
+      "/api": "http://localhost:3170",
+      "/health": "http://localhost:3170",
     },
   },
-})
+});

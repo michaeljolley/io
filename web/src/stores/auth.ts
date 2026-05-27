@@ -1,156 +1,48 @@
-import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
-import { useRouter } from 'vue-router'
-import type { Session, User } from '@supabase/supabase-js'
-import { apiFetch } from '@/lib/api'
-import { getAuthConfig, getSupabase } from '@/lib/supabase'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { supabase } from "@/lib/supabase";
 
-export const useAuthStore = defineStore('auth', () => {
-  const router = useRouter()
-  const user = ref<User | null>(null)
-  const session = ref<Session | null>(null)
-  const initialized = ref(false)
-  const authEnabled = ref(false)
-  const loading = ref(false)
-  const isAuthenticated = computed(() => !authEnabled.value || !!user.value)
+export const useAuthStore = defineStore("auth", () => {
+  const token = ref<string | null>(localStorage.getItem("io_token"));
+  const email = ref<string | null>(localStorage.getItem("io_email"));
+  const loading = ref(false);
 
-  let listening = false
+  const isAuthenticated = computed(() => !!token.value);
 
-  async function syncSession() {
-    const supabase = await getSupabase()
-    if (!supabase) {
-      session.value = null
-      user.value = null
-      return
-    }
-
-    const { data } = await supabase.auth.getSession()
-    session.value = data.session ?? null
-    user.value = data.session?.user ?? null
-  }
-
-  async function init(force = false) {
-    if (initialized.value && !force) return
-
-    loading.value = true
-    const config = await getAuthConfig()
-    authEnabled.value = !!config.authEnabled
-
-    if (!authEnabled.value) {
-      initialized.value = true
-      loading.value = false
-      return
-    }
-
-    await syncSession()
-
-    const supabase = await getSupabase()
-    if (supabase && !listening) {
-      supabase.auth.onAuthStateChange((_event, nextSession) => {
-        session.value = nextSession
-        user.value = nextSession?.user ?? null
-        initialized.value = true
-      })
-      listening = true
-    }
-
-    initialized.value = true
-    loading.value = false
-  }
-
-  async function signIn(email: string, password: string) {
-    loading.value = true
-
+  async function login(emailInput: string, password: string): Promise<void> {
+    if (!supabase) throw new Error("Auth not configured");
+    loading.value = true;
     try {
-      const supabase = await getSupabase()
-      if (!supabase) {
-        throw new Error('Authentication is disabled for this workspace.')
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-      await syncSession()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailInput,
+        password,
+      });
+      if (error) throw error;
+      token.value = data.session?.access_token ?? null;
+      email.value = data.user?.email ?? null;
+      if (token.value) localStorage.setItem("io_token", token.value);
+      if (email.value) localStorage.setItem("io_email", email.value);
     } finally {
-      loading.value = false
-      initialized.value = true
+      loading.value = false;
     }
   }
 
-  async function signOut() {
-    if (!authEnabled.value) {
-      user.value = null
-      session.value = null
-      return
-    }
-
-    const supabase = await getSupabase()
-    await supabase?.auth.signOut()
-    user.value = null
-    session.value = null
+  async function logout(): Promise<void> {
+    if (supabase) await supabase.auth.signOut();
+    token.value = null;
+    email.value = null;
+    localStorage.removeItem("io_token");
+    localStorage.removeItem("io_email");
   }
 
-  async function logout() {
-    loading.value = true
-    try {
-      // Call backend logout endpoint
-      await apiFetch('/api/logout', { method: 'POST' }).catch(() => {
-        // Logout still proceeds even if backend call fails
-      })
-
-      // Clear auth state
-      user.value = null
-      session.value = null
-
-      // Clear localStorage token if present
-      localStorage.removeItem('token')
-      localStorage.removeItem('supabase.auth.token')
-
-      // Sign out from Supabase if enabled
-      if (authEnabled.value) {
-        const supabase = await getSupabase()
-        await supabase?.auth.signOut().catch(() => {
-          // Continue even if Supabase signOut fails
-        })
-      }
-
-      // Redirect to login
-      await router.push('/login')
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Logout failed' }
-    } finally {
-      loading.value = false
+  async function refreshToken(): Promise<void> {
+    if (!supabase) return;
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      token.value = data.session.access_token;
+      localStorage.setItem("io_token", data.session.access_token);
     }
   }
 
-  async function getAccessToken() {
-    if (!authEnabled.value) {
-      return null
-    }
-
-    if (!initialized.value) {
-      await init()
-    }
-
-    if (session.value?.access_token) {
-      return session.value.access_token
-    }
-
-    await syncSession()
-    return session.value?.access_token ?? null
-  }
-
-  return {
-    user,
-    session,
-    initialized,
-    authEnabled,
-    loading,
-    isAuthenticated,
-    init,
-    signIn,
-    signOut,
-    logout,
-    getAccessToken,
-  }
-})
+  return { token, email, loading, isAuthenticated, login, logout, refreshToken };
+});

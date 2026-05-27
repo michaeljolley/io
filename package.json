@@ -1,7 +1,7 @@
 {
   "name": "heyio",
-  "version": "0.4.0",
-  "description": "IO — a personal AI assistant built on the GitHub Copilot SDK",
+  "version": "0.5.0",
+  "description": "IO — a personal AI assistant daemon built on the GitHub Copilot SDK",
   "bin": {
     "io": "dist/index.js"
   },
@@ -16,10 +16,9 @@
     "build:all": "npm run build && npm run build:web",
     "postinstall": "npm rebuild better-sqlite3",
     "daemon": "tsx src/daemon.ts",
-    "tui": "tsx src/tui/index.ts",
     "dev": "tsx --watch src/daemon.ts",
     "prepublishOnly": "npm run build:all",
-    "test": "node --import tsx --test 'src/**/*.test.ts' && npm test --prefix web"
+    "test": "node --import tsx --test 'src/**/*.test.ts'"
   },
   "engines": {
     "node": ">=22"
@@ -45,7 +44,6 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.6.2",
     "commander": "^14.0.0",
-    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "grammy": "^1.40.0",
     "zod": "^4.3.6"
@@ -53,9 +51,8 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.1",
+    "@types/node": "^22.15.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vue-tsc": "^3.2.9"
+    "typescript": "^5.8.0"
   }
 }

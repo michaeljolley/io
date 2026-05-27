@@ -1,150 +1,73 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { apiFetch, authenticatedUrl } from '@/lib/api'
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { apiPost } from "@/lib/api";
 
-export type ChatAttachment = {
-  type: 'blob'
-  data: string
-  mimeType: string
-  displayName: string
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  streaming?: boolean;
 }
 
-export type ChatMessage = {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  text: string
-  streaming: boolean
-  createdAt: string
-  kind?: string
-  attachments?: ChatAttachment[]
-}
+export const useChatStore = defineStore("chat", () => {
+  const messages = ref<ChatMessage[]>([]);
+  const isStreaming = ref(false);
+  const eventSource = ref<EventSource | null>(null);
 
-export const useChatStore = defineStore('chat', () => {
-  const messages = ref<ChatMessage[]>([])
-  const isLoading = ref(false)
-
-  let eventSource: EventSource | null = null
-  let activeAssistantId: string | null = null
-
-  function getMessage(id?: string) {
-    if (!messages.value.length) return null
-    if (!id) return messages.value[messages.value.length - 1] ?? null
-    return messages.value.find((message) => message.id === id) ?? null
+  function addUserMessage(content: string): ChatMessage {
+    const msg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content,
+      timestamp: new Date(),
+    };
+    messages.value.push(msg);
+    return msg;
   }
 
-  function addMessage(message: Omit<ChatMessage, 'id' | 'createdAt' | 'streaming'> & Partial<Pick<ChatMessage, 'id' | 'createdAt' | 'streaming'>>) {
-    const entry: ChatMessage = {
-      id: message.id ?? crypto.randomUUID(),
-      createdAt: message.createdAt ?? new Date().toISOString(),
-      streaming: message.streaming ?? false,
-      role: message.role,
-      text: message.text,
-      kind: message.kind,
-    }
-    messages.value.push(entry)
-    return entry
-  }
+  async function sendMessage(content: string): Promise<void> {
+    addUserMessage(content);
+    isStreaming.value = true;
 
-  function appendToLast(text: string, id?: string) {
-    const target = getMessage(id ?? activeAssistantId ?? undefined)
-    if (target) {
-      target.text += text
+    const assistantMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+      streaming: true,
+    };
+    messages.value.push(assistantMsg);
+
+    try {
+      const response = await apiPost("/message", { prompt: content });
+      assistantMsg.content = response.content;
+      assistantMsg.streaming = false;
+    } catch (err: any) {
+      assistantMsg.content = `Error: ${err.message}`;
+      assistantMsg.streaming = false;
+    } finally {
+      isStreaming.value = false;
     }
   }
 
-  function setLastStreaming(streaming: boolean, id?: string) {
-    const target = getMessage(id ?? activeAssistantId ?? undefined)
-    if (target) {
-      target.streaming = streaming
+  function updateStreamingMessage(content: string): void {
+    const last = messages.value[messages.value.length - 1];
+    if (last?.streaming) {
+      last.content = content;
     }
   }
 
-  function closeStream() {
-    eventSource?.close()
-    eventSource = null
-    activeAssistantId = null
-    isLoading.value = false
-  }
-
-  async function sendMessage(text: string, attachments: ChatAttachment[] = []) {
-    const prompt = text.trim()
-    if (!prompt) return
-
-    closeStream()
-    addMessage({ role: 'user', text: prompt })
-    const assistant = addMessage({ role: 'assistant', text: '', streaming: true })
-    activeAssistantId = assistant.id
-    isLoading.value = true
-
-    const streamUrl = await authenticatedUrl('/api/events')
-    eventSource = new EventSource(streamUrl)
-    eventSource.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data) as Record<string, unknown>
-        if (payload.type === 'delta') {
-          appendToLast(String(payload.text ?? ''), assistant.id)
-          return
-        }
-        if (payload.type === 'done') {
-          setLastStreaming(false, assistant.id)
-          closeStream()
-          return
-        }
-        if (payload.type === 'feed') {
-          addMessage({
-            role: 'system',
-            kind: 'feed',
-            text: [payload.title, payload.body].filter(Boolean).join('\n') || JSON.stringify(payload, null, 2),
-          })
-        }
-      } catch {
-        appendToLast(event.data, assistant.id)
-      }
-    }
-
-    eventSource.onerror = () => {
-      if (!assistant.text) {
-        assistant.text = 'stream disconnected'
-      }
-      setLastStreaming(false, assistant.id)
-      closeStream()
-    }
-
-    const response = await apiFetch('/api/message', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: prompt, attachments }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      assistant.text = errorText || `Request failed (${response.status})`
-      setLastStreaming(false, assistant.id)
-      closeStream()
-    }
-  }
-
-  async function abortRun() {
-    await apiFetch('/api/orchestrator/abort', { method: 'POST' }).catch(() => null)
-    setLastStreaming(false)
-    closeStream()
-  }
-
-  function clearMessages() {
-    closeStream()
-    messages.value = []
+  function clearMessages(): void {
+    messages.value = [];
   }
 
   return {
     messages,
-    isLoading,
-    addMessage,
-    appendToLast,
-    setLastStreaming,
+    isStreaming,
+    eventSource,
     sendMessage,
-    abortRun,
+    updateStreamingMessage,
     clearMessages,
-  }
-})
+  };
+});

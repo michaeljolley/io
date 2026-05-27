@@ -1,142 +1,116 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import AppIcon from '@/components/AppIcon.vue'
-import SettingsTabs from '@/components/SettingsTabs.vue'
-import { apiFetch } from '@/lib/api'
+import { ref, onMounted } from "vue";
+import { apiGet, apiPut, apiDelete, apiPost } from "@/lib/api";
+import { Server, Plus, Trash2 } from "lucide-vue-next";
 
-type McpServer = {
-  name: string
-  command?: string
-  args?: string[]
-  url?: string
-  env?: Record<string, string>
-  enabled?: boolean
-  tools?: string[]
+interface McpServer {
+  id: string;
+  name: string;
+  type: "stdio" | "http";
+  enabled: boolean;
 }
 
-const servers = ref<McpServer[]>([])
-const addingServer = ref(false)
-const newServer = ref({ name: '', transport: 'stdio', command: '' })
-const error = ref('')
+const servers = ref<McpServer[]>([]);
+const loading = ref(true);
+const showAdd = ref(false);
+const newServer = ref({ name: "", type: "stdio" as "stdio" | "http", command: "", url: "" });
 
-function serverStatus(server: McpServer) {
-  return server.enabled === false ? 'disabled' : 'connected'
+onMounted(async () => {
+  try {
+    servers.value = await apiGet("/mcp");
+  } finally {
+    loading.value = false;
+  }
+});
+
+async function toggleServer(server: McpServer) {
+  await apiPut(`/mcp/${server.id}`, { enabled: !server.enabled });
+  server.enabled = !server.enabled;
 }
 
-function serverTools(server: McpServer) {
-  if (server.tools?.length) return server.tools
-  if (server.args?.length) return server.args
-  return []
-}
-
-async function loadServers() {
-  const response = await apiFetch('/api/mcp/servers')
-  if (!response.ok) return
-  servers.value = (await response.json() as { servers: McpServer[] }).servers
+async function deleteServer(id: string) {
+  await apiDelete(`/mcp/${id}`);
+  servers.value = servers.value.filter((s) => s.id !== id);
 }
 
 async function addServer() {
-  error.value = ''
-  if (!newServer.value.name.trim() || !newServer.value.command.trim()) return
-  const payload: Record<string, string> = { name: newServer.value.name.trim() }
-  if (newServer.value.transport === 'stdio') {
-    payload.command = newServer.value.command.trim()
-  } else {
-    payload.url = newServer.value.command.trim()
-  }
-  const response = await apiFetch('/api/mcp/servers', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!response.ok) {
-    error.value = await response.text() || 'Unable to add server.'
-    return
-  }
-  newServer.value = { name: '', transport: 'stdio', command: '' }
-  addingServer.value = false
-  await loadServers()
+  const body: any = { name: newServer.value.name, type: newServer.value.type };
+  if (newServer.value.type === "stdio") body.command = newServer.value.command;
+  else body.url = newServer.value.url;
+  const server = await apiPost("/mcp", body);
+  servers.value.push(server);
+  showAdd.value = false;
+  newServer.value = { name: "", type: "stdio", command: "", url: "" };
 }
-
-async function removeServer(name: string) {
-  await apiFetch(`/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' })
-  await loadServers()
-}
-
-async function toggleServer(name: string, enabled: boolean) {
-  await apiFetch(`/api/mcp/servers/${encodeURIComponent(name)}/toggle`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ enabled: !enabled }),
-  })
-  await loadServers()
-}
-
-onMounted(loadServers)
 </script>
 
 <template>
-  <SettingsTabs active="mcp">
-    <div class="max-w-2xl space-y-4">
-      <div class="flex items-center justify-between">
-        <p class="text-xs text-muted-foreground">MCP servers extend IO agents with additional tools and data sources.</p>
-        <button class="flex items-center gap-1.5 rounded border border-border px-3 py-1.5 font-mono text-xs text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary" @click="addingServer = !addingServer">
-          <AppIcon name="plus" class="h-3 w-3" />
-          Add server
-        </button>
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">MCP Servers</h1>
+      <button
+        @click="showAdd = !showAdd"
+        class="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+      >
+        <Plus class="w-4 h-4" /> Add Server
+      </button>
+    </div>
+
+    <!-- Add form -->
+    <div v-if="showAdd" class="border border-border rounded-lg p-4 mb-6 space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium">Name</label>
+          <input v-model="newServer.name" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="text-sm font-medium">Type</label>
+          <select v-model="newServer.type" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <option value="stdio">stdio</option>
+            <option value="http">http</option>
+          </select>
+        </div>
       </div>
+      <div v-if="newServer.type === 'stdio'">
+        <label class="text-sm font-medium">Command</label>
+        <input v-model="newServer.command" placeholder="npx @my/mcp-server" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <div v-else>
+        <label class="text-sm font-medium">URL</label>
+        <input v-model="newServer.url" placeholder="https://..." class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+      <button @click="addServer" class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Save</button>
+    </div>
 
-      <transition enter-active-class="duration-150 ease-out" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="duration-100 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
-        <form v-if="addingServer" class="space-y-3 rounded-lg border border-primary/30 bg-primary/[0.04] p-4" @submit.prevent="addServer">
-          <div class="mb-1 font-mono text-xs text-primary/80">New MCP Server</div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">Name</label>
-              <input v-model="newServer.name" class="w-full rounded border border-border bg-black/30 px-3 py-1.5 text-xs font-mono placeholder:text-muted-foreground/30" placeholder="My Server" />
-            </div>
-            <div>
-              <label class="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">Transport</label>
-              <select v-model="newServer.transport" class="w-full rounded border border-border bg-black/30 px-3 py-1.5 text-xs font-mono">
-                <option value="stdio">stdio</option>
-                <option value="http">HTTP/SSE</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">{{ newServer.transport === 'stdio' ? 'Command' : 'URL' }}</label>
-            <input v-model="newServer.command" class="w-full rounded border border-border bg-black/30 px-3 py-1.5 text-xs font-mono placeholder:text-muted-foreground/30" :placeholder="newServer.transport === 'stdio' ? 'npx @modelcontextprotocol/server-...' : 'https://...'
-            " />
-          </div>
-          <div v-if="error" class="rounded border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error }}</div>
-          <div class="flex justify-end gap-2">
-            <button type="button" class="px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground" @click="addingServer = false">Cancel</button>
-            <button type="submit" class="rounded bg-primary/15 px-3 py-1.5 font-mono text-xs text-primary transition-colors hover:bg-primary/25">Add</button>
-          </div>
-        </form>
-      </transition>
+    <div v-if="loading" class="text-muted-foreground">Loading...</div>
 
-      <div class="space-y-2">
-        <article v-for="server in servers" :key="server.name" class="overflow-hidden rounded-lg border border-border bg-card">
-          <div class="flex items-center gap-3 px-4 py-3">
-            <div class="h-2 w-2 shrink-0 rounded-full" :class="serverStatus(server) === 'connected' ? 'bg-status-success' : 'bg-destructive'" :style="{ boxShadow: serverStatus(server) === 'connected' ? 'var(--glow-success)' : 'var(--glow-error)' }" />
-            <div class="min-w-0 flex-1">
-              <div class="mb-0.5 flex items-center gap-2">
-                <span class="text-sm font-medium">{{ server.name }}</span>
-                <span class="rounded px-1.5 py-0.5 font-mono text-[10px]" :class="serverStatus(server) === 'connected' ? 'bg-status-success/10 text-status-success' : 'bg-destructive/10 text-destructive'">{{ serverStatus(server) }}</span>
-                <span class="rounded bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{{ server.url ? 'http' : 'stdio' }}</span>
-              </div>
-              <code class="block truncate font-mono text-[11px] text-muted-foreground/50">{{ server.command ?? server.url ?? '—' }}</code>
-            </div>
-            <button class="rounded border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary" @click="toggleServer(server.name, !!server.enabled)">{{ server.enabled === false ? 'enable' : 'disable' }}</button>
-            <button class="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground/30 transition-colors hover:bg-destructive/10 hover:text-destructive" @click="removeServer(server.name)">
-              <AppIcon name="trash" class="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <div v-if="serverTools(server).length" class="flex flex-wrap gap-1.5 border-t border-border/40 px-4 py-2">
-            <code v-for="tool in serverTools(server)" :key="tool" class="rounded border border-white/[0.05] bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-foreground/50">{{ tool }}</code>
-          </div>
-        </article>
+    <div v-else-if="servers.length === 0" class="text-center py-12 text-muted-foreground">
+      <Server class="w-12 h-12 mx-auto mb-3 opacity-50" />
+      <p>No MCP servers configured.</p>
+    </div>
+
+    <div v-else class="space-y-2">
+      <div v-for="server in servers" :key="server.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
+        <div>
+          <span class="font-medium text-sm">{{ server.name }}</span>
+          <span class="ml-2 text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{{ server.type }}</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            @click="toggleServer(server)"
+            class="relative w-10 h-5 rounded-full transition-colors"
+            :class="server.enabled ? 'bg-primary' : 'bg-muted'"
+          >
+            <span
+              class="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform"
+              :class="server.enabled ? 'translate-x-5' : 'translate-x-0.5'"
+            ></span>
+          </button>
+          <button @click="deleteServer(server.id)" class="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+            <Trash2 class="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
-  </SettingsTabs>
+  </div>
 </template>

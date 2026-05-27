@@ -1,57 +1,44 @@
-import { readPage, listPages } from "./fs.js";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { PATHS } from "../paths.js";
 
-export interface WikiSearchResult {
+export interface SearchResult {
   path: string;
-  title: string;
   snippet: string;
+  line: number;
 }
 
-export function searchWiki(query: string): WikiSearchResult[] {
-  if (!query.trim()) return [];
+export async function searchPages(query: string): Promise<SearchResult[]> {
+  if (!existsSync(PATHS.wikiPages)) return [];
 
-  const lowerQuery = query.toLowerCase();
-  const pages = listPages();
-  const results: WikiSearchResult[] = [];
+  const results: SearchResult[] = [];
+  const lower = query.toLowerCase();
 
-  for (const pagePath of pages) {
-    const content = readPage(pagePath);
-    if (!content) continue;
+  const walk = (dir: string, prefix: string) => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
 
-    const lowerContent = content.toLowerCase();
-    const idx = lowerContent.indexOf(lowerQuery);
-    if (idx === -1) continue;
+      if (entry.isDirectory()) {
+        walk(fullPath, rel);
+      } else if (entry.name.endsWith(".md")) {
+        const content = readFileSync(fullPath, "utf-8");
+        const lines = content.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(lower)) {
+            results.push({
+              path: rel,
+              snippet: lines[i].trim().slice(0, 120),
+              line: i + 1,
+            });
+            break; // one result per file
+          }
+        }
+      }
+    }
+  };
 
-    const title = extractTitle(pagePath, content);
-    const snippetStart = Math.max(0, idx - 100);
-    const snippetEnd = Math.min(content.length, idx + query.length + 100);
-    let snippet = content.slice(snippetStart, snippetEnd).trim();
-    if (snippetStart > 0) snippet = `…${snippet}`;
-    if (snippetEnd < content.length) snippet = `${snippet}…`;
-
-    results.push({ path: pagePath, title, snippet });
-  }
-
+  walk(PATHS.wikiPages, "");
   return results;
-}
-
-export function getWikiSummary(): string {
-  const pages = listPages();
-  if (pages.length === 0) return "Wiki is empty — no pages yet.";
-
-  const lines: string[] = ["Wiki pages:"];
-  for (const pagePath of pages) {
-    const content = readPage(pagePath);
-    const title = content ? extractTitle(pagePath, content) : pagePath;
-    lines.push(`- ${pagePath}: ${title}`);
-  }
-  return lines.join("\n");
-}
-
-function extractTitle(pagePath: string, content: string): string {
-  const firstLine = content.split("\n").find((l) => l.trim().length > 0);
-  if (firstLine) {
-    const heading = firstLine.replace(/^#+\s*/, "").trim();
-    if (heading) return heading;
-  }
-  return pagePath.replace(/.*\//, "").replace(/\.md$/, "");
 }

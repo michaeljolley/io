@@ -1,54 +1,43 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
-import { dirname } from "path";
-import { IO_HOME } from "../paths.js";
-import { join } from "path";
-
-export const MCP_CONFIG_PATH = join(IO_HOME, "mcp.json");
-
-// Mutable override for tests — mirrors the setDbPathForTests pattern.
-let _configPath = MCP_CONFIG_PATH;
-
-export function setMcpConfigPathForTests(path: string): void {
-  _configPath = path;
-}
-
-export function resetMcpConfigPath(): void {
-  _configPath = MCP_CONFIG_PATH;
-}
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { PATHS } from "../paths.js";
 
 export interface McpServerConfig {
+  id: string;
   name: string;
+  type: "stdio" | "http";
   command?: string;
   args?: string[];
-  env?: Record<string, string>;
   url?: string;
-  enabled?: boolean;
+  headers?: Record<string, string>;
+  enabled: boolean;
 }
 
-export interface McpConfig {
-  servers: McpServerConfig[];
+export function loadMcpConfig(): McpServerConfig[] {
+  if (!existsSync(PATHS.mcpConfig)) return [];
+  const raw = JSON.parse(readFileSync(PATHS.mcpConfig, "utf-8"));
+  return Array.isArray(raw.servers) ? raw.servers : [];
 }
 
-export function loadMcpConfig(): McpConfig {
-  if (!existsSync(_configPath)) {
-    return { servers: [] };
-  }
-  try {
-    const raw = readFileSync(_configPath, "utf-8");
-    const parsed = JSON.parse(raw);
-    if (!parsed.servers || !Array.isArray(parsed.servers)) {
-      return { servers: [] };
-    }
-    return parsed as McpConfig;
-  } catch {
-    return { servers: [] };
-  }
+export function saveMcpConfig(servers: McpServerConfig[]): void {
+  writeFileSync(PATHS.mcpConfig, JSON.stringify({ servers }, null, 2) + "\n");
 }
 
-export function saveMcpConfig(config: McpConfig): void {
-  const dir = dirname(_configPath);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
+export function addMcpServer(server: McpServerConfig): void {
+  const servers = loadMcpConfig();
+  servers.push(server);
+  saveMcpConfig(servers);
+}
+
+export function removeMcpServer(id: string): void {
+  const servers = loadMcpConfig().filter((s) => s.id !== id);
+  saveMcpConfig(servers);
+}
+
+export function toggleMcpServer(id: string, enabled: boolean): void {
+  const servers = loadMcpConfig();
+  const server = servers.find((s) => s.id === id);
+  if (server) {
+    server.enabled = enabled;
+    saveMcpConfig(servers);
   }
-  writeFileSync(_configPath, JSON.stringify(config, null, 2), "utf-8");
 }
