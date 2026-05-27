@@ -32,7 +32,7 @@ export async function delegateTask(
 
   // Select model based on task complexity
   const tier = classifyComplexity(task);
-  const model = selectModel(tier);
+  const model = await selectModel(tier);
 
   // Create ephemeral agent session for the lead
   const client = await getClient();

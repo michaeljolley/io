@@ -11,7 +11,6 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `telegramEnabled` | `boolean` | `false` | Enable the Telegram bot interface |
 | `selfEditEnabled` | `boolean` | `false` | Allow IO to modify its own source code |
 | `defaultModel` | `string` | `"gpt-4.1"` | LLM model for the main orchestrator session |
-| `models` | `string[]` | *(see below)* | Available models — IO auto-selects based on task complexity |
 | `port` | `number` | `3170` | Port for the HTTP server (API + web frontend) |
 | `supabaseUrl` | `string` | — | Supabase project URL (required for auth) |
 | `supabaseAnonKey` | `string` | — | Supabase anon/public API key (required for auth) |
@@ -22,15 +21,13 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 
 ## Model Routing
 
-IO has built-in knowledge of model capabilities and automatically selects the most appropriate model for each task's complexity. You just provide the list of models you want IO to use:
+IO discovers available models from the Copilot SDK at startup using `listModels()`. It automatically selects the most appropriate model for each task based on complexity — no configuration needed.
 
-```json
-{
-  "models": ["claude-opus-4.7", "claude-sonnet-4.6", "claude-haiku-4.5", "gpt-5.5", "gpt-5.4-mini"]
-}
-```
+- **Complex tasks** (architecture, refactoring, debugging) → most capable model
+- **Medium tasks** (features, tests, reviews) → balanced model
+- **Simple tasks** (formatting, lookups, renames) → cheapest/fastest model
 
-For complex tasks (architecture, refactoring, debugging), IO picks the most capable model. For simple tasks (formatting, lookups), it picks the cheapest. No manual categorization required.
+The `defaultModel` setting only controls the main orchestrator session. Squad agents use automatic model selection.
 
 ## Example Config
 
@@ -41,7 +38,6 @@ For complex tasks (architecture, refactoring, debugging), IO picks the most capa
   "telegramEnabled": true,
   "selfEditEnabled": false,
   "defaultModel": "claude-sonnet-4.6",
-  "models": ["claude-opus-4.7", "claude-sonnet-4.6", "claude-haiku-4.5", "gpt-5.5", "gpt-5.4-mini"],
   "port": 3170,
   "supabaseUrl": "https://your-project.supabase.co",
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIs...",

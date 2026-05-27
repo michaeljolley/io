@@ -1,14 +1,21 @@
 import { loadConfig } from "../config.js";
+import { getClient } from "./client.js";
 
 export type TaskComplexity = "high" | "medium" | "low";
 
+interface ScoredModel {
+  id: string;
+  score: number;
+}
+
+// Cache discovered models so we don't call listModels() on every task
+let discoveredModels: ScoredModel[] | undefined;
+
 /**
- * Built-in model capability rankings (higher = more capable).
- * The router uses this to match models to task complexity without
- * requiring the user to manually tier their models.
+ * Built-in model capability hints. Used as fallback when billing info
+ * isn't available from the SDK. Higher = more capable.
  */
-const MODEL_CAPABILITY: Record<string, number> = {
-  // Tier 3 — most capable (complex architecture, deep reasoning)
+const MODEL_CAPABILITY_HINTS: Record<string, number> = {
   "claude-opus-4.7": 90,
   "claude-opus-4.6": 88,
   "claude-opus-4.5": 85,
@@ -17,50 +24,75 @@ const MODEL_CAPABILITY: Record<string, number> = {
   "gpt-5.3-codex": 83,
   "gpt-5.2-codex": 82,
   "gpt-5.2": 80,
-
-  // Tier 2 — balanced (features, tests, reviews)
   "claude-sonnet-4.6": 70,
   "claude-sonnet-4.5": 68,
   "gpt-4.1": 65,
-
-  // Tier 1 — fast/cheap (lookups, formatting, simple edits)
   "claude-haiku-4.5": 40,
   "gpt-5.4-mini": 42,
   "gpt-5-mini": 38,
 };
 
-const COMPLEXITY_THRESHOLDS: Record<TaskComplexity, { min: number }> = {
-  high: { min: 75 },
-  medium: { min: 55 },
-  low: { min: 0 },
-};
+/**
+ * Discover available models from the Copilot SDK and score them.
+ * Uses billing multiplier as primary capability signal, falls back to
+ * built-in hints for unknown models.
+ */
+export async function discoverModels(): Promise<ScoredModel[]> {
+  if (discoveredModels) return discoveredModels;
+
+  try {
+    const client = await getClient();
+    const models = await client.listModels();
+
+    discoveredModels = models
+      .filter((m) => !m.policy || m.policy.state === "enabled")
+      .map((m) => ({
+        id: m.id,
+        // Use billing multiplier as capability proxy (higher cost = more capable)
+        // Fall back to built-in hints, then default of 50
+        score: m.billing
+          ? Math.min(m.billing.multiplier * 10, 100)
+          : (MODEL_CAPABILITY_HINTS[m.id] ?? 50),
+      }))
+      .sort((a, b) => b.score - a.score);
+  } catch {
+    // SDK discovery failed — fall back to defaultModel only
+    const config = loadConfig();
+    discoveredModels = [{ id: config.defaultModel, score: 65 }];
+  }
+
+  return discoveredModels;
+}
+
+/** Reset cached models (e.g. after client reconnect) */
+export function resetModelCache(): void {
+  discoveredModels = undefined;
+}
 
 /**
  * Select the best available model for a given task complexity.
- * Uses the user's configured `models` list filtered against built-in
- * capability scores — no manual tiering required.
+ * Discovers models from the Copilot SDK and picks based on capability —
+ * zero configuration required.
  */
-export function selectModel(complexity: TaskComplexity): string {
+export async function selectModel(complexity: TaskComplexity): Promise<string> {
   const config = loadConfig();
-  const available = config.models;
-  const threshold = COMPLEXITY_THRESHOLDS[complexity].min;
+  const scored = await discoverModels();
 
-  // Score and sort available models by capability (descending)
-  const scored = available
-    .map((m) => ({ model: m, score: MODEL_CAPABILITY[m] ?? 50 }))
-    .sort((a, b) => b.score - a.score);
+  if (scored.length === 0) return config.defaultModel;
 
-  // For high complexity, pick the most capable model above threshold
-  // For low complexity, pick the least capable model (cheapest) that's still available
-  if (complexity === "low") {
-    // Pick cheapest model
-    const cheapest = scored[scored.length - 1];
-    return cheapest?.model ?? config.defaultModel;
+  if (complexity === "high") {
+    // Most capable model
+    return scored[0].id;
   }
 
-  // For medium/high, pick the best model at or above the threshold
-  const suitable = scored.find((m) => m.score >= threshold);
-  return suitable?.model ?? scored[0]?.model ?? config.defaultModel;
+  if (complexity === "low") {
+    // Cheapest model
+    return scored[scored.length - 1].id;
+  }
+
+  // Medium — pick a model around the middle of the ranked list
+  const midIdx = Math.floor(scored.length / 2);
+  return scored[midIdx].id;
 }
 
 export function classifyComplexity(task: string): TaskComplexity {
