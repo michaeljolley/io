@@ -25,8 +25,9 @@ function checkSquadSchedules(): void {
 
     updateScheduleLastRun(schedule.id);
 
-    const agenda = schedule.agenda || "triage";
-    const prompt = `[Squad Schedule] Run "${agenda}" stand-up for squad ${schedule.squad_id}. Agenda: ${agenda}`;
+    const prompt = schedule.prompt
+      ? `[Squad Schedule] Run for squad ${schedule.squad_id}. Prompt: ${schedule.prompt}`
+      : `[Squad Schedule] Run "triage" stand-up for squad ${schedule.squad_id}. Agenda: triage`;
 
     sendToOrchestrator(prompt, "scheduler", (_text, done) => {
       if (done) {
