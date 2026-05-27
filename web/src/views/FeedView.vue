@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { Inbox, Check, Trash2 } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
@@ -68,12 +68,18 @@ function getSquadForSource(source: string): Squad | undefined {
   return squads.value.find((s) => s.id === squadId);
 }
 
+const decoratedItems = computed(() =>
+  items.value.map((item) => {
+    const squad = getSquadForSource(item.source);
+    return { ...item, squad };
+  })
+);
+
 onMounted(async () => {
   await Promise.all([loadFeed(), loadSquads()]);
 });
-function getSourceLabel(item: FeedItem): string {
-  const squad = getSquadForSource(item.source);
-  return squad?.name ?? item.source;
+function getSourceLabel(item: FeedItem & { squad?: Squad }): string {
+  return item.squad?.name ?? item.source;
 }
 </script>
 
@@ -103,7 +109,7 @@ function getSourceLabel(item: FeedItem): string {
 
     <div v-else class="space-y-2">
       <div
-        v-for="item in items"
+        v-for="item in decoratedItems"
         :key="item.id"
         class="border border-border rounded-lg overflow-hidden"
         :class="{ 'border-l-2 border-l-primary': !item.read }"
@@ -116,8 +122,8 @@ function getSourceLabel(item: FeedItem): string {
             <div class="flex items-center gap-2">
               <span
                 class="text-xs px-2 py-0.5 rounded-full"
-                :class="{ 'bg-secondary text-secondary-foreground': !getSquadForSource(item.source) }"
-                :style="getSquadForSource(item.source) ? getSquadLabelStyle(getSquadForSource(item.source)!.color) : {}"
+                :class="{ 'bg-secondary text-secondary-foreground': !item.squad }"
+                :style="item.squad ? getSquadLabelStyle(item.squad.color) : {}"
               >
                 {{ getSourceLabel(item) }}
               </span>

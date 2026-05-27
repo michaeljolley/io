@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { PATHS } from "../paths.js";
-import { SQUAD_COLOR_PALETTE } from "./squad-colors.js";
+import { pickSquadColor } from "./squad-colors.js";
 
 let db: Database.Database | undefined;
 
@@ -145,8 +145,11 @@ function runMigrations(db: Database.Database): void {
       .prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
       .all() as { id: string }[];
     const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
+    const usedColors: string[] = [];
     for (let i = 0; i < squads.length; i++) {
-      update.run(SQUAD_COLOR_PALETTE[i % SQUAD_COLOR_PALETTE.length], squads[i]!.id);
+      const color = pickSquadColor(usedColors);
+      usedColors.push(color);
+      update.run(color, squads[i].id);
     }
     setSchemaVersion(db, 3);
   }

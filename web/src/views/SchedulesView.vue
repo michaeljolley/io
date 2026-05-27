@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
 import { Clock, Plus, Trash2 } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
@@ -61,6 +61,13 @@ function getSquadById(squadId: string | null): Squad | undefined {
   if (!squadId) return undefined;
   return squads.value.find((s) => s.id === squadId);
 }
+
+const decoratedSchedules = computed(() =>
+  filteredSchedules().map((schedule) => ({
+    ...schedule,
+    squad: getSquadById(schedule.squad_id),
+  }))
+);
 
 async function toggleSchedule(schedule: Schedule) {
   const enabled = !schedule.enabled;
@@ -144,12 +151,12 @@ async function deleteSchedule(id: string) {
     </div>
 
     <div v-else class="space-y-2">
-      <div v-for="schedule in filteredSchedules()" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
+      <div v-for="schedule in decoratedSchedules" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
         <div>
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
-          <div v-if="getSquadById(schedule.squad_id)" class="mt-1">
-            <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(getSquadById(schedule.squad_id)!.color)">
-              {{ getSquadById(schedule.squad_id)!.name }}
+          <div v-if="schedule.squad" class="mt-1">
+            <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(schedule.squad.color)">
+              {{ schedule.squad.name }}
             </span>
           </div>
           <div class="text-xs text-muted-foreground mt-0.5">
