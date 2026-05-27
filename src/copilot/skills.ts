@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, basename } from "node:path";
-import { exec } from "node:child_process";
+import { join, basename, resolve, sep } from "node:path";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { PATHS } from "../paths.js";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface SkillInfo {
   name: string;
@@ -51,7 +51,7 @@ export async function addSkill(url: string): Promise<void> {
     throw new Error(`Skill "${slug}" is already installed.`);
   }
 
-  await execAsync(`git clone --depth 1 ${url} ${dest}`);
+  await execFileAsync("git", ["clone", "--depth", "1", "--", url, dest]);
 
   // Verify SKILL.md exists
   if (!existsSync(join(dest, "SKILL.md"))) {
@@ -82,6 +82,32 @@ export async function updateSkillContent(slug: string, content: string): Promise
     throw new Error(`Skill "${slug}" not found.`);
   }
   writeFileSync(skillMd, content);
+}
+
+export async function createSkill(slug: string, content: string): Promise<void> {
+  const cleanSlug = slug
+    .trim()
+    .replace(/[^a-z0-9-]/gi, "-")
+    .toLowerCase()
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!cleanSlug) {
+    throw new Error("Skill title must contain at least one alphanumeric character.");
+  }
+
+  // Guard against path traversal: the resolved destination must be a direct
+  // child of the skills directory (not above or beside it).
+  const skillsRoot = resolve(PATHS.skills);
+  const dest = resolve(skillsRoot, cleanSlug);
+  if (!dest.startsWith(skillsRoot + sep)) {
+    throw new Error("Invalid skill slug.");
+  }
+
+  if (existsSync(dest)) {
+    throw new Error(`Skill "${cleanSlug}" already exists.`);
+  }
+  mkdirSync(dest, { recursive: true });
+  writeFileSync(join(dest, "SKILL.md"), content);
 }
 
 export async function loadSkillDirectories(): Promise<string[]> {

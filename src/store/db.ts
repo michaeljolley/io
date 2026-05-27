@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { PATHS } from "../paths.js";
+import { pickSquadColor } from "./squad-colors.js";
 
 let db: Database.Database | undefined;
 
@@ -134,6 +135,121 @@ function runMigrations(db: Database.Database): void {
       update.run(slug || s.id, s.id);
     }
     setSchemaVersion(db, 2);
+  }
+
+  if (version < 3) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_events (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        summary TEXT NOT NULL DEFAULT '',
+        payload TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_agent_events_task_id ON agent_events (task_id);
+    `);
+    setSchemaVersion(db, 3);
+  }
+
+  if (version < 4) {
+    db.exec(`
+      ALTER TABLE squads ADD COLUMN color TEXT;
+    `);
+    const squads = db
+      .prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
+      .all() as { id: string }[];
+    const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
+    const usedColors: string[] = [];
+    for (let i = 0; i < squads.length; i++) {
+      const color = pickSquadColor(usedColors);
+      usedColors.push(color);
+      update.run(color, squads[i].id);
+    }
+    setSchemaVersion(db, 4);
+  }
+
+  if (version < 5) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+        content TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'web',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_conversation_id
+        ON conversation_messages(conversation_id);
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_created_at
+        ON conversation_messages(created_at);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS conversation_messages_fts
+        USING fts5(content, content=conversation_messages, content_rowid=rowid);
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_insert
+        AFTER INSERT ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_update
+        AFTER UPDATE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_delete
+        AFTER DELETE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+        END;
+    `);
+    setSchemaVersion(db, 5);
+  }
+
+  if (version < 6) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+        agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+        task_id TEXT,
+        action_type TEXT NOT NULL,
+        summary TEXT NOT NULL DEFAULT '',
+        payload TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_log_squad_id ON audit_log (squad_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_agent_id ON audit_log (agent_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log (action_type);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log (created_at);
+    `);
+    setSchemaVersion(db, 6);
+  }
+
+  if (version < 7) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS token_usage (
+        id TEXT PRIMARY KEY,
+        squad_id TEXT REFERENCES squads(id) ON DELETE CASCADE,
+        agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+        task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+        model TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        cost_usd REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_token_usage_squad ON token_usage(squad_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_agent ON token_usage(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_task ON token_usage(task_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_created ON token_usage(created_at);
+    `);
+    setSchemaVersion(db, 7);
   }
 }
 

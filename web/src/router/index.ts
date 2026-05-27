@@ -19,6 +19,11 @@ const routes = [
     component: () => import("@/views/SquadsView.vue"),
   },
   {
+    path: "/squads/health",
+    name: "squad-health",
+    component: () => import("@/views/SquadHealthView.vue"),
+  },
+  {
     path: "/squads/:id",
     name: "squad-detail",
     component: () => import("@/views/SquadDetailView.vue"),
@@ -44,9 +49,24 @@ const routes = [
     component: () => import("@/views/SchedulesView.vue"),
   },
   {
+    path: "/history",
+    name: "history",
+    component: () => import("@/views/HistoryView.vue"),
+  },
+  {
     path: "/wiki",
     name: "wiki",
     component: () => import("@/views/WikiView.vue"),
+  },
+  {
+    path: "/usage",
+    name: "usage",
+    component: () => import("@/views/UsageView.vue"),
+  },
+  {
+    path: "/audit-log",
+    name: "audit-log",
+    component: () => import("@/views/AuditLogView.vue"),
   },
   {
     path: "/settings",

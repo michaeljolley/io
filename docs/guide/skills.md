@@ -7,7 +7,9 @@ Skills are modular extensions that teach IO how to use external tools. Each skil
 Skills are managed through the **web dashboard** under the Skills page:
 
 - **View** all installed skills with name, description, and slug
-- **Install** a new skill by providing its git repository URL, or by discovering community skills
+- **Install** a new skill from a git repository URL (click **From Git**), or browse community skills (click **Discover**)
+- **Create** a new skill directly in the browser (click **Create New**)
+- **Edit** an existing skill's content by selecting it and clicking the pencil icon
 - **Remove** skills you no longer need (hover over a skill card to reveal the delete button)
 
 ## How Skills Work
@@ -58,26 +60,30 @@ Installed skills appear with an **Installed** badge and are immediately availabl
 
 ## Installation Sources
 
-Skills can be installed in three ways:
+Skills can be installed in four ways:
 
 | Method | How |
 |--------|-----|
 | Community discovery | Use the **Discover** tab in the web dashboard |
-| Git repository | Paste any git URL into the **Add Skill** form on the **Installed** tab |
+| Git repository | Click **From Git** on the **Installed** tab and paste a git URL |
+| Direct creation | Click **Create New** on the **Installed** tab and write the content |
 | Manual | Copy a skill folder containing `SKILL.md` into `~/.io/skills/` |
 
-### Git repository install
+### From a Git repository
 
-Paste the URL into the **Add Skill** form:
+Click **From Git** in the Skills page and paste a repository URL:
 
 - `https://github.com/user/skill-name.git`
 - `git@github.com:user/skill-name.git`
 
 The repository must contain a `SKILL.md` file at its root.
 
+### Created directly in the web UI
+
+Click **Create New** in the Skills page. Enter a title (the slug is derived automatically) and write the `SKILL.md` content in the textarea. Click **Create** to save the skill to `~/.io/skills/<slug>/SKILL.md`.
+
 ## Skill Metadata
 
 - The first `# Heading` in `SKILL.md` becomes the skill name
 - The first paragraph becomes the description
 - The directory name becomes the slug
-

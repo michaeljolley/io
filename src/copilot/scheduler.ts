@@ -18,6 +18,10 @@ function checkSquadSchedules(): void {
   for (const schedule of schedules) {
     if (!schedule.enabled) continue;
     if (!isDue(schedule.cron, schedule.last_run, now)) continue;
+    if (!schedule.squad_id) {
+      console.warn(`[scheduler] Schedule ${schedule.id} skipped: missing squad_id.`);
+      continue;
+    }
 
     updateScheduleLastRun(schedule.id);
 

@@ -40,6 +40,45 @@ Server-Sent Events connection for real-time updates.
 
 List all squads and their agents.
 
+### `GET /api/squads/health`
+
+Get health metrics for all squads at a glance.
+
+**Response:**
+```json
+{
+  "health": [
+    {
+      "id": "squad-id",
+      "name": "Alpha Squad",
+      "universe": "my-project",
+      "agentCount": 3,
+      "activeInstanceCount": 1,
+      "activeInstances": [
+        { "id": "inst-id", "branch": "feat/new-feature", "lastActivity": "2024-01-01T12:00:00" }
+      ],
+      "tasksTotal": 25,
+      "tasksCompleted": 20,
+      "tasksCompletedRecent": 5,
+      "tasksPending": 2,
+      "tasksInProgress": 1,
+      "tasksFailed": 2,
+      "avgCycleTimeMinutes": 45.2,
+      "isStalled": false,
+      "recentTasks": [
+        { "id": "task-id", "description": "...", "status": "done", "updatedAt": "2024-01-01T12:00:00" }
+      ]
+    }
+  ]
+}
+```
+
+**Fields:**
+- `tasksCompleted` — all-time completed task count
+- `tasksCompletedRecent` — tasks completed in the last 7 days
+- `avgCycleTimeMinutes` — average time from task creation to completion (null if no completed tasks)
+- `isStalled` — true when the squad has pending/in-progress tasks that have not been updated in over 60 minutes
+
 ### `GET /api/squads/:id`
 
 Get squad detail with agents, tasks, and instances.
@@ -100,12 +139,22 @@ List installed skills.
 
 ### `POST /api/skills`
 
-Install a skill from a git repository.
+Install or create a skill. Two modes are supported:
 
-**Body:**
+**Install from a git repository:**
 ```json
 { "url": "https://github.com/user/my-skill.git" }
 ```
+
+**Create directly with markdown content:**
+```json
+{
+  "slug": "my-skill",
+  "content": "# My Skill\n\nDescribe the skill here..."
+}
+```
+
+The `slug` is sanitised to lowercase alphanumeric characters and hyphens. The skill is saved to `~/.io/skills/<slug>/SKILL.md`.
 
 ### `DELETE /api/skills/:slug`
 
@@ -150,8 +199,10 @@ Create a schedule.
 
 **Body:**
 ```json
-{ "type": "io", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
+{ "type": "io", "squad_id": "your-squad-id", "cron": "0 9 * * 1-5", "prompt": "Good morning summary" }
 ```
+
+`squad_id` is required for all schedules.
 
 ### `PUT /api/schedules/:id`
 
