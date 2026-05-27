@@ -8,6 +8,7 @@ import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
 import { getTasksForSquad } from "../store/tasks.js";
+import { getAgentEvents } from "../store/agent-events.js";
 import { getInstancesForSquad } from "../store/instances.js";
 import {
   getFeedItems,
@@ -110,6 +111,12 @@ export async function startApiServer(config: Config): Promise<void> {
     const tasks = getTasksForSquad(req.params.id);
     const instances = getInstancesForSquad(req.params.id);
     res.json({ squad, agents, tasks, instances });
+  });
+
+  // --- Task Events ---
+  app.get("/api/tasks/:taskId/events", (req, res) => {
+    const events = getAgentEvents(req.params.taskId);
+    res.json(events);
   });
 
   // --- Feed ---
