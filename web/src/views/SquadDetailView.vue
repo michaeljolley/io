@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { apiGet, apiDelete } from "@/lib/api";
-import { ArrowLeft, User, Shield, FlaskConical, GitBranch, Trash2, Activity, Eye } from "lucide-vue-next";
+import { apiGet, apiDelete, apiPost } from "@/lib/api";
+import { ArrowLeft, User, Shield, FlaskConical, GitBranch, Trash2, Activity, Eye, Square } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
 import AgentActivityPreview from "@/components/AgentActivityPreview.vue";
 
@@ -15,6 +15,7 @@ const tasks = ref<any[]>([]);
 const instances = ref<any[]>([]);
 const loading = ref(true);
 const destroyingId = ref<string | null>(null);
+const stoppingTaskId = ref<string | null>(null);
 const previewTaskId = ref<string | null>(null);
 
 function openPreview(taskId: string) {
@@ -27,6 +28,22 @@ function closePreview() {
 
 function isActiveTask(status: string) {
   return status === "pending" || status === "in_progress";
+}
+
+async function stopTask(taskId: string) {
+  if (stoppingTaskId.value) return;
+  stoppingTaskId.value = taskId;
+  try {
+    await apiPost(`/tasks/${taskId}/stop`);
+    const task = tasks.value.find((t) => t.id === taskId);
+    if (task) {
+      task.status = "stopped";
+    }
+  } catch (err) {
+    console.error("Failed to stop task:", err);
+  } finally {
+    stoppingTaskId.value = null;
+  }
 }
 
 onMounted(async () => {
@@ -189,6 +206,17 @@ function relativeTime(isoString: string): string {
               <span class="text-sm">{{ task.description }}</span>
               <div class="flex items-center gap-2">
                 <button
+                  v-if="isActiveTask(task.status)"
+                  @click="stopTask(task.id)"
+                  :disabled="stoppingTaskId === task.id"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border border-red-500/50 text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Stop agent"
+                  title="Stop agent"
+                >
+                  <Square class="w-3 h-3" />
+                  {{ stoppingTaskId === task.id ? "Stopping…" : "Stop" }}
+                </button>
+                <button
                   v-if="isActiveTask(task.status) || previewTaskId === task.id"
                   @click="previewTaskId === task.id ? closePreview() : openPreview(task.id)"
                   class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border transition-colors"
@@ -208,6 +236,7 @@ function relativeTime(isoString: string): string {
                     'bg-blue-500/10 text-blue-500': task.status === 'in_progress',
                     'bg-green-500/10 text-green-500': task.status === 'done',
                     'bg-red-500/10 text-red-500': task.status === 'failed',
+                    'bg-orange-500/10 text-orange-500': task.status === 'stopped',
                   }"
                 >
                   {{ task.status }}
@@ -222,6 +251,7 @@ function relativeTime(isoString: string): string {
                 :task-description="task.description"
                 :task-status="task.status"
                 @close="closePreview"
+                @stopped="task.status = 'stopped'"
               />
             </div>
           </div>

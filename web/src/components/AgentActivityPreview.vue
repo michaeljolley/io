@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from "vue";
-import { apiGet, createEventSource } from "@/lib/api";
-import { X, ToggleLeft, ToggleRight, Activity } from "lucide-vue-next";
+import { apiGet, apiPost, createEventSource } from "@/lib/api";
+import { X, ToggleLeft, ToggleRight, Activity, Square } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 
 interface AgentEvent {
@@ -21,11 +21,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
+  stopped: [];
 }>();
 
 const events = ref<AgentEvent[]>([]);
 const rawMode = ref(false);
 const loading = ref(true);
+const stopping = ref(false);
 const feedContainer = ref<HTMLElement>();
 
 let eventSource: EventSource | null = null;
@@ -73,6 +75,19 @@ function connectSSE() {
   });
 }
 
+async function stopAgent() {
+  if (stopping.value) return;
+  stopping.value = true;
+  try {
+    await apiPost(`/tasks/${props.taskId}/stop`);
+    emit("stopped");
+  } catch (err) {
+    console.error("Failed to stop agent:", err);
+  } finally {
+    stopping.value = false;
+  }
+}
+
 function humanReadableType(type: string): string {
   switch (type) {
     case "status":
@@ -93,7 +108,7 @@ function formatTime(isoStr: string): string {
 watch(
   () => props.taskStatus,
   (newStatus) => {
-    if (newStatus === "done" || newStatus === "failed") {
+    if (newStatus === "done" || newStatus === "failed" || newStatus === "stopped") {
       liveMessage.value = "";
       loadEvents();
       if (eventSource) {
@@ -131,12 +146,25 @@ onUnmounted(() => {
             'bg-blue-500/10 text-blue-500': taskStatus === 'in_progress',
             'bg-green-500/10 text-green-500': taskStatus === 'done',
             'bg-red-500/10 text-red-500': taskStatus === 'failed',
+            'bg-orange-500/10 text-orange-500': taskStatus === 'stopped',
           }"
         >
           {{ taskStatus }}
         </span>
       </div>
       <div class="flex items-center gap-2">
+        <!-- Stop button (visible when task is active) -->
+        <button
+          v-if="taskStatus === 'pending' || taskStatus === 'in_progress'"
+          @click="stopAgent"
+          :disabled="stopping"
+          class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-red-500/50 text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Stop agent"
+          title="Stop agent"
+        >
+          <Square class="w-3 h-3" />
+          {{ stopping ? "Stopping…" : "Stop" }}
+        </button>
         <!-- Human-readable / Raw JSON toggle -->
         <button
           @click="rawMode = !rawMode"

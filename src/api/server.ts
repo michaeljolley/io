@@ -18,6 +18,7 @@ import {
   getUnreadCount,
 } from "../store/feed.js";
 import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
+import { triggerSchedule } from "../copilot/trigger-schedule.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
 import { listSkills, addSkill, createSkill, removeSkill, getSkillContent, updateSkillContent, discoverSkills, installFromSource, fetchRemoteSkillPreview } from "../copilot/skills.js";
 import { readPage, writePage, deletePage, listPages, listTemplates, readTemplate, writeTemplate, deleteTemplate } from "../wiki/fs.js";
@@ -222,6 +223,19 @@ export async function startApiServer(config: Config): Promise<void> {
   app.get("/api/tasks/:taskId/events", (req, res) => {
     const events = getAgentEvents(req.params.taskId);
     res.json(events);
+  });
+
+  // --- Stop Task ---
+  app.post("/api/tasks/:taskId/stop", async (req, res) => {
+    try {
+      const { stopTask } = await import("../copilot/agents.js");
+      await stopTask(req.params.taskId);
+      res.json({ ok: true });
+    } catch (err: any) {
+      const msg: string = err?.message ?? "Unknown error";
+      const isNotRunning = msg.toLowerCase().includes("not currently running") || msg.toLowerCase().includes("already completed");
+      res.status(isNotRunning ? 404 : 500).json({ error: msg });
+    }
   });
 
   // --- Audit Log ---
@@ -499,6 +513,15 @@ export async function startApiServer(config: Config): Promise<void> {
       toggleSchedule(req.params.id, enabled);
     }
     res.json({ ok: true });
+  });
+
+  app.post("/api/schedules/:id/trigger", (req, res) => {
+    const schedule = triggerSchedule(req.params.id);
+    if (!schedule) {
+      res.status(404).json({ error: "Schedule not found" });
+      return;
+    }
+    res.json({ ok: true, schedule });
   });
 
   app.delete("/api/schedules/:id", (req, res) => {
