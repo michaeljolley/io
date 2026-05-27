@@ -50,6 +50,7 @@ async function addSchedule() {
     squad_id: newSchedule.value.squad_id,
   };
   if (!newSchedule.value.squad_id) return;
+  if (!newSchedule.value.prompt.trim()) return;
   body.prompt = newSchedule.value.prompt;
   const schedule = await apiPost("/schedules", body);
   schedules.value.push(schedule);
@@ -138,11 +139,11 @@ function getSquadName(squadId: string | null): string {
       </div>
       <div>
         <label class="text-sm font-medium">Prompt</label>
-        <textarea v-model="newSchedule.prompt" rows="3" placeholder="e.g. Triage issues, work on ready issues, review external PRs, ideate on features, send session summary" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+        <textarea v-model="newSchedule.prompt" rows="3" placeholder="e.g. Triage issues, review PRs, ideate on features" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
       </div>
       <button
         @click="addSchedule"
-        :disabled="!newSchedule.squad_id"
+        :disabled="!newSchedule.squad_id || !newSchedule.prompt.trim()"
         class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Save
