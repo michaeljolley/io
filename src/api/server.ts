@@ -224,6 +224,19 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json(events);
   });
 
+  // --- Stop Task ---
+  app.post("/api/tasks/:taskId/stop", async (req, res) => {
+    try {
+      const { stopTask } = await import("../copilot/agents.js");
+      await stopTask(req.params.taskId);
+      res.json({ ok: true });
+    } catch (err: any) {
+      const msg: string = err?.message ?? "Unknown error";
+      const isNotRunning = msg.toLowerCase().includes("not currently running") || msg.toLowerCase().includes("already completed");
+      res.status(isNotRunning ? 404 : 500).json({ error: msg });
+    }
+  });
+
   // --- Audit Log ---
   app.get("/api/audit-log", (req, res) => {
     const squad_id = req.query.squad_id as string | undefined;

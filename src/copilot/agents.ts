@@ -3,7 +3,7 @@ import { approveAll } from "@github/copilot-sdk";
 import { getClient } from "./client.js";
 import { loadConfig } from "../config.js";
 import { getLeadForSquad, getAgentsForSquad, updateAgentStatus, getSquad } from "../store/squads.js";
-import { createTask, updateTaskStatus } from "../store/tasks.js";
+import { createTask, updateTaskStatus, getTask } from "../store/tasks.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
@@ -11,6 +11,32 @@ import { attachTokenTracker } from "./token-tracker.js";
 import { addAuditEntry } from "../store/audit-log.js";
 import { addAgentEvent } from "../store/agent-events.js";
 import { PATHS } from "../paths.js";
+
+// Registry of active agent sessions keyed by task ID
+const activeSessions = new Map<string, CopilotSession>();
+
+/**
+ * Stop a running agent by task ID. Disconnects the session and marks the task as stopped.
+ */
+export async function stopTask(taskId: string): Promise<void> {
+  const session = activeSessions.get(taskId);
+  if (!session) {
+    throw new Error(`Task is not currently running or has already completed`);
+  }
+  try {
+    await session.disconnect();
+  } finally {
+    activeSessions.delete(taskId);
+  }
+  updateTaskStatus(taskId, "stopped", "Stopped by user");
+  addAgentEvent(taskId, "status", "Task stopped by user", { reason: "user_requested" });
+
+  // Reset agent status to idle
+  const task = getTask(taskId);
+  if (task?.agent_id) {
+    updateAgentStatus(task.agent_id, "idle");
+  }
+}
 
 export async function delegateTask(
   squadId: string,
@@ -97,6 +123,9 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
       },
     });
 
+    // Register session so it can be stopped externally
+    activeSessions.set(taskRecord.id, session);
+
     const flushTokens = attachTokenTracker(session, {
       squadId,
       agentId: lead.id,
@@ -146,6 +175,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
         unsubscribeDelta();
       }
     } finally {
+      activeSessions.delete(taskRecord.id);
       flushTokens();
       await session.disconnect();
     }
