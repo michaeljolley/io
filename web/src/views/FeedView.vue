@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { Inbox, Check, Trash2 } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface FeedItem {
   id: string;
@@ -13,7 +14,14 @@ interface FeedItem {
   created_at: string;
 }
 
+interface Squad {
+  id: string;
+  name: string;
+  color: string;
+}
+
 const items = ref<FeedItem[]>([]);
+const squads = ref<Squad[]>([]);
 const unreadCount = ref(0);
 const filter = ref<"all" | "unread">("all");
 const loading = ref(true);
@@ -28,6 +36,11 @@ async function loadFeed() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadSquads() {
+  const data = await apiGet("/squads");
+  squads.value = data.squads;
 }
 
 async function markRead(id: string) {
@@ -49,7 +62,19 @@ function toggle(id: string) {
   if (expandedId.value === id) markRead(id);
 }
 
-onMounted(loadFeed);
+function getSquadForSource(source: string): Squad | undefined {
+  if (!source.startsWith("squad-")) return undefined;
+  const squadId = source.slice("squad-".length);
+  return squads.value.find((s) => s.id === squadId);
+}
+
+onMounted(async () => {
+  await Promise.all([loadFeed(), loadSquads()]);
+});
+function getSourceLabel(item: FeedItem): string {
+  const squad = getSquadForSource(item.source);
+  return squad?.name ?? item.source;
+}
 </script>
 
 <template>
@@ -89,8 +114,12 @@ onMounted(loadFeed);
         >
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
-              <span class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-                {{ item.source }}
+              <span
+                class="text-xs px-2 py-0.5 rounded-full"
+                :class="{ 'bg-secondary text-secondary-foreground': !getSquadForSource(item.source) }"
+                :style="getSquadForSource(item.source) ? getSquadLabelStyle(getSquadForSource(item.source)!.color) : {}"
+              >
+                {{ getSourceLabel(item) }}
               </span>
               <span class="text-sm font-medium truncate" :class="{ 'font-bold': !item.read }">
                 {{ item.title }}

@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { apiGet } from "@/lib/api";
 import { ArrowLeft, User, Shield, FlaskConical } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 const route = useRoute();
 const squad = ref<any>(null);
@@ -34,7 +35,9 @@ onMounted(async () => {
 
     <template v-else-if="squad">
       <div class="mb-6">
-        <h1 class="text-2xl font-bold">{{ squad.name }}</h1>
+        <span class="inline-flex items-center text-sm px-2.5 py-1 rounded-full font-medium mb-2" :style="getSquadLabelStyle(squad.color)">
+          {{ squad.name }}
+        </span>
         <p class="text-muted-foreground">{{ squad.universe }}</p>
       </div>
 

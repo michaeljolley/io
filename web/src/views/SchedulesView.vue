@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
 import { Clock, Plus, Trash2 } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface Schedule {
   id: string;
@@ -14,7 +15,14 @@ interface Schedule {
   last_run: string | null;
 }
 
+interface Squad {
+  id: string;
+  name: string;
+  color: string;
+}
+
 const schedules = ref<Schedule[]>([]);
+const squads = ref<Squad[]>([]);
 const loading = ref(true);
 const tab = ref<"squad" | "io">("squad");
 const showAdd = ref(false);
@@ -22,7 +30,12 @@ const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "
 
 onMounted(async () => {
   try {
-    schedules.value = await apiGet("/schedules");
+    const [scheduleData, squadData] = await Promise.all([
+      apiGet("/schedules"),
+      apiGet("/squads"),
+    ]);
+    schedules.value = scheduleData;
+    squads.value = squadData.squads;
   } finally {
     loading.value = false;
   }
@@ -33,6 +46,7 @@ const filteredSchedules = () => schedules.value.filter((s) => s.type === tab.val
 async function addSchedule() {
   const body: any = { type: newSchedule.value.type, cron: newSchedule.value.cron };
   if (newSchedule.value.type === "squad") {
+    if (!newSchedule.value.squad_id) return;
     body.squad_id = newSchedule.value.squad_id;
     body.agenda = newSchedule.value.agenda;
   } else {
@@ -41,6 +55,11 @@ async function addSchedule() {
   const schedule = await apiPost("/schedules", body);
   schedules.value.push(schedule);
   showAdd.value = false;
+}
+
+function getSquadById(squadId: string | null): Squad | undefined {
+  if (!squadId) return undefined;
+  return squads.value.find((s) => s.id === squadId);
 }
 
 async function toggleSchedule(schedule: Schedule) {
@@ -96,6 +115,13 @@ async function deleteSchedule(id: string) {
         </div>
       </div>
       <div v-if="newSchedule.type === 'squad'">
+        <label class="text-sm font-medium">Squad</label>
+        <select v-model="newSchedule.squad_id" class="mt-1 mb-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <option disabled value="">Select squad</option>
+          <option v-for="squad in squads" :key="squad.id" :value="squad.id">
+            {{ squad.name }}
+          </option>
+        </select>
         <label class="text-sm font-medium">Agenda</label>
         <select v-model="newSchedule.agenda" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
           <option value="triage">Triage</option>
@@ -121,6 +147,11 @@ async function deleteSchedule(id: string) {
       <div v-for="schedule in filteredSchedules()" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
         <div>
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
+          <div v-if="getSquadById(schedule.squad_id)" class="mt-1">
+            <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(getSquadById(schedule.squad_id)!.color)">
+              {{ getSquadById(schedule.squad_id)!.name }}
+            </span>
+          </div>
           <div class="text-xs text-muted-foreground mt-0.5">
             {{ schedule.type === 'squad' ? `Agenda: ${schedule.agenda}` : schedule.prompt.slice(0, 60) }}
           </div>
