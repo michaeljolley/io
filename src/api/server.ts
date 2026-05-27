@@ -17,7 +17,7 @@ import {
 } from "../store/feed.js";
 import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
-import { listSkills, addSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
+import { listSkills, addSkill, removeSkill, getSkillContent, updateSkillContent, discoverSkills, installFromSource, fetchRemoteSkillPreview } from "../copilot/skills.js";
 import { readPage, writePage, deletePage, listPages } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
 import { randomUUID } from "node:crypto";
@@ -164,15 +164,56 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json(skills);
   });
 
+  app.get("/api/skills/discover", async (req, res) => {
+    const source = req.query.source as string;
+    if (source !== "awesome-copilot" && source !== "skillssh") {
+      res.status(400).json({ error: "source must be 'awesome-copilot' or 'skillssh'" });
+      return;
+    }
+    const q = req.query.q as string | undefined;
+    try {
+      const skills = await discoverSkills(source, q);
+      res.json(skills);
+    } catch (err: any) {
+      res.status(502).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/skills/preview", async (req, res) => {
+    const source = req.query.source as string;
+    const slug = req.query.slug as string;
+    if (source !== "awesome-copilot" && source !== "skillssh") {
+      res.status(400).json({ error: "source must be 'awesome-copilot' or 'skillssh'" });
+      return;
+    }
+    if (!slug) {
+      res.status(400).json({ error: "slug is required" });
+      return;
+    }
+    try {
+      const content = await fetchRemoteSkillPreview(source, slug);
+      res.json({ content });
+    } catch (err: any) {
+      res.status(502).json({ error: err.message });
+    }
+  });
+
   app.post("/api/skills", async (req, res) => {
     try {
-      const { url } = req.body;
-      if (!url || typeof url !== "string") {
-        res.status(400).json({ error: "Missing 'url' in request body" });
-        return;
+      const { url, source, slug } = req.body;
+      if (source && slug) {
+        if (source !== "awesome-copilot" && source !== "skillssh") {
+          res.status(400).json({ error: "source must be 'awesome-copilot' or 'skillssh'" });
+          return;
+        }
+        await installFromSource(source, slug);
+        res.status(201).json({ ok: true });
+      } else if (url && typeof url === "string") {
+        await addSkill(url);
+        res.status(201).json({ ok: true });
+      } else {
+        res.status(400).json({ error: "Provide 'url' for git install, or 'source' + 'slug' for community install" });
       }
-      await addSkill(url);
-      res.status(201).json({ ok: true });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
