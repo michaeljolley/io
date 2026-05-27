@@ -10,6 +10,7 @@ import {
   Server,
   Clock,
   BookOpen,
+  History,
   Settings,
   LogOut,
 } from "lucide-vue-next";
@@ -20,6 +21,7 @@ const auth = useAuthStore();
 
 const navItems = [
   { name: "Chat", icon: MessageSquare, path: "/" },
+  { name: "History", icon: History, path: "/history" },
   { name: "Squads", icon: Users, path: "/squads" },
   { name: "Feed", icon: Inbox, path: "/feed" },
   { name: "Skills", icon: Puzzle, path: "/skills" },
