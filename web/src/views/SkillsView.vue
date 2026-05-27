@@ -24,7 +24,9 @@ const newSkillContent = ref(DEFAULT_SKILL_TEMPLATE);
 const adding = ref(false);
 const error = ref("");
 
-// Derives the slug from the title using the same rules as the backend.
+// Derives a display slug from the title using the same normalisation rules as
+// createSkill() in src/copilot/skills.ts so the user sees the exact slug that
+// will be used before submitting the form.
 const newSkillSlug = computed(() =>
   newSkillTitle.value
     .trim()

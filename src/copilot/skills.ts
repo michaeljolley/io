@@ -92,14 +92,14 @@ export async function createSkill(slug: string, content: string): Promise<void> 
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
   if (!cleanSlug) {
-    throw new Error("Skill slug must not be empty.");
+    throw new Error("Skill title must contain at least one alphanumeric character.");
   }
 
   // Guard against path traversal: the resolved destination must be a direct
-  // child of the skills directory (no ".." components can escape it).
+  // child of the skills directory (not above or beside it).
   const skillsRoot = resolve(PATHS.skills);
   const dest = resolve(skillsRoot, cleanSlug);
-  if (resolve(dest, "..") !== skillsRoot) {
+  if (!dest.startsWith(skillsRoot + "/")) {
     throw new Error("Invalid skill slug.");
   }
 
