@@ -11,6 +11,7 @@ function parseHex(hex: string): { r: number; g: number; b: number } | null {
 export function getSquadLabelStyle(color: string): Record<string, string> {
   const rgb = parseHex(color);
   if (!rgb) return {};
+  // ITU BT.601 relative luminance approximation to pick readable foreground text.
   const luma = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
   const textColor = luma > 145 ? "#111827" : "#f9fafb";
   return {

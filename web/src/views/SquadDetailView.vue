@@ -35,7 +35,7 @@ onMounted(async () => {
 
     <template v-else-if="squad">
       <div class="mb-6">
-        <span class="inline-flex items-center text-sm px-2.5 py-1 rounded-full font-medium mb-2" :style="getSquadLabelStyle(squad.color)">
+        <span class="inline-flex items-center text-sm px-2.5 py-1 rounded-full font-medium mb-2 w-fit" :style="getSquadLabelStyle(squad.color)">
           {{ squad.name }}
         </span>
         <p class="text-muted-foreground">{{ squad.universe }}</p>

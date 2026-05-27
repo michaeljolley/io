@@ -70,7 +70,7 @@ function getAgentsForSquad(squadId: string) {
             </span>
             <p class="text-sm text-muted-foreground mt-0.5">{{ squad.universe }}</p>
           </div>
-          <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(squad.color)">
+          <span class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
             {{ getAgentsForSquad(squad.id).length }} agents
           </span>
         </div>
