@@ -16,10 +16,15 @@ export interface Schedule {
 export function createSchedule(input: {
   type: "squad" | "io";
   cron: string;
-  squad_id?: string;
+  squad_id: string;
   agenda?: string;
   prompt?: string;
 }): Schedule {
+  const squadId = input.squad_id.trim();
+  if (!squadId) {
+    throw new Error("squad_id is required");
+  }
+
   const db = getDb();
   const id = randomUUID();
   db.prepare(
@@ -28,7 +33,7 @@ export function createSchedule(input: {
   ).run(
     id,
     input.type,
-    input.squad_id ?? null,
+    squadId,
     input.cron,
     input.agenda ?? "",
     input.prompt ?? ""

@@ -284,12 +284,12 @@ export function createTools(): Tool<any>[] {
       parameters: z.object({
         type: z.enum(["squad", "io"]).describe("Schedule type"),
         cron: z.string().describe("Cron expression (e.g., '0 9 * * 1-5')"),
-        squad_id: z.string().optional().describe("Squad ID (required for squad schedules)"),
+        squad_id: z.string().describe("Target squad ID"),
         agenda: z
           .string()
           .optional()
           .describe("Agenda type for squad schedules (triage, prioritize, ideation, or custom)"),
-        prompt: z.string().optional().describe("Prompt text for IO schedules"),
+        prompt: z.string().optional().describe("Prompt text for the schedule"),
       }),
       handler: async ({ type, cron, squad_id, agenda, prompt }) => {
         const { createSchedule } = await import("../store/schedules.js");
