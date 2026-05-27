@@ -1,6 +1,6 @@
 # 🤖 IO
 
-A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on your machine, reachable via Telegram, a web UI, and a terminal TUI.
+A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on your machine, reachable via Telegram, a web dashboard, and an HTTP API.
 
 [![CI](https://github.com/michaeljolley/io/actions/workflows/ci.yml/badge.svg)](https://github.com/michaeljolley/io/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -9,10 +9,10 @@ A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on 
 ## ✨ Features
 
 - **Copilot SDK Integration** — powered by GitHub's Copilot SDK for LLM conversations with tool calling
-- **Multi-Interface** — Web UI + Telegram bot + terminal TUI + HTTP API
+- **Multi-Interface** — Web dashboard + Telegram bot + HTTP API
 - **Web Frontend** — Vue 3 dashboard with chat, squad management, skills, and agent activity views
 - **Persistent Memory** — wiki-based knowledge base stored at `~/.io/wiki/`
-- **Squad System** — persistent project teams with **named specialist agents** themed from 80s pop culture (A-Team, Transformers, ThunderCats, GI Joe, Aliens, Ghostbusters)
+- **Squad System** — persistent project teams with **named specialist agents** themed from pop culture universes (dynamically selected at squad creation)
 - **Skills** — modular skill system; install from git repos or the [skills.sh](https://skills.sh) registry
 - **Adaptive Sessions** — infinite sessions with automatic context compaction
 - **Named Agent Personas** — each squad agent gets a character persona with personality, dynamic role title, and specialized charter
@@ -55,10 +55,7 @@ This creates a config file at `~/.io/config.json`.
 ### Run
 
 ```bash
-# Interactive TUI mode
-io
-
-# Background daemon (Telegram + HTTP API)
+# Background daemon (Telegram + HTTP API + Web)
 io --daemon
 
 # Allow IO to modify its own source code
@@ -96,8 +93,7 @@ WantedBy=multi-user.target
 
 | Command | Description |
 | --- | --- |
-| `io` | Start interactive TUI mode |
-| `io --daemon` | Run as background daemon (Telegram + API) |
+| `io --daemon` | Run as background daemon (Telegram + API + Web) |
 | `io --self-edit` | Allow IO to modify its own source |
 | `io setup` | Configure Telegram bot token and user ID |
 | `io skill list` | List installed skills |
@@ -128,7 +124,6 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `authorizedEmail` | `string` | — | Email address allowed to access the web portal |
 | `backgroundNotifyMode` | `string` | `"meaningful"` | Background task notification frequency: `"all"`, `"meaningful"`, or `"off"` |
 | `backgroundNotifyTelegram` | `boolean` | `true` | Send background task notifications via Telegram |
-| `backgroundNotifyTui` | `boolean` | `true` | Show background task notifications in TUI |
 | `watchdogEnabled` | `boolean` | `true` | Enable the daemon event loop watchdog |
 
 Each `modelTiers` list is a ranked preference — IO picks the first available model at startup.
@@ -194,7 +189,7 @@ A skill is a directory with a `SKILL.md` file that describes the skill and its t
 
 Squads are persistent project teams with **named specialist agents**. Each squad:
 
-- Has an 80s pop culture **universe theme** (A-Team, Transformers, ThunderCats, GI Joe, Aliens, Ghostbusters)
+- Has a pop culture **universe theme** (dynamically researched at creation time — never hardcoded)
 - Contains dynamically-created **specialist agents** with roles tailored to the project (e.g., "Express API Engineer", "Vue.js Frontend Dev")
 - Each agent is assigned a **character persona** with personality traits that color their work style
 - Remembers decisions, context, and conversation history across sessions
@@ -202,7 +197,7 @@ Squads are persistent project teams with **named specialist agents**. Each squad
 
 ### How Squads Work
 
-1. **Create** — `squad_create` assigns a random 80s universe (or user picks one)
+1. **Create** — `squad_create` assigns a random pop culture universe (or user picks one)
 2. **Analyze** — `squad_analyze` scans the project to determine languages, frameworks, and tools
 3. **Build the team** — `squad_add_agent` for each specialist the project needs; characters are drawn from the universe pool
 4. **Delegate** — `squad_delegate` sends tasks to specific agents by character name
@@ -211,13 +206,13 @@ Squads are persistent project teams with **named specialist agents**. Each squad
 ## 🏗️ Architecture
 
 ```
-User → [Web UI / TUI / Telegram / HTTP API]
+User → [Web Dashboard / Telegram / HTTP API]
                 ↓
          Orchestrator (Copilot SDK)
           ↕           ↕          ↕
      Squad Manager   Wiki/Memory  MCP Servers
           ↓
-     Named Agents (80s Characters)
+     Named Agents (Pop Culture Characters)
 ```
 
 IO is built around the **Copilot SDK** which handles all LLM interactions, including tool calling and context management. The **Orchestrator** manages the primary conversation session with automatic context compaction for infinite-length sessions.
@@ -239,7 +234,7 @@ Access the web UI at `http://your-server:3170/` when running in daemon mode.
 
 ### Authentication
 
-The web portal supports optional Supabase email authentication. When enabled, users must sign in with email and password before accessing the dashboard. Only the configured `authorizedEmail` is allowed access.
+The web portal uses Supabase email authentication. All API endpoints (except `/health`) require a valid JWT. Users must sign in with email and password before accessing the dashboard. Only the configured `authorizedEmail` is allowed access.
 
 **Setup:**
 
@@ -258,8 +253,6 @@ The web portal supports optional Supabase email authentication. When enabled, us
 
 5. Restart IO — the web portal will now require login
 
-> **Note:** Auth is completely optional. If `supabaseUrl` is not configured, the portal runs without authentication (open access).
-
 ## 🏗️ Project Structure
 
 ```
@@ -268,28 +261,35 @@ src/
 ├── daemon.ts             # Daemon startup/shutdown
 ├── config.ts             # Config loading
 ├── paths.ts              # Path constants
-├── update.ts             # Self-update checker
+├── notify.ts             # Notification routing
+├── watchdog.ts           # Event loop stall + zombie detection
 ├── copilot/
 │   ├── client.ts         # CopilotClient singleton
 │   ├── orchestrator.ts   # Main session management
 │   ├── agents.ts         # Named agent sessions & personas
-│   ├── universes.ts      # 80s universe character data
 │   ├── tools.ts          # Tool definitions
 │   ├── model-router.ts   # Complexity-based model selection
 │   ├── skills.ts         # Skills loader
+│   ├── scheduler.ts      # Squad cron scheduler
+│   ├── io-scheduler.ts   # IO-level cron scheduler
 │   └── system-message.ts # System prompt builder
 ├── store/
 │   ├── db.ts             # SQLite database
 │   ├── squads.ts         # Squad & agent CRUD
-│   └── tasks.ts          # Agent task tracking
+│   ├── tasks.ts          # Agent task tracking
+│   ├── instances.ts      # Squad instance management
+│   ├── feed.ts           # Unified feed/inbox
+│   └── schedules.ts      # Schedule persistence
 ├── wiki/
 │   ├── fs.ts             # Wiki filesystem
 │   └── search.ts         # Wiki search
 ├── telegram/
 │   ├── bot.ts            # Grammy Telegram bot
 │   └── handlers.ts       # Command handlers
-├── tui/
-│   └── index.ts          # Terminal UI
+├── mcp/
+│   ├── config.ts         # MCP server config
+│   ├── registry.ts       # Module-level tool registry
+│   └── index.ts          # MCP exports
 └── api/
     ├── auth.ts           # Supabase JWT auth middleware
     └── server.ts         # Express HTTP + SSE + static frontend
@@ -298,10 +298,17 @@ web/                        # Vue 3 frontend (built to web-dist/)
 ├── src/
 │   ├── lib/              # supabase.ts, api.ts (auth helpers)
 │   ├── stores/           # Pinia stores (chat, auth)
-│   ├── views/            # ChatView, SquadsView, SkillsView, AgentActivityView, LoginView
+│   ├── views/            # ChatView, SquadsView, FeedView, SkillsView, McpView, etc.
 │   ├── router/           # Vue Router config + auth guard
 │   └── main.ts           # App entry
 ├── vite.config.ts        # Vite config (builds to ../web-dist/)
+└── package.json
+
+docs/                       # VitePress documentation site
+├── .vitepress/config.ts  # Site configuration
+├── guide/                # Getting started, configuration, etc.
+├── architecture/         # System design documentation
+├── reference/            # CLI, API, and tools reference
 └── package.json
 ```
 
@@ -321,8 +328,8 @@ npm run dev
 # Build for production
 npm run build
 
-# Run the TUI directly
-npm run tui
+# Build everything (backend + web)
+npm run build:all
 
 # Run the daemon directly
 npm run daemon
