@@ -2,11 +2,12 @@ import type { CopilotClient, CopilotSession } from "@github/copilot-sdk";
 import { approveAll } from "@github/copilot-sdk";
 import { getClient } from "./client.js";
 import { loadConfig } from "../config.js";
-import { getLeadForSquad, getAgentsForSquad, updateAgentStatus } from "../store/squads.js";
+import { getLeadForSquad, getAgentsForSquad, updateAgentStatus, getSquad } from "../store/squads.js";
 import { createTask, updateTaskStatus } from "../store/tasks.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
+import { addAgentEvent } from "../store/agent-events.js";
 import { PATHS } from "../paths.js";
 
 export async function delegateTask(
@@ -87,16 +88,53 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
     });
 
     try {
-      const response = await session.sendAndWait(
-        { prompt: `Task delegated to you:\n\n${task}` },
-        600_000
-      );
-      result = response?.data?.content ?? "Task completed (no response content).";
+      // Mark task as in progress and record start event
+      updateTaskStatus(taskRecord.id, "in_progress");
+      addAgentEvent(taskRecord.id, "status", `Task started by ${lead.character_name}`, {
+        agent: lead.character_name,
+        role: lead.role_title,
+        task,
+      });
+
+      // Capture streaming message deltas and broadcast via SSE
+      let accumulatedMessage = "";
+      const { broadcast } = await import("../api/server.js");
+      const unsubscribeDelta = session.on("assistant.message_delta", (event: any) => {
+        const delta = event.data?.deltaContent ?? "";
+        if (delta) {
+          accumulatedMessage += delta;
+          broadcast("agent_event", {
+            taskId: taskRecord.id,
+            type: "message_delta",
+            summary: accumulatedMessage,
+            payload: { delta, accumulated: accumulatedMessage },
+          });
+        }
+      });
+
+      try {
+        const response = await session.sendAndWait(
+          { prompt: `Task delegated to you:\n\n${task}` },
+          600_000
+        );
+        result = response?.data?.content ?? "Task completed (no response content).";
+
+        // Record the final message event if we have meaningful content
+        if (accumulatedMessage.trim()) {
+          addAgentEvent(taskRecord.id, "message", accumulatedMessage, {
+            agent: lead.character_name,
+            content: accumulatedMessage,
+          });
+        }
+      } finally {
+        unsubscribeDelta();
+      }
     } finally {
       await session.disconnect();
     }
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : "Unknown error";
+    addAgentEvent(taskRecord.id, "status", `Task failed: ${errMsg}`, { error: errMsg });
     updateTaskStatus(taskRecord.id, "failed", errMsg);
     updateAgentStatus(lead.id, "idle");
     throw err;
@@ -106,9 +144,17 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
   updateTaskStatus(taskRecord.id, "done", result);
   updateAgentStatus(lead.id, "idle");
 
+  // Record completion event
+  addAgentEvent(taskRecord.id, "status", `Task completed by ${lead.character_name}`, {
+    agent: lead.character_name,
+    result: result.slice(0, 500),
+  });
+
   // Post to feed
+  const squad = getSquad(squadId);
+  const squadSource = squad ? `squad-${squad.slug}` : `squad-${squadId}`;
   postFeedItem(
-    `squad-${squadId}`,
+    squadSource,
     `Task completed by ${lead.character_name}`,
     result.slice(0, 2000)
   );

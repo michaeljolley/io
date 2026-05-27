@@ -138,6 +138,22 @@ function runMigrations(db: Database.Database): void {
 
   if (version < 3) {
     db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_events (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        summary TEXT NOT NULL DEFAULT '',
+        payload TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_agent_events_task_id ON agent_events (task_id);
+    `);
+    setSchemaVersion(db, 3);
+  }
+
+  if (version < 4) {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS conversation_messages (
         id TEXT PRIMARY KEY,
         conversation_id TEXT NOT NULL,
@@ -172,7 +188,7 @@ function runMigrations(db: Database.Database): void {
           INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
         END;
     `);
-    setSchemaVersion(db, 3);
+    setSchemaVersion(db, 4);
   }
 }
 
