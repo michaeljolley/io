@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { PATHS } from "../paths.js";
+import { pickSquadColor } from "./squad-colors.js";
 
 let db: Database.Database | undefined;
 
@@ -150,6 +151,62 @@ function runMigrations(db: Database.Database): void {
       CREATE INDEX IF NOT EXISTS idx_agent_events_task_id ON agent_events (task_id);
     `);
     setSchemaVersion(db, 3);
+  }
+
+  if (version < 4) {
+    db.exec(`
+      ALTER TABLE squads ADD COLUMN color TEXT;
+    `);
+    const squads = db
+      .prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
+      .all() as { id: string }[];
+    const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
+    const usedColors: string[] = [];
+    for (let i = 0; i < squads.length; i++) {
+      const color = pickSquadColor(usedColors);
+      usedColors.push(color);
+      update.run(color, squads[i].id);
+    }
+    setSchemaVersion(db, 4);
+  }
+
+  if (version < 5) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS conversation_messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant')),
+        content TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'web',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_conversation_id
+        ON conversation_messages(conversation_id);
+
+      CREATE INDEX IF NOT EXISTS idx_conv_messages_created_at
+        ON conversation_messages(created_at);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS conversation_messages_fts
+        USING fts5(content, content=conversation_messages, content_rowid=rowid);
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_insert
+        AFTER INSERT ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_update
+        AFTER UPDATE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+          INSERT INTO conversation_messages_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+
+      CREATE TRIGGER IF NOT EXISTS conv_messages_fts_delete
+        AFTER DELETE ON conversation_messages BEGIN
+          INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
+        END;
+    `);
+    setSchemaVersion(db, 5);
   }
 }
 

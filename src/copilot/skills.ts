@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, basename, resolve } from "node:path";
-import { exec } from "node:child_process";
+import { join, basename, resolve, sep } from "node:path";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { PATHS } from "../paths.js";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface SkillInfo {
   name: string;
@@ -51,7 +51,7 @@ export async function addSkill(url: string): Promise<void> {
     throw new Error(`Skill "${slug}" is already installed.`);
   }
 
-  await execAsync(`git clone --depth 1 ${url} ${dest}`);
+  await execFileAsync("git", ["clone", "--depth", "1", "--", url, dest]);
 
   // Verify SKILL.md exists
   if (!existsSync(join(dest, "SKILL.md"))) {
@@ -99,7 +99,7 @@ export async function createSkill(slug: string, content: string): Promise<void> 
   // child of the skills directory (not above or beside it).
   const skillsRoot = resolve(PATHS.skills);
   const dest = resolve(skillsRoot, cleanSlug);
-  if (!dest.startsWith(skillsRoot + "/")) {
+  if (!dest.startsWith(skillsRoot + sep)) {
     throw new Error("Invalid skill slug.");
   }
 

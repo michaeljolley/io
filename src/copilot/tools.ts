@@ -61,6 +61,17 @@ export function createTools(): Tool<any>[] {
       },
     }),
 
+    defineTool("wiki_backlinks", {
+      description: "Find all wiki pages that link to the given page",
+      parameters: z.object({
+        path: z.string().describe("Page path relative to pages/ (e.g., 'notes/todo.md')"),
+      }),
+      handler: async ({ path }) => {
+        const { getBacklinks } = await import("../wiki/backlinks.js");
+        return await getBacklinks(path);
+      },
+    }),
+
     // --- Squad Tools ---
     defineTool("squad_create", {
       description:

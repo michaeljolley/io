@@ -21,6 +21,14 @@ import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../
 import { listSkills, addSkill, createSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
 import { readPage, writePage, deletePage, listPages, listTemplates, readTemplate, writeTemplate, deleteTemplate } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
+import { getBacklinks } from "../wiki/backlinks.js";
+import {
+  saveMessage,
+  getConversation,
+  listConversations,
+  searchConversations,
+  deleteConversation,
+} from "../store/conversations.js";
 import { randomUUID } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -81,19 +89,55 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // --- Chat ---
   app.post("/api/message", async (req, res) => {
-    const { prompt } = req.body;
+    const { prompt, conversationId: clientConvId } = req.body;
     if (!prompt || typeof prompt !== "string") {
       res.status(400).json({ error: "prompt is required" });
       return;
     }
 
+    const conversationId = (typeof clientConvId === "string" && clientConvId) ? clientConvId : randomUUID();
+
+    // Persist the user message
+    saveMessage(conversationId, "user", prompt, "web");
+
     // Stream response via SSE, send final to HTTP response
     await sendToOrchestrator(prompt, "web", (content, done) => {
       broadcast("message_delta", { content, done });
       if (done) {
-        res.json({ content });
+        // Persist the assistant response
+        saveMessage(conversationId, "assistant", content, "web");
+        res.json({ content, conversationId });
       }
     });
+  });
+
+  // --- History ---
+  app.get("/api/history", (req, res) => {
+    const q = req.query.q as string | undefined;
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    if (q) {
+      res.json(searchConversations(q, { limit, offset, from, to }));
+    } else {
+      res.json(listConversations({ limit, offset, from, to }));
+    }
+  });
+
+  app.get("/api/history/:id", (req, res) => {
+    const messages = getConversation(req.params.id);
+    if (messages.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+    res.json(messages);
+  });
+
+  app.delete("/api/history/:id", (req, res) => {
+    deleteConversation(req.params.id);
+    res.json({ ok: true });
   });
 
   // --- Squads ---
@@ -278,6 +322,13 @@ export async function startApiServer(config: Config): Promise<void> {
     }
     const results = await searchPages(query);
     res.json(results);
+  });
+
+  app.get("/api/wiki/backlinks/*path", async (req, res) => {
+    const raw = (req.params as any).path;
+    const pagePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const backlinks = await getBacklinks(pagePath);
+    res.json(backlinks);
   });
 
   // --- Wiki Templates ---

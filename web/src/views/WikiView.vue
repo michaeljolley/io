@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { apiGet, apiPut, apiDelete } from "@/lib/api";
-import { BookOpen, Search, Plus, Pencil, Trash2, Save, X, FileCode } from "lucide-vue-next";
+import { BookOpen, Search, Plus, Pencil, Trash2, Save, X, Link, FileCode } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 import WikiTree from "@/components/WikiTree.vue";
 
@@ -19,6 +19,7 @@ const searchQuery = ref("");
 const loading = ref(true);
 const showNewForm = ref(false);
 const newPagePath = ref("");
+const backlinks = ref<string[]>([]);
 
 // --- Templates ---
 const templates = ref<string[]>([]);
@@ -54,6 +55,7 @@ async function selectPage(path: string) {
   editMode.value = false;
   const data = await apiGet(`/wiki/page/${path}`);
   pageContent.value = data.content;
+  backlinks.value = await apiGet(`/wiki/backlinks/${path}`);
 }
 
 function startEdit() {
@@ -66,6 +68,7 @@ async function savePage() {
   await apiPut(`/wiki/page/${selectedPage.value}`, { content: editContent.value });
   pageContent.value = editContent.value;
   editMode.value = false;
+  backlinks.value = await apiGet(`/wiki/backlinks/${selectedPage.value}`);
 }
 
 async function deletePage() {
@@ -75,6 +78,7 @@ async function deletePage() {
   pages.value = pages.value.filter((p) => p !== selectedPage.value);
   selectedPage.value = null;
   pageContent.value = "";
+  backlinks.value = [];
 }
 
 async function createPage() {
@@ -94,6 +98,7 @@ async function createPage() {
   pageContent.value = "";
   editContent.value = "";
   editMode.value = true;
+  backlinks.value = [];
 }
 
 // --- Template helpers ---
@@ -260,7 +265,23 @@ async function createTemplate() {
               v-model="editContent"
               class="w-full h-full min-h-[400px] font-mono text-sm bg-background border border-input rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             ></textarea>
-            <MarkdownContent v-else :content="pageContent" />
+            <template v-else>
+              <MarkdownContent :content="pageContent" />
+              <div v-if="backlinks.length > 0" class="mt-8 pt-4 border-t border-border">
+                <div class="flex items-center gap-1.5 mb-2 text-xs font-medium text-muted-foreground">
+                  <Link class="w-3.5 h-3.5" />
+                  Backlinks
+                </div>
+                <ul class="space-y-1">
+                  <li v-for="link in backlinks" :key="link">
+                    <button
+                      @click="selectPage(link)"
+                      class="text-xs text-primary hover:underline font-mono"
+                    >{{ link }}</button>
+                  </li>
+                </ul>
+              </div>
+            </template>
           </div>
         </template>
       </div>
