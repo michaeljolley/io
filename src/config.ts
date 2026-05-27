@@ -9,19 +9,15 @@ const ConfigSchema = z.object({
   telegramEnabled: z.boolean().default(false),
   selfEditEnabled: z.boolean().default(false),
   defaultModel: z.string().default("gpt-4.1"),
-  modelTiers: z
-    .object({
-      high: z.array(z.string()).default(["claude-opus-4.7", "claude-opus-4.6"]),
-      medium: z
-        .array(z.string())
-        .default(["claude-sonnet-4.6", "gpt-5.5", "claude-opus-4.5"]),
-      low: z.array(z.string()).default(["claude-haiku-4.5", "gpt-5.4-mini"]),
-    })
-    .default({
-      high: ["claude-opus-4.7", "claude-opus-4.6"],
-      medium: ["claude-sonnet-4.6", "gpt-5.5", "claude-opus-4.5"],
-      low: ["claude-haiku-4.5", "gpt-5.4-mini"],
-    }),
+  models: z
+    .array(z.string())
+    .default([
+      "claude-opus-4.7",
+      "claude-sonnet-4.6",
+      "claude-haiku-4.5",
+      "gpt-5.5",
+      "gpt-5.4-mini",
+    ]),
   port: z.number().default(3170),
   supabaseUrl: z.string().optional(),
   supabaseAnonKey: z.string().optional(),

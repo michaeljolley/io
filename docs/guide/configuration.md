@@ -11,7 +11,7 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `telegramEnabled` | `boolean` | `false` | Enable the Telegram bot interface |
 | `selfEditEnabled` | `boolean` | `false` | Allow IO to modify its own source code |
 | `defaultModel` | `string` | `"gpt-4.1"` | LLM model for the main orchestrator session |
-| `modelTiers` | `object` | *(see below)* | Per-complexity model preferences for squad agents |
+| `models` | `string[]` | *(see below)* | Available models — IO auto-selects based on task complexity |
 | `port` | `number` | `3170` | Port for the HTTP server (API + web frontend) |
 | `supabaseUrl` | `string` | — | Supabase project URL (required for auth) |
 | `supabaseAnonKey` | `string` | — | Supabase anon/public API key (required for auth) |
@@ -20,21 +20,17 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `backgroundNotifyTelegram` | `boolean` | `true` | Send background task notifications via Telegram |
 | `watchdogEnabled` | `boolean` | `true` | Enable the daemon event loop watchdog |
 
-## Model Tiers
+## Model Routing
 
-Model tiers control which LLM is selected for squad agent tasks based on complexity:
+IO has built-in knowledge of model capabilities and automatically selects the most appropriate model for each task's complexity. You just provide the list of models you want IO to use:
 
 ```json
 {
-  "modelTiers": {
-    "high": ["claude-opus-4.7", "claude-opus-4.6"],
-    "medium": ["claude-sonnet-4.6", "gpt-5.5", "claude-opus-4.5"],
-    "low": ["claude-haiku-4.5", "gpt-5.4-mini"]
-  }
+  "models": ["claude-opus-4.7", "claude-sonnet-4.6", "claude-haiku-4.5", "gpt-5.5", "gpt-5.4-mini"]
 }
 ```
 
-Each list is a ranked preference — IO picks the first available model.
+For complex tasks (architecture, refactoring, debugging), IO picks the most capable model. For simple tasks (formatting, lookups), it picks the cheapest. No manual categorization required.
 
 ## Example Config
 
@@ -45,15 +41,11 @@ Each list is a ranked preference — IO picks the first available model.
   "telegramEnabled": true,
   "selfEditEnabled": false,
   "defaultModel": "claude-sonnet-4.6",
+  "models": ["claude-opus-4.7", "claude-sonnet-4.6", "claude-haiku-4.5", "gpt-5.5", "gpt-5.4-mini"],
   "port": 3170,
   "supabaseUrl": "https://your-project.supabase.co",
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIs...",
-  "authorizedEmail": "you@example.com",
-  "modelTiers": {
-    "high": ["claude-opus-4.7", "claude-opus-4.6"],
-    "medium": ["claude-sonnet-4.6", "gpt-5.5"],
-    "low": ["claude-haiku-4.5", "gpt-5.4-mini"]
-  }
+  "authorizedEmail": "you@example.com"
 }
 ```
 

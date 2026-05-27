@@ -114,10 +114,7 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `telegramEnabled` | `boolean` | `false` | Enable the Telegram bot interface |
 | `selfEditEnabled` | `boolean` | `false` | Allow IO to modify its own source code |
 | `defaultModel` | `string` | `"gpt-4.1"` | LLM model for the main orchestrator session |
-| `modelTiers` | `object` | *(see below)* | Per-complexity model preferences for squad agents |
-| `modelTiers.high` | `string[]` | `["claude-opus-4.7", "claude-opus-4.6"]` | Models for complex tasks (architecture, debugging, design) |
-| `modelTiers.medium` | `string[]` | `["claude-sonnet-4.6", "gpt-5.5", "claude-opus-4.5"]` | Models for standard tasks (features, tests, reviews) |
-| `modelTiers.low` | `string[]` | `["claude-haiku-4.5", "gpt-5.4-mini"]` | Models for simple tasks (reads, formatting, lookups) |
+| `models` | `string[]` | *(see below)* | Available models for squad agents — IO auto-selects based on task complexity |
 | `port` | `number` | `3170` | Port for the HTTP server (API + web frontend) |
 | `supabaseUrl` | `string` | — | Supabase project URL (enables web portal authentication) |
 | `supabaseAnonKey` | `string` | — | Supabase anon/public API key |
@@ -126,7 +123,7 @@ IO stores its configuration at `~/.io/config.json`. The setup wizard (`io setup`
 | `backgroundNotifyTelegram` | `boolean` | `true` | Send background task notifications via Telegram |
 | `watchdogEnabled` | `boolean` | `true` | Enable the daemon event loop watchdog |
 
-Each `modelTiers` list is a ranked preference — IO picks the first available model at startup.
+IO has built-in knowledge of model capabilities and automatically picks the most appropriate model for each task's complexity.
 
 > **Migration note:** If your config uses the old `apiPort` field, IO will automatically migrate it to `port`.
 
@@ -139,15 +136,11 @@ Each `modelTiers` list is a ranked preference — IO picks the first available m
   "telegramEnabled": true,
   "selfEditEnabled": false,
   "defaultModel": "claude-sonnet-4.6",
+  "models": ["claude-opus-4.7", "claude-sonnet-4.6", "claude-haiku-4.5", "gpt-5.5", "gpt-5.4-mini"],
   "port": 3170,
   "supabaseUrl": "https://your-project.supabase.co",
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIs...",
-  "authorizedEmail": "you@example.com",
-  "modelTiers": {
-    "high": ["claude-opus-4.7", "claude-opus-4.6"],
-    "medium": ["claude-sonnet-4.6", "gpt-5.5", "claude-opus-4.5"],
-    "low": ["claude-haiku-4.5", "gpt-5.4-mini"]
-  }
+  "authorizedEmail": "you@example.com"
 }
 ```
 
