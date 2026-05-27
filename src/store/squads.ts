@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./db.js";
+import { pickSquadColor } from "./squad-colors.js";
 
 export interface Squad {
   id: string;
   name: string;
   slug: string;
   universe: string;
+  color: string;
   repo_url: string | null;
   rules: string;
   created_at: string;
@@ -33,9 +35,13 @@ export function createSquad(
   const db = getDb();
   const id = randomUUID();
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const usedColors = db
+    .prepare("SELECT color FROM squads WHERE color IS NOT NULL")
+    .all() as { color: string }[];
+  const color = pickSquadColor(usedColors.map((row) => row.color));
   db.prepare(
-    "INSERT INTO squads (id, name, slug, universe, repo_url) VALUES (?, ?, ?, ?, ?)"
-  ).run(id, name, slug, universe, repoUrl ?? null);
+    "INSERT INTO squads (id, name, slug, universe, color, repo_url) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(id, name, slug, universe, color, repoUrl ?? null);
 
   return db.prepare("SELECT * FROM squads WHERE id = ?").get(id) as Squad;
 }

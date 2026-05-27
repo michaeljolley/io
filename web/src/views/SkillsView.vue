@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { Puzzle, Plus, Trash2, Eye, Pencil, Save, X } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
@@ -11,12 +11,30 @@ interface Skill {
   path: string;
 }
 
+const DEFAULT_SKILL_TEMPLATE =
+  "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n";
+
 const skills = ref<Skill[]>([]);
 const loading = ref(true);
 const showAddForm = ref(false);
+const addMode = ref<"git" | "create">("git");
 const newSkillUrl = ref("");
+const newSkillTitle = ref("");
+const newSkillContent = ref(DEFAULT_SKILL_TEMPLATE);
 const adding = ref(false);
 const error = ref("");
+
+// Derives a display slug from the title using the same normalisation rules as
+// createSkill() in src/copilot/skills.ts so the user sees the exact slug that
+// will be used before submitting the form.
+const newSkillSlug = computed(() =>
+  newSkillTitle.value
+    .trim()
+    .replace(/[^a-z0-9-]/gi, "-")
+    .toLowerCase()
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+);
 
 // View/Edit state
 const selectedSkill = ref<Skill | null>(null);
@@ -34,17 +52,48 @@ async function fetchSkills() {
   }
 }
 
-async function addSkill() {
+function openAddForm(mode: "git" | "create") {
+  addMode.value = mode;
+  showAddForm.value = true;
+  error.value = "";
+}
+
+function cancelAddForm() {
+  showAddForm.value = false;
+  newSkillUrl.value = "";
+  newSkillTitle.value = "";
+  newSkillContent.value = DEFAULT_SKILL_TEMPLATE;
+  error.value = "";
+}
+
+async function addSkillFromGit() {
   if (!newSkillUrl.value.trim()) return;
   adding.value = true;
   error.value = "";
   try {
     await apiPost("/skills", { url: newSkillUrl.value.trim() });
-    newSkillUrl.value = "";
-    showAddForm.value = false;
+    cancelAddForm();
     await fetchSkills();
   } catch (err: any) {
     error.value = err.message || "Failed to install skill";
+  } finally {
+    adding.value = false;
+  }
+}
+
+async function createSkill() {
+  if (!newSkillTitle.value.trim() || !newSkillContent.value.trim()) return;
+  adding.value = true;
+  error.value = "";
+  try {
+    await apiPost("/skills", {
+      slug: newSkillSlug.value,
+      content: newSkillContent.value,
+    });
+    cancelAddForm();
+    await fetchSkills();
+  } catch (err: any) {
+    error.value = err.message || "Failed to create skill";
   } finally {
     adding.value = false;
   }
@@ -102,31 +151,78 @@ onMounted(fetchSkills);
     <!-- Sidebar: skill list -->
     <div class="w-72 border-r border-border flex flex-col shrink-0">
       <div class="p-3 border-b border-border space-y-2">
-        <button
-          @click="showAddForm = !showAddForm"
-          class="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus class="w-3.5 h-3.5" />
-          Add Skill
-        </button>
-        <div v-if="showAddForm" class="space-y-1.5">
+        <div class="flex gap-1">
+          <button
+            @click="openAddForm('git')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus class="w-3.5 h-3.5" />
+            From Git
+          </button>
+          <button
+            @click="openAddForm('create')"
+            class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-md border border-border hover:bg-accent"
+          >
+            <Plus class="w-3.5 h-3.5" />
+            Create New
+          </button>
+        </div>
+
+        <!-- Git clone form -->
+        <div v-if="showAddForm && addMode === 'git'" class="space-y-1.5">
           <input
             v-model="newSkillUrl"
             type="text"
             placeholder="https://github.com/user/skill-repo.git"
             class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            @keyup.enter="addSkill"
+            @keyup.enter="addSkillFromGit"
           />
           <div class="flex gap-1">
             <button
-              @click="addSkill"
+              @click="addSkillFromGit"
               :disabled="adding || !newSkillUrl.trim()"
               class="flex-1 px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {{ adding ? "Installing..." : "Install" }}
             </button>
             <button
-              @click="showAddForm = false; newSkillUrl = ''"
+              @click="cancelAddForm"
+              class="px-2 py-1 text-xs rounded border border-border hover:bg-accent"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Create new skill form -->
+        <div v-if="showAddForm && addMode === 'create'" class="space-y-1.5">
+          <div>
+            <input
+              v-model="newSkillTitle"
+              type="text"
+              placeholder="Skill title"
+              class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <p v-if="newSkillTitle.trim()" class="mt-0.5 text-xs text-muted-foreground font-mono">
+              slug: {{ newSkillSlug }}
+            </p>
+          </div>
+          <textarea
+            v-model="newSkillContent"
+            rows="8"
+            placeholder="# My Skill&#10;&#10;Describe your skill in Markdown..."
+            class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+          ></textarea>
+          <div class="flex gap-1">
+            <button
+              @click="createSkill"
+              :disabled="adding || !newSkillTitle.trim() || !newSkillContent.trim()"
+              class="flex-1 px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {{ adding ? "Creating..." : "Create" }}
+            </button>
+            <button
+              @click="cancelAddForm"
               class="px-2 py-1 text-xs rounded border border-border hover:bg-accent"
             >
               Cancel
