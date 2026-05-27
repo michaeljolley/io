@@ -16,7 +16,7 @@ import {
 } from "../store/feed.js";
 import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
-import { listSkills } from "../copilot/skills.js";
+import { listSkills, addSkill, removeSkill } from "../copilot/skills.js";
 import { readPage, writePage, deletePage, listPages } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
 import { randomUUID } from "node:crypto";
@@ -152,6 +152,29 @@ export async function startApiServer(config: Config): Promise<void> {
   app.get("/api/skills", async (_req, res) => {
     const skills = await listSkills();
     res.json(skills);
+  });
+
+  app.post("/api/skills", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url || typeof url !== "string") {
+        res.status(400).json({ error: "Missing 'url' in request body" });
+        return;
+      }
+      await addSkill(url);
+      res.status(201).json({ ok: true });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/skills/:slug", async (req, res) => {
+    try {
+      await removeSkill(req.params.slug);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
   });
 
   // --- Wiki ---

@@ -35,39 +35,4 @@ program
     await runSetup();
   });
 
-const skill = program.command("skill").description("Manage installed skills");
-
-skill
-  .command("list")
-  .description("List installed skills")
-  .action(async () => {
-    const { listSkills } = await import("./copilot/skills.js");
-    const skills = await listSkills();
-    if (skills.length === 0) {
-      console.log("No skills installed.");
-      return;
-    }
-    for (const s of skills) {
-      console.log(`  ${s.name} — ${s.description}`);
-    }
-  });
-
-skill
-  .command("add <url>")
-  .description("Install a skill from a git repository")
-  .action(async (url) => {
-    const { addSkill } = await import("./copilot/skills.js");
-    await addSkill(url);
-    console.log("Skill installed successfully.");
-  });
-
-skill
-  .command("remove <slug>")
-  .description("Remove an installed skill")
-  .action(async (slug) => {
-    const { removeSkill } = await import("./copilot/skills.js");
-    await removeSkill(slug);
-    console.log(`Skill "${slug}" removed.`);
-  });
-
 program.parse();

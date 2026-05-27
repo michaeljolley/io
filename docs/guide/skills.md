@@ -4,16 +4,11 @@ Skills are modular extensions that teach IO how to use external tools. Each skil
 
 ## Managing Skills
 
-```bash
-# List installed skills
-io skill list
+Skills are managed through the **web dashboard** under the Skills page:
 
-# Install from a git repo
-io skill add https://github.com/user/my-skill.git
-
-# Remove a skill
-io skill remove my-skill
-```
+- **View** all installed skills with name, description, and slug
+- **Install** a new skill by providing its git repository URL
+- **Remove** skills you no longer need (hover over a skill card to reveal the delete button)
 
 ## How Skills Work
 
@@ -52,11 +47,9 @@ Description of available tools and their parameters...
 
 ## Installation Sources
 
-Skills can be installed from any git repository:
+Skills can be installed from any git repository via the web dashboard. Simply paste the URL:
 
-```bash
-io skill add https://github.com/user/skill-name.git
-io skill add git@github.com:user/skill-name.git
-```
+- `https://github.com/user/skill-name.git`
+- `git@github.com:user/skill-name.git`
 
 The repository must contain a `SKILL.md` file at its root.

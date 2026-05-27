@@ -98,6 +98,19 @@ Remove a server.
 
 List installed skills.
 
+### `POST /api/skills`
+
+Install a skill from a git repository.
+
+**Body:**
+```json
+{ "url": "https://github.com/user/my-skill.git" }
+```
+
+### `DELETE /api/skills/:slug`
+
+Remove an installed skill by slug.
+
 ## Wiki
 
 ### `GET /api/wiki/pages`

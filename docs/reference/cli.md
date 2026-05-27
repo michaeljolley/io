@@ -23,28 +23,6 @@ io setup
 
 Prompts for Supabase credentials, Telegram bot token, and user ID. Saves to `~/.io/config.json`.
 
-## `io skill list`
-
-List all installed skills.
-
-```bash
-io skill list
-```
-
-## `io skill add <url>`
-
-Install a skill from a git repository.
-
-```bash
-io skill add https://github.com/user/my-skill.git
-```
-
-The repository must contain a `SKILL.md` file at its root.
-
-## `io skill remove <slug>`
-
-Remove an installed skill by its slug (directory name).
-
-```bash
-io skill remove my-skill
-```
+::: tip
+Skills are managed through the web dashboard — no CLI commands needed.
+:::

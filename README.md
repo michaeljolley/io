@@ -96,10 +96,8 @@ WantedBy=multi-user.target
 | `io --daemon` | Run as background daemon (Telegram + API + Web) |
 | `io --self-edit` | Allow IO to modify its own source |
 | `io setup` | Configure Telegram bot token and user ID |
-| `io skill list` | List installed skills |
-| `io skill add <repo-url>` | Install a skill from a git repository |
-| `io skill remove <slug>` | Remove an installed skill |
-| `io skill search <query>` | Search the skills.sh registry |
+
+Skills are managed via the web dashboard.
 
 ## ⚙️ Configuration
 
@@ -158,19 +156,11 @@ Skills are modular extensions that add new tools and capabilities to IO. Each sk
 
 ### Managing Skills
 
-```bash
-# Search the skills.sh registry
-io skill search "github"
+Skills are managed through the web dashboard:
 
-# Install from a git repo
-io skill add https://github.com/user/my-skill.git
-
-# List installed skills
-io skill list
-
-# Remove a skill
-io skill remove my-skill
-```
+- **View** all installed skills with name, description, and slug
+- **Install** new skills by providing a git repository URL
+- **Remove** skills you no longer need
 
 ### Creating a Skill
 
