@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci && npm ci --prefix web
+
+      - name: Type check (backend)
+        run: npx tsc --noEmit
+
+      - name: Type check (Vue)
+        run: npx vue-tsc --noEmit -p web/tsconfig.json
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build:all
