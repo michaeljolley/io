@@ -8,7 +8,7 @@ import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
 import { getTasksForSquad } from "../store/tasks.js";
-import { getInstancesForSquad } from "../store/instances.js";
+import { getInstancesForSquad, destroyInstance } from "../store/instances.js";
 import {
   getFeedItems,
   markFeedItemRead,
@@ -97,7 +97,12 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // --- Squads ---
   app.get("/api/squads", (_req, res) => {
-    res.json(listSquads());
+    const data = listSquads();
+    const instanceCounts: Record<string, number> = {};
+    for (const squad of data.squads) {
+      instanceCounts[squad.id] = getInstancesForSquad(squad.id).length;
+    }
+    res.json({ ...data, instanceCounts });
   });
 
   app.get("/api/squads/:id", (req, res) => {
@@ -110,6 +115,17 @@ export async function startApiServer(config: Config): Promise<void> {
     const tasks = getTasksForSquad(req.params.id);
     const instances = getInstancesForSquad(req.params.id);
     res.json({ squad, agents, tasks, instances });
+  });
+
+  app.delete("/api/instances/:id", async (req, res) => {
+    try {
+      await destroyInstance(req.params.id);
+      res.json({ ok: true });
+    } catch (err: any) {
+      const msg: string = err?.message ?? "Unknown error";
+      const status = msg.toLowerCase().includes("not found") ? 404 : 500;
+      res.status(status).json({ error: msg });
+    }
   });
 
   // --- Feed ---

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { apiGet } from "@/lib/api";
-import { Users, GitBranch } from "lucide-vue-next";
+import { Users, GitBranch, Layers } from "lucide-vue-next";
 
 interface Squad {
   id: string;
@@ -24,6 +24,7 @@ interface Agent {
 
 const squads = ref<Squad[]>([]);
 const agents = ref<Agent[]>([]);
+const instanceCounts = ref<Record<string, number>>({});
 const loading = ref(true);
 
 onMounted(async () => {
@@ -31,6 +32,7 @@ onMounted(async () => {
     const data = await apiGet("/squads");
     squads.value = data.squads;
     agents.value = data.agents;
+    instanceCounts.value = data.instanceCounts ?? {};
   } finally {
     loading.value = false;
   }
@@ -73,6 +75,10 @@ function getAgentsForSquad(squadId: string) {
           <span v-if="squad.repo_url" class="flex items-center gap-1">
             <GitBranch class="w-3 h-3" />
             {{ squad.repo_url }}
+          </span>
+          <span class="flex items-center gap-1">
+            <Layers class="w-3 h-3" />
+            {{ instanceCounts[squad.id] ?? 0 }}/3 instances
           </span>
         </div>
       </router-link>
