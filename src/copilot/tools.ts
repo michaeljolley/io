@@ -77,6 +77,10 @@ export function createTools(): Tool<any>[] {
         const squad = createSquad(name, universe, repo_url);
         let cloneMsg = "";
 
+        // Copy squad wiki templates into the new squad's wiki directory
+        const { copySquadTemplates } = await import("../wiki/fs.js");
+        await copySquadTemplates(squad.slug);
+
         if (repo_url) {
           const { exec } = await import("node:child_process");
           const { promisify } = await import("node:util");
