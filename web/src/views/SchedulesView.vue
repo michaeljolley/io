@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
-import { Clock, Plus, Trash2 } from "lucide-vue-next";
+import { Clock, Plus, Trash2, Play } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface Schedule {
@@ -27,6 +27,7 @@ const loading = ref(true);
 const tab = ref<"squad" | "io">("squad");
 const showAdd = ref(false);
 const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "", agenda: "triage", prompt: "" });
+const triggeredId = ref<string | null>(null);
 
 onMounted(async () => {
   try {
@@ -81,6 +82,16 @@ async function toggleSchedule(schedule: Schedule) {
 async function deleteSchedule(id: string) {
   await apiDelete(`/schedules/${id}`);
   schedules.value = schedules.value.filter((s) => s.id !== id);
+}
+
+async function triggerScheduleNow(schedule: Schedule) {
+  await apiPost(`/schedules/${schedule.id}/trigger`, {});
+  triggeredId.value = schedule.id;
+  // Update last_run locally
+  schedule.last_run = new Date().toISOString();
+  setTimeout(() => {
+    triggeredId.value = null;
+  }, 3000);
 }
 
 function getSquadName(squadId: string | null): string {
@@ -185,6 +196,14 @@ function getSquadName(squadId: string | null): string {
           </div>
         </div>
         <div class="flex items-center gap-3">
+          <button
+            @click="triggerScheduleNow(schedule)"
+            class="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"
+            title="Trigger now"
+          >
+            <Play class="w-4 h-4" />
+          </button>
+          <span v-if="triggeredId === schedule.id" class="text-xs text-green-500 font-medium">Triggered!</span>
           <button
             @click="toggleSchedule(schedule)"
             class="relative w-10 h-5 rounded-full transition-colors"

@@ -41,6 +41,11 @@ export function createSchedule(input: {
   return db.prepare("SELECT * FROM schedules WHERE id = ?").get(id) as Schedule;
 }
 
+export function getSchedule(id: string): Schedule | undefined {
+  const db = getDb();
+  return db.prepare("SELECT * FROM schedules WHERE id = ?").get(id) as Schedule | undefined;
+}
+
 export function listSchedules(type?: "squad" | "io"): Schedule[] {
   const db = getDb();
   if (type) {
