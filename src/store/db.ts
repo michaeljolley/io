@@ -139,33 +139,15 @@ function runMigrations(db: Database.Database): void {
 
   if (version < 3) {
     db.exec(`
-<<<<<<< HEAD
-      CREATE TABLE IF NOT EXISTS audit_log (
-        id TEXT PRIMARY KEY,
-        squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
-        agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
-        task_id TEXT,
-        action_type TEXT NOT NULL,
-=======
       CREATE TABLE IF NOT EXISTS agent_events (
         id TEXT PRIMARY KEY,
         task_id TEXT NOT NULL,
         type TEXT NOT NULL,
->>>>>>> origin/main
         summary TEXT NOT NULL DEFAULT '',
         payload TEXT NOT NULL DEFAULT '{}',
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
 
-<<<<<<< HEAD
-      CREATE INDEX IF NOT EXISTS idx_audit_log_squad_id ON audit_log (squad_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_log_agent_id ON audit_log (agent_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log (action_type);
-      CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log (created_at);
-    `);
-    setSchemaVersion(db, 3);
-  }
-=======
       CREATE INDEX IF NOT EXISTS idx_agent_events_task_id ON agent_events (task_id);
     `);
     setSchemaVersion(db, 3);
@@ -226,7 +208,27 @@ function runMigrations(db: Database.Database): void {
     `);
     setSchemaVersion(db, 5);
   }
->>>>>>> origin/main
+
+  if (version < 6) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+        agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+        task_id TEXT,
+        action_type TEXT NOT NULL,
+        summary TEXT NOT NULL DEFAULT '',
+        payload TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_log_squad_id ON audit_log (squad_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_agent_id ON audit_log (agent_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log (action_type);
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log (created_at);
+    `);
+    setSchemaVersion(db, 6);
+  }
 }
 
 function getSchemaVersion(db: Database.Database): number {

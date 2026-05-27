@@ -7,11 +7,8 @@ import { createTask, updateTaskStatus } from "../store/tasks.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
-<<<<<<< HEAD
 import { addAuditEntry } from "../store/audit-log.js";
-=======
 import { addAgentEvent } from "../store/agent-events.js";
->>>>>>> origin/main
 import { PATHS } from "../paths.js";
 
 export async function delegateTask(
@@ -163,7 +160,6 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
   updateTaskStatus(taskRecord.id, "done", result);
   updateAgentStatus(lead.id, "idle");
 
-<<<<<<< HEAD
   // Audit: task completed
   addAuditEntry(
     "task_completed",
@@ -171,13 +167,12 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
     { result: result.slice(0, 500) },
     { squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id }
   );
-=======
+
   // Record completion event
   addAgentEvent(taskRecord.id, "status", `Task completed by ${lead.character_name}`, {
     agent: lead.character_name,
     result: result.slice(0, 500),
   });
->>>>>>> origin/main
 
   // Post to feed
   const squad = getSquad(squadId);

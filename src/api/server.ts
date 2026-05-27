@@ -7,15 +7,10 @@ import { loadConfig, saveConfig } from "../config.js";
 import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
-<<<<<<< HEAD
-import { getTasksForSquad } from "../store/tasks.js";
-import { getInstancesForSquad } from "../store/instances.js";
-import { getAuditLog, countAuditLog } from "../store/audit-log.js";
-=======
 import { getTasksForSquad, getSquadTaskMetrics } from "../store/tasks.js";
 import { getInstancesForSquad, destroyInstance } from "../store/instances.js";
 import { getAgentEvents } from "../store/agent-events.js";
->>>>>>> origin/main
+import { getAuditLog, countAuditLog } from "../store/audit-log.js";
 import {
   getFeedItems,
   markFeedItemRead,
@@ -205,22 +200,6 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json({ squad, agents, tasks, instances });
   });
 
-<<<<<<< HEAD
-  // --- Audit Log ---
-  app.get("/api/audit-log", (req, res) => {
-    const squad_id = req.query.squad_id as string | undefined;
-    const agent_id = req.query.agent_id as string | undefined;
-    const action_type = req.query.action_type as string | undefined;
-    const from = req.query.from as string | undefined;
-    const to = req.query.to as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = parseInt(req.query.offset as string) || 0;
-    const filters = { squad_id, agent_id, action_type, from, to, limit, offset };
-    res.json({
-      entries: getAuditLog(filters),
-      total: countAuditLog(filters),
-    });
-=======
   app.delete("/api/instances/:id", async (req, res) => {
     try {
       await destroyInstance(req.params.id);
@@ -236,7 +215,22 @@ export async function startApiServer(config: Config): Promise<void> {
   app.get("/api/tasks/:taskId/events", (req, res) => {
     const events = getAgentEvents(req.params.taskId);
     res.json(events);
->>>>>>> origin/main
+  });
+
+  // --- Audit Log ---
+  app.get("/api/audit-log", (req, res) => {
+    const squad_id = req.query.squad_id as string | undefined;
+    const agent_id = req.query.agent_id as string | undefined;
+    const action_type = req.query.action_type as string | undefined;
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const filters = { squad_id, agent_id, action_type, from, to, limit, offset };
+    res.json({
+      entries: getAuditLog(filters),
+      total: countAuditLog(filters),
+    });
   });
 
   // --- Feed ---
