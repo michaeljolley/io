@@ -20,6 +20,13 @@ import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../
 import { listSkills, addSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
 import { readPage, writePage, deletePage, listPages } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
+import {
+  getTokenUsageSummary,
+  getTokenUsageBySquad,
+  getTokenUsageByAgent,
+  getDailyTokenUsage,
+} from "../store/token-usage.js";
+import { DEFAULT_MODEL_PRICING } from "../copilot/token-tracker.js";
 import { randomUUID } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -315,6 +322,59 @@ export async function startApiServer(config: Config): Promise<void> {
     if (body.watchdogEnabled !== undefined) updates.watchdogEnabled = body.watchdogEnabled;
 
     saveConfig(updates);
+    res.json({ ok: true });
+  });
+
+  // --- Token Usage ---
+  app.get("/api/token-usage/summary", (req, res) => {
+    const since = req.query.since as string | undefined;
+    res.json(getTokenUsageSummary({ since }));
+  });
+
+  app.get("/api/token-usage/by-squad", (req, res) => {
+    const since = req.query.since as string | undefined;
+    res.json(getTokenUsageBySquad({ since }));
+  });
+
+  app.get("/api/token-usage/by-agent", (req, res) => {
+    const since = req.query.since as string | undefined;
+    const squadId = req.query.squad_id as string | undefined;
+    res.json(getTokenUsageByAgent({ since, squadId }));
+  });
+
+  app.get("/api/token-usage/daily", (req, res) => {
+    const days = parseInt(req.query.days as string) || 30;
+    res.json(getDailyTokenUsage(days));
+  });
+
+  app.get("/api/token-usage/pricing", (_req, res) => {
+    const config = loadConfig();
+    const merged = { ...DEFAULT_MODEL_PRICING, ...(config.modelPricing ?? {}) };
+    res.json(merged);
+  });
+
+  app.put("/api/token-usage/pricing", (req, res) => {
+    const pricing = req.body;
+    if (typeof pricing !== "object" || pricing === null) {
+      res.status(400).json({ error: "Expected object body" });
+      return;
+    }
+    saveConfig({ modelPricing: pricing });
+    res.json({ ok: true });
+  });
+
+  app.get("/api/token-usage/alert-threshold", (_req, res) => {
+    const config = loadConfig();
+    res.json({ tokenAlertThreshold: config.tokenAlertThreshold ?? null });
+  });
+
+  app.put("/api/token-usage/alert-threshold", (req, res) => {
+    const { tokenAlertThreshold } = req.body;
+    if (tokenAlertThreshold !== null && typeof tokenAlertThreshold !== "number") {
+      res.status(400).json({ error: "tokenAlertThreshold must be a number or null" });
+      return;
+    }
+    saveConfig({ tokenAlertThreshold: tokenAlertThreshold ?? undefined });
     res.json({ ok: true });
   });
 

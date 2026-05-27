@@ -3,6 +3,7 @@ import { getClient } from "./client.js";
 import { getLeadForSquad, getAgentsForSquad, type Agent } from "../store/squads.js";
 import { selectModel } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
+import { attachTokenTracker } from "./token-tracker.js";
 
 interface MeetingResult {
   plan: string;
@@ -114,6 +115,8 @@ export async function planningMeeting(
         onPermissionRequest: approveAll,
       });
 
+      const flushTokens = attachTokenTracker(session, { squadId, agentId: agent.id });
+
       try {
         const response = await session.sendAndWait(
           { prompt: "Please provide your planning input for this task." },
@@ -125,6 +128,7 @@ export async function planningMeeting(
           input: response?.data?.content ?? "(no response)",
         };
       } finally {
+        flushTokens();
         await session.disconnect();
       }
     })
@@ -151,6 +155,11 @@ export async function planningMeeting(
     onPermissionRequest: approveAll,
   });
 
+  const flushFacilitatorTokens = attachTokenTracker(facilitatorSession, {
+    squadId,
+    agentId: lead.id,
+  });
+
   let plan: string;
   try {
     const prompt = `Here is the input gathered from your team:\n\n${inputsSummary}\n\nNow synthesize this into a clear, structured action plan.`;
@@ -160,6 +169,7 @@ export async function planningMeeting(
     );
     plan = response?.data?.content ?? "Planning meeting completed but no plan was produced.";
   } finally {
+    flushFacilitatorTokens();
     await facilitatorSession.disconnect();
   }
 

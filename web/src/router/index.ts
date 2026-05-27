@@ -49,6 +49,11 @@ const routes = [
     component: () => import("@/views/WikiView.vue"),
   },
   {
+    path: "/usage",
+    name: "usage",
+    component: () => import("@/views/UsageView.vue"),
+  },
+  {
     path: "/settings",
     name: "settings",
     component: () => import("@/views/SettingsView.vue"),

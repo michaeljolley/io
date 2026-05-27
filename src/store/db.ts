@@ -135,6 +135,28 @@ function runMigrations(db: Database.Database): void {
     }
     setSchemaVersion(db, 2);
   }
+
+  if (version < 3) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS token_usage (
+        id TEXT PRIMARY KEY,
+        squad_id TEXT REFERENCES squads(id) ON DELETE CASCADE,
+        agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+        task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+        model TEXT NOT NULL,
+        input_tokens INTEGER NOT NULL DEFAULT 0,
+        output_tokens INTEGER NOT NULL DEFAULT 0,
+        cost_usd REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_token_usage_squad ON token_usage(squad_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_agent ON token_usage(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_task ON token_usage(task_id);
+      CREATE INDEX IF NOT EXISTS idx_token_usage_created ON token_usage(created_at);
+    `);
+    setSchemaVersion(db, 3);
+  }
 }
 
 function getSchemaVersion(db: Database.Database): number {

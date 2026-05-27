@@ -12,6 +12,7 @@ import {
   BookOpen,
   Settings,
   LogOut,
+  BarChart3,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -22,6 +23,7 @@ const navItems = [
   { name: "Chat", icon: MessageSquare, path: "/" },
   { name: "Squads", icon: Users, path: "/squads" },
   { name: "Feed", icon: Inbox, path: "/feed" },
+  { name: "Usage", icon: BarChart3, path: "/usage" },
   { name: "Skills", icon: Puzzle, path: "/skills" },
   { name: "MCP Servers", icon: Server, path: "/mcp" },
   { name: "Schedules", icon: Clock, path: "/schedules" },

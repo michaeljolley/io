@@ -7,6 +7,7 @@ import { createTask, updateTaskStatus } from "../store/tasks.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
+import { attachTokenTracker } from "./token-tracker.js";
 import { PATHS } from "../paths.js";
 
 export async function delegateTask(
@@ -86,6 +87,12 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
       },
     });
 
+    const flushTokens = attachTokenTracker(session, {
+      squadId,
+      agentId: lead.id,
+      taskId: taskRecord.id,
+    });
+
     try {
       const response = await session.sendAndWait(
         { prompt: `Task delegated to you:\n\n${task}` },
@@ -93,6 +100,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
       );
       result = response?.data?.content ?? "Task completed (no response content).";
     } finally {
+      flushTokens();
       await session.disconnect();
     }
   } catch (err) {
