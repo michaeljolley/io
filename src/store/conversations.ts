@@ -187,7 +187,8 @@ export function searchConversations(
       `SELECT DISTINCT cm.conversation_id
        FROM conversation_messages cm
        JOIN conversation_messages_fts fts ON fts.rowid = cm.rowid
-       WHERE conversation_messages_fts MATCH ?${dateWhere}`
+       WHERE conversation_messages_fts MATCH ?${dateWhere}
+       LIMIT 500`
     )
     .all(query, ...dateParams) as { conversation_id: string }[];
 

@@ -32,13 +32,13 @@ const selectedMessages = ref<ConversationMessage[]>([]);
 const threadLoading = ref(false);
 
 const limit = 50;
-let offset = 0;
+const offset = ref(0);
 
 async function loadConversations(reset = true) {
   loading.value = true;
   try {
     if (reset) {
-      offset = 0;
+      offset.value = 0;
       conversations.value = [];
     }
     const params = new URLSearchParams();
@@ -46,7 +46,7 @@ async function loadConversations(reset = true) {
     if (dateFrom.value) params.set("from", dateFrom.value);
     if (dateTo.value) params.set("to", dateTo.value + "T23:59:59");
     params.set("limit", String(limit));
-    params.set("offset", String(offset));
+    params.set("offset", String(offset.value));
 
     const result = await apiGet<{ items: ConversationSummary[]; total: number }>(
       `/history?${params.toString()}`
@@ -55,7 +55,7 @@ async function loadConversations(reset = true) {
       ? result.items
       : [...conversations.value, ...result.items];
     total.value = result.total;
-    offset += result.items.length;
+    offset.value += result.items.length;
   } finally {
     loading.value = false;
   }
