@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, basename } from "node:path";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
@@ -77,12 +77,24 @@ export async function getSkillContent(slug: string): Promise<string> {
 }
 
 export async function updateSkillContent(slug: string, content: string): Promise<void> {
-  const { writeFileSync } = await import("node:fs");
   const skillMd = join(PATHS.skills, slug, "SKILL.md");
   if (!existsSync(join(PATHS.skills, slug))) {
     throw new Error(`Skill "${slug}" not found.`);
   }
   writeFileSync(skillMd, content);
+}
+
+export async function createSkill(slug: string, content: string): Promise<void> {
+  const cleanSlug = slug.trim().replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  if (!cleanSlug) {
+    throw new Error("Skill slug must not be empty.");
+  }
+  const dest = join(PATHS.skills, cleanSlug);
+  if (existsSync(dest)) {
+    throw new Error(`Skill "${cleanSlug}" already exists.`);
+  }
+  mkdirSync(dest, { recursive: true });
+  writeFileSync(join(dest, "SKILL.md"), content);
 }
 
 export async function loadSkillDirectories(): Promise<string[]> {

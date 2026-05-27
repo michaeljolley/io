@@ -100,12 +100,22 @@ List installed skills.
 
 ### `POST /api/skills`
 
-Install a skill from a git repository.
+Install or create a skill. Two modes are supported:
 
-**Body:**
+**Install from a git repository:**
 ```json
 { "url": "https://github.com/user/my-skill.git" }
 ```
+
+**Create directly with markdown content:**
+```json
+{
+  "slug": "my-skill",
+  "content": "# My Skill\n\nDescribe the skill here..."
+}
+```
+
+The `slug` is sanitised to lowercase alphanumeric characters and hyphens. The skill is saved to `~/.io/skills/<slug>/SKILL.md`.
 
 ### `DELETE /api/skills/:slug`
 
