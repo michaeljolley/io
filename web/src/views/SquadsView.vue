@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { apiGet } from "@/lib/api";
-import { Users, GitBranch } from "lucide-vue-next";
+import { Users, GitBranch, Layers } from "lucide-vue-next";
+import { getSquadLabelStyle } from "@/lib/squad-colors";
 
 interface Squad {
   id: string;
   name: string;
   universe: string;
+  color: string;
   repo_url: string | null;
   created_at: string;
 }
@@ -24,6 +26,7 @@ interface Agent {
 
 const squads = ref<Squad[]>([]);
 const agents = ref<Agent[]>([]);
+const instanceCounts = ref<Record<string, number>>({});
 const loading = ref(true);
 
 onMounted(async () => {
@@ -31,6 +34,7 @@ onMounted(async () => {
     const data = await apiGet("/squads");
     squads.value = data.squads;
     agents.value = data.agents;
+    instanceCounts.value = data.instanceCounts ?? {};
   } finally {
     loading.value = false;
   }
@@ -58,11 +62,14 @@ function getAgentsForSquad(squadId: string) {
         v-for="squad in squads"
         :key="squad.id"
         :to="`/squads/${squad.id}`"
-        class="block rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors"
+        class="block rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors border-l-4"
+        :style="{ borderLeftColor: squad.color }"
       >
         <div class="flex items-start justify-between">
-          <div>
-            <h3 class="font-semibold">{{ squad.name }}</h3>
+          <div class="min-w-0">
+            <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium" :style="getSquadLabelStyle(squad.color)">
+              {{ squad.name }}
+            </span>
             <p class="text-sm text-muted-foreground mt-0.5">{{ squad.universe }}</p>
           </div>
           <span class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
@@ -73,6 +80,10 @@ function getAgentsForSquad(squadId: string) {
           <span v-if="squad.repo_url" class="flex items-center gap-1">
             <GitBranch class="w-3 h-3" />
             {{ squad.repo_url }}
+          </span>
+          <span class="flex items-center gap-1">
+            <Layers class="w-3 h-3" />
+            {{ instanceCounts[squad.id] ?? 0 }}/3 instances
           </span>
         </div>
       </router-link>

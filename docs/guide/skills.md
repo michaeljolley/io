@@ -7,7 +7,9 @@ Skills are modular extensions that teach IO how to use external tools. Each skil
 Skills are managed through the **web dashboard** under the Skills page:
 
 - **View** all installed skills with name, description, and slug
-- **Install** a new skill by providing its git repository URL
+- **Install** a new skill from a git repository URL (click **From Git**)
+- **Create** a new skill directly in the browser (click **Create New**)
+- **Edit** an existing skill's content by selecting it and clicking the pencil icon
 - **Remove** skills you no longer need (hover over a skill card to reveal the delete button)
 
 ## How Skills Work
@@ -47,9 +49,15 @@ Description of available tools and their parameters...
 
 ## Installation Sources
 
-Skills can be installed from any git repository via the web dashboard. Simply paste the URL:
+### From a Git repository
+
+Click **From Git** in the Skills page and paste a repository URL:
 
 - `https://github.com/user/skill-name.git`
 - `git@github.com:user/skill-name.git`
 
 The repository must contain a `SKILL.md` file at its root.
+
+### Created directly in the web UI
+
+Click **Create New** in the Skills page. Enter a title (the slug is derived automatically) and write the `SKILL.md` content in the textarea. Click **Create** to save the skill to `~/.io/skills/<slug>/SKILL.md`.

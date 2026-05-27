@@ -7,9 +7,15 @@ import { loadConfig, saveConfig } from "../config.js";
 import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
+<<<<<<< HEAD
 import { getTasksForSquad } from "../store/tasks.js";
 import { getInstancesForSquad } from "../store/instances.js";
 import { getAuditLog, countAuditLog } from "../store/audit-log.js";
+=======
+import { getTasksForSquad, getSquadTaskMetrics } from "../store/tasks.js";
+import { getInstancesForSquad, destroyInstance } from "../store/instances.js";
+import { getAgentEvents } from "../store/agent-events.js";
+>>>>>>> origin/main
 import {
   getFeedItems,
   markFeedItemRead,
@@ -18,9 +24,17 @@ import {
 } from "../store/feed.js";
 import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
-import { listSkills, addSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
-import { readPage, writePage, deletePage, listPages } from "../wiki/fs.js";
+import { listSkills, addSkill, createSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
+import { readPage, writePage, deletePage, listPages, listTemplates, readTemplate, writeTemplate, deleteTemplate } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
+import { getBacklinks } from "../wiki/backlinks.js";
+import {
+  saveMessage,
+  getConversation,
+  listConversations,
+  searchConversations,
+  deleteConversation,
+} from "../store/conversations.js";
 import { randomUUID } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -81,24 +95,102 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // --- Chat ---
   app.post("/api/message", async (req, res) => {
-    const { prompt } = req.body;
+    const { prompt, conversationId: clientConvId } = req.body;
     if (!prompt || typeof prompt !== "string") {
       res.status(400).json({ error: "prompt is required" });
       return;
     }
 
+    const conversationId = (typeof clientConvId === "string" && clientConvId) ? clientConvId : randomUUID();
+
+    // Persist the user message
+    saveMessage(conversationId, "user", prompt, "web");
+
     // Stream response via SSE, send final to HTTP response
     await sendToOrchestrator(prompt, "web", (content, done) => {
       broadcast("message_delta", { content, done });
       if (done) {
-        res.json({ content });
+        // Persist the assistant response
+        saveMessage(conversationId, "assistant", content, "web");
+        res.json({ content, conversationId });
       }
     });
   });
 
+  // --- History ---
+  app.get("/api/history", (req, res) => {
+    const q = req.query.q as string | undefined;
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    if (q) {
+      res.json(searchConversations(q, { limit, offset, from, to }));
+    } else {
+      res.json(listConversations({ limit, offset, from, to }));
+    }
+  });
+
+  app.get("/api/history/:id", (req, res) => {
+    const messages = getConversation(req.params.id);
+    if (messages.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+    res.json(messages);
+  });
+
+  app.delete("/api/history/:id", (req, res) => {
+    deleteConversation(req.params.id);
+    res.json({ ok: true });
+  });
+
   // --- Squads ---
   app.get("/api/squads", (_req, res) => {
-    res.json(listSquads());
+    const data = listSquads();
+    const instanceCounts: Record<string, number> = {};
+    for (const squad of data.squads) {
+      instanceCounts[squad.id] = getInstancesForSquad(squad.id).length;
+    }
+    res.json({ ...data, instanceCounts });
+  });
+
+  // --- Squad Health Dashboard ---
+  app.get("/api/squads/health", (_req, res) => {
+    const { squads, agents } = listSquads();
+    const health = squads.map((squad) => {
+      const squadAgents = agents.filter((a) => a.squad_id === squad.id);
+      const instances = getInstancesForSquad(squad.id);
+      const metrics = getSquadTaskMetrics(squad.id);
+      return {
+        id: squad.id,
+        name: squad.name,
+        universe: squad.universe,
+        agentCount: squadAgents.length,
+        activeInstanceCount: instances.length,
+        activeInstances: instances.map((inst) => ({
+          id: inst.id,
+          branch: inst.branch,
+          lastActivity: inst.last_activity,
+        })),
+        tasksTotal: metrics.tasksTotal,
+        tasksCompleted: metrics.tasksCompleted,
+        tasksCompletedRecent: metrics.tasksCompletedRecent,
+        tasksPending: metrics.tasksPending,
+        tasksInProgress: metrics.tasksInProgress,
+        tasksFailed: metrics.tasksFailed,
+        avgCycleTimeMinutes: metrics.avgCycleTimeMinutes,
+        isStalled: metrics.isStalled,
+        recentTasks: metrics.recentTasks.map((t) => ({
+          id: t.id,
+          description: t.description,
+          status: t.status,
+          updatedAt: t.updated_at,
+        })),
+      };
+    });
+    res.json({ health });
   });
 
   app.get("/api/squads/:id", (req, res) => {
@@ -113,6 +205,7 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json({ squad, agents, tasks, instances });
   });
 
+<<<<<<< HEAD
   // --- Audit Log ---
   app.get("/api/audit-log", (req, res) => {
     const squad_id = req.query.squad_id as string | undefined;
@@ -127,6 +220,23 @@ export async function startApiServer(config: Config): Promise<void> {
       entries: getAuditLog(filters),
       total: countAuditLog(filters),
     });
+=======
+  app.delete("/api/instances/:id", async (req, res) => {
+    try {
+      await destroyInstance(req.params.id);
+      res.json({ ok: true });
+    } catch (err: any) {
+      const msg: string = err?.message ?? "Unknown error";
+      const status = msg.toLowerCase().includes("not found") ? 404 : 500;
+      res.status(status).json({ error: msg });
+    }
+  });
+
+  // --- Task Events ---
+  app.get("/api/tasks/:taskId/events", (req, res) => {
+    const events = getAgentEvents(req.params.taskId);
+    res.json(events);
+>>>>>>> origin/main
   });
 
   // --- Feed ---
@@ -183,12 +293,17 @@ export async function startApiServer(config: Config): Promise<void> {
 
   app.post("/api/skills", async (req, res) => {
     try {
-      const { url } = req.body;
-      if (!url || typeof url !== "string") {
-        res.status(400).json({ error: "Missing 'url' in request body" });
+      const { url, slug, content } = req.body;
+      if (url && typeof url === "string") {
+        // Git-clone method
+        await addSkill(url);
+      } else if (slug && typeof slug === "string" && content && typeof content === "string") {
+        // Direct-creation method
+        await createSkill(slug, content);
+      } else {
+        res.status(400).json({ error: "Provide either 'url' (git clone) or 'slug' + 'content' (direct create)" });
         return;
       }
-      await addSkill(url);
       res.status(201).json({ ok: true });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -269,6 +384,49 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json(results);
   });
 
+  app.get("/api/wiki/backlinks/*path", async (req, res) => {
+    const raw = (req.params as any).path;
+    const pagePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const backlinks = await getBacklinks(pagePath);
+    res.json(backlinks);
+  });
+
+  // --- Wiki Templates ---
+  app.get("/api/wiki/templates/squad", async (_req, res) => {
+    const files = await listTemplates();
+    res.json(files);
+  });
+
+  app.get("/api/wiki/template/squad/*path", async (req, res) => {
+    try {
+      const raw = (req.params as any).path;
+      const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+      const content = await readTemplate(templatePath);
+      res.json({ path: templatePath, content });
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
+  });
+
+  app.put("/api/wiki/template/squad/*path", async (req, res) => {
+    const raw = (req.params as any).path;
+    const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const { content } = req.body;
+    await writeTemplate(templatePath, content);
+    res.json({ ok: true });
+  });
+
+  app.delete("/api/wiki/template/squad/*path", async (req, res) => {
+    try {
+      const raw = (req.params as any).path;
+      const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+      await deleteTemplate(templatePath);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
+  });
+
   // --- Schedules ---
   app.get("/api/schedules", (_req, res) => {
     const type = undefined; // return all
@@ -276,7 +434,21 @@ export async function startApiServer(config: Config): Promise<void> {
   });
 
   app.post("/api/schedules", (req, res) => {
-    const schedule = createSchedule(req.body);
+    const { type, cron, squad_id, agenda, prompt } = req.body ?? {};
+    if (type !== "squad" && type !== "io") {
+      res.status(400).json({ error: "type must be 'squad' or 'io'" });
+      return;
+    }
+    if (!cron || typeof cron !== "string") {
+      res.status(400).json({ error: "cron is required" });
+      return;
+    }
+    if (!squad_id || typeof squad_id !== "string" || !squad_id.trim()) {
+      res.status(400).json({ error: "squad_id is required" });
+      return;
+    }
+
+    const schedule = createSchedule({ type, cron, squad_id, agenda, prompt });
     res.json(schedule);
   });
 

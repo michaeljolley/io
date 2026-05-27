@@ -19,6 +19,11 @@ const routes = [
     component: () => import("@/views/SquadsView.vue"),
   },
   {
+    path: "/squads/health",
+    name: "squad-health",
+    component: () => import("@/views/SquadHealthView.vue"),
+  },
+  {
     path: "/squads/:id",
     name: "squad-detail",
     component: () => import("@/views/SquadDetailView.vue"),
@@ -42,6 +47,11 @@ const routes = [
     path: "/schedules",
     name: "schedules",
     component: () => import("@/views/SchedulesView.vue"),
+  },
+  {
+    path: "/history",
+    name: "history",
+    component: () => import("@/views/HistoryView.vue"),
   },
   {
     path: "/wiki",

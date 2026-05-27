@@ -9,6 +9,7 @@ export const PATHS = {
   db: join(IO_HOME, "io.db"),
   wiki: join(IO_HOME, "wiki"),
   wikiPages: join(IO_HOME, "wiki", "pages"),
+  wikiSquadTemplates: join(IO_HOME, "wiki", "templates", "squad"),
   skills: join(IO_HOME, "skills"),
   mcpConfig: join(IO_HOME, "mcp.json"),
   sessions: join(IO_HOME, "sessions"),

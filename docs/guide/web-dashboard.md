@@ -24,6 +24,15 @@ The primary interface — a real-time conversation with the IO orchestrator. Mes
 ### Squads
 Overview of all project squads. Click a squad card to see its agent roster, active instances, and recent tasks.
 
+### Squad Health
+At-a-glance dashboard of health metrics for every squad. Cards are sorted by urgency (stalled first, then active, then idle) and show:
+- **Completed tasks** — all-time and last 7 days
+- **Average cycle time** — mean time from task creation to completion
+- **Task status badges** — in-progress, pending, and failed counts
+- **Active instances** — git worktree branches currently in use
+- **Recent activity** — last 5 task updates with status icons
+- **Stalled indicator** — highlighted when a squad has active tasks with no updates in over 60 minutes
+
 ### Feed
 Unified inbox for all deliverables from squads and the orchestrator. Items can be filtered by read/unread status and source.
 
