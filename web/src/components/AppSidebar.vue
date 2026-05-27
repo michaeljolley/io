@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import {
   MessageSquare,
   Users,
+  Activity,
   Inbox,
   Puzzle,
   Server,
@@ -21,6 +23,7 @@ const auth = useAuthStore();
 const navItems = [
   { name: "Chat", icon: MessageSquare, path: "/" },
   { name: "Squads", icon: Users, path: "/squads" },
+  { name: "Health", icon: Activity, path: "/squads/health" },
   { name: "Feed", icon: Inbox, path: "/feed" },
   { name: "Skills", icon: Puzzle, path: "/skills" },
   { name: "MCP Servers", icon: Server, path: "/mcp" },
@@ -28,6 +31,23 @@ const navItems = [
   { name: "Wiki", icon: BookOpen, path: "/wiki" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];
+
+// Find the best (longest prefix) matching nav path for the current route.
+// This ensures /squads/health activates "Health" rather than "Squads".
+const activeNavPath = computed(() => {
+  let bestPath = "";
+  for (const item of navItems) {
+    const p = item.path;
+    const matches =
+      p === "/"
+        ? route.path === "/"
+        : route.path === p || route.path.startsWith(p + "/");
+    if (matches && p.length > bestPath.length) {
+      bestPath = p;
+    }
+  }
+  return bestPath;
+});
 
 async function logout() {
   await auth.logout();
@@ -51,7 +71,7 @@ async function logout() {
         :to="item.path"
         class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors"
         :class="[
-          route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
+          activeNavPath === item.path
             ? 'bg-accent text-accent-foreground font-medium'
             : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
         ]"

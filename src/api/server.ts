@@ -7,7 +7,7 @@ import { loadConfig, saveConfig } from "../config.js";
 import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
-import { getTasksForSquad } from "../store/tasks.js";
+import { getTasksForSquad, getSquadTaskMetrics } from "../store/tasks.js";
 import { getInstancesForSquad } from "../store/instances.js";
 import {
   getFeedItems,
@@ -98,6 +98,43 @@ export async function startApiServer(config: Config): Promise<void> {
   // --- Squads ---
   app.get("/api/squads", (_req, res) => {
     res.json(listSquads());
+  });
+
+  // --- Squad Health Dashboard ---
+  app.get("/api/squads/health", (_req, res) => {
+    const { squads, agents } = listSquads();
+    const health = squads.map((squad) => {
+      const squadAgents = agents.filter((a) => a.squad_id === squad.id);
+      const instances = getInstancesForSquad(squad.id);
+      const metrics = getSquadTaskMetrics(squad.id);
+      return {
+        id: squad.id,
+        name: squad.name,
+        universe: squad.universe,
+        agentCount: squadAgents.length,
+        activeInstanceCount: instances.length,
+        activeInstances: instances.map((inst) => ({
+          id: inst.id,
+          branch: inst.branch,
+          lastActivity: inst.last_activity,
+        })),
+        tasksTotal: metrics.tasksTotal,
+        tasksCompleted: metrics.tasksCompleted,
+        tasksCompletedRecent: metrics.tasksCompletedRecent,
+        tasksPending: metrics.tasksPending,
+        tasksInProgress: metrics.tasksInProgress,
+        tasksFailed: metrics.tasksFailed,
+        avgCycleTimeMinutes: metrics.avgCycleTimeMinutes,
+        isStalled: metrics.isStalled,
+        recentTasks: metrics.recentTasks.map((t) => ({
+          id: t.id,
+          description: t.description,
+          status: t.status,
+          updatedAt: t.updated_at,
+        })),
+      };
+    });
+    res.json({ health });
   });
 
   app.get("/api/squads/:id", (req, res) => {

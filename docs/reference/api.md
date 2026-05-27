@@ -40,6 +40,45 @@ Server-Sent Events connection for real-time updates.
 
 List all squads and their agents.
 
+### `GET /api/squads/health`
+
+Get health metrics for all squads at a glance.
+
+**Response:**
+```json
+{
+  "health": [
+    {
+      "id": "squad-id",
+      "name": "Alpha Squad",
+      "universe": "my-project",
+      "agentCount": 3,
+      "activeInstanceCount": 1,
+      "activeInstances": [
+        { "id": "inst-id", "branch": "feat/new-feature", "lastActivity": "2024-01-01T12:00:00" }
+      ],
+      "tasksTotal": 25,
+      "tasksCompleted": 20,
+      "tasksCompletedRecent": 5,
+      "tasksPending": 2,
+      "tasksInProgress": 1,
+      "tasksFailed": 2,
+      "avgCycleTimeMinutes": 45.2,
+      "isStalled": false,
+      "recentTasks": [
+        { "id": "task-id", "description": "...", "status": "done", "updatedAt": "2024-01-01T12:00:00" }
+      ]
+    }
+  ]
+}
+```
+
+**Fields:**
+- `tasksCompleted` — all-time completed task count
+- `tasksCompletedRecent` — tasks completed in the last 7 days
+- `avgCycleTimeMinutes` — average time from task creation to completion (null if no completed tasks)
+- `isStalled` — true when the squad has pending/in-progress tasks that have not been updated in over 60 minutes
+
 ### `GET /api/squads/:id`
 
 Get squad detail with agents, tasks, and instances.
