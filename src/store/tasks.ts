@@ -79,6 +79,9 @@ export interface SquadTaskMetrics {
   recentTasks: Task[];
 }
 
+/** Squads with active tasks and no update within this window are flagged as stalled. */
+const STALL_THRESHOLD_MS = 60 * 60 * 1000; // 60 minutes
+
 export function getSquadTaskMetrics(squadId: string): SquadTaskMetrics {
   const db = getDb();
 
@@ -109,13 +112,13 @@ export function getSquadTaskMetrics(squadId: string): SquadTaskMetrics {
   };
 
   // A squad is considered stalled if it has active tasks but none have been
-  // updated in the last 60 minutes.
+  // updated within STALL_THRESHOLD_MS.
   const hasActiveTasks = row.pending + row.in_progress > 0;
   const isStalled =
     hasActiveTasks &&
     row.last_active_update !== null &&
     new Date(row.last_active_update + "Z").getTime() <
-      Date.now() - 60 * 60 * 1000;
+      Date.now() - STALL_THRESHOLD_MS;
 
   const recentTasks = db
     .prepare(
