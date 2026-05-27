@@ -87,8 +87,11 @@ async function deleteSchedule(id: string) {
 async function triggerScheduleNow(schedule: Schedule) {
   await apiPost(`/schedules/${schedule.id}/trigger`, {});
   triggeredId.value = schedule.id;
-  // Update last_run locally
-  schedule.last_run = new Date().toISOString();
+  // Update last_run in the source array to ensure reactivity
+  const idx = schedules.value.findIndex((s) => s.id === schedule.id);
+  if (idx !== -1) {
+    schedules.value[idx] = { ...schedules.value[idx], last_run: new Date().toISOString() };
+  }
   setTimeout(() => {
     triggeredId.value = null;
   }, 3000);
