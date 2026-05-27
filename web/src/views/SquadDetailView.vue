@@ -2,7 +2,8 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { apiGet } from "@/lib/api";
-import { ArrowLeft, User, Shield, FlaskConical } from "lucide-vue-next";
+import { ArrowLeft, User, Shield, FlaskConical, Eye } from "lucide-vue-next";
+import AgentActivityPreview from "@/components/AgentActivityPreview.vue";
 
 const route = useRoute();
 const squad = ref<any>(null);
@@ -10,6 +11,19 @@ const agents = ref<any[]>([]);
 const tasks = ref<any[]>([]);
 const instances = ref<any[]>([]);
 const loading = ref(true);
+const previewTaskId = ref<string | null>(null);
+
+function openPreview(taskId: string) {
+  previewTaskId.value = taskId;
+}
+
+function closePreview() {
+  previewTaskId.value = null;
+}
+
+function isActiveTask(status: string) {
+  return status === "pending" || status === "in_progress";
+}
 
 onMounted(async () => {
   try {
@@ -104,17 +118,42 @@ onMounted(async () => {
           <div v-for="task in tasks" :key="task.id" class="border border-border rounded-lg p-3">
             <div class="flex items-center justify-between">
               <span class="text-sm">{{ task.description }}</span>
-              <span
-                class="text-xs px-2 py-0.5 rounded-full"
-                :class="{
-                  'bg-yellow-500/10 text-yellow-500': task.status === 'pending',
-                  'bg-blue-500/10 text-blue-500': task.status === 'in_progress',
-                  'bg-green-500/10 text-green-500': task.status === 'done',
-                  'bg-red-500/10 text-red-500': task.status === 'failed',
-                }"
-              >
-                {{ task.status }}
-              </span>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="isActiveTask(task.status) || previewTaskId === task.id"
+                  @click="previewTaskId === task.id ? closePreview() : openPreview(task.id)"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border transition-colors"
+                  :class="previewTaskId === task.id
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground'"
+                  :aria-label="previewTaskId === task.id ? 'Hide activity preview' : 'Show activity preview'"
+                  :title="previewTaskId === task.id ? 'Hide preview' : 'Preview activity'"
+                >
+                  <Eye class="w-3 h-3" />
+                  Preview
+                </button>
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full"
+                  :class="{
+                    'bg-yellow-500/10 text-yellow-500': task.status === 'pending',
+                    'bg-blue-500/10 text-blue-500': task.status === 'in_progress',
+                    'bg-green-500/10 text-green-500': task.status === 'done',
+                    'bg-red-500/10 text-red-500': task.status === 'failed',
+                  }"
+                >
+                  {{ task.status }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Activity Preview Panel -->
+            <div v-if="previewTaskId === task.id" class="mt-3 h-96">
+              <AgentActivityPreview
+                :task-id="task.id"
+                :task-description="task.description"
+                :task-status="task.status"
+                @close="closePreview"
+              />
             </div>
           </div>
         </div>

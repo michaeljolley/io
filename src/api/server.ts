@@ -8,6 +8,7 @@ import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
 import { getTasksForSquad } from "../store/tasks.js";
+import { getAgentEvents } from "../store/agent-events.js";
 import { getInstancesForSquad } from "../store/instances.js";
 import {
   getFeedItems,
@@ -18,7 +19,7 @@ import {
 import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
 import { listSkills, addSkill, createSkill, removeSkill, getSkillContent, updateSkillContent } from "../copilot/skills.js";
-import { readPage, writePage, deletePage, listPages } from "../wiki/fs.js";
+import { readPage, writePage, deletePage, listPages, listTemplates, readTemplate, writeTemplate, deleteTemplate } from "../wiki/fs.js";
 import { searchPages } from "../wiki/search.js";
 import { randomUUID } from "node:crypto";
 
@@ -110,6 +111,12 @@ export async function startApiServer(config: Config): Promise<void> {
     const tasks = getTasksForSquad(req.params.id);
     const instances = getInstancesForSquad(req.params.id);
     res.json({ squad, agents, tasks, instances });
+  });
+
+  // --- Task Events ---
+  app.get("/api/tasks/:taskId/events", (req, res) => {
+    const events = getAgentEvents(req.params.taskId);
+    res.json(events);
   });
 
   // --- Feed ---
@@ -257,6 +264,42 @@ export async function startApiServer(config: Config): Promise<void> {
     res.json(results);
   });
 
+  // --- Wiki Templates ---
+  app.get("/api/wiki/templates/squad", async (_req, res) => {
+    const files = await listTemplates();
+    res.json(files);
+  });
+
+  app.get("/api/wiki/template/squad/*path", async (req, res) => {
+    try {
+      const raw = (req.params as any).path;
+      const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+      const content = await readTemplate(templatePath);
+      res.json({ path: templatePath, content });
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
+  });
+
+  app.put("/api/wiki/template/squad/*path", async (req, res) => {
+    const raw = (req.params as any).path;
+    const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+    const { content } = req.body;
+    await writeTemplate(templatePath, content);
+    res.json({ ok: true });
+  });
+
+  app.delete("/api/wiki/template/squad/*path", async (req, res) => {
+    try {
+      const raw = (req.params as any).path;
+      const templatePath = Array.isArray(raw) ? raw.join("/") : raw;
+      await deleteTemplate(templatePath);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(404).json({ error: err.message });
+    }
+  });
+
   // --- Schedules ---
   app.get("/api/schedules", (_req, res) => {
     const type = undefined; // return all
@@ -264,7 +307,21 @@ export async function startApiServer(config: Config): Promise<void> {
   });
 
   app.post("/api/schedules", (req, res) => {
-    const schedule = createSchedule(req.body);
+    const { type, cron, squad_id, agenda, prompt } = req.body ?? {};
+    if (type !== "squad" && type !== "io") {
+      res.status(400).json({ error: "type must be 'squad' or 'io'" });
+      return;
+    }
+    if (!cron || typeof cron !== "string") {
+      res.status(400).json({ error: "cron is required" });
+      return;
+    }
+    if (!squad_id || typeof squad_id !== "string" || !squad_id.trim()) {
+      res.status(400).json({ error: "squad_id is required" });
+      return;
+    }
+
+    const schedule = createSchedule({ type, cron, squad_id, agenda, prompt });
     res.json(schedule);
   });
 

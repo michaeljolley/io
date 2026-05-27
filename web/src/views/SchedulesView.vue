@@ -14,7 +14,13 @@ interface Schedule {
   last_run: string | null;
 }
 
+interface Squad {
+  id: string;
+  name: string;
+}
+
 const schedules = ref<Schedule[]>([]);
+const squads = ref<Squad[]>([]);
 const loading = ref(true);
 const tab = ref<"squad" | "io">("squad");
 const showAdd = ref(false);
@@ -22,6 +28,11 @@ const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "
 
 onMounted(async () => {
   try {
+    const squadData = await apiGet("/squads");
+    squads.value = squadData.squads;
+    if (squads.value.length > 0) {
+      newSchedule.value.squad_id = squads.value[0].id;
+    }
     schedules.value = await apiGet("/schedules");
   } finally {
     loading.value = false;
@@ -31,9 +42,12 @@ onMounted(async () => {
 const filteredSchedules = () => schedules.value.filter((s) => s.type === tab.value);
 
 async function addSchedule() {
-  const body: any = { type: newSchedule.value.type, cron: newSchedule.value.cron };
+  const body: any = {
+    type: newSchedule.value.type,
+    cron: newSchedule.value.cron,
+    squad_id: newSchedule.value.squad_id,
+  };
   if (newSchedule.value.type === "squad") {
-    body.squad_id = newSchedule.value.squad_id;
     body.agenda = newSchedule.value.agenda;
   } else {
     body.prompt = newSchedule.value.prompt;
@@ -52,6 +66,11 @@ async function toggleSchedule(schedule: Schedule) {
 async function deleteSchedule(id: string) {
   await apiDelete(`/schedules/${id}`);
   schedules.value = schedules.value.filter((s) => s.id !== id);
+}
+
+function getSquadName(squadId: string | null): string {
+  if (!squadId) return "Unknown squad";
+  return squads.value.find((s) => s.id === squadId)?.name ?? squadId;
 }
 </script>
 
@@ -95,6 +114,17 @@ async function deleteSchedule(id: string) {
           <input v-model="newSchedule.cron" placeholder="0 9 * * 1-5" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
         </div>
       </div>
+      <div>
+        <label class="text-sm font-medium">Target Squad</label>
+        <select
+          v-model="newSchedule.squad_id"
+          class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option v-for="squad in squads" :key="squad.id" :value="squad.id">
+            {{ squad.name }}
+          </option>
+        </select>
+      </div>
       <div v-if="newSchedule.type === 'squad'">
         <label class="text-sm font-medium">Agenda</label>
         <select v-model="newSchedule.agenda" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -107,7 +137,13 @@ async function deleteSchedule(id: string) {
         <label class="text-sm font-medium">Prompt</label>
         <textarea v-model="newSchedule.prompt" rows="2" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
       </div>
-      <button @click="addSchedule" class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90">Save</button>
+      <button
+        @click="addSchedule"
+        :disabled="!newSchedule.squad_id"
+        class="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Save
+      </button>
     </div>
 
     <div v-if="loading" class="text-muted-foreground">Loading...</div>
@@ -123,6 +159,9 @@ async function deleteSchedule(id: string) {
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
           <div class="text-xs text-muted-foreground mt-0.5">
             {{ schedule.type === 'squad' ? `Agenda: ${schedule.agenda}` : schedule.prompt.slice(0, 60) }}
+          </div>
+          <div class="text-xs text-muted-foreground mt-0.5">
+            Squad: {{ getSquadName(schedule.squad_id) }}
           </div>
         </div>
         <div class="flex items-center gap-3">

@@ -1,6 +1,6 @@
 import { approveAll } from "@github/copilot-sdk";
 import { getClient } from "./client.js";
-import { getLeadForSquad, getAgentsForSquad, type Agent } from "../store/squads.js";
+import { getLeadForSquad, getAgentsForSquad, getSquad, type Agent } from "../store/squads.js";
 import { selectModel } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
 
@@ -180,8 +180,10 @@ export async function squadMeeting(
 
   if (!executeAfter) {
     // Post to feed and wait for user to trigger execution
+    const squad = getSquad(squadId);
+    const squadSource = squad ? `squad-${squad.slug}` : `squad-${squadId}`;
     postFeedItem(
-      `squad-${squadId}`,
+      squadSource,
       "Planning meeting complete — awaiting approval",
       summary
     );
