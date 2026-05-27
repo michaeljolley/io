@@ -11,20 +11,27 @@ interface Skill {
   path: string;
 }
 
+const DEFAULT_SKILL_TEMPLATE =
+  "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n";
+
 const skills = ref<Skill[]>([]);
 const loading = ref(true);
 const showAddForm = ref(false);
 const addMode = ref<"git" | "create">("git");
 const newSkillUrl = ref("");
 const newSkillTitle = ref("");
-const newSkillContent = ref(
-  "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n"
-);
+const newSkillContent = ref(DEFAULT_SKILL_TEMPLATE);
 const adding = ref(false);
 const error = ref("");
 
+// Derives the slug from the title using the same rules as the backend.
 const newSkillSlug = computed(() =>
-  newSkillTitle.value.trim().replace(/[^a-z0-9-]/gi, "-").toLowerCase()
+  newSkillTitle.value
+    .trim()
+    .replace(/[^a-z0-9-]/gi, "-")
+    .toLowerCase()
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
 );
 
 // View/Edit state
@@ -53,8 +60,7 @@ function cancelAddForm() {
   showAddForm.value = false;
   newSkillUrl.value = "";
   newSkillTitle.value = "";
-  newSkillContent.value =
-    "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n";
+  newSkillContent.value = DEFAULT_SKILL_TEMPLATE;
   error.value = "";
 }
 
