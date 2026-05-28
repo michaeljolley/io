@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { apiGet, apiPut, apiDelete, apiPost } from "@/lib/api";
 import { Server, Plus, Trash2 } from "lucide-vue-next";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 
 interface McpServer {
   id: string;
@@ -96,16 +97,11 @@ async function addServer() {
           <span class="ml-2 text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{{ server.type }}</span>
         </div>
         <div class="flex items-center gap-3">
-          <button
-            @click="toggleServer(server)"
-            class="relative w-10 h-5 rounded-full transition-colors"
-            :class="server.enabled ? 'bg-primary' : 'bg-muted'"
-          >
-            <span
-              class="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform"
-              :class="server.enabled ? 'translate-x-5' : 'translate-x-0.5'"
-            ></span>
-          </button>
+          <ToggleSwitch
+            :model-value="server.enabled"
+            :aria-label="`Toggle ${server.name}`"
+            @update:model-value="toggleServer(server)"
+          />
           <button @click="deleteServer(server.id)" class="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
             <Trash2 class="w-4 h-4" />
           </button>

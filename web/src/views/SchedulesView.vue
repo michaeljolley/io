@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
 import { Clock, Plus, Trash2, Play } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 
 interface Schedule {
   id: string;
@@ -196,13 +197,11 @@ function getSquadName(squadId: string | null): string {
             <Play class="w-4 h-4" />
           </button>
           <span v-if="triggeredId === schedule.id" class="text-xs text-green-500 font-medium">Triggered!</span>
-          <button
-            @click="toggleSchedule(schedule)"
-            class="relative w-10 h-5 rounded-full transition-colors"
-            :class="schedule.enabled ? 'bg-primary' : 'bg-muted'"
-          >
-            <span class="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform" :class="schedule.enabled ? 'translate-x-5' : 'translate-x-0.5'"></span>
-          </button>
+          <ToggleSwitch
+            :model-value="Boolean(schedule.enabled)"
+            :aria-label="`Toggle schedule ${schedule.cron}`"
+            @update:model-value="toggleSchedule(schedule)"
+          />
           <button @click="deleteSchedule(schedule.id)" class="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
             <Trash2 class="w-4 h-4" />
           </button>
