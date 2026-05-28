@@ -3,6 +3,7 @@ import { computed, ref, nextTick, onMounted, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { Send, Square, Paperclip, X, Image as ImageIcon, FileText } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
+import LogoIcon from "@/components/LogoIcon.vue";
 import {
   fileToMessageAttachment,
   formatAttachmentSize,
@@ -142,7 +143,7 @@ onMounted(() => scrollToBottom());
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
       <div v-if="chat.messages.length === 0" class="flex items-center justify-center h-full">
         <div class="text-center text-muted-foreground">
-          <div class="text-4xl mb-3">🤖</div>
+          <LogoIcon :size="56" class="mx-auto mb-4" />
           <p class="text-lg font-medium">Welcome to IO</p>
           <p class="text-sm mt-1">Send a message to get started.</p>
         </div>
