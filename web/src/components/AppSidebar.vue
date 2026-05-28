@@ -25,7 +25,6 @@ const route = useRoute();
 const collapsed = ref(false);
 
 const navItems = [
-  { name: "Chat", icon: MessageSquare, path: "/" },
   { name: "History", icon: History, path: "/history" },
   { name: "Squads", icon: Users, path: "/squads" },
   { name: "Health", icon: Activity, path: "/squads/health" },
