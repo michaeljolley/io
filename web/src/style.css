@@ -112,11 +112,14 @@
       hsl(var(--gradient-end))
     );
     background-size: 200% auto;
+    background-position: center;
+    animation: gradientShift 6s linear infinite;
+    animation-play-state: paused;
     box-shadow: 0 12px 30px -14px hsl(var(--gradient-mid) / 0.65);
   }
 
   .btn-gradient:hover {
-    background-position: right center;
+    animation-play-state: running;
     transform: translateY(-1px);
     box-shadow: 0 16px 34px -16px hsl(var(--gradient-mid) / 0.85);
   }
