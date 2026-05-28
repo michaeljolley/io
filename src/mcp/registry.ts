@@ -18,6 +18,7 @@ export function getMcpServersForSession(): Record<string, MCPServerConfig> | und
         type: "local",
         command: server.command,
         args: server.args ?? [],
+        env: server.env,
         tools: ["*"],
       } as any;
     } else if (server.type === "http" && server.url) {

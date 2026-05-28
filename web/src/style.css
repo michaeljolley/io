@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -66,32 +67,64 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: Inter, system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
-  .btn-gradient {
-    @apply relative px-4 py-2 text-sm font-medium text-white rounded-md transition-all;
-    background: linear-gradient(
-      135deg,
+  .bg-gradient-brand {
+    background-image: linear-gradient(135deg,
       hsl(var(--gradient-start)),
       hsl(var(--gradient-mid)),
       hsl(var(--gradient-end))
     );
   }
-  .btn-gradient:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px hsl(var(--gradient-mid) / 0.3);
+
+  .bg-gradient-brand-animated {
+    background-image: linear-gradient(135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    background-size: 200% 200%;
+    animation: gradientShift 6s ease infinite;
   }
+
+  .btn-gradient {
+    @apply relative overflow-hidden px-3 py-2 text-sm font-medium text-white rounded-md transition-all duration-200;
+    background-image: linear-gradient(135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    background-size: 200% auto;
+    box-shadow: 0 10px 25px -12px hsl(var(--gradient-mid) / 0.6);
+  }
+
+  .btn-gradient:hover {
+    background-position: right center;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px -14px hsl(var(--gradient-mid) / 0.8);
+  }
+
   .btn-gradient:active {
     transform: translateY(0);
   }
+
   .btn-gradient:disabled {
     opacity: 0.5;
     transform: none;
     box-shadow: none;
     cursor: not-allowed;
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }

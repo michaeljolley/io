@@ -15,6 +15,7 @@ import {
   type MessageAttachment,
   toCopilotBlobAttachments,
 } from "../chat/attachments.js";
+import { attachTokenTracker } from "./token-tracker.js";
 
 let orchestratorSession: CopilotSession | undefined;
 let sessionCreatePromise: Promise<CopilotSession> | undefined;
@@ -91,16 +92,16 @@ async function createOrResumeSession(
     },
   };
 
+  let session: CopilotSession;
   if (savedId?.value) {
     try {
-      const session = await client.resumeSession(savedId.value, sessionConfig);
-      return session;
+      session = await client.resumeSession(savedId.value, sessionConfig);
     } catch {
-      // Resume failed, create new
+      session = await client.createSession(sessionConfig);
     }
+  } else {
+    session = await client.createSession(sessionConfig);
   }
-
-  const session = await client.createSession(sessionConfig);
 
   // Persist session ID
   db.prepare(
@@ -172,32 +173,40 @@ async function executeOnSession(msg: QueuedMessage): Promise<void> {
 
   activeMessageAttachments = msg.attachments;
 
-  // Save attachments to disk so orchestrator/squads can access them via filesystem tools
-  const savedAttachments = saveAttachmentsToDisk(msg.attachments);
-  const pathSummary = buildAttachmentPathSummary(savedAttachments);
-
-  const taggedPrompt = `[via ${msg.source}] ${msg.prompt}${pathSummary || buildAttachmentSummary(msg.attachments)}`;
-  let accumulated = "";
-
-  const unsubscribe = orchestratorSession.on("assistant.message_delta", (event: any) => {
-    const delta = event.data?.deltaContent ?? "";
-    accumulated += delta;
-    msg.callback(accumulated, false);
+  const flushTokens = attachTokenTracker(orchestratorSession, {
+    agentId: "orchestrator",
   });
 
   try {
-    const response = await orchestratorSession.sendAndWait(
-      {
-        prompt: taggedPrompt,
-        attachments: toCopilotBlobAttachments(msg.attachments),
-      },
-      600_000
-    );
-    const finalContent = response?.data?.content ?? accumulated;
-    msg.callback(finalContent, true);
+    // Save attachments to disk so orchestrator/squads can access them via filesystem tools
+    const savedAttachments = saveAttachmentsToDisk(msg.attachments);
+    const pathSummary = buildAttachmentPathSummary(savedAttachments);
+
+    const taggedPrompt = `[via ${msg.source}] ${msg.prompt}${pathSummary || buildAttachmentSummary(msg.attachments)}`;
+    let accumulated = "";
+
+    const unsubscribe = orchestratorSession.on("assistant.message_delta", (event: any) => {
+      const delta = event.data?.deltaContent ?? "";
+      accumulated += delta;
+      msg.callback(accumulated, false);
+    });
+
+    try {
+      const response = await orchestratorSession.sendAndWait(
+        {
+          prompt: taggedPrompt,
+          attachments: toCopilotBlobAttachments(msg.attachments),
+        },
+        600_000
+      );
+      const finalContent = response?.data?.content ?? accumulated;
+      msg.callback(finalContent, true);
+    } finally {
+      activeMessageAttachments = [];
+      unsubscribe();
+    }
   } finally {
-    activeMessageAttachments = [];
-    unsubscribe();
+    flushTokens();
   }
 }
 
