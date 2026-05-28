@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, nextTick, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
-import { MessageCircle, X, Send, Square, Minimize2 } from "lucide-vue-next";
+import { MessageCircle, Send, Square, Minimize2 } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 
 const chat = useChatStore();
@@ -11,7 +11,8 @@ const isOpen = ref(false);
 const input = ref("");
 const messagesContainer = ref<HTMLElement>();
 
-// Don't show overlay on the Chat page itself
+const hasMessages = computed(() => chat.messages.length > 0);
+
 const isOnChatPage = () => route.path === "/";
 
 function toggle() {
@@ -29,7 +30,7 @@ async function send() {
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    send();
+    void send();
   }
 }
 
@@ -37,6 +38,13 @@ function scrollToBottom() {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
+}
+
+function formatTimestamp(date: Date): string {
+  return new Date(date).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 watch(
@@ -58,17 +66,16 @@ watch(
 </script>
 
 <template>
-  <!-- FAB button -->
   <button
     v-if="!isOpen && !isOnChatPage()"
     @click="toggle"
-    class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full btn-gradient flex items-center justify-center shadow-glow-lg hover:scale-105 transition-transform"
+    class="overlay-fab"
     title="Chat with IO"
+    aria-label="Open chat overlay"
   >
     <MessageCircle class="w-5 h-5 text-white" />
   </button>
 
-  <!-- Chat panel -->
   <Transition
     enter-active-class="transition-all duration-200 ease-out"
     enter-from-class="opacity-0 translate-y-4 scale-95"
@@ -77,28 +84,34 @@ watch(
     leave-from-class="opacity-100 translate-y-0 scale-100"
     leave-to-class="opacity-0 translate-y-4 scale-95"
   >
-    <div
-      v-if="isOpen"
-      class="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden"
-    >
-      <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-header">
-        <div class="flex items-center gap-2">
-          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <span class="text-sm font-medium">IO Assistant</span>
+    <section v-if="isOpen" class="overlay-panel" aria-label="IO Assistant chat">
+      <header class="overlay-header">
+        <div class="flex items-center gap-3">
+          <div class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div>
+            <p class="text-sm font-semibold tracking-tight">IO Assistant</p>
+            <p class="text-[11px] text-muted-foreground font-mono">online</p>
+          </div>
         </div>
         <button
           @click="isOpen = false"
-          class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          class="overlay-icon-btn"
+          aria-label="Minimize chat overlay"
+          title="Minimize"
         >
-          <Minimize2 class="w-4 h-4" />
+          <Minimize2 class="h-4 w-4" />
         </button>
-      </div>
+      </header>
 
-      <!-- Messages -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto p-3 space-y-3">
-        <div v-if="chat.messages.length === 0" class="flex items-center justify-center h-full">
-          <p class="text-xs text-muted-foreground">Send a message to chat with IO</p>
+      <div ref="messagesContainer" class="overlay-messages">
+        <div v-if="!hasMessages" class="flex h-full items-center justify-center">
+          <div class="text-center">
+            <div class="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <MessageCircle class="h-4 w-4" />
+            </div>
+            <p class="text-sm font-medium">Start a quick chat</p>
+            <p class="mt-1 text-xs text-muted-foreground">Ask IO anything about your workspace.</p>
+          </div>
         </div>
 
         <div
@@ -107,44 +120,158 @@ watch(
           class="flex"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <div
-            class="max-w-[80%] rounded-lg px-3 py-2 text-xs"
-            :class="
-              msg.role === 'user'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-foreground'
-            "
-          >
+          <article class="overlay-bubble" :class="msg.role === 'user' ? 'overlay-bubble-user' : 'overlay-bubble-assistant'">
             <MarkdownContent v-if="msg.content" :content="msg.content" :class="msg.role === 'user' ? 'prose-invert' : ''" />
             <span v-else class="text-muted-foreground">...</span>
-            <div
+            <div class="mt-1.5 flex items-center justify-between gap-3">
+              <span class="text-[10px] uppercase tracking-[0.16em] font-mono" :class="msg.role === 'user' ? 'text-primary-foreground/65' : 'text-muted-foreground'">
+                {{ msg.role }}
+              </span>
+              <span class="text-[10px] font-mono" :class="msg.role === 'user' ? 'text-primary-foreground/65' : 'text-muted-foreground'">
+                {{ formatTimestamp(msg.timestamp) }}
+              </span>
+            </div>
+            <span
               v-if="msg.streaming"
-              class="inline-block w-1.5 h-3 bg-current animate-pulse ml-1"
-            ></div>
-          </div>
+              class="mt-1 inline-block h-3 w-1.5 animate-pulse rounded-sm bg-current"
+            />
+          </article>
         </div>
       </div>
 
-      <!-- Input -->
-      <div class="border-t border-border p-3">
-        <div class="flex gap-2 items-end">
+      <footer class="overlay-footer">
+        <div class="flex items-end gap-2">
           <textarea
             v-model="input"
             @keydown="handleKeydown"
             placeholder="Message IO..."
             rows="1"
-            class="flex-1 resize-none rounded-md border border-input bg-input px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring min-h-[36px] max-h-[80px]"
-          ></textarea>
+            class="overlay-input"
+          />
           <button
             @click="send"
             :disabled="!input.trim() || chat.isStreaming"
-            class="rounded-md bg-primary text-primary-foreground p-2 hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            class="overlay-send-btn"
+            :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
+            :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
           >
-            <Send v-if="!chat.isStreaming" class="w-3.5 h-3.5" />
-            <Square v-else class="w-3.5 h-3.5" />
+            <Send v-if="!chat.isStreaming" class="h-3.5 w-3.5" />
+            <Square v-else class="h-3.5 w-3.5" />
           </button>
         </div>
-      </div>
-    </div>
+      </footer>
+    </section>
   </Transition>
 </template>
+
+<style scoped>
+.overlay-fab {
+  @apply fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-glow-lg transition-all duration-200 sm:bottom-6 sm:right-6;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--gradient-start)),
+    hsl(var(--gradient-mid)),
+    hsl(var(--gradient-end))
+  );
+}
+
+.overlay-fab:hover {
+  @apply -translate-y-0.5 scale-[1.03] shadow-glow;
+}
+
+.overlay-fab:active {
+  @apply translate-y-0 scale-100;
+}
+
+.overlay-fab:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+.overlay-panel {
+  @apply fixed bottom-3 right-3 z-50 flex h-[min(36rem,72vh)] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-2xl backdrop-blur sm:bottom-6 sm:right-6 sm:h-[34rem] sm:w-[24rem];
+}
+
+.overlay-header {
+  @apply flex items-center justify-between border-b border-border/80 bg-header/85 px-4 py-3;
+}
+
+.overlay-icon-btn {
+  @apply rounded-md p-1.5 text-muted-foreground transition-colors duration-150;
+}
+
+.overlay-icon-btn:hover {
+  @apply bg-accent text-foreground;
+}
+
+.overlay-icon-btn:active {
+  @apply bg-accent/80;
+}
+
+.overlay-icon-btn:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-card;
+}
+
+.overlay-messages {
+  @apply flex-1 space-y-3 overflow-y-auto p-3.5;
+}
+
+.overlay-bubble {
+  @apply max-w-[86%] rounded-xl border px-3 py-2.5 text-xs leading-relaxed;
+}
+
+.overlay-bubble-assistant {
+  @apply border-border/80 bg-secondary text-foreground;
+}
+
+.overlay-bubble-user {
+  @apply border-transparent text-primary-foreground;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--gradient-start) / 0.9),
+    hsl(var(--gradient-mid) / 0.96),
+    hsl(var(--gradient-end) / 0.92)
+  );
+}
+
+.overlay-footer {
+  @apply border-t border-border/80 bg-card/90 p-3;
+}
+
+.overlay-input {
+  @apply min-h-[40px] max-h-[96px] flex-1 resize-none rounded-lg border border-input bg-input px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground transition-colors duration-150;
+}
+
+.overlay-input:hover {
+  @apply border-border;
+}
+
+.overlay-input:focus {
+  @apply outline-none;
+}
+
+.overlay-input:focus-visible {
+  @apply ring-2 ring-ring ring-offset-1 ring-offset-card border-ring;
+}
+
+.overlay-send-btn {
+  @apply flex h-9 w-9 items-center justify-center rounded-lg text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--gradient-start)),
+    hsl(var(--gradient-mid)),
+    hsl(var(--gradient-end))
+  );
+}
+
+.overlay-send-btn:hover:not(:disabled) {
+  @apply -translate-y-0.5 brightness-110;
+}
+
+.overlay-send-btn:active:not(:disabled) {
+  @apply translate-y-0 brightness-100;
+}
+
+.overlay-send-btn:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-card;
+}
+</style>
