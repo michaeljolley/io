@@ -30,6 +30,7 @@ export const useChatStore = defineStore("chat", () => {
   const isStreaming = ref(false);
   const eventSource = ref<EventSource | null>(null);
   const conversationId = ref<string>(crypto.randomUUID());
+  const currentAbortController = ref<AbortController | null>(null);
 
   function addUserMessage(content: string, attachments: MessageAttachment[] = []): ChatMessage {
     const msg: ChatMessage = {
@@ -74,9 +75,12 @@ export const useChatStore = defineStore("chat", () => {
         headers["Authorization"] = `Bearer ${auth.token}`;
       }
 
+      currentAbortController.value = new AbortController();
+
       const response = await fetch("/api/message", {
         method: "POST",
         headers,
+        signal: currentAbortController.value.signal,
         body: JSON.stringify({
           prompt: content,
           conversationId: conversationId.value,
@@ -172,12 +176,21 @@ export const useChatStore = defineStore("chat", () => {
       const streaming = messages.value.filter((m) => m.streaming);
       const target = streaming[streaming.length - 1];
       if (target) {
-        target.content = `Error: ${err.message}`;
-        target.streaming = false;
+        if (err?.name === "AbortError") {
+          target.streaming = false;
+        } else {
+          target.content = `Error: ${err.message}`;
+          target.streaming = false;
+        }
       }
     } finally {
+      currentAbortController.value = null;
       isStreaming.value = false;
     }
+  }
+
+  function stopStreaming(): void {
+    currentAbortController.value?.abort();
   }
 
   function updateStreamingMessage(content: string): void {
@@ -200,5 +213,6 @@ export const useChatStore = defineStore("chat", () => {
     sendMessage,
     updateStreamingMessage,
     clearMessages,
+    stopStreaming,
   };
 });
