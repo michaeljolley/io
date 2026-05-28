@@ -365,7 +365,7 @@ onMounted(async () => {
 
         <p v-if="composerError" class="text-xs text-destructive mb-2">{{ composerError }}</p>
 
-        <div class="flex items-end gap-2">
+        <div class="flex items-center gap-2 rounded-2xl border border-white/5 bg-[#202020]/90 px-2 py-2">
           <button
             class="overlay-attach-btn"
             :disabled="chat.isStreaming"
@@ -430,12 +430,12 @@ onMounted(async () => {
 }
 
 .overlay-panel {
-  @apply fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden border border-border bg-card/95 shadow-2xl backdrop-blur;
+  @apply fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden border border-white/5 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur;
 }
 
 @media (min-width: 768px) {
   .overlay-panel {
-    @apply bottom-4 right-4 left-auto h-[min(44rem,85vh)] w-[min(27rem,calc(100vw-2.25rem))] rounded-2xl;
+    @apply bottom-4 right-4 left-auto h-[min(44rem,85vh)] w-[min(27rem,calc(100vw-2.25rem))] rounded-3xl;
   }
 }
 
@@ -492,7 +492,7 @@ onMounted(async () => {
 }
 
 .overlay-bubble-assistant {
-  @apply border-border/70 bg-secondary text-foreground;
+  @apply border-white/5 bg-[#232323] text-foreground shadow-sm;
 }
 
 .overlay-bubble-user {
@@ -532,16 +532,16 @@ onMounted(async () => {
 }
 
 .overlay-footer {
-  @apply border-t border-border/80 bg-card/95 p-3;
+  @apply border-t border-white/5 bg-[#1f1f1f]/95 p-3;
 }
 
 .overlay-chip {
-  @apply flex items-center gap-1.5 rounded-md border border-border bg-muted/60 px-1.5 py-1 text-[11px] text-foreground;
+  @apply flex items-center gap-1.5 rounded-full border border-white/5 bg-[#2a2a2a]/90 px-1.5 py-1 text-[11px] text-foreground;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .overlay-input {
-  @apply min-h-[42px] max-h-[136px] flex-1 resize-none rounded-lg border border-input bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150;
+  @apply min-h-[42px] max-h-[136px] flex-1 resize-none rounded-full border border-white/5 bg-[#2a2a2a] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150;
 }
 
 .overlay-input:hover {
@@ -557,7 +557,7 @@ onMounted(async () => {
 }
 
 .overlay-attach-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-lg border border-input bg-input text-muted-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-[#2a2a2a] text-muted-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
 }
 
 .overlay-attach-btn:hover:not(:disabled) {
@@ -569,7 +569,7 @@ onMounted(async () => {
 }
 
 .overlay-send-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-lg text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
   background: linear-gradient(
     135deg,
     hsl(var(--gradient-start)),

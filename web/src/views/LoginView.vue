@@ -27,7 +27,7 @@ async function handleLogin() {
       <!-- Logo -->
       <div class="text-center">
         <LogoIcon :size="56" class="mx-auto mb-4" />
-        <h1 class="text-2xl font-bold bg-gradient-brand bg-clip-text text-transparent">
+        <h1 class="font-display text-4xl font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent">
           IO
         </h1>
         <p class="text-sm text-muted-foreground mt-1">Sign in to your dashboard</p>

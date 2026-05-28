@@ -5,59 +5,63 @@
 
 @layer base {
   :root {
-    --background: 240 20% 98%;
-    --foreground: 240 10% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
-    --primary: 326 82% 56%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 323 78% 57%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 93%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 5% 93%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 326 82% 95%;
-    --accent-foreground: 326 82% 40%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 25 8% 64%;
+    --accent: 320 34% 14%;
+    --accent-foreground: 323 78% 62%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 326 82% 56%;
-    --radius: 0.5rem;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 18%;
+    --ring: 323 78% 57%;
+    --radius: 1rem;
 
     --gradient-start: 0 69% 52%;
-    --gradient-mid: 326 75% 56%;
-    --gradient-end: 292 100% 63%;
+    --gradient-mid: 323 78% 57%;
+    --gradient-end: 280 96% 66%;
 
-    --sidebar: 240 15% 96%;
-    --header: 0 0% 100%;
+    --sidebar: 0 0% 9%;
+    --header: 0 0% 11%;
   }
 
   .dark {
-    --background: 240 15% 6%;
-    --foreground: 0 0% 95%;
-    --card: 240 14% 10%;
-    --card-foreground: 0 0% 95%;
-    --primary: 326 82% 56%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 323 78% 57%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 13%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 240 10% 13%;
-    --muted-foreground: 240 5% 50%;
-    --accent: 240 10% 15%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 63% 31%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 25 8% 64%;
+    --accent: 320 34% 14%;
+    --accent-foreground: 323 78% 62%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 10% 15%;
-    --input: 240 12% 12%;
-    --ring: 326 82% 56%;
-    --radius: 0.5rem;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 18%;
+    --ring: 323 78% 57%;
+    --radius: 1rem;
 
     --gradient-start: 0 69% 52%;
-    --gradient-mid: 326 75% 56%;
-    --gradient-end: 292 100% 63%;
+    --gradient-mid: 323 78% 57%;
+    --gradient-end: 280 96% 66%;
 
-    --sidebar: 240 14% 8%;
-    --header: 240 14% 9%;
+    --sidebar: 0 0% 9%;
+    --header: 0 0% 11%;
   }
 }
 
@@ -69,10 +73,19 @@
     @apply bg-background text-foreground;
     font-family: "Inter", system-ui, -apple-system, sans-serif;
     letter-spacing: -0.01em;
+    background-image:
+      radial-gradient(circle at top, rgba(228, 58, 156, 0.10), transparent 24%),
+      radial-gradient(circle at bottom, rgba(255, 255, 255, 0.05), transparent 26%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    background-attachment: fixed;
   }
 }
 
 @layer components {
+  .font-display {
+    font-family: "Bebas Neue", "Inter", sans-serif;
+  }
+
   .bg-gradient-brand {
     background-image: linear-gradient(135deg,
       hsl(var(--gradient-start)),
@@ -92,20 +105,20 @@
   }
 
   .btn-gradient {
-    @apply relative overflow-hidden px-3 py-2 text-sm font-medium text-white rounded-md transition-all duration-200;
+    @apply relative overflow-hidden px-3 py-2 text-sm font-medium text-white rounded-xl transition-all duration-200;
     background-image: linear-gradient(135deg,
       hsl(var(--gradient-start)),
       hsl(var(--gradient-mid)),
       hsl(var(--gradient-end))
     );
     background-size: 200% auto;
-    box-shadow: 0 10px 25px -12px hsl(var(--gradient-mid) / 0.6);
+    box-shadow: 0 12px 30px -14px hsl(var(--gradient-mid) / 0.65);
   }
 
   .btn-gradient:hover {
     background-position: right center;
     transform: translateY(-1px);
-    box-shadow: 0 14px 30px -14px hsl(var(--gradient-mid) / 0.8);
+    box-shadow: 0 16px 34px -16px hsl(var(--gradient-mid) / 0.85);
   }
 
   .btn-gradient:active {
