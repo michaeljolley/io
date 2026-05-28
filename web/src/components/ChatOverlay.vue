@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
 import {
-  MessageCircle,
   Send,
   Square,
   Minimize2,
@@ -13,6 +12,7 @@ import {
   FileText,
   ChevronDown,
 } from "lucide-vue-next";
+import LogoIcon from "@/components/LogoIcon.vue";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 import {
   fileToMessageAttachment,
@@ -220,8 +220,7 @@ onMounted(async () => {
     title="Chat with IO"
     aria-label="Open chat overlay"
   >
-    <MessageCircle class="h-5 w-5 text-white" />
-    <span class="overlay-fab-label">IO</span>
+    <LogoIcon :size="20" class="shrink-0" />
   </button>
 
   <Transition
@@ -243,7 +242,9 @@ onMounted(async () => {
     >
       <header class="overlay-header">
         <div class="flex items-center gap-3">
-          <div class="overlay-status-dot" />
+          <div class="overlay-brand-badge" aria-hidden="true">
+            <span class="overlay-brand-badge-text">I</span>
+          </div>
           <div>
             <p class="overlay-title">IO ASSISTANT</p>
             <p class="overlay-meta">LIVE</p>
@@ -274,7 +275,16 @@ onMounted(async () => {
           class="flex"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <article class="overlay-bubble" :class="msg.role === 'user' ? 'overlay-bubble-user' : 'overlay-bubble-assistant'">
+          <div class="flex items-start gap-2" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
+            <div
+              class="overlay-avatar"
+              :class="msg.role === 'user' ? 'overlay-avatar-user' : 'overlay-avatar-assistant'"
+              aria-hidden="true"
+            >
+              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">M</span>
+              <LogoIcon v-else :size="12" class="shrink-0" />
+            </div>
+            <article class="overlay-bubble" :class="msg.role === 'user' ? 'overlay-bubble-user' : 'overlay-bubble-assistant'">
             <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
               <div
                 v-for="(attachment, idx) in msg.attachments"
@@ -319,6 +329,7 @@ onMounted(async () => {
               <span class="overlay-dot animate-pulse [animation-delay:280ms]" />
             </div>
           </article>
+          </div>
         </div>
       </div>
 
@@ -365,7 +376,7 @@ onMounted(async () => {
 
         <p v-if="composerError" class="text-xs text-destructive mb-2">{{ composerError }}</p>
 
-        <div class="flex items-center gap-2 rounded-2xl border border-white/5 bg-[#202020]/90 px-2 py-2">
+        <div class="flex items-end gap-2">
           <button
             class="overlay-attach-btn"
             :disabled="chat.isStreaming"
@@ -376,25 +387,27 @@ onMounted(async () => {
             <Paperclip class="w-4 h-4" />
           </button>
 
-          <textarea
-            ref="textareaRef"
-            v-model="input"
-            @keydown="handleKeydown"
-            placeholder="Message IO..."
-            rows="1"
-            class="overlay-input"
-          />
+          <div class="overlay-composer-field">
+            <textarea
+              ref="textareaRef"
+              v-model="input"
+              @keydown="handleKeydown"
+              placeholder="Message IO..."
+              rows="1"
+              class="overlay-input"
+            />
 
-          <button
-            @click="chat.isStreaming ? stopStreaming() : send()"
-            :disabled="!canSend && !chat.isStreaming"
-            class="overlay-send-btn"
-            :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
-            :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
-          >
-            <Send v-if="!chat.isStreaming" class="h-4 w-4" />
-            <Square v-else class="h-3.5 w-3.5" />
-          </button>
+            <button
+              @click="chat.isStreaming ? stopStreaming() : send()"
+              :disabled="!canSend && !chat.isStreaming"
+              class="overlay-send-btn"
+              :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
+              :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
+            >
+              <Send v-if="!chat.isStreaming" class="h-4 w-4" />
+              <Square v-else class="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </footer>
     </section>
@@ -403,18 +416,13 @@ onMounted(async () => {
 
 <style scoped>
 .overlay-fab {
-  @apply fixed bottom-4 right-4 z-50 flex h-12 items-center gap-2 rounded-full px-4 text-white shadow-glow-lg transition-all duration-200 sm:bottom-6 sm:right-6;
+  @apply fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-glow-lg transition-all duration-200 sm:bottom-6 sm:right-6;
   background: linear-gradient(
     135deg,
     hsl(var(--gradient-start)),
     hsl(var(--gradient-mid)),
     hsl(var(--gradient-end))
   );
-}
-
-.overlay-fab-label {
-  font-family: "Bebas Neue", "Inter", sans-serif;
-  @apply text-lg leading-none tracking-[0.1em];
 }
 
 .overlay-fab:hover {
@@ -430,12 +438,12 @@ onMounted(async () => {
 }
 
 .overlay-panel {
-  @apply fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden border border-white/5 bg-[#1e1e1e]/95 shadow-2xl backdrop-blur;
+  @apply fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden border border-border bg-card/95 shadow-2xl backdrop-blur;
 }
 
 @media (min-width: 768px) {
   .overlay-panel {
-    @apply bottom-4 right-4 left-auto h-[min(44rem,85vh)] w-[min(27rem,calc(100vw-2.25rem))] rounded-3xl;
+    @apply bottom-4 right-4 left-auto h-[min(44rem,85vh)] w-[min(27rem,calc(100vw-2.25rem))] rounded-2xl;
   }
 }
 
@@ -453,9 +461,13 @@ onMounted(async () => {
   @apply flex items-center justify-between border-b border-border/80 bg-header/85 px-4 py-3;
 }
 
-.overlay-status-dot {
-  @apply h-2.5 w-2.5 rounded-full bg-emerald-400;
-  box-shadow: 0 0 0 4px rgb(52 211 153 / 0.14);
+.overlay-brand-badge {
+  @apply flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-lg;
+  background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-mid)), hsl(var(--gradient-end)));
+}
+
+.overlay-brand-badge-text {
+  @apply text-sm font-bold leading-none tracking-[0.12em];
 }
 
 .overlay-title {
@@ -487,12 +499,24 @@ onMounted(async () => {
     linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
 }
 
+.overlay-avatar {
+  @apply mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/70 text-[10px] font-bold shadow-sm;
+}
+
+.overlay-avatar-assistant {
+  @apply bg-secondary text-foreground;
+}
+
+.overlay-avatar-user {
+  @apply bg-primary text-primary-foreground;
+}
+
 .overlay-bubble {
   @apply max-w-[90%] rounded-xl border px-3 py-2.5 text-[13px] leading-relaxed md:max-w-[84%];
 }
 
 .overlay-bubble-assistant {
-  @apply border-white/5 bg-[#232323] text-foreground shadow-sm;
+  @apply border-border/70 bg-secondary text-foreground;
 }
 
 .overlay-bubble-user {
@@ -532,16 +556,20 @@ onMounted(async () => {
 }
 
 .overlay-footer {
-  @apply border-t border-white/5 bg-[#1f1f1f]/95 p-3;
+  @apply border-t border-border/80 bg-card/95 p-3;
 }
 
 .overlay-chip {
-  @apply flex items-center gap-1.5 rounded-full border border-white/5 bg-[#2a2a2a]/90 px-1.5 py-1 text-[11px] text-foreground;
+  @apply flex items-center gap-1.5 rounded-md border border-border bg-muted/60 px-1.5 py-1 text-[11px] text-foreground;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.overlay-composer-field {
+  @apply relative flex-1;
+}
+
 .overlay-input {
-  @apply min-h-[42px] max-h-[136px] flex-1 resize-none rounded-full border border-white/5 bg-[#2a2a2a] px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150;
+  @apply min-h-[42px] max-h-[136px] w-full resize-none rounded-lg border border-input bg-input px-3 py-2 pr-12 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150;
 }
 
 .overlay-input:hover {
@@ -557,7 +585,7 @@ onMounted(async () => {
 }
 
 .overlay-attach-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-[#2a2a2a] text-muted-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply flex h-10 w-10 items-center justify-center rounded-lg border border-input bg-input text-muted-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
 }
 
 .overlay-attach-btn:hover:not(:disabled) {
@@ -569,7 +597,7 @@ onMounted(async () => {
 }
 
 .overlay-send-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
   background: linear-gradient(
     135deg,
     hsl(var(--gradient-start)),
