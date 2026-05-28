@@ -403,12 +403,29 @@ export function createTools(): Tool<any>[] {
         const { promisify } = await import("node:util");
         const { homedir } = await import("node:os");
         const execAsync = promisify(exec);
+
+        // Ensure GitHub CLI auth is available in the shell environment
+        const shellEnv: Record<string, string | undefined> = { ...process.env, GH_PROMPT_DISABLED: "1" };
+        if (!shellEnv.GH_TOKEN && !shellEnv.GITHUB_TOKEN) {
+          try {
+            const { stdout: token } = await execAsync("gh auth token", {
+              timeout: 5_000,
+              env: process.env,
+            });
+            if (token.trim()) {
+              shellEnv.GH_TOKEN = token.trim();
+            }
+          } catch {
+            // gh auth not available
+          }
+        }
+
         try {
           const { stdout } = await execAsync(command, {
             cwd: cwd ?? homedir(),
             timeout: 60_000,
             maxBuffer: 1024 * 1024,
-            env: { ...process.env, GH_PROMPT_DISABLED: "1" },
+            env: shellEnv,
           });
           const output = stdout.trim() || "(no output)";
           addAuditEntry(

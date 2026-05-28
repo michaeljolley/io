@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { apiPost } from "@/lib/api";
 import type { MessageAttachment } from "@/lib/attachments";
+import { useAuthStore } from "./auth";
 
 export interface ChatMessage {
   id: string;
@@ -10,6 +10,19 @@ export interface ChatMessage {
   attachments: MessageAttachment[];
   timestamp: Date;
   streaming?: boolean;
+}
+
+// Time threshold (ms) — if more than this has elapsed since the last delta
+// AND the previous assistant message was finalized, start a new bubble.
+const NEW_BUBBLE_THRESHOLD = 5_000;
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 <= Date.now() + 60_000;
+  } catch {
+    return true;
+  }
 }
 
 export const useChatStore = defineStore("chat", () => {
@@ -47,21 +60,121 @@ export const useChatStore = defineStore("chat", () => {
     };
     messages.value.push(assistantMsg);
 
+    let lastDeltaTime = Date.now();
+
     try {
-      const response = await apiPost("/message", {
-        prompt: content,
-        conversationId: conversationId.value,
-        attachments,
+      const auth = useAuthStore();
+      // Proactively refresh if token is near expiry
+      if (auth.token && isTokenExpired(auth.token)) {
+        await auth.refreshToken();
+      }
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (auth.token) {
+        headers["Authorization"] = `Bearer ${auth.token}`;
+      }
+
+      const response = await fetch("/api/message", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          prompt: content,
+          conversationId: conversationId.value,
+          attachments,
+        }),
       });
-      assistantMsg.content = response.content;
-      assistantMsg.streaming = false;
-      // Server may echo back the conversationId (e.g. when it was generated server-side)
-      if (response.conversationId) {
-        conversationId.value = response.conversationId;
+
+      if (!response.ok || !response.body) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      // Read SSE stream from response body
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() ?? "";
+
+        let currentEvent = "";
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7);
+          } else if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            try {
+              const parsed = JSON.parse(data);
+              if (currentEvent === "delta") {
+                const now = Date.now();
+                // Smart bubble: if enough time passed and last message was finalized,
+                // create a new assistant bubble
+                const lastMsg = messages.value[messages.value.length - 1];
+                if (
+                  lastMsg &&
+                  !lastMsg.streaming &&
+                  lastMsg.role === "assistant" &&
+                  now - lastDeltaTime > NEW_BUBBLE_THRESHOLD
+                ) {
+                  const newMsg: ChatMessage = {
+                    id: crypto.randomUUID(),
+                    role: "assistant",
+                    content: parsed.content,
+                    attachments: [],
+                    timestamp: new Date(),
+                    streaming: true,
+                  };
+                  messages.value.push(newMsg);
+                } else {
+                  // Find the current streaming bubble and update it
+                  const streaming = messages.value.filter((m) => m.streaming);
+                  const target = streaming[streaming.length - 1];
+                  if (target) {
+                    target.content = parsed.content;
+                  }
+                }
+                lastDeltaTime = now;
+              } else if (currentEvent === "done") {
+                // Finalize the streaming bubble
+                const streaming = messages.value.filter((m) => m.streaming);
+                const target = streaming[streaming.length - 1];
+                if (target) {
+                  target.content = parsed.content;
+                  target.streaming = false;
+                }
+                if (parsed.conversationId) {
+                  conversationId.value = parsed.conversationId;
+                }
+              } else if (currentEvent === "error") {
+                const streaming = messages.value.filter((m) => m.streaming);
+                const target = streaming[streaming.length - 1];
+                if (target) {
+                  target.content = `Error: ${parsed.error}`;
+                  target.streaming = false;
+                }
+              }
+            } catch {
+              // Ignore malformed JSON lines
+            }
+            currentEvent = "";
+          } else if (line.startsWith(":")) {
+            // Comment (keepalive) — ignore
+          }
+        }
       }
     } catch (err: any) {
-      assistantMsg.content = `Error: ${err.message}`;
-      assistantMsg.streaming = false;
+      // Finalize any streaming bubble with the error
+      const streaming = messages.value.filter((m) => m.streaming);
+      const target = streaming[streaming.length - 1];
+      if (target) {
+        target.content = `Error: ${err.message}`;
+        target.streaming = false;
+      }
     } finally {
       isStreaming.value = false;
     }

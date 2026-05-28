@@ -17,6 +17,11 @@ export interface Instance {
 
 const MAX_INSTANCES_PER_SQUAD = 3;
 
+export function getInstance(instanceId: string): Instance | undefined {
+  const db = getDb();
+  return db.prepare("SELECT * FROM instances WHERE id = ?").get(instanceId) as Instance | undefined;
+}
+
 export async function createInstance(
   squadId: string,
   branch: string

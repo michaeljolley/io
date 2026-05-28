@@ -1,14 +1,33 @@
 import { z } from "zod";
 import { defineTool } from "@github/copilot-sdk";
 import type { Tool } from "@github/copilot-sdk";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+import { join } from "node:path";
+import { PATHS } from "../paths.js";
+
+const execAsync = promisify(exec);
+
+/**
+ * Resolve the project root directory for a squad from its repo_url.
+ * Returns the path under ~/.io/source/{owner}/{repo} or null if unknown.
+ */
+function resolveSquadProjectDir(repoUrl: string | null): string | null {
+  if (!repoUrl) return null;
+  const match = repoUrl.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+  if (!match) return null;
+  const [, owner, repo] = match;
+  return join(PATHS.source, owner, repo);
+}
 
 /**
  * Creates a scoped set of tools for squad agent sessions.
  * Wiki tools are sandboxed to the squad's own wiki subfolder.
  * Feed posts are locked to the squad's source identifier.
  */
-export function createSquadTools(squadSlug: string, squadId: string): Tool<any>[] {
+export function createSquadTools(squadSlug: string, squadId: string, repoUrl?: string | null): Tool<any>[] {
   const wikiPrefix = `squads/${squadSlug}`;
+  const projectDir = resolveSquadProjectDir(repoUrl ?? null);
 
   return [
     // --- Wiki Tools (scoped to squads/{slug}/) ---
@@ -106,6 +125,63 @@ export function createSquadTools(squadSlug: string, squadId: string): Tool<any>[
       handler: async () => {
         const { getTasksForSquad } = await import("../store/tasks.js");
         return getTasksForSquad(squadId);
+      },
+    }),
+
+    // --- Shell Tool (scoped to project directory) ---
+    defineTool("shell_exec", {
+      description:
+        "Execute a shell command in the squad's project directory. Use for git, build tools, test runners, file operations, etc.",
+      parameters: z.object({
+        command: z.string().describe("Shell command to execute"),
+        cwd: z
+          .string()
+          .optional()
+          .describe(
+            "Working directory relative to project root (optional, defaults to project root)"
+          ),
+      }),
+      handler: async ({ command, cwd }) => {
+        const baseDir = projectDir ?? process.cwd();
+        // If cwd is provided, resolve it relative to the project dir
+        const workDir = cwd ? join(baseDir, cwd) : baseDir;
+
+        // Safety: ensure workDir is under baseDir
+        const resolved = join(workDir);
+        if (!resolved.startsWith(baseDir)) {
+          return `Error: cannot execute commands outside the project directory`;
+        }
+
+        try {
+          // Ensure GitHub CLI auth is available — prefer GH_TOKEN from env,
+          // fall back to extracting from gh auth if available
+          const shellEnv: Record<string, string | undefined> = { ...process.env, GH_PROMPT_DISABLED: "1" };
+          if (!shellEnv.GH_TOKEN && !shellEnv.GITHUB_TOKEN) {
+            try {
+              const { stdout: token } = await execAsync("gh auth token", {
+                timeout: 5_000,
+                env: process.env,
+              });
+              if (token.trim()) {
+                shellEnv.GH_TOKEN = token.trim();
+              }
+            } catch {
+              // gh auth not available — agents won't be able to push
+            }
+          }
+
+          const { stdout } = await execAsync(command, {
+            cwd: workDir,
+            timeout: 120_000,
+            maxBuffer: 2 * 1024 * 1024,
+            env: shellEnv,
+          });
+          return stdout.trim() || "(no output)";
+        } catch (err: any) {
+          const stderr = err.stderr?.toString().trim() ?? "";
+          const stdout = err.stdout?.toString().trim() ?? "";
+          return `Error (exit ${err.code ?? 1}): ${stderr || stdout || err.message}`;
+        }
       },
     }),
   ];

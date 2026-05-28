@@ -97,7 +97,7 @@ export async function startApiServer(config: Config): Promise<void> {
     });
   });
 
-  // --- Chat ---
+  // --- Chat (SSE-streamed response) ---
   app.post("/api/message", async (req, res) => {
     const { prompt, conversationId: clientConvId, attachments: rawAttachments } = req.body;
     if (!prompt || typeof prompt !== "string") {
@@ -117,15 +117,43 @@ export async function startApiServer(config: Config): Promise<void> {
     // Persist the user message
     saveMessage(conversationId, "user", prompt, "web", attachments);
 
-    // Stream response via SSE, send final to HTTP response
-    await sendToOrchestrator(prompt, "web", (content, done) => {
-      broadcast("message_delta", { content, done });
-      if (done) {
-        // Persist the assistant response
-        saveMessage(conversationId, "assistant", content, "web");
-        res.json({ content, conversationId });
+    // Switch to SSE streaming to avoid Cloudflare 524 timeouts
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    // Keepalive: send a comment every 30s to keep Cloudflare happy
+    const keepalive = setInterval(() => {
+      res.write(": keepalive\n\n");
+    }, 30_000);
+
+    let closed = false;
+    req.on("close", () => { closed = true; clearInterval(keepalive); });
+
+    try {
+      await sendToOrchestrator(prompt, "web", (content, done) => {
+        if (closed) return;
+        if (done) {
+          saveMessage(conversationId, "assistant", content, "web");
+          res.write(`event: done\ndata: ${JSON.stringify({ content, conversationId })}\n\n`);
+          clearInterval(keepalive);
+          res.end();
+        } else {
+          res.write(`event: delta\ndata: ${JSON.stringify({ content })}\n\n`);
+          // Also broadcast to other SSE listeners (e.g. ChatOverlay)
+          broadcast("message_delta", { content, done: false });
+        }
+      }, attachments);
+    } catch (err) {
+      if (!closed) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        res.write(`event: error\ndata: ${JSON.stringify({ error: message })}\n\n`);
+        clearInterval(keepalive);
+        res.end();
       }
-    }, attachments);
+    }
   });
 
   // --- History ---

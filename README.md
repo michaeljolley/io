@@ -1,6 +1,6 @@
-# 🤖 IO
+<img src="assets/IO-logo.svg" width="120"/>
 
-A personal AI assistant daemon built on the GitHub Copilot SDK. IO runs 24/7 on your machine, reachable via Telegram, a web dashboard, and an HTTP API.
+IO is a personal AI assistant daemon built on the GitHub Copilot SDK. It runs 24/7 on your machine, reachable via Telegram, a web dashboard, and an HTTP API.
 
 [![CI](https://github.com/michaeljolley/io/actions/workflows/ci.yml/badge.svg)](https://github.com/michaeljolley/io/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)

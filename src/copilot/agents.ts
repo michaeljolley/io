@@ -4,7 +4,7 @@ import { getClient } from "./client.js";
 import { loadConfig } from "../config.js";
 import { getLeadForSquad, getAgentsForSquad, updateAgentStatus, getSquad } from "../store/squads.js";
 import { createTask, updateTaskStatus, getTask } from "../store/tasks.js";
-import { touchInstanceActivity } from "../store/instances.js";
+import { touchInstanceActivity, getInstance } from "../store/instances.js";
 import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
 import { attachTokenTracker } from "./token-tracker.js";
@@ -15,9 +15,57 @@ import { createSquadTools } from "./squad-tools.js";
 import { loadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { buildAttachmentSummary, type MessageAttachment, toCopilotBlobAttachments } from "../chat/attachments.js";
+import { existsSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+
+const execAsync = promisify(exec);
 
 // Registry of active agent sessions keyed by task ID
 const activeSessions = new Map<string, CopilotSession>();
+
+/**
+ * Resolve the working directory for a squad agent session.
+ * Priority: instance worktree → cloned repo → process.cwd()
+ */
+async function resolveSquadWorkingDirectory(
+  squad: { repo_url: string | null },
+  instanceId?: string
+): Promise<string> {
+  // If an instance is specified, use its worktree path
+  if (instanceId) {
+    const instance = getInstance(instanceId);
+    if (instance?.worktree_path && existsSync(instance.worktree_path)) {
+      return instance.worktree_path;
+    }
+  }
+
+  // Derive from squad repo_url → ~/.io/source/{owner}/{repo}
+  if (squad.repo_url) {
+    const match = squad.repo_url.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+    if (match) {
+      const [, owner, repo] = match;
+      const sourceDir = join(PATHS.source, owner, repo);
+
+      if (existsSync(sourceDir)) {
+        return sourceDir;
+      }
+
+      // Attempt to clone if missing
+      const parentDir = join(PATHS.source, owner);
+      if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
+      try {
+        await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000 });
+        return sourceDir;
+      } catch {
+        // Clone failed — fall through to default
+      }
+    }
+  }
+
+  return process.cwd();
+}
 
 /**
  * Stop a running agent by task ID. Disconnects the session and marks the task as stopped.
@@ -118,14 +166,17 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
   let result: string;
   try {
     // Load squad-scoped tools, skills, and MCP servers
-    const squadTools = createSquadTools(squadSlug, squadId);
+    const squadTools = createSquadTools(squadSlug, squadId, squad?.repo_url);
     const skillDirs = await loadSkillDirectories();
     const mcpServers = getMcpServersForSession();
+
+    // Resolve correct working directory for the squad's project
+    const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
 
     const session = await client.createSession({
       model,
       streaming: true,
-      workingDirectory: process.cwd(),
+      workingDirectory: workDir,
       systemMessage: { content: systemMessage },
       tools: squadTools,
       skillDirectories: skillDirs,
