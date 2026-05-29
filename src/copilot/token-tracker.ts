@@ -3,6 +3,8 @@ import { loadConfig } from "../config.js";
 import { recordTokenUsage } from "../store/token-usage.js";
 import { postFeedItem } from "../store/feed.js";
 
+const NANO_AIU_TO_USD = 1e-14;
+
 /**
  * Default model pricing (USD per 1M tokens).
  * Used when modelPricing is not configured.
@@ -36,7 +38,16 @@ export function estimateCost(model: string, inputTokens: number, outputTokens: n
 }
 
 interface UsageAccumulator {
-  [model: string]: { inputTokens: number; outputTokens: number };
+  [model: string]: { inputTokens: number; outputTokens: number; costUsd: number };
+}
+
+function resolveCostUsd(data: any, model: string, inputTokens: number, outputTokens: number): number {
+  const totalNanoAiu = data?.copilotUsage?.totalNanoAiu;
+  if (typeof totalNanoAiu === "number" && Number.isFinite(totalNanoAiu)) {
+    return totalNanoAiu * NANO_AIU_TO_USD;
+  }
+
+  return estimateCost(model, inputTokens, outputTokens);
 }
 
 /**
@@ -62,9 +73,10 @@ export function attachTokenTracker(
     const model: string = data.model;
     const input: number = data.inputTokens ?? 0;
     const output: number = data.outputTokens ?? 0;
-    if (!accumulator[model]) accumulator[model] = { inputTokens: 0, outputTokens: 0 };
+    if (!accumulator[model]) accumulator[model] = { inputTokens: 0, outputTokens: 0, costUsd: 0 };
     accumulator[model].inputTokens += input;
     accumulator[model].outputTokens += output;
+    accumulator[model].costUsd += resolveCostUsd(data, model, input, output);
   });
 
   return () => {
@@ -76,7 +88,7 @@ export function attachTokenTracker(
 
     for (const [model, usage] of Object.entries(accumulator)) {
       if (usage.inputTokens === 0 && usage.outputTokens === 0) continue;
-      const costUsd = estimateCost(model, usage.inputTokens, usage.outputTokens);
+      const costUsd = usage.costUsd ?? estimateCost(model, usage.inputTokens, usage.outputTokens);
       recordTokenUsage({
         squadId: context.squadId,
         agentId: context.agentId,
