@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
+import { describeCronExpression } from "@/lib/cron";
 import { Clock, Plus, Trash2, Play, Pencil } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
@@ -45,7 +46,7 @@ onMounted(async () => {
   }
 });
 
-const filteredSchedules = () => schedules.value.filter((s) => s.type === tab.value);
+const filteredSchedules = computed(() => schedules.value.filter((s) => s.type === tab.value));
 
 async function addSchedule() {
   const body: any = {
@@ -67,9 +68,10 @@ function getSquadById(squadId: string | null): Squad | undefined {
 }
 
 const decoratedSchedules = computed(() =>
-  filteredSchedules().map((schedule) => ({
+  filteredSchedules.value.map((schedule) => ({
     ...schedule,
     squad: getSquadById(schedule.squad_id),
+    description: describeCronExpression(schedule.cron),
   }))
 );
 
@@ -186,7 +188,7 @@ function getSquadName(squadId: string | null): string {
 
     <div v-if="loading" class="text-muted-foreground">Loading...</div>
 
-    <div v-else-if="filteredSchedules().length === 0" class="text-center py-12 text-muted-foreground">
+    <div v-else-if="filteredSchedules.length === 0" class="text-center py-12 text-muted-foreground">
       <Clock class="w-12 h-12 mx-auto mb-3 opacity-50" />
       <p>No {{ tab }} schedules configured.</p>
     </div>
@@ -195,6 +197,7 @@ function getSquadName(squadId: string | null): string {
       <div v-for="schedule in decoratedSchedules" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
         <div>
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
+          <div class="text-xs text-primary/90 mt-1 font-medium">Runs {{ schedule.description }}</div>
           <div v-if="schedule.squad" class="mt-1">
             <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(schedule.squad.color)">
               {{ schedule.squad.name }}
