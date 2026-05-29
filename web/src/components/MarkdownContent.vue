@@ -18,5 +18,20 @@ const rendered = computed(() => {
 </script>
 
 <template>
-  <div class="prose prose-sm dark:prose-invert max-w-none" v-html="rendered"></div>
+  <div class="prose prose-sm dark:prose-invert max-w-none markdown-content" v-html="rendered"></div>
 </template>
+
+<style>
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+</style>
