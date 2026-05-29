@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
+import { useAuthStore } from "@/stores/auth";
 import { useRoute } from "vue-router";
-import { Send, Square, X, Image as ImageIcon, FileText, ChevronDown, MessageSquare, Paperclip } from "lucide-vue-next";
+import { Send, Square, Minimize2, Image as ImageIcon, FileText, ChevronDown, MessageSquare, Paperclip } from "lucide-vue-next";
 import LogoIcon from "@/components/LogoIcon.vue";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/lib/attachments";
 
 const chat = useChatStore();
+const auth = useAuthStore();
 const route = useRoute();
 
 const isOpen = ref(false);
@@ -39,6 +41,11 @@ const isOnChatPage = () => route.path === "/";
 const totalPendingAttachmentBytes = computed(() =>
   pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
 );
+
+const userInitial = computed(() => {
+  const email = typeof auth.email === 'string' ? auth.email.trim() : '';
+  return email ? email.charAt(0).toUpperCase() : 'U';
+});
 
 const canSend = computed(
   () =>
@@ -240,26 +247,27 @@ onMounted(async () => {
           <div class="overlay-brand-mark" aria-hidden="true">
             <img src="/logo.svg" alt="IO" width="18" height="18" class="shrink-0" />
           </div>
-          <div class="flex flex-col leading-none">
-            <span class="overlay-title">IO</span>
-            <span class="overlay-quick-chat">quick chat</span>
+          <div class="flex items-center leading-none">
+            <span class="overlay-title">IO Chat</span>
           </div>
         </div>
 
         <button
           @click="isOpen = false"
           class="overlay-icon-btn"
-          aria-label="Close chat overlay"
-          title="Close chat"
+          aria-label="Minimize chat overlay"
+          title="Minimize chat"
         >
-          <X class="h-3.5 w-3.5" />
+          <Minimize2 class="h-3.5 w-3.5" />
         </button>
       </header>
 
       <div ref="messagesContainer" class="overlay-messages" @scroll="updateScrollState">
         <div v-if="!hasMessages" class="flex h-full items-center justify-center px-5 text-center">
           <div>
-            <p class="overlay-empty-title">CHAT</p>
+            <div class="overlay-empty-brand" aria-hidden="true">
+              <LogoIcon :size="24" class="shrink-0" />
+            </div>
             <p class="overlay-empty-copy">Ask IO about your workspace, agents, or recent changes.</p>
           </div>
         </div>
@@ -276,7 +284,7 @@ onMounted(async () => {
               :class="msg.role === 'user' ? 'overlay-avatar-user' : 'overlay-avatar-assistant'"
               aria-hidden="true"
             >
-              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">U</span>
+              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">{{ userInitial }}</span>
               <LogoIcon v-else :size="10" class="shrink-0" />
             </div>
 
@@ -448,11 +456,6 @@ onMounted(async () => {
   @apply text-lg leading-none tracking-[0.16em] text-white;
 }
 
-.overlay-quick-chat {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  @apply mt-0.5 text-[10px] text-zinc-600;
-}
-
 .overlay-icon-btn {
   @apply rounded-lg p-1.5 text-zinc-500 transition-colors duration-150;
 }
@@ -470,13 +473,12 @@ onMounted(async () => {
   background: #1c1c1c;
 }
 
-.overlay-empty-title {
-  font-family: "Bebas Neue", sans-serif;
-  @apply text-3xl leading-none tracking-[0.12em] text-white;
+.overlay-empty-brand {
+  @apply mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#252525];
 }
 
 .overlay-empty-copy {
-  @apply mt-2 text-xs text-zinc-500;
+  @apply mt-0 text-xs text-zinc-500;
   font-family: "Inter", sans-serif;
 }
 
@@ -490,9 +492,9 @@ onMounted(async () => {
 }
 
 .overlay-avatar-user {
-  border-color: rgba(228, 58, 156, 0.16);
-  background: rgba(228, 58, 156, 0.08);
-  color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #8f1228 0%, #6d1120 100%);
+  color: #fff;
 }
 
 .overlay-avatar-letter {
@@ -500,7 +502,7 @@ onMounted(async () => {
 }
 
 .overlay-bubble {
-  @apply max-w-[82%] rounded-xl px-3 py-2 text-[11px] leading-relaxed;
+  @apply max-w-[82%] rounded-xl px-3 py-2 text-[10px] leading-relaxed;
 }
 
 .overlay-bubble-assistant {
@@ -510,7 +512,7 @@ onMounted(async () => {
 }
 
 .overlay-bubble-user {
-  background: #E43A9C;
+  background: linear-gradient(180deg, #8f1228 0%, #6d1120 100%);
   color: #fff;
 }
 
@@ -555,7 +557,7 @@ onMounted(async () => {
 }
 
 .overlay-attach-btn {
-  @apply absolute left-1.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d2d2d] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#2d2d2d] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
 }
 
 .overlay-attach-btn:hover:not(:disabled) {
@@ -567,11 +569,11 @@ onMounted(async () => {
 }
 
 .overlay-composer-field {
-  @apply relative flex-1;
+  @apply flex items-center gap-2;
 }
 
 .overlay-input {
-  @apply min-h-[36px] w-full resize-none rounded-xl border border-[#2d2d2d] bg-[#252525] px-3 py-2 pl-10 pr-11 text-[11px] leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
+  @apply min-h-[36px] flex-1 resize-none rounded-xl border border-[#2d2d2d] bg-[#252525] px-3 py-2 text-[11px] leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
   max-height: 100px;
   font-family: "Inter", sans-serif;
 }
@@ -581,7 +583,7 @@ onMounted(async () => {
 }
 
 .overlay-send-btn {
-  @apply absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
   background: linear-gradient(135deg, #D83333, #E43A9C);
 }
 
