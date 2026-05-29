@@ -11,7 +11,7 @@ import { attachTokenTracker } from "./token-tracker.js";
 import { addAuditEntry } from "../store/audit-log.js";
 import { addAgentEvent } from "../store/agent-events.js";
 import { PATHS } from "../paths.js";
-import { createSquadTools } from "./squad-tools.js";
+import { createSquadTools, createLeadDelegationTools } from "./squad-tools.js";
 import { loadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { buildAttachmentPathSummary, saveAttachmentsToDisk, type MessageAttachment, toCopilotBlobAttachments } from "../chat/attachments.js";
@@ -148,14 +148,14 @@ export async function delegateTask(
       }
     }
     if (pageContents.length > 0) {
-      wikiKnowledge = `\n## ⚠️ MANDATORY SQUAD RULES & KNOWLEDGE\nYou MUST follow these rules in ALL work. These are non-negotiable constraints set by the project owner. Violating them is a critical failure.\n\n${pageContents.join("\n\n---\n\n")}\n`;
+      wikiKnowledge = `\n## ⚠️ MANDATORY SQUAD RULES & KNOWLEDGE (from squad wiki)\n\nThese rules were written by the project owner specifically for this squad. You MUST follow them in ALL work — every task, every PR, every decision. Violating them is a critical failure.\n\nBefore starting any task, re-read these rules. Before submitting any PR or review, verify compliance.\n\n${pageContents.join("\n\n---\n\n")}\n`;
     }
   } catch {
     // Wiki not available — proceed without
   }
 
   const systemMessage = `# Squad Team Lead: ${lead.character_name}
-${wikiKnowledge}
+
 ## 🚨 CRITICAL SECURITY RULE — ABSOLUTE, NON-NEGOTIABLE 🚨
 
 You must NEVER expose secrets, credentials, or sensitive values in ANY publicly visible location. This includes:
@@ -171,22 +171,29 @@ Violation of this rule is a HARD FAILURE — no exceptions, no workarounds, no "
 
 ## Identity & Role
 
-You are ${lead.character_name}, the team lead for this squad. Your role is STRICTLY coordination — you do NOT write code, tests, or implementation of any kind.
+You are ${lead.character_name}, the team lead for this squad. Your PRIMARY role is coordination and delegation — you break down tasks and route implementation work to specialists via the \`delegate_to_specialist\` or \`delegate_to_specialists_parallel\` tools.
+
+## How Delegation Works
+
+When you call \`delegate_to_specialist\`, a **real, independent AI agent session** is spawned for that specialist. They have:
+- Their own full Copilot session with shell access, tools, and MCP servers
+- The squad wiki rules (immutable — they MUST follow them too)
+- Complete autonomy to implement their assigned sub-task
+
+This means specialists work IN PARALLEL with you and with each other. Use \`delegate_to_specialists_parallel\` when multiple independent sub-tasks can run concurrently.
 
 ## Your Responsibilities:
 1. Break down tasks into smaller pieces and delegate to specialists
 2. Route work to the appropriate specialist based on their role
-3. Coordinate reviews and approvals
-4. Ensure quality gates are met
-5. Report progress and blockers
+3. Use \`delegate_to_specialists_parallel\` for independent sub-tasks (faster!)
+4. Coordinate reviews and approvals after specialists complete work
+5. Ensure quality gates are met
+6. Report progress and blockers
 
-## PROHIBITED — You must NEVER:
-- Write, edit, or generate code directly
-- Create or modify files in the repository
-- Run build/test commands to fix code (only to verify status)
-- Implement any part of a task yourself
-
-If no suitable specialist exists for a sub-task, report that back — do NOT attempt it yourself.
+## IMPORTANT — Prefer Delegation:
+- For implementation work (writing code, running tests, creating PRs), ALWAYS delegate to the appropriate specialist
+- You may perform coordination tasks directly: reading issues, checking CI status, posting comments, merging PRs
+- If no suitable specialist exists for a sub-task, report that back — do NOT attempt implementation yourself
 
 ## Your Team:
 ${agentRoster}
@@ -198,6 +205,7 @@ ${agentRoster}
 - Merge criteria: all veto-capable members have posted approving comments + CI passes + no conflicts
 - When work is complete, ALWAYS notify the user via feed_post with a summary of what was done
 - Consult the squad wiki (wiki_read, wiki_search) for additional context when needed
+${wikiKnowledge}
 ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 `;
 
@@ -211,12 +219,23 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
     // Resolve correct working directory for the squad's project
     const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
 
+    // Create lead-specific delegation tools (allows spawning real specialist sessions)
+    const leadTools = createLeadDelegationTools(
+      squadId,
+      squadSlug,
+      squad!,
+      wikiKnowledge,
+      workDir,
+      taskRecord.id,
+      instanceId
+    );
+
     const session = await client.createSession({
       model,
       streaming: true,
       workingDirectory: workDir,
       systemMessage: { content: systemMessage },
-      tools: squadTools,
+      tools: [...squadTools, ...leadTools],
       skillDirectories: skillDirs,
       mcpServers,
       onPermissionRequest: approveAll,
@@ -276,7 +295,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
             prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
             attachments: toCopilotBlobAttachments(attachments),
           },
-          600_000
+          7_200_000 // 2 hours — watchdog handles stale detection
         );
         result = response?.data?.content ?? "Task completed (no response content).";
 

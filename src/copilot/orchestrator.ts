@@ -197,7 +197,7 @@ async function executeOnSession(msg: QueuedMessage): Promise<void> {
           prompt: taggedPrompt,
           attachments: toCopilotBlobAttachments(msg.attachments),
         },
-        600_000
+        7_200_000 // 2 hours — watchdog handles stale detection
       );
       const finalContent = response?.data?.content ?? accumulated;
       msg.callback(finalContent, true);

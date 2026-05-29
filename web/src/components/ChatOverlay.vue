@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
-import { Send, Square, X, Image as ImageIcon, FileText, ChevronDown, MessageSquare } from "lucide-vue-next";
+import { Send, Square, X, Image as ImageIcon, FileText, ChevronDown, MessageSquare, Paperclip } from "lucide-vue-next";
 import LogoIcon from "@/components/LogoIcon.vue";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 import {
@@ -372,26 +372,38 @@ onMounted(async () => {
 
         <p v-if="composerError" class="mb-2 text-[11px] text-[#ef4444]">{{ composerError }}</p>
 
-        <div class="overlay-composer-field">
-          <textarea
-            ref="textareaRef"
-            v-model="input"
-            @keydown="handleKeydown"
-            placeholder="Message IO…"
-            rows="1"
-            class="overlay-input"
-          />
-
+        <div class="flex items-end gap-2">
           <button
-            @click="chat.isStreaming ? stopStreaming() : send()"
-            :disabled="!canSend && !chat.isStreaming"
-            class="overlay-send-btn"
-            :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
-            :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
+            class="overlay-attach-btn"
+            :disabled="chat.isStreaming"
+            @click="openPicker"
+            title="Attach files"
+            aria-label="Attach files"
           >
-            <Send v-if="!chat.isStreaming" class="h-3 w-3" />
-            <Square v-else class="h-3 w-3" />
+            <Paperclip class="h-4 w-4" />
           </button>
+
+          <div class="overlay-composer-field">
+            <textarea
+              ref="textareaRef"
+              v-model="input"
+              @keydown="handleKeydown"
+              placeholder="Message IO…"
+              rows="1"
+              class="overlay-input"
+            />
+
+            <button
+              @click="chat.isStreaming ? stopStreaming() : send()"
+              :disabled="!canSend && !chat.isStreaming"
+              class="overlay-send-btn"
+              :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
+              :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
+            >
+              <Send v-if="!chat.isStreaming" class="h-3 w-3" />
+              <Square v-else class="h-3 w-3" />
+            </button>
+          </div>
         </div>
       </footer>
     </section>
@@ -544,31 +556,43 @@ onMounted(async () => {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.overlay-composer-field {
-  @apply relative flex items-end gap-2 rounded-xl border border-white/[0.08] bg-[#252525] px-3 py-2 transition-colors duration-150;
+.overlay-attach-btn {
+  @apply flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
 }
 
-.overlay-composer-field:focus-within {
-  border-color: rgba(228, 58, 156, 0.3);
+.overlay-attach-btn:hover:not(:disabled) {
+  @apply border-white/[0.12] bg-[#2a2a2a] text-zinc-300;
+}
+
+.overlay-attach-btn:focus-visible {
+  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
+}
+
+.overlay-composer-field {
+  @apply relative flex-1;
 }
 
 .overlay-input {
-  @apply min-h-[18px] flex-1 resize-none bg-transparent text-xs leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none;
+  @apply min-h-[36px] w-full resize-none rounded-xl border border-white/[0.08] bg-[#252525] px-3 py-2 pr-10 text-xs leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
   max-height: 100px;
   font-family: "Inter", sans-serif;
 }
 
+.overlay-input:focus {
+  border-color: rgba(228, 58, 156, 0.3);
+}
+
 .overlay-send-btn {
-  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
+  @apply absolute bottom-1 right-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
   background: linear-gradient(135deg, #D83333, #E43A9C);
 }
 
 .overlay-send-btn:hover:not(:disabled) {
-  @apply -translate-y-0.5 brightness-110;
+  @apply brightness-110;
 }
 
 .overlay-send-btn:active:not(:disabled) {
-  @apply translate-y-0 brightness-100;
+  @apply brightness-100;
 }
 
 .overlay-send-btn:focus-visible {

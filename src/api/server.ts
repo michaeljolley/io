@@ -2,6 +2,7 @@ import express from "express";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { existsSync } from "node:fs";
 import type { Config } from "../config.js";
 import { loadConfig, saveConfig } from "../config.js";
 import { createAuthMiddleware } from "./auth.js";
@@ -54,7 +55,9 @@ const sseClients: SSEClient[] = [];
 function broadcast(event: string, data: any): void {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients) {
-    client.res.write(payload);
+    if (!client.res.writableEnded) {
+      client.res.write(payload);
+    }
   }
 }
 
@@ -64,7 +67,12 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // Serve static web frontend
   const webDistPath = resolve(__dirname, "..", "..", "web-dist");
-  app.use(express.static(webDistPath));
+  const webIndexPath = join(webDistPath, "index.html");
+  if (existsSync(webDistPath)) {
+    app.use(express.static(webDistPath));
+  } else {
+    console.warn(`[io] Warning: web-dist not found at ${webDistPath}. Web UI will not be available.`);
+  }
 
   // Auth middleware for all API routes
   const auth = createAuthMiddleware(config);
@@ -664,16 +672,32 @@ export async function startApiServer(config: Config): Promise<void> {
 
   // --- Health (unauthenticated) ---
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", version: process.env.npm_package_version ?? "unknown" });
+    res.json({
+      status: "ok",
+      version: process.env.npm_package_version ?? "unknown",
+      webUi: existsSync(webIndexPath),
+      webDistPath,
+    });
   });
 
   // SPA fallback — serve index.html for non-API routes
-  app.get("*splat", (_req, res) => {
-    res.sendFile(join(webDistPath, "index.html"));
+  app.get("*splat", (req, res) => {
+    if (req.path.startsWith("/api/")) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    if (existsSync(webIndexPath)) {
+      res.sendFile(webIndexPath);
+    } else {
+      res.status(503).send("Web UI not available — web-dist not found.");
+    }
   });
 
-  app.listen(config.port, () => {
-    // Server started
+  return new Promise<void>((resolvePromise, reject) => {
+    const server = app.listen(config.port, () => {
+      resolvePromise();
+    });
+    server.on("error", reject);
   });
 }
 

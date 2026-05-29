@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { join } from "node:path";
 import { PATHS } from "../paths.js";
 import { getGhToken } from "./gh-token.js";
+import type { Squad } from "../store/squads.js";
 
 const execAsync = promisify(exec);
 
@@ -179,6 +180,119 @@ export function createSquadTools(squadSlug: string, squadId: string, repoUrl?: s
           const stdout = err.stdout?.toString().trim() ?? "";
           return `Error (exit ${err.code ?? 1}): ${stderr || stdout || err.message}`;
         }
+      },
+    }),
+  ];
+}
+
+/**
+ * Additional tools available ONLY to team leads.
+ * Includes the delegate_to_specialist tool which spawns real parallel agent sessions.
+ */
+export function createLeadDelegationTools(
+  squadId: string,
+  squadSlug: string,
+  squad: Squad,
+  wikiKnowledge: string,
+  workDir: string,
+  parentTaskId: string,
+  instanceId?: string
+): Tool<any>[] {
+  return [
+    defineTool("delegate_to_specialist", {
+      description:
+        "Delegate a sub-task to a specialist agent. This spawns an INDEPENDENT session for that agent — they will execute the work in parallel. Use this to assign implementation work to the right specialist based on their role. You can call this multiple times to delegate to multiple specialists in parallel.",
+      parameters: z.object({
+        agent_name: z.string().describe("Character name of the specialist to delegate to (from your team roster)"),
+        sub_task: z.string().describe("Detailed description of the sub-task. Be specific about what to implement, which files to touch, acceptance criteria, and branch to work on."),
+      }),
+      handler: async ({ agent_name, sub_task }) => {
+        const { getAgentsForSquad } = await import("../store/squads.js");
+        const agents = getAgentsForSquad(squadId);
+        const agent = agents.find(
+          (a) => a.character_name.toLowerCase() === agent_name.toLowerCase() && !a.is_lead
+        );
+
+        if (!agent) {
+          const available = agents
+            .filter((a) => !a.is_lead)
+            .map((a) => `${a.character_name} (${a.role_title})`)
+            .join(", ");
+          return `Error: No specialist found with name "${agent_name}". Available specialists: ${available}`;
+        }
+
+        const { runSpecialistSession } = await import("./specialist-runner.js");
+        const result = await runSpecialistSession({
+          agent,
+          squad,
+          squadSlug,
+          squadId,
+          task: sub_task,
+          wikiKnowledge,
+          workDir,
+          instanceId,
+          parentTaskId,
+        });
+
+        if (result.success) {
+          return `✅ ${result.agentName} (${result.role}) completed the task:\n\n${result.result}`;
+        } else {
+          return `❌ ${result.agentName} (${result.role}) failed:\n\n${result.result}`;
+        }
+      },
+    }),
+
+    defineTool("delegate_to_specialists_parallel", {
+      description:
+        "Delegate multiple sub-tasks to different specialists IN PARALLEL. All tasks run concurrently and results are returned together. Use this when multiple independent sub-tasks can be worked on simultaneously by different specialists.",
+      parameters: z.object({
+        assignments: z.array(z.object({
+          agent_name: z.string().describe("Character name of the specialist"),
+          sub_task: z.string().describe("Detailed sub-task description"),
+        })).describe("Array of agent assignments to execute in parallel"),
+      }),
+      handler: async ({ assignments }) => {
+        const { getAgentsForSquad } = await import("../store/squads.js");
+        const { runSpecialistsParallel } = await import("./specialist-runner.js");
+        const agents = getAgentsForSquad(squadId);
+
+        const requests = [];
+        const errors: string[] = [];
+
+        for (const assignment of assignments) {
+          const agent = agents.find(
+            (a) => a.character_name.toLowerCase() === assignment.agent_name.toLowerCase() && !a.is_lead
+          );
+          if (!agent) {
+            errors.push(`No specialist found: "${assignment.agent_name}"`);
+            continue;
+          }
+          requests.push({
+            agent,
+            squad,
+            squadSlug,
+            squadId,
+            task: assignment.sub_task,
+            wikiKnowledge,
+            workDir,
+            instanceId,
+            parentTaskId,
+          });
+        }
+
+        if (requests.length === 0) {
+          return `Error: No valid specialists matched. ${errors.join("; ")}`;
+        }
+
+        const results = await runSpecialistsParallel(requests);
+
+        const summaries = results.map((r) => {
+          const status = r.success ? "✅" : "❌";
+          return `${status} **${r.agentName}** (${r.role}):\n${r.result}`;
+        });
+
+        const preamble = errors.length > 0 ? `⚠️ Skipped: ${errors.join("; ")}\n\n` : "";
+        return `${preamble}## Parallel Results\n\n${summaries.join("\n\n---\n\n")}`;
       },
     }),
   ];

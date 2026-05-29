@@ -78,11 +78,11 @@ function toggleCollapse() {
     <div class="p-3 border-b border-border flex items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
       <router-link to="/" class="flex items-center gap-2" :class="collapsed ? 'justify-center' : ''">
         <LogoIcon :size="24" />
-        <h1 v-if="!collapsed" class="text-base font-bold tracking-tight bg-gradient-brand bg-clip-text text-transparent">IO</h1>
+        <h1 v-if="!collapsed" class="font-display text-[1.1rem] font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent">IO</h1>
       </router-link>
       <button
         @click="toggleCollapse"
-        class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        class="p-1 rounded-full hover:bg-accent/70 text-muted-foreground hover:text-foreground transition-colors"
         :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         v-if="!collapsed"
       >
@@ -94,7 +94,7 @@ function toggleCollapse() {
     <button
       v-if="collapsed"
       @click="toggleCollapse"
-      class="mx-auto mt-2 p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+      class="mx-auto mt-2 p-1.5 rounded-full hover:bg-accent/70 text-muted-foreground hover:text-foreground transition-colors"
       title="Expand sidebar"
     >
       <PanelLeftOpen class="w-4 h-4" />
@@ -106,12 +106,12 @@ function toggleCollapse() {
         v-for="item in navItems"
         :key="item.path"
         :to="item.path"
-        class="flex items-center gap-3 rounded-md text-sm transition-colors"
+        class="flex items-center gap-3 rounded-full text-sm transition-colors border border-transparent"
         :class="[
           collapsed ? 'justify-center px-2 py-2' : 'px-3 py-2',
           activeNavPath === item.path
-            ? 'bg-primary/10 text-primary font-medium'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            ? 'bg-accent text-accent-foreground font-medium border border-white/10'
+            : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
         ]"
         :title="collapsed ? item.name : undefined"
       >
@@ -126,12 +126,12 @@ function toggleCollapse() {
         v-for="item in footerItems"
         :key="item.path"
         :to="item.path"
-        class="flex items-center gap-3 rounded-md text-sm transition-colors"
+        class="flex items-center gap-3 rounded-full text-sm transition-colors border border-transparent"
         :class="[
           collapsed ? 'justify-center px-2 py-2' : 'px-3 py-2',
           activeNavPath === item.path
-            ? 'bg-primary/10 text-primary font-medium'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            ? 'bg-accent text-accent-foreground font-medium border border-white/10'
+            : 'text-muted-foreground hover:bg-white/5 hover:text-foreground',
         ]"
         :title="collapsed ? item.name : undefined"
       >
@@ -156,7 +156,7 @@ function toggleCollapse() {
         <a
           :href="REPO_URL"
           target="_blank"
-          class="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          class="p-1 rounded-full hover:bg-accent/70 text-muted-foreground hover:text-foreground transition-colors"
           title="GitHub repository"
         >
           <Github class="w-3.5 h-3.5" />

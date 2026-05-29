@@ -1,11 +1,16 @@
 import { CopilotClient } from "@github/copilot-sdk";
-import { PATHS } from "../paths.js";
+import { getGhToken } from "./gh-token.js";
 
 let client: CopilotClient | undefined;
 
+export function getCopilotClientOptions(): ConstructorParameters<typeof CopilotClient>[0] {
+  const githubToken = getGhToken();
+  return githubToken ? { githubToken } : {};
+}
+
 export async function getClient(): Promise<CopilotClient> {
   if (!client) {
-    client = new CopilotClient();
+    client = new CopilotClient(getCopilotClientOptions());
     await client.start();
   }
   return client;

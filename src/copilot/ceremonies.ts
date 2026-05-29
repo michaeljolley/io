@@ -125,7 +125,7 @@ export async function planningMeeting(
             prompt: `Please provide your planning input for this task.${buildAttachmentSummary(attachments)}`,
             attachments: toCopilotBlobAttachments(attachments),
           },
-          60_000
+          7_200_000 // 2 hours — watchdog handles stale detection
         );
         return {
           agent: agent.character_name,
@@ -173,7 +173,7 @@ export async function planningMeeting(
         prompt,
         attachments: toCopilotBlobAttachments(attachments),
       },
-      120_000
+      7_200_000 // 2 hours — watchdog handles stale detection
     );
     plan = response?.data?.content ?? "Planning meeting completed but no plan was produced.";
   } finally {

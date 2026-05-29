@@ -9,6 +9,11 @@ import { loadConfig, resetConfigCache } from "../config.js";
 let cachedToken: string | undefined;
 let resolved = false;
 
+export function resetGhTokenCache(): void {
+  cachedToken = undefined;
+  resolved = false;
+}
+
 export function getGhToken(): string | undefined {
   if (resolved && cachedToken) return cachedToken;
 

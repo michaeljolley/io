@@ -1,4 +1,4 @@
-import { loadConfig } from "./config.js";
+import { loadConfig, getConfigWarning } from "./config.js";
 import { getDb, closeDb } from "./store/db.js";
 import { PATHS } from "./paths.js";
 import { mkdirSync, existsSync } from "node:fs";
@@ -57,6 +57,13 @@ export async function startDaemon(opts: DaemonOptions): Promise<void> {
   }
 
   console.log("[io] Daemon running. Press Ctrl+C to stop.");
+
+  // Notify user if config had to fall back to defaults
+  const configWarn = getConfigWarning();
+  if (configWarn) {
+    const { postFeedItem } = await import("./store/feed.js");
+    postFeedItem("system", "⚠️ Config Warning", configWarn);
+  }
 
   // Graceful shutdown
   let shuttingDown = false;
