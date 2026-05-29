@@ -21,6 +21,7 @@ const composerError = ref("");
 const messagesContainer = ref<HTMLElement>();
 const fileInput = ref<HTMLInputElement>();
 const pendingAttachments = ref<MessageAttachment[]>([]);
+const textareaRef = ref<HTMLTextAreaElement>();
 const isDragging = ref(false);
 
 const totalPendingAttachmentBytes = computed(() =>
@@ -93,6 +94,12 @@ function scrollToBottom() {
   }
 }
 
+function updateComposerHeight(): void {
+  if (!textareaRef.value) return;
+  textareaRef.value.style.height = "auto";
+  textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 120)}px`;
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -134,7 +141,18 @@ watch(
   }
 );
 
-onMounted(() => scrollToBottom());
+watch(
+  () => input.value,
+  async () => {
+    await nextTick();
+    updateComposerHeight();
+  }
+);
+
+onMounted(() => {
+  updateComposerHeight();
+  scrollToBottom();
+});
 </script>
 
 <template>
@@ -242,6 +260,7 @@ onMounted(() => scrollToBottom());
           <Paperclip class="w-4 h-4" />
         </button>
         <textarea
+          ref="textareaRef"
           v-model="input"
           @keydown="handleKeydown"
           placeholder="Send a message..."
