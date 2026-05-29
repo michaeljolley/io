@@ -317,7 +317,7 @@ onMounted(async () => {
                 class="overlay-markdown"
                 :class="msg.role === 'user' ? 'prose-invert' : ''"
               />
-              <span v-else class="text-zinc-500">...</span>
+              <span v-else-if="!msg.streaming" class="text-zinc-500">...</span>
             </article>
           </div>
 

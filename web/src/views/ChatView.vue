@@ -202,7 +202,7 @@ onMounted(() => {
             </div>
           </div>
           <MarkdownContent v-if="msg.content" :content="msg.content" :class="msg.role === 'user' ? 'prose-invert' : ''" />
-          <span v-else class="text-muted-foreground">...</span>
+          <span v-else-if="!msg.streaming" class="text-muted-foreground">...</span>
           <div
             v-if="msg.streaming"
             class="inline-block w-2 h-4 bg-current animate-pulse ml-1"
