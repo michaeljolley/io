@@ -265,9 +265,7 @@ onMounted(async () => {
       <div ref="messagesContainer" class="overlay-messages" @scroll="updateScrollState">
         <div v-if="!hasMessages" class="flex h-full items-center justify-center px-5 text-center">
           <div>
-            <div class="overlay-empty-brand" aria-hidden="true">
-              <LogoIcon :size="24" class="shrink-0" />
-            </div>
+            <LogoIcon :size="32" class="mx-auto mb-3 shrink-0" />
             <p class="overlay-empty-copy">Ask IO about your workspace, agents, or recent changes.</p>
           </div>
         </div>
@@ -304,7 +302,7 @@ onMounted(async () => {
                     :alt="attachment.name"
                     class="mb-1 max-h-44 rounded-md object-contain"
                   />
-                  <div class="flex items-center gap-2 text-[10px]">
+                  <div class="flex items-center gap-2 text-[9px]">
                     <ImageIcon v-if="isImageAttachment(attachment)" class="h-3.5 w-3.5" />
                     <FileText v-else class="h-3.5 w-3.5" />
                     <span class="truncate">{{ attachment.name }}</span>
@@ -493,7 +491,7 @@ onMounted(async () => {
 
 .overlay-avatar-user {
   border-color: rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, #8f1228 0%, #6d1120 100%);
+  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
   color: #fff;
 }
 
@@ -502,7 +500,7 @@ onMounted(async () => {
 }
 
 .overlay-bubble {
-  @apply max-w-[82%] rounded-xl px-3 py-2 text-[10px] leading-relaxed;
+  @apply max-w-[82%] rounded-xl px-3 py-2 text-[9px] leading-relaxed;
 }
 
 .overlay-bubble-assistant {
@@ -512,12 +510,12 @@ onMounted(async () => {
 }
 
 .overlay-bubble-user {
-  background: linear-gradient(180deg, #8f1228 0%, #6d1120 100%);
+  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
   color: #fff;
 }
 
 .overlay-attachment {
-  @apply rounded-lg border border-[#2b2b2b] bg-[#252525]/90 p-2 text-[10px] text-zinc-200;
+  @apply rounded-lg border border-[#2b2b2b] bg-[#252525]/90 p-2 text-[9px] text-zinc-200;
 }
 
 .overlay-markdown :deep(p:last-child) {
