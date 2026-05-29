@@ -234,11 +234,11 @@ onMounted(async () => {
     >
       <header
         class="overlay-header"
-        style="background: linear-gradient(135deg, rgba(216,51,51,0.18) 0%, rgba(240,65,255,0.10) 100%);"
+        style="background: linear-gradient(180deg, rgba(216,51,51,0.12) 0%, rgba(240,65,255,0.06) 100%);"
       >
         <div class="flex items-center gap-2.5">
           <div class="overlay-brand-mark" aria-hidden="true">
-            <LogoIcon :size="18" class="shrink-0" />
+            <img src="/logo.svg" alt="IO" width="18" height="18" class="shrink-0" />
           </div>
           <div class="flex flex-col leading-none">
             <span class="overlay-title">IO</span>
@@ -372,7 +372,7 @@ onMounted(async () => {
 
         <p v-if="composerError" class="mb-2 text-[11px] text-[#ef4444]">{{ composerError }}</p>
 
-        <div class="flex items-end gap-2">
+        <div class="overlay-composer-field">
           <button
             class="overlay-attach-btn"
             :disabled="chat.isStreaming"
@@ -383,27 +383,25 @@ onMounted(async () => {
             <Paperclip class="h-4 w-4" />
           </button>
 
-          <div class="overlay-composer-field">
-            <textarea
-              ref="textareaRef"
-              v-model="input"
-              @keydown="handleKeydown"
-              placeholder="Message IO…"
-              rows="1"
-              class="overlay-input"
-            />
+          <textarea
+            ref="textareaRef"
+            v-model="input"
+            @keydown="handleKeydown"
+            placeholder="Message IO…"
+            rows="1"
+            class="overlay-input"
+          />
 
-            <button
-              @click="chat.isStreaming ? stopStreaming() : send()"
-              :disabled="!canSend && !chat.isStreaming"
-              class="overlay-send-btn"
-              :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
-              :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
-            >
-              <Send v-if="!chat.isStreaming" class="h-3 w-3" />
-              <Square v-else class="h-3 w-3" />
-            </button>
-          </div>
+          <button
+            @click="chat.isStreaming ? stopStreaming() : send()"
+            :disabled="!canSend && !chat.isStreaming"
+            class="overlay-send-btn"
+            :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
+            :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
+          >
+            <Send v-if="!chat.isStreaming" class="h-3 w-3" />
+            <Square v-else class="h-3 w-3" />
+          </button>
         </div>
       </footer>
     </section>
@@ -429,7 +427,7 @@ onMounted(async () => {
 }
 
 .overlay-panel {
-  @apply fixed bottom-5 right-5 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-white/[0.09] shadow-2xl;
+  @apply fixed bottom-5 right-5 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-[#2a2a2a] shadow-2xl;
   background: #1c1c1c;
 }
 
@@ -438,7 +436,7 @@ onMounted(async () => {
 }
 
 .overlay-header {
-  @apply flex flex-shrink-0 items-center justify-between px-4 py-3 border-b border-white/[0.07];
+  @apply flex flex-shrink-0 items-center justify-between px-4 py-3 border-b border-[#2b2b2b];
 }
 
 .overlay-brand-mark {
@@ -488,13 +486,13 @@ onMounted(async () => {
 
 .overlay-avatar-assistant {
   background: #282828;
-  border-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .overlay-avatar-user {
-  border-color: rgba(228, 58, 156, 0.3);
-  background: rgba(228, 58, 156, 0.12);
-  color: #E43A9C;
+  border-color: rgba(228, 58, 156, 0.16);
+  background: rgba(228, 58, 156, 0.08);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .overlay-avatar-letter {
@@ -502,22 +500,22 @@ onMounted(async () => {
 }
 
 .overlay-bubble {
-  @apply max-w-[82%] rounded-xl px-3 py-2 text-xs leading-relaxed;
+  @apply max-w-[82%] rounded-xl px-3 py-2 text-[11px] leading-relaxed;
 }
 
 .overlay-bubble-assistant {
   background: #282828;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   color: rgb(228 228 231);
 }
 
 .overlay-bubble-user {
-  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
+  background: #E43A9C;
   color: #fff;
 }
 
 .overlay-attachment {
-  @apply rounded-lg border border-white/[0.06] bg-[#252525]/90 p-2 text-[10px] text-zinc-200;
+  @apply rounded-lg border border-[#2b2b2b] bg-[#252525]/90 p-2 text-[10px] text-zinc-200;
 }
 
 .overlay-markdown :deep(p:last-child) {
@@ -525,7 +523,7 @@ onMounted(async () => {
 }
 
 .overlay-markdown :deep(pre) {
-  @apply rounded-lg border border-white/[0.06] bg-[#1f1f1f] p-0;
+  @apply rounded-lg border border-[#2b2b2b] bg-[#1f1f1f] p-0;
 }
 
 .overlay-markdown :deep(pre code) {
@@ -534,7 +532,7 @@ onMounted(async () => {
 }
 
 .overlay-stream-indicator {
-  @apply mt-1 flex w-fit items-center gap-1 rounded-xl rounded-tl-sm border border-white/[0.06] bg-[#282828] px-3 py-2.5;
+  @apply mt-1 flex w-fit items-center gap-1 rounded-xl rounded-tl-sm border border-[#2a2a2a] bg-[#282828] px-3 py-2.5;
 }
 
 .overlay-stream-dot {
@@ -543,25 +541,25 @@ onMounted(async () => {
 }
 
 .overlay-scroll-hint {
-  @apply absolute bottom-24 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/[0.08] bg-[#252525]/95 px-2.5 py-1 text-[10px] text-zinc-300 backdrop-blur;
+  @apply absolute bottom-24 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-[#2a2a2a] bg-[#252525]/95 px-2.5 py-1 text-[10px] text-zinc-300 backdrop-blur;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .overlay-footer {
-  @apply flex-shrink-0 border-t border-white/[0.06] bg-[#1c1c1c] p-2.5;
+  @apply flex-shrink-0 border-t border-[#2a2a2a] bg-[#1c1c1c] p-2.5;
 }
 
 .overlay-chip {
-  @apply flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-[#2c2c2c] px-1.5 py-1 text-[10px] text-zinc-200;
+  @apply flex items-center gap-1.5 rounded-md border border-[#2d2d2d] bg-[#2c2c2c] px-1.5 py-1 text-[10px] text-zinc-200;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .overlay-attach-btn {
-  @apply flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  @apply absolute left-1.5 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg border border-[#2d2d2d] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
 }
 
 .overlay-attach-btn:hover:not(:disabled) {
-  @apply border-white/[0.12] bg-[#2a2a2a] text-zinc-300;
+  @apply border-[#3a3a3a] bg-[#2a2a2a] text-zinc-300;
 }
 
 .overlay-attach-btn:focus-visible {
@@ -573,7 +571,7 @@ onMounted(async () => {
 }
 
 .overlay-input {
-  @apply min-h-[36px] w-full resize-none rounded-xl border border-white/[0.08] bg-[#252525] px-3 py-2 pr-10 text-xs leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
+  @apply min-h-[36px] w-full resize-none rounded-xl border border-[#2d2d2d] bg-[#252525] px-3 py-2 pl-10 pr-11 text-[11px] leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
   max-height: 100px;
   font-family: "Inter", sans-serif;
 }
@@ -583,7 +581,7 @@ onMounted(async () => {
 }
 
 .overlay-send-btn {
-  @apply absolute bottom-1 right-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
+  @apply absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
   background: linear-gradient(135deg, #D83333, #E43A9C);
 }
 
