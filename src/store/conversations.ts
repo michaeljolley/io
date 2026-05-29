@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "./db.js";
 import type { MessageAttachment } from "../chat/attachments.js";
+import { logWarn } from "../logging.js";
 
 export interface ConversationMessage {
   id: string;
@@ -43,7 +44,8 @@ function parseAttachments(value: string | undefined): MessageAttachment[] {
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? (parsed as MessageAttachment[]) : [];
-  } catch {
+  } catch (err) {
+    logWarn("Failed to parse stored conversation attachments", { rawValue: value }, err);
     return [];
   }
 }

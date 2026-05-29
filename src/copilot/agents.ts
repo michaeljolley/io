@@ -19,6 +19,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import { logWarn } from "../logging.js";
 
 const execAsync = promisify(exec);
 
@@ -58,8 +59,8 @@ async function resolveSquadWorkingDirectory(
       try {
         await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000 });
         return sourceDir;
-      } catch {
-        // Clone failed — fall through to default
+      } catch (err) {
+        logWarn("Failed to clone squad repository, falling back to current working directory", { repoUrl: squad.repo_url }, err);
       }
     }
   }

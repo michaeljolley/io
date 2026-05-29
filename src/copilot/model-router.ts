@@ -1,5 +1,6 @@
 import { loadConfig } from "../config.js";
 import { getClient } from "./client.js";
+import { logWarn } from "../logging.js";
 
 export type TaskComplexity = "high" | "medium" | "low";
 
@@ -55,7 +56,8 @@ export async function discoverModels(): Promise<ScoredModel[]> {
           : (MODEL_CAPABILITY_HINTS[m.id] ?? 50),
       }))
       .sort((a, b) => b.score - a.score);
-  } catch {
+  } catch (err) {
+    logWarn("Failed to discover models from SDK, falling back to configured default model", {}, err);
     // SDK discovery failed — fall back to defaultModel only
     const config = loadConfig();
     discoveredModels = [{ id: config.defaultModel, score: 65 }];

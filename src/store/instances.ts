@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { getDb } from "./db.js";
+import { logWarn } from "../logging.js";
 
 const execAsync = promisify(exec);
 
@@ -54,7 +55,8 @@ export async function createInstance(
   const repoCwd = squad.repo_url.startsWith("/") ? squad.repo_url : process.cwd();
   try {
     await execAsync(`git worktree add ${worktreePath} -b ${branch}`, { cwd: repoCwd });
-  } catch {
+  } catch (err) {
+    logWarn("Failed to create new git worktree branch, retrying existing branch", { squadId, branch, worktreePath }, err);
     // Branch may already exist
     await execAsync(`git worktree add ${worktreePath} ${branch}`, { cwd: repoCwd });
   }
@@ -78,8 +80,8 @@ export async function destroyInstance(instanceId: string): Promise<void> {
   // Remove worktree
   try {
     await execAsync(`git worktree remove ${instance.worktree_path} --force`);
-  } catch {
-    // Already removed or doesn't exist
+  } catch (err) {
+    logWarn("Failed to remove git worktree, it may already be gone", { instanceId: instance.id, worktreePath: instance.worktree_path }, err);
   }
 
   db.prepare("UPDATE instances SET status = 'destroyed' WHERE id = ?").run(instanceId);

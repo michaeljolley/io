@@ -1,5 +1,6 @@
 import type { Context } from "grammy";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
+import { logWarn } from "../logging.js";
 
 export async function handleMessage(
   ctx: Context,
@@ -31,7 +32,8 @@ export async function handleMessage(
         const msg = await ctx.reply(truncated, { parse_mode: "Markdown" });
         replyMsgId = msg.message_id;
       }
-    } catch {
+    } catch (err) {
+      logWarn("Telegram message edit failed, falling back to plain text", {}, err);
       // Fallback: send without markdown parsing
       try {
         if (!replyMsgId) {

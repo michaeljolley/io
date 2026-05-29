@@ -1,5 +1,6 @@
 import { loadConfig } from "./config.js";
 import { postFeedItem } from "./store/feed.js";
+import { logWarn } from "./logging.js";
 
 export type NotifyChannel = "telegram" | "web";
 
@@ -24,8 +25,8 @@ export async function notify(
           parse_mode: "Markdown",
         });
       }
-    } catch {
-      // Telegram notification failed silently
+    } catch (err) {
+      logWarn("Telegram notification failed", { title, source }, err);
     }
   }
 }
