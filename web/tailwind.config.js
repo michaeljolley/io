@@ -55,6 +55,22 @@ export default {
         glow: "0 0 20px hsl(var(--gradient-mid) / 0.2)",
         "glow-lg": "0 0 40px hsl(var(--gradient-mid) / 0.3)",
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            "h1, h2, h3, h4, h5, h6": {
+              color: "inherit",
+            },
+          },
+        },
+        invert: {
+          css: {
+            "h1, h2, h3, h4, h5, h6": {
+              color: "inherit",
+            },
+          },
+        },
+      },
     },
   },
   plugins: [require("@tailwindcss/typography")],
