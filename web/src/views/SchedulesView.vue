@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
-import { Clock, Plus, Trash2, Play } from "lucide-vue-next";
+import { Clock, Plus, Trash2, Play, Pencil } from "lucide-vue-next";
 import { getSquadLabelStyle } from "@/lib/squad-colors";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 
@@ -28,6 +28,8 @@ const loading = ref(true);
 const tab = ref<"squad" | "io">("squad");
 const showAdd = ref(false);
 const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "", prompt: "" });
+const editingScheduleId = ref<string | null>(null);
+const editingPrompt = ref("");
 const triggeredId = ref<string | null>(null);
 
 onMounted(async () => {
@@ -73,8 +75,25 @@ const decoratedSchedules = computed(() =>
 
 async function toggleSchedule(schedule: Schedule) {
   const enabled = !schedule.enabled;
-  await apiPut(`/schedules/${schedule.id}`, { enabled });
-  schedule.enabled = enabled ? 1 : 0;
+  const updated = await apiPut(`/schedules/${schedule.id}`, { enabled });
+  schedule.enabled = updated.enabled;
+}
+
+function startPromptEdit(schedule: Schedule) {
+  editingScheduleId.value = schedule.id;
+  editingPrompt.value = schedule.prompt;
+}
+
+async function savePromptEdit(schedule: Schedule) {
+  const updated = await apiPut(`/schedules/${schedule.id}`, { prompt: editingPrompt.value });
+  schedule.prompt = updated.prompt;
+  editingScheduleId.value = null;
+  editingPrompt.value = "";
+}
+
+function cancelPromptEdit() {
+  editingScheduleId.value = null;
+  editingPrompt.value = "";
 }
 
 async function deleteSchedule(id: string) {
@@ -182,7 +201,38 @@ function getSquadName(squadId: string | null): string {
             </span>
           </div>
           <div class="text-xs text-muted-foreground mt-0.5">
-            {{ schedule.prompt ? schedule.prompt.slice(0, 80) : '(no prompt)' }}
+            <div v-if="editingScheduleId === schedule.id" class="mt-2 space-y-2">
+              <textarea
+                v-model="editingPrompt"
+                rows="3"
+                class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="Schedule prompt"
+              ></textarea>
+              <div class="flex gap-2">
+                <button
+                  @click="savePromptEdit(schedule)"
+                  class="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Save
+                </button>
+                <button
+                  @click="cancelPromptEdit()"
+                  class="px-3 py-1.5 text-xs rounded-md border border-border hover:bg-muted/50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+            <div v-else class="mt-2 flex items-center justify-between gap-3">
+              <span>{{ schedule.prompt ? schedule.prompt : '(no prompt)' }}</span>
+              <button
+                @click="startPromptEdit(schedule)"
+                class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-border hover:bg-muted/50"
+              >
+                <Pencil class="w-3 h-3" />
+                Edit prompt
+              </button>
+            </div>
           </div>
           <div class="text-xs text-muted-foreground mt-0.5">
             Squad: {{ getSquadName(schedule.squad_id) }}

@@ -18,7 +18,7 @@ import {
   deleteFeedItem,
   getUnreadCount,
 } from "../store/feed.js";
-import { listSchedules, createSchedule, deleteSchedule, toggleSchedule } from "../store/schedules.js";
+import { listSchedules, createSchedule, updateSchedule, deleteSchedule, getSchedule } from "../store/schedules.js";
 import { triggerSchedule } from "../copilot/trigger-schedule.js";
 import { listServers, toggleMcpServer, addMcpServer, removeMcpServer } from "../mcp/index.js";
 import { listSkills, addSkill, createSkill, removeSkill, getSkillContent, updateSkillContent, discoverSkills, installFromSource, fetchRemoteSkillPreview } from "../copilot/skills.js";
@@ -554,11 +554,21 @@ export async function startApiServer(config: Config): Promise<void> {
   });
 
   app.put("/api/schedules/:id", (req, res) => {
-    const { enabled } = req.body;
-    if (typeof enabled === "boolean") {
-      toggleSchedule(req.params.id, enabled);
+    const schedule = getSchedule(req.params.id);
+    if (!schedule) {
+      res.status(404).json({ error: "Schedule not found" });
+      return;
     }
-    res.json({ ok: true });
+
+    const { enabled, cron, agenda, prompt } = req.body ?? {};
+    const updated = updateSchedule(req.params.id, {
+      cron: typeof cron === "string" ? cron : undefined,
+      agenda: typeof agenda === "string" ? agenda : undefined,
+      prompt: typeof prompt === "string" ? prompt : undefined,
+      enabled: typeof enabled === "boolean" ? enabled : undefined,
+    });
+
+    res.json(updated);
   });
 
   app.post("/api/schedules/:id/trigger", (req, res) => {

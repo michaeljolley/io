@@ -8,7 +8,7 @@ const tempHome = mkdtempSync(join(tmpdir(), "io-schedules-test-"));
 process.env.HOME = tempHome;
 
 const { createSquad } = await import("./squads.js");
-const { createSchedule, listSchedules } = await import("./schedules.js");
+const { createSchedule, listSchedules, updateSchedule } = await import("./schedules.js");
 const { closeDb } = await import("./db.js");
 
 after(() => {
@@ -49,4 +49,24 @@ test("a squad can have multiple schedules", () => {
     .map((schedule) => schedule.id);
 
   assert.deepEqual(new Set(squadScheduleIds), new Set([first.id, second.id]));
+});
+
+test("updateSchedule persists prompt changes and toggles enabled state", () => {
+  const squad = createSquad("Beta Team", "DC");
+  const schedule = createSchedule({
+    type: "squad",
+    squad_id: squad.id,
+    cron: "0 10 * * 1-5",
+    prompt: "Original prompt",
+  });
+
+  const updated = updateSchedule(schedule.id, { prompt: "Updated prompt", enabled: true });
+
+  assert.equal(updated.prompt, "Updated prompt");
+  assert.equal(updated.enabled, 1);
+
+  const persisted = listSchedules("squad").find((item) => item.id === schedule.id);
+  assert.ok(persisted);
+  assert.equal(persisted?.prompt, "Updated prompt");
+  assert.equal(persisted?.enabled, 1);
 });
