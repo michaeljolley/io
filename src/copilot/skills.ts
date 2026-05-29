@@ -128,6 +128,10 @@ export interface DiscoveredSkill {
   name: string;
   description: string;
   source: DiscoverySource;
+  /** GitHub repo path (e.g., "clerk/skills") for skillssh sources */
+  sourceRepo?: string;
+  /** Install count from skills.sh */
+  installs?: number;
 }
 
 interface DiscoveryCache {
@@ -183,19 +187,36 @@ async function fetchAwesomeCopilotSkills(): Promise<DiscoveredSkill[]> {
   return parseAwesomeCopilotTable(text);
 }
 
-async function fetchSkillsShSkills(): Promise<DiscoveredSkill[]> {
+interface SkillsShSearchResult {
+  id: string;
+  skillId: string;
+  name: string;
+  installs: number;
+  source: string;
+}
+
+interface SkillsShSearchResponse {
+  skills: SkillsShSearchResult[];
+  count: number;
+}
+
+async function fetchSkillsShSkills(query?: string): Promise<DiscoveredSkill[]> {
   try {
-    const res = await fetch("https://skills.sh/api/skills", {
+    const searchQuery = query?.trim() || "";
+    const url = `https://skills.sh/api/search?q=${encodeURIComponent(searchQuery)}`;
+    const res = await fetch(url, {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return [];
-    const data = (await res.json()) as Array<Record<string, string>>;
-    return data.map((item) => ({
-      slug: item.slug ?? item.name ?? "",
-      name: item.name ?? item.slug ?? "",
-      description: item.description ?? "",
+    const data = (await res.json()) as SkillsShSearchResponse;
+    return data.skills.map((item) => ({
+      slug: item.skillId || item.name || "",
+      name: item.name || item.skillId || "",
+      description: "",
       source: "skillssh" as const,
+      sourceRepo: item.source,
+      installs: item.installs,
     }));
   } catch {
     return [];
@@ -206,16 +227,19 @@ export async function discoverSkills(
   source: DiscoverySource,
   query?: string
 ): Promise<DiscoveredSkill[]> {
+  // For skills.sh, use the search API directly with the query
+  if (source === "skillssh") {
+    return fetchSkillsShSkills(query);
+  }
+
+  // For awesome-copilot, use caching and client-side filtering
   const cached = DISCOVERY_CACHE.get(source);
   let skills: DiscoveredSkill[];
 
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
     skills = cached.skills;
   } else {
-    skills =
-      source === "awesome-copilot"
-        ? await fetchAwesomeCopilotSkills()
-        : await fetchSkillsShSkills();
+    skills = await fetchAwesomeCopilotSkills();
     DISCOVERY_CACHE.set(source, { skills, fetchedAt: Date.now() });
   }
 
@@ -229,19 +253,67 @@ export async function discoverSkills(
   return skills;
 }
 
+/**
+ * Find the path to SKILL.md in a GitHub repo by searching the repo tree.
+ * Returns the full path (e.g., "skills/features/clerk-testing/SKILL.md").
+ */
+async function findSkillPathInRepo(
+  repoPath: string,
+  skillId: string
+): Promise<string> {
+  const treeUrl = `https://api.github.com/repos/${repoPath}/git/trees/main?recursive=1`;
+  const res = await fetch(treeUrl, { signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch repo tree for "${repoPath}": HTTP ${res.status}`);
+  }
+
+  interface TreeItem {
+    path: string;
+    type: string;
+  }
+  const data = (await res.json()) as { tree: TreeItem[] };
+
+  // Look for a SKILL.md file in a folder named after the skillId
+  const targetSuffix = `${skillId}/SKILL.md`;
+  const match = data.tree.find(
+    (item) => item.type === "blob" && item.path.endsWith(targetSuffix)
+  );
+
+  if (!match) {
+    throw new Error(`Could not find SKILL.md for "${skillId}" in repo "${repoPath}"`);
+  }
+
+  return match.path;
+}
+
 function remoteSkillMdUrl(source: DiscoverySource, safeSlug: string): string {
   const encodedSlug = encodeURIComponent(safeSlug);
   if (source === "awesome-copilot") {
     return `https://raw.githubusercontent.com/github/awesome-copilot/main/skills/${encodedSlug}/SKILL.md`;
   }
+  // Legacy fallback for skillssh without sourceRepo (shouldn't be used anymore)
   return `https://skills.sh/skills/${encodedSlug}/SKILL.md`;
 }
 
 export async function fetchRemoteSkillPreview(
   source: DiscoverySource,
-  slug: string
+  slug: string,
+  sourceRepo?: string
 ): Promise<string> {
   const safeSlug = validateSlug(slug);
+
+  // For skillssh with a sourceRepo, use GitHub directly
+  if (source === "skillssh" && sourceRepo) {
+    const skillPath = await findSkillPathInRepo(sourceRepo, safeSlug);
+    const rawUrl = `https://raw.githubusercontent.com/${sourceRepo}/main/${skillPath}`;
+    const res = await fetch(rawUrl, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch preview for "${safeSlug}": HTTP ${res.status}`);
+    }
+    return res.text();
+  }
+
+  // Fallback to legacy URL approach
   const url = remoteSkillMdUrl(source, safeSlug);
   const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!res.ok) throw new Error(`Failed to fetch preview for "${safeSlug}": HTTP ${res.status}`);
@@ -250,14 +322,15 @@ export async function fetchRemoteSkillPreview(
 
 export async function installFromSource(
   source: DiscoverySource,
-  slug: string
+  slug: string,
+  sourceRepo?: string
 ): Promise<void> {
   const safeSlug = validateSlug(slug);
   const dest = join(PATHS.skills, safeSlug);
   if (existsSync(dest)) {
     throw new Error(`Skill "${safeSlug}" is already installed.`);
   }
-  const content = await fetchRemoteSkillPreview(source, safeSlug);
+  const content = await fetchRemoteSkillPreview(source, safeSlug, sourceRepo);
   mkdirSync(dest, { recursive: true });
   writeFileSync(join(dest, "SKILL.md"), content);
 }

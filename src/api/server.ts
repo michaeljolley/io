@@ -379,7 +379,8 @@ export async function startApiServer(config: Config): Promise<void> {
       return;
     }
     try {
-      const content = await fetchRemoteSkillPreview(source, slug);
+      const sourceRepo = req.query.sourceRepo as string | undefined;
+      const content = await fetchRemoteSkillPreview(source, slug, sourceRepo);
       res.json({ content });
     } catch (err: any) {
       res.status(502).json({ error: err.message });
@@ -388,13 +389,13 @@ export async function startApiServer(config: Config): Promise<void> {
 
   app.post("/api/skills", async (req, res) => {
     try {
-      const { url, source, slug, content } = req.body;
+      const { url, source, slug, content, sourceRepo } = req.body;
       if (source && slug) {
         if (source !== "awesome-copilot" && source !== "skillssh") {
           res.status(400).json({ error: "source must be 'awesome-copilot' or 'skillssh'" });
           return;
         }
-        await installFromSource(source, slug);
+        await installFromSource(source, slug, sourceRepo);
       } else if (url && typeof url === "string") {
         // Git-clone method
         await addSkill(url);
