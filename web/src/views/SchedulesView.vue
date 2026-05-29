@@ -1,125 +1,125 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
-import { describeCronExpression } from "@/lib/cron";
-import { Clock, Plus, Trash2, Play, Pencil } from "lucide-vue-next";
-import { getSquadLabelStyle } from "@/lib/squad-colors";
-import ToggleSwitch from "@/components/ToggleSwitch.vue";
+  import { ref, onMounted, computed } from "vue";
+  import { apiGet, apiPost, apiDelete, apiPut } from "@/lib/api";
+  import { describeCronExpression } from "@/lib/cron";
+  import { Clock, Plus, Trash2, Play, Pencil } from "lucide-vue-next";
+  import { getSquadLabelStyle } from "@/lib/squad-colors";
+  import ToggleSwitch from "@/components/ToggleSwitch.vue";
 
-interface Schedule {
-  id: string;
-  type: "squad" | "io";
-  squad_id: string | null;
-  cron: string;
-  agenda: string;
-  prompt: string;
-  enabled: number;
-  last_run: string | null;
-}
+  interface Schedule {
+    id: string;
+    type: "squad" | "io";
+    squad_id: string | null;
+    cron: string;
+    agenda: string;
+    prompt: string;
+    enabled: number;
+    last_run: string | null;
+  }
 
-interface Squad {
-  id: string;
-  name: string;
-  color: string;
-}
+  interface Squad {
+    id: string;
+    name: string;
+    color: string;
+  }
 
-const schedules = ref<Schedule[]>([]);
-const squads = ref<Squad[]>([]);
-const loading = ref(true);
-const tab = ref<"squad" | "io">("squad");
-const showAdd = ref(false);
-const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "", prompt: "" });
-const editingScheduleId = ref<string | null>(null);
-const editingPrompt = ref("");
-const triggeredId = ref<string | null>(null);
+  const schedules = ref<Schedule[]>([]);
+  const squads = ref<Squad[]>([]);
+  const loading = ref(true);
+  const tab = ref<"squad" | "io">("squad");
+  const showAdd = ref(false);
+  const newSchedule = ref({ type: "squad" as "squad" | "io", cron: "", squad_id: "", prompt: "" });
+  const editingScheduleId = ref<string | null>(null);
+  const editingPrompt = ref("");
+  const triggeredId = ref<string | null>(null);
 
-onMounted(async () => {
-  try {
-    const squadData = await apiGet("/squads");
-    squads.value = squadData.squads;
-    if (squads.value.length > 0) {
-      newSchedule.value.squad_id = squads.value[0].id;
+  onMounted(async () => {
+    try {
+      const squadData = await apiGet("/squads");
+      squads.value = squadData.squads;
+      if (squads.value.length > 0) {
+        newSchedule.value.squad_id = squads.value[0].id;
+      }
+      schedules.value = await apiGet("/schedules");
+    } finally {
+      loading.value = false;
     }
-    schedules.value = await apiGet("/schedules");
-  } finally {
-    loading.value = false;
+  });
+
+  const filteredSchedules = computed(() => schedules.value.filter((s) => s.type === tab.value));
+
+  async function addSchedule() {
+    const body: any = {
+      type: newSchedule.value.type,
+      cron: newSchedule.value.cron,
+      squad_id: newSchedule.value.squad_id,
+    };
+    if (!newSchedule.value.squad_id) return;
+    if (!newSchedule.value.prompt.trim()) return;
+    body.prompt = newSchedule.value.prompt;
+    const schedule = await apiPost("/schedules", body);
+    schedules.value.push(schedule);
+    showAdd.value = false;
   }
-});
 
-const filteredSchedules = computed(() => schedules.value.filter((s) => s.type === tab.value));
-
-async function addSchedule() {
-  const body: any = {
-    type: newSchedule.value.type,
-    cron: newSchedule.value.cron,
-    squad_id: newSchedule.value.squad_id,
-  };
-  if (!newSchedule.value.squad_id) return;
-  if (!newSchedule.value.prompt.trim()) return;
-  body.prompt = newSchedule.value.prompt;
-  const schedule = await apiPost("/schedules", body);
-  schedules.value.push(schedule);
-  showAdd.value = false;
-}
-
-function getSquadById(squadId: string | null): Squad | undefined {
-  if (!squadId) return undefined;
-  return squads.value.find((s) => s.id === squadId);
-}
-
-const decoratedSchedules = computed(() =>
-  filteredSchedules.value.map((schedule) => ({
-    ...schedule,
-    squad: getSquadById(schedule.squad_id),
-    description: describeCronExpression(schedule.cron),
-  }))
-);
-
-async function toggleSchedule(schedule: Schedule) {
-  const enabled = !schedule.enabled;
-  const updated = await apiPut(`/schedules/${schedule.id}`, { enabled });
-  schedule.enabled = updated.enabled;
-}
-
-function startPromptEdit(schedule: Schedule) {
-  editingScheduleId.value = schedule.id;
-  editingPrompt.value = schedule.prompt;
-}
-
-async function savePromptEdit(schedule: Schedule) {
-  const updated = await apiPut(`/schedules/${schedule.id}`, { prompt: editingPrompt.value });
-  schedule.prompt = updated.prompt;
-  editingScheduleId.value = null;
-  editingPrompt.value = "";
-}
-
-function cancelPromptEdit() {
-  editingScheduleId.value = null;
-  editingPrompt.value = "";
-}
-
-async function deleteSchedule(id: string) {
-  await apiDelete(`/schedules/${id}`);
-  schedules.value = schedules.value.filter((s) => s.id !== id);
-}
-
-async function triggerScheduleNow(schedule: Schedule) {
-  await apiPost(`/schedules/${schedule.id}/trigger`, {});
-  triggeredId.value = schedule.id;
-  // Update last_run in the source array to ensure reactivity
-  const idx = schedules.value.findIndex((s) => s.id === schedule.id);
-  if (idx !== -1) {
-    schedules.value[idx] = { ...schedules.value[idx], last_run: new Date().toISOString() };
+  function getSquadById(squadId: string | null): Squad | undefined {
+    if (!squadId) return undefined;
+    return squads.value.find((s) => s.id === squadId);
   }
-  setTimeout(() => {
-    triggeredId.value = null;
-  }, 3000);
-}
 
-function getSquadName(squadId: string | null): string {
-  if (!squadId) return "Unknown squad";
-  return squads.value.find((s) => s.id === squadId)?.name ?? squadId;
-}
+  const decoratedSchedules = computed(() =>
+    filteredSchedules.value.map((schedule) => ({
+      ...schedule,
+      squad: getSquadById(schedule.squad_id),
+      description: describeCronExpression(schedule.cron),
+    }))
+  );
+
+  async function toggleSchedule(schedule: Schedule) {
+    const enabled = !schedule.enabled;
+    const updated = await apiPut(`/schedules/${schedule.id}`, { enabled });
+    schedule.enabled = updated.enabled;
+  }
+
+  function startPromptEdit(schedule: Schedule) {
+    editingScheduleId.value = schedule.id;
+    editingPrompt.value = schedule.prompt;
+  }
+
+  async function savePromptEdit(schedule: Schedule) {
+    const updated = await apiPut(`/schedules/${schedule.id}`, { prompt: editingPrompt.value });
+    schedule.prompt = updated.prompt;
+    editingScheduleId.value = null;
+    editingPrompt.value = "";
+  }
+
+  function cancelPromptEdit() {
+    editingScheduleId.value = null;
+    editingPrompt.value = "";
+  }
+
+  async function deleteSchedule(id: string) {
+    await apiDelete(`/schedules/${id}`);
+    schedules.value = schedules.value.filter((s) => s.id !== id);
+  }
+
+  async function triggerScheduleNow(schedule: Schedule) {
+    await apiPost(`/schedules/${schedule.id}/trigger`, {});
+    triggeredId.value = schedule.id;
+    // Update last_run in the source array to ensure reactivity
+    const idx = schedules.value.findIndex((s) => s.id === schedule.id);
+    if (idx !== -1) {
+      schedules.value[idx] = { ...schedules.value[idx], last_run: new Date().toISOString() };
+    }
+    setTimeout(() => {
+      triggeredId.value = null;
+    }, 3000);
+  }
+
+  function getSquadName(squadId: string | null): string {
+    if (!squadId) return "Unknown squad";
+    return squads.value.find((s) => s.id === squadId)?.name ?? squadId;
+  }
 </script>
 
 <template>
@@ -137,13 +137,17 @@ function getSquadName(squadId: string | null): string {
     <!-- Tabs -->
     <div class="flex gap-1 border-b border-border mb-4">
       <button
-        v-for="t in (['squad', 'io'] as const)"
+        v-for="t in ['squad', 'io'] as const"
         :key="t"
         @click="tab = t"
         class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-        :class="tab === t ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'"
+        :class="
+          tab === t
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
+        "
       >
-        {{ t === 'squad' ? 'Squad Schedules' : 'IO Schedules' }}
+        {{ t === "squad" ? "Squad Schedules" : "IO Schedules" }}
       </button>
     </div>
 
@@ -152,14 +156,21 @@ function getSquadName(squadId: string | null): string {
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-sm font-medium">Type</label>
-          <select v-model="newSchedule.type" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+          <select
+            v-model="newSchedule.type"
+            class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
             <option value="squad">Squad</option>
             <option value="io">IO</option>
           </select>
         </div>
         <div>
           <label class="text-sm font-medium">Cron Expression</label>
-          <input v-model="newSchedule.cron" placeholder="0 9 * * 1-5" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+          <input
+            v-model="newSchedule.cron"
+            placeholder="0 9 * * 1-5"
+            class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
         </div>
       </div>
       <div>
@@ -175,7 +186,12 @@ function getSquadName(squadId: string | null): string {
       </div>
       <div>
         <label class="text-sm font-medium">Prompt</label>
-        <textarea v-model="newSchedule.prompt" rows="3" placeholder="e.g. Triage issues, review PRs, ideate on features" class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+        <textarea
+          v-model="newSchedule.prompt"
+          rows="3"
+          placeholder="e.g. Triage issues, review PRs, ideate on features"
+          class="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        ></textarea>
       </div>
       <button
         @click="addSchedule"
@@ -194,12 +210,21 @@ function getSquadName(squadId: string | null): string {
     </div>
 
     <div v-else class="space-y-2">
-      <div v-for="schedule in decoratedSchedules" :key="schedule.id" class="flex items-center justify-between border border-border rounded-lg px-4 py-3">
+      <div
+        v-for="schedule in decoratedSchedules"
+        :key="schedule.id"
+        class="flex items-center justify-between border border-border rounded-lg px-4 py-3"
+      >
         <div>
           <div class="text-sm font-medium font-mono">{{ schedule.cron }}</div>
-          <div class="text-xs text-primary/90 mt-1 font-medium">Runs {{ schedule.description }}</div>
+          <div class="text-xs text-primary/90 mt-1 font-medium">
+            Runs {{ schedule.description }}
+          </div>
           <div v-if="schedule.squad" class="mt-1">
-            <span class="text-xs px-2 py-0.5 rounded-full" :style="getSquadLabelStyle(schedule.squad.color)">
+            <span
+              class="text-xs px-2 py-0.5 rounded-full"
+              :style="getSquadLabelStyle(schedule.squad.color)"
+            >
               {{ schedule.squad.name }}
             </span>
           </div>
@@ -227,7 +252,7 @@ function getSquadName(squadId: string | null): string {
               </div>
             </div>
             <div v-else class="mt-2 flex items-center justify-between gap-3">
-              <span>{{ schedule.prompt ? schedule.prompt : '(no prompt)' }}</span>
+              <span>{{ schedule.prompt ? schedule.prompt : "(no prompt)" }}</span>
               <button
                 @click="startPromptEdit(schedule)"
                 class="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-border hover:bg-muted/50"
@@ -249,13 +274,18 @@ function getSquadName(squadId: string | null): string {
           >
             <Play class="w-4 h-4" />
           </button>
-          <span v-if="triggeredId === schedule.id" class="text-xs text-green-500 font-medium">Triggered!</span>
+          <span v-if="triggeredId === schedule.id" class="text-xs text-green-500 font-medium"
+            >Triggered!</span
+          >
           <ToggleSwitch
             :model-value="Boolean(schedule.enabled)"
             :aria-label="`Toggle schedule ${schedule.cron}`"
             @update:model-value="toggleSchedule(schedule)"
           />
-          <button @click="deleteSchedule(schedule.id)" class="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+          <button
+            @click="deleteSchedule(schedule.id)"
+            class="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          >
             <Trash2 class="w-4 h-4" />
           </button>
         </div>

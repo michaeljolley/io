@@ -1,135 +1,133 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed, nextTick } from "vue";
-import { apiGet, apiPost, createEventSource } from "@/lib/api";
-import { X, ToggleLeft, ToggleRight, Activity, Square } from "lucide-vue-next";
-import MarkdownContent from "@/components/MarkdownContent.vue";
+  import { ref, watch, onMounted, onUnmounted, computed, nextTick } from "vue";
+  import { apiGet, apiPost, createEventSource } from "@/lib/api";
+  import { X, ToggleLeft, ToggleRight, Activity, Square } from "lucide-vue-next";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
 
-interface AgentEvent {
-  id: string;
-  task_id: string;
-  type: string;
-  summary: string;
-  payload: string;
-  created_at: string;
-}
-
-const props = defineProps<{
-  taskId: string;
-  taskDescription: string;
-  taskStatus: string;
-}>();
-
-const emit = defineEmits<{
-  close: [];
-  stopped: [];
-}>();
-
-const events = ref<AgentEvent[]>([]);
-const rawMode = ref(false);
-const loading = ref(true);
-const stopping = ref(false);
-const feedContainer = ref<HTMLElement>();
-
-let eventSource: EventSource | null = null;
-
-// Computed: filter out events with empty summary
-const visibleEvents = computed(() =>
-  events.value.filter((e) => e.summary.trim() !== "")
-);
-
-// Current live message delta (not yet persisted as a full message event)
-const liveMessage = ref("");
-
-async function loadEvents() {
-  try {
-    const data = await apiGet<AgentEvent[]>(`/tasks/${props.taskId}/events`);
-    events.value = data;
-  } finally {
-    loading.value = false;
+  interface AgentEvent {
+    id: string;
+    task_id: string;
+    type: string;
+    summary: string;
+    payload: string;
+    created_at: string;
   }
-}
 
-function scrollToBottom() {
-  if (feedContainer.value) {
-    feedContainer.value.scrollTop = feedContainer.value.scrollHeight;
-  }
-}
+  const props = defineProps<{
+    taskId: string;
+    taskDescription: string;
+    taskStatus: string;
+  }>();
 
-function connectSSE() {
-  if (props.taskStatus !== "pending" && props.taskStatus !== "in_progress") return;
+  const emit = defineEmits<{
+    close: [];
+    stopped: [];
+  }>();
 
-  eventSource = createEventSource();
-  eventSource.addEventListener("agent_event", (e: MessageEvent) => {
-    const data = JSON.parse(e.data);
-    if (data.taskId !== props.taskId) return;
+  const events = ref<AgentEvent[]>([]);
+  const rawMode = ref(false);
+  const loading = ref(true);
+  const stopping = ref(false);
+  const feedContainer = ref<HTMLElement>();
 
-    if (data.type === "message_delta") {
-      // Live streaming content — update in-memory only
-      liveMessage.value = data.summary ?? "";
-      nextTick(scrollToBottom);
-    } else {
-      // Persisted event — reload from server
-      loadEvents().then(() => nextTick(scrollToBottom));
-      liveMessage.value = "";
+  let eventSource: EventSource | null = null;
+
+  // Computed: filter out events with empty summary
+  const visibleEvents = computed(() => events.value.filter((e) => e.summary.trim() !== ""));
+
+  // Current live message delta (not yet persisted as a full message event)
+  const liveMessage = ref("");
+
+  async function loadEvents() {
+    try {
+      const data = await apiGet<AgentEvent[]>(`/tasks/${props.taskId}/events`);
+      events.value = data;
+    } finally {
+      loading.value = false;
     }
-  });
-}
-
-async function stopAgent() {
-  if (stopping.value) return;
-  stopping.value = true;
-  try {
-    await apiPost(`/tasks/${props.taskId}/stop`);
-    emit("stopped");
-  } catch (err) {
-    console.error("Failed to stop agent:", err);
-  } finally {
-    stopping.value = false;
   }
-}
 
-function humanReadableType(type: string): string {
-  switch (type) {
-    case "status":
-      return "Status";
-    case "message":
-      return "Agent message";
-    case "message_delta":
-      return "Streaming…";
-    default:
-      return type;
+  function scrollToBottom() {
+    if (feedContainer.value) {
+      feedContainer.value.scrollTop = feedContainer.value.scrollHeight;
+    }
   }
-}
 
-function formatTime(isoStr: string): string {
-  return new Date(isoStr).toLocaleTimeString();
-}
+  function connectSSE() {
+    if (props.taskStatus !== "pending" && props.taskStatus !== "in_progress") return;
 
-watch(
-  () => props.taskStatus,
-  (newStatus) => {
-    if (newStatus === "done" || newStatus === "failed" || newStatus === "stopped") {
-      liveMessage.value = "";
-      loadEvents();
-      if (eventSource) {
-        eventSource.close();
-        eventSource = null;
+    eventSource = createEventSource();
+    eventSource.addEventListener("agent_event", (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      if (data.taskId !== props.taskId) return;
+
+      if (data.type === "message_delta") {
+        // Live streaming content — update in-memory only
+        liveMessage.value = data.summary ?? "";
+        nextTick(scrollToBottom);
+      } else {
+        // Persisted event — reload from server
+        loadEvents().then(() => nextTick(scrollToBottom));
+        liveMessage.value = "";
+      }
+    });
+  }
+
+  async function stopAgent() {
+    if (stopping.value) return;
+    stopping.value = true;
+    try {
+      await apiPost(`/tasks/${props.taskId}/stop`);
+      emit("stopped");
+    } catch (err) {
+      console.error("Failed to stop agent:", err);
+    } finally {
+      stopping.value = false;
+    }
+  }
+
+  function humanReadableType(type: string): string {
+    switch (type) {
+      case "status":
+        return "Status";
+      case "message":
+        return "Agent message";
+      case "message_delta":
+        return "Streaming…";
+      default:
+        return type;
+    }
+  }
+
+  function formatTime(isoStr: string): string {
+    return new Date(isoStr).toLocaleTimeString();
+  }
+
+  watch(
+    () => props.taskStatus,
+    (newStatus) => {
+      if (newStatus === "done" || newStatus === "failed" || newStatus === "stopped") {
+        liveMessage.value = "";
+        loadEvents();
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
       }
     }
-  }
-);
+  );
 
-onMounted(() => {
-  loadEvents().then(() => nextTick(scrollToBottom));
-  connectSSE();
-});
+  onMounted(() => {
+    loadEvents().then(() => nextTick(scrollToBottom));
+    connectSSE();
+  });
 
-onUnmounted(() => {
-  if (eventSource) {
-    eventSource.close();
-    eventSource = null;
-  }
-});
+  onUnmounted(() => {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+  });
 </script>
 
 <template>
@@ -188,7 +186,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Task description -->
-    <div class="px-4 py-2 text-xs text-muted-foreground border-b border-border bg-muted/10 truncate">
+    <div
+      class="px-4 py-2 text-xs text-muted-foreground border-b border-border bg-muted/10 truncate"
+    >
       {{ taskDescription }}
     </div>
 
@@ -196,7 +196,10 @@ onUnmounted(() => {
     <div ref="feedContainer" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
       <div v-if="loading" class="text-muted-foreground text-xs">Loading events…</div>
 
-      <div v-else-if="visibleEvents.length === 0 && !liveMessage" class="text-muted-foreground text-xs">
+      <div
+        v-else-if="visibleEvents.length === 0 && !liveMessage"
+        class="text-muted-foreground text-xs"
+      >
         No events yet. The agent will start shortly.
       </div>
 
@@ -206,10 +209,15 @@ onUnmounted(() => {
         :key="event.id"
         class="border border-border rounded-lg p-3"
         :class="{
-          'border-l-2 border-l-green-500': event.type === 'status' && event.summary.includes('completed'),
-          'border-l-2 border-l-red-500': event.type === 'status' && event.summary.includes('failed'),
+          'border-l-2 border-l-green-500':
+            event.type === 'status' && event.summary.includes('completed'),
+          'border-l-2 border-l-red-500':
+            event.type === 'status' && event.summary.includes('failed'),
           'border-l-2 border-l-blue-500': event.type === 'message',
-          'border-l-2 border-l-primary': event.type === 'status' && !event.summary.includes('completed') && !event.summary.includes('failed'),
+          'border-l-2 border-l-primary':
+            event.type === 'status' &&
+            !event.summary.includes('completed') &&
+            !event.summary.includes('failed'),
         }"
       >
         <div class="flex items-center justify-between mb-1">
@@ -223,7 +231,8 @@ onUnmounted(() => {
         <pre
           v-if="rawMode"
           class="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap break-all"
-        >{{ JSON.stringify(JSON.parse(event.payload), null, 2) }}</pre>
+          >{{ JSON.stringify(JSON.parse(event.payload), null, 2) }}</pre
+        >
 
         <!-- Human-readable view -->
         <div v-else>
@@ -252,7 +261,8 @@ onUnmounted(() => {
         <pre
           v-if="rawMode"
           class="text-xs bg-muted rounded p-2 overflow-x-auto whitespace-pre-wrap break-all"
-        >{{ JSON.stringify({ type: 'message_delta', accumulated: liveMessage }, null, 2) }}</pre>
+          >{{ JSON.stringify({ type: "message_delta", accumulated: liveMessage }, null, 2) }}</pre
+        >
 
         <!-- Human-readable live content -->
         <MarkdownContent v-else :content="liveMessage" class="text-sm" />

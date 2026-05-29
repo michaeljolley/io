@@ -1,70 +1,68 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
-import LogoIcon from "@/components/LogoIcon.vue";
-import {
-  MessageSquare,
-  Users,
-  Activity,
-  Inbox,
-  Puzzle,
-  Server,
-  Clock,
-  BookOpen,
-  History,
-  Settings,
-  BarChart3,
-  ClipboardList,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Github,
-} from "lucide-vue-next";
+  import { ref, computed } from "vue";
+  import { useRoute } from "vue-router";
+  import LogoIcon from "@/components/LogoIcon.vue";
+  import {
+    MessageSquare,
+    Users,
+    Activity,
+    Inbox,
+    Puzzle,
+    Server,
+    Clock,
+    BookOpen,
+    History,
+    Settings,
+    BarChart3,
+    ClipboardList,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Github,
+  } from "lucide-vue-next";
 
-const route = useRoute();
+  const route = useRoute();
 
-const collapsed = ref(false);
+  const collapsed = ref(false);
 
-const navItems = [
-  { name: "History", icon: History, path: "/history" },
-  { name: "Squads", icon: Users, path: "/squads" },
-  { name: "Health", icon: Activity, path: "/squads/health" },
-  { name: "Usage", icon: BarChart3, path: "/usage" },
-  { name: "Audit Log", icon: ClipboardList, path: "/audit-log" },
-  { name: "Skills", icon: Puzzle, path: "/skills" },
-  { name: "MCP Servers", icon: Server, path: "/mcp" },
-  { name: "Schedules", icon: Clock, path: "/schedules" },
-  { name: "Wiki", icon: BookOpen, path: "/wiki" },
-];
+  const navItems = [
+    { name: "History", icon: History, path: "/history" },
+    { name: "Squads", icon: Users, path: "/squads" },
+    { name: "Health", icon: Activity, path: "/squads/health" },
+    { name: "Usage", icon: BarChart3, path: "/usage" },
+    { name: "Audit Log", icon: ClipboardList, path: "/audit-log" },
+    { name: "Skills", icon: Puzzle, path: "/skills" },
+    { name: "MCP Servers", icon: Server, path: "/mcp" },
+    { name: "Schedules", icon: Clock, path: "/schedules" },
+    { name: "Wiki", icon: BookOpen, path: "/wiki" },
+  ];
 
-const footerItems = [
-  { name: "Chat", icon: MessageSquare, path: "/" },
-  { name: "Feed", icon: Inbox, path: "/feed" },
-  { name: "Settings", icon: Settings, path: "/settings" },
-];
+  const footerItems = [
+    { name: "Chat", icon: MessageSquare, path: "/" },
+    { name: "Feed", icon: Inbox, path: "/feed" },
+    { name: "Settings", icon: Settings, path: "/settings" },
+  ];
 
-const APP_VERSION = __APP_VERSION__;
-const REPO_URL = "https://github.com/michaeljolley/io";
+  const APP_VERSION = __APP_VERSION__;
+  const REPO_URL = "https://github.com/michaeljolley/io";
 
-// Find the best (longest prefix) matching nav path for the current route.
-const activeNavPath = computed(() => {
-  let bestPath = "";
-  const allItems = [...navItems, ...footerItems];
-  for (const item of allItems) {
-    const p = item.path;
-    const matches =
-      p === "/"
-        ? route.path === "/"
-        : route.path === p || route.path.startsWith(p + "/");
-    if (matches && p.length > bestPath.length) {
-      bestPath = p;
+  // Find the best (longest prefix) matching nav path for the current route.
+  const activeNavPath = computed(() => {
+    let bestPath = "";
+    const allItems = [...navItems, ...footerItems];
+    for (const item of allItems) {
+      const p = item.path;
+      const matches =
+        p === "/" ? route.path === "/" : route.path === p || route.path.startsWith(p + "/");
+      if (matches && p.length > bestPath.length) {
+        bestPath = p;
+      }
     }
-  }
-  return bestPath;
-});
+    return bestPath;
+  });
 
-function toggleCollapse() {
-  collapsed.value = !collapsed.value;
-}
+  function toggleCollapse() {
+    collapsed.value = !collapsed.value;
+  }
 </script>
 
 <template>
@@ -75,10 +73,22 @@ function toggleCollapse() {
     ]"
   >
     <!-- Logo + Collapse toggle -->
-    <div class="p-3 border-b border-border flex items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
-      <router-link to="/" class="flex items-center gap-2" :class="collapsed ? 'justify-center' : ''">
+    <div
+      class="p-3 border-b border-border flex items-center"
+      :class="collapsed ? 'justify-center' : 'justify-between'"
+    >
+      <router-link
+        to="/"
+        class="flex items-center gap-2"
+        :class="collapsed ? 'justify-center' : ''"
+      >
         <LogoIcon :size="24" />
-        <h1 v-if="!collapsed" class="font-display text-[1.1rem] font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent">IO</h1>
+        <h1
+          v-if="!collapsed"
+          class="font-display text-[1.1rem] font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent"
+        >
+          IO
+        </h1>
       </router-link>
       <button
         @click="toggleCollapse"

@@ -1,113 +1,111 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
-import { apiGet, apiDelete } from "@/lib/api";
-import { History, Search, Trash2, ArrowLeft, MessageSquare } from "lucide-vue-next";
-import MarkdownContent from "@/components/MarkdownContent.vue";
+  import { ref, onMounted, computed, watch } from "vue";
+  import { apiGet, apiDelete } from "@/lib/api";
+  import { History, Search, Trash2, ArrowLeft, MessageSquare } from "lucide-vue-next";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
 
-interface ConversationSummary {
-  id: string;
-  preview: string;
-  messageCount: number;
-  startedAt: string;
-  updatedAt: string;
-}
+  interface ConversationSummary {
+    id: string;
+    preview: string;
+    messageCount: number;
+    startedAt: string;
+    updatedAt: string;
+  }
 
-interface ConversationMessage {
-  id: string;
-  conversationId: string;
-  role: "user" | "assistant";
-  content: string;
-  source: string;
-  createdAt: string;
-}
+  interface ConversationMessage {
+    id: string;
+    conversationId: string;
+    role: "user" | "assistant";
+    content: string;
+    source: string;
+    createdAt: string;
+  }
 
-const conversations = ref<ConversationSummary[]>([]);
-const total = ref(0);
-const loading = ref(true);
-const searchQuery = ref("");
-const dateFrom = ref("");
-const dateTo = ref("");
-const selectedConversation = ref<string | null>(null);
-const selectedMessages = ref<ConversationMessage[]>([]);
-const threadLoading = ref(false);
+  const conversations = ref<ConversationSummary[]>([]);
+  const total = ref(0);
+  const loading = ref(true);
+  const searchQuery = ref("");
+  const dateFrom = ref("");
+  const dateTo = ref("");
+  const selectedConversation = ref<string | null>(null);
+  const selectedMessages = ref<ConversationMessage[]>([]);
+  const threadLoading = ref(false);
 
-const limit = 50;
-const offset = ref(0);
+  const limit = 50;
+  const offset = ref(0);
 
-async function loadConversations(reset = true) {
-  loading.value = true;
-  try {
-    if (reset) {
-      offset.value = 0;
-      conversations.value = [];
+  async function loadConversations(reset = true) {
+    loading.value = true;
+    try {
+      if (reset) {
+        offset.value = 0;
+        conversations.value = [];
+      }
+      const params = new URLSearchParams();
+      if (searchQuery.value) params.set("q", searchQuery.value);
+      if (dateFrom.value) params.set("from", dateFrom.value);
+      if (dateTo.value) params.set("to", dateTo.value + "T23:59:59");
+      params.set("limit", String(limit));
+      params.set("offset", String(offset.value));
+
+      const result = await apiGet<{ items: ConversationSummary[]; total: number }>(
+        `/history?${params.toString()}`
+      );
+      conversations.value = reset ? result.items : [...conversations.value, ...result.items];
+      total.value = result.total;
+      offset.value += result.items.length;
+    } finally {
+      loading.value = false;
     }
-    const params = new URLSearchParams();
-    if (searchQuery.value) params.set("q", searchQuery.value);
-    if (dateFrom.value) params.set("from", dateFrom.value);
-    if (dateTo.value) params.set("to", dateTo.value + "T23:59:59");
-    params.set("limit", String(limit));
-    params.set("offset", String(offset.value));
-
-    const result = await apiGet<{ items: ConversationSummary[]; total: number }>(
-      `/history?${params.toString()}`
-    );
-    conversations.value = reset
-      ? result.items
-      : [...conversations.value, ...result.items];
-    total.value = result.total;
-    offset.value += result.items.length;
-  } finally {
-    loading.value = false;
   }
-}
 
-async function openConversation(id: string) {
-  selectedConversation.value = id;
-  threadLoading.value = true;
-  try {
-    selectedMessages.value = await apiGet<ConversationMessage[]>(`/history/${id}`);
-  } finally {
-    threadLoading.value = false;
+  async function openConversation(id: string) {
+    selectedConversation.value = id;
+    threadLoading.value = true;
+    try {
+      selectedMessages.value = await apiGet<ConversationMessage[]>(`/history/${id}`);
+    } finally {
+      threadLoading.value = false;
+    }
   }
-}
 
-function closeThread() {
-  selectedConversation.value = null;
-  selectedMessages.value = [];
-}
+  function closeThread() {
+    selectedConversation.value = null;
+    selectedMessages.value = [];
+  }
 
-async function deleteConversation(id: string, e: Event) {
-  e.stopPropagation();
-  if (!confirm("Delete this conversation?")) return;
-  await apiDelete(`/history/${id}`);
-  conversations.value = conversations.value.filter((c) => c.id !== id);
-  total.value = Math.max(0, total.value - 1);
-  if (selectedConversation.value === id) closeThread();
-}
+  async function deleteConversation(id: string, e: Event) {
+    e.stopPropagation();
+    if (!confirm("Delete this conversation?")) return;
+    await apiDelete(`/history/${id}`);
+    conversations.value = conversations.value.filter((c) => c.id !== id);
+    total.value = Math.max(0, total.value - 1);
+    if (selectedConversation.value === id) closeThread();
+  }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function truncate(text: string, max = 100): string {
+    return text.length > max ? text.slice(0, max) + "…" : text;
+  }
+
+  const hasMore = computed(() => conversations.value.length < total.value);
+
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+  watch([searchQuery, dateFrom, dateTo], () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadConversations(true), 300);
   });
-}
 
-function truncate(text: string, max = 100): string {
-  return text.length > max ? text.slice(0, max) + "…" : text;
-}
-
-const hasMore = computed(() => conversations.value.length < total.value);
-
-let searchTimer: ReturnType<typeof setTimeout> | null = null;
-watch([searchQuery, dateFrom, dateTo], () => {
-  if (searchTimer) clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => loadConversations(true), 300);
-});
-
-onMounted(() => loadConversations(true));
+  onMounted(() => loadConversations(true));
 </script>
 
 <template>
@@ -156,7 +154,10 @@ onMounted(() => loadConversations(true));
         <div v-if="loading && conversations.length === 0" class="p-4 text-xs text-muted-foreground">
           Loading...
         </div>
-        <div v-else-if="conversations.length === 0" class="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground">
+        <div
+          v-else-if="conversations.length === 0"
+          class="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground"
+        >
           <MessageSquare class="w-10 h-10 mb-3 opacity-40" />
           <p class="text-sm">No conversations found.</p>
           <p class="text-xs mt-1">Start chatting to build up your history.</p>
@@ -208,7 +209,9 @@ onMounted(() => loadConversations(true));
           <ArrowLeft class="w-4 h-4" />
         </button>
         <span class="text-sm font-medium text-muted-foreground">
-          {{ formatDate(conversations.find(c => c.id === selectedConversation)?.startedAt ?? "") }}
+          {{
+            formatDate(conversations.find((c) => c.id === selectedConversation)?.startedAt ?? "")
+          }}
         </span>
       </div>
 
@@ -225,11 +228,7 @@ onMounted(() => loadConversations(true));
         >
           <div
             class="max-w-[75%] rounded-lg px-4 py-2 text-sm"
-            :class="
-              msg.role === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-muted text-foreground'
-            "
+            :class="msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-muted text-foreground'"
           >
             <MarkdownContent
               v-if="msg.content"

@@ -63,20 +63,26 @@ export async function apiGet<T = any>(path: string): Promise<T> {
 }
 
 export async function apiPost<T = any>(path: string, body?: any): Promise<T> {
-  const opts = { method: "POST", headers: await getHeaders(), body: body ? JSON.stringify(body) : undefined };
-  const res = await handleResponse(
-    await fetch(`${BASE_URL}${path}`, opts),
-    async () => fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
+  const opts = {
+    method: "POST",
+    headers: await getHeaders(),
+    body: body ? JSON.stringify(body) : undefined,
+  };
+  const res = await handleResponse(await fetch(`${BASE_URL}${path}`, opts), async () =>
+    fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
   );
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export async function apiPut<T = any>(path: string, body?: any): Promise<T> {
-  const opts = { method: "PUT", headers: await getHeaders(), body: body ? JSON.stringify(body) : undefined };
-  const res = await handleResponse(
-    await fetch(`${BASE_URL}${path}`, opts),
-    async () => fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
+  const opts = {
+    method: "PUT",
+    headers: await getHeaders(),
+    body: body ? JSON.stringify(body) : undefined,
+  };
+  const res = await handleResponse(await fetch(`${BASE_URL}${path}`, opts), async () =>
+    fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
   );
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
@@ -84,9 +90,8 @@ export async function apiPut<T = any>(path: string, body?: any): Promise<T> {
 
 export async function apiDelete<T = any>(path: string): Promise<T> {
   const opts = { method: "DELETE", headers: await getHeaders() };
-  const res = await handleResponse(
-    await fetch(`${BASE_URL}${path}`, opts),
-    async () => fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
+  const res = await handleResponse(await fetch(`${BASE_URL}${path}`, opts), async () =>
+    fetch(`${BASE_URL}${path}`, { ...opts, headers: await getHeaders() })
   );
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();

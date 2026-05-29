@@ -1,24 +1,24 @@
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    modelValue: boolean;
-    ariaLabel?: string;
-    disabled?: boolean;
-  }>(),
-  {
-    ariaLabel: "Toggle",
-    disabled: false,
+  const props = withDefaults(
+    defineProps<{
+      modelValue: boolean;
+      ariaLabel?: string;
+      disabled?: boolean;
+    }>(),
+    {
+      ariaLabel: "Toggle",
+      disabled: false,
+    }
+  );
+
+  const emit = defineEmits<{
+    (e: "update:modelValue", value: boolean): void;
+  }>();
+
+  function toggle() {
+    if (props.disabled) return;
+    emit("update:modelValue", !props.modelValue);
   }
-);
-
-const emit = defineEmits<{
-  (e: "update:modelValue", value: boolean): void;
-}>();
-
-function toggle() {
-  if (props.disabled) return;
-  emit("update:modelValue", !props.modelValue);
-}
 </script>
 
 <template>

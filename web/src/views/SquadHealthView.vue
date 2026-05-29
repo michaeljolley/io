@@ -1,79 +1,79 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { apiGet } from "@/lib/api";
-import {
-  Activity,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  GitBranch,
-  Users,
-  Loader2,
-} from "lucide-vue-next";
+  import { ref, onMounted, computed } from "vue";
+  import { apiGet } from "@/lib/api";
+  import {
+    Activity,
+    CheckCircle,
+    Clock,
+    AlertTriangle,
+    GitBranch,
+    Users,
+    Loader2,
+  } from "lucide-vue-next";
 
-interface RecentTask {
-  id: string;
-  description: string;
-  status: string;
-  updatedAt: string;
-}
-
-interface ActiveInstance {
-  id: string;
-  branch: string;
-  lastActivity: string;
-}
-
-interface SquadHealth {
-  id: string;
-  name: string;
-  universe: string;
-  agentCount: number;
-  activeInstanceCount: number;
-  activeInstances: ActiveInstance[];
-  tasksTotal: number;
-  tasksCompleted: number;
-  tasksCompletedRecent: number;
-  tasksPending: number;
-  tasksInProgress: number;
-  tasksFailed: number;
-  avgCycleTimeMinutes: number | null;
-  isStalled: boolean;
-  recentTasks: RecentTask[];
-}
-
-const health = ref<SquadHealth[]>([]);
-const loading = ref(true);
-
-onMounted(async () => {
-  try {
-    const data = await apiGet("/squads/health");
-    health.value = data.health;
-  } finally {
-    loading.value = false;
+  interface RecentTask {
+    id: string;
+    description: string;
+    status: string;
+    updatedAt: string;
   }
-});
 
-function formatCycleTime(minutes: number | null): string {
-  if (minutes === null) return "—";
-  if (minutes < 60) return `${Math.round(minutes)}m`;
-  const hours = Math.floor(minutes / 60);
-  const mins = Math.round(minutes % 60);
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
+  interface ActiveInstance {
+    id: string;
+    branch: string;
+    lastActivity: string;
+  }
 
-function squadStatus(squad: SquadHealth): "stalled" | "active" | "idle" {
-  if (squad.isStalled) return "stalled";
-  if (squad.tasksInProgress > 0) return "active";
-  return "idle";
-}
+  interface SquadHealth {
+    id: string;
+    name: string;
+    universe: string;
+    agentCount: number;
+    activeInstanceCount: number;
+    activeInstances: ActiveInstance[];
+    tasksTotal: number;
+    tasksCompleted: number;
+    tasksCompletedRecent: number;
+    tasksPending: number;
+    tasksInProgress: number;
+    tasksFailed: number;
+    avgCycleTimeMinutes: number | null;
+    isStalled: boolean;
+    recentTasks: RecentTask[];
+  }
 
-const sortedHealth = computed(() =>
-  [...health.value].sort((a, b) => {
-    const order = { stalled: 0, active: 1, idle: 2 };
-    return order[squadStatus(a)] - order[squadStatus(b)];
-  })
-);
+  const health = ref<SquadHealth[]>([]);
+  const loading = ref(true);
+
+  onMounted(async () => {
+    try {
+      const data = await apiGet("/squads/health");
+      health.value = data.health;
+    } finally {
+      loading.value = false;
+    }
+  });
+
+  function formatCycleTime(minutes: number | null): string {
+    if (minutes === null) return "—";
+    if (minutes < 60) return `${Math.round(minutes)}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+
+  function squadStatus(squad: SquadHealth): "stalled" | "active" | "idle" {
+    if (squad.isStalled) return "stalled";
+    if (squad.tasksInProgress > 0) return "active";
+    return "idle";
+  }
+
+  const sortedHealth = computed(() =>
+    [...health.value].sort((a, b) => {
+      const order = { stalled: 0, active: 1, idle: 2 };
+      return order[squadStatus(a)] - order[squadStatus(b)];
+    })
+  );
 </script>
 
 <template>
@@ -108,10 +108,7 @@ const sortedHealth = computed(() =>
         <!-- Header -->
         <div class="flex items-start justify-between">
           <div>
-            <router-link
-              :to="`/squads/${squad.id}`"
-              class="font-semibold hover:underline"
-            >
+            <router-link :to="`/squads/${squad.id}`" class="font-semibold hover:underline">
               {{ squad.name }}
             </router-link>
             <p class="text-xs text-muted-foreground mt-0.5">{{ squad.universe }}</p>
@@ -201,10 +198,7 @@ const sortedHealth = computed(() =>
               :key="task.id"
               class="flex items-center gap-2 text-xs"
             >
-              <CheckCircle
-                v-if="task.status === 'done'"
-                class="w-3 h-3 text-green-500 shrink-0"
-              />
+              <CheckCircle v-if="task.status === 'done'" class="w-3 h-3 text-green-500 shrink-0" />
               <Loader2
                 v-else-if="task.status === 'in_progress'"
                 class="w-3 h-3 text-blue-500 shrink-0 animate-spin"
@@ -213,10 +207,7 @@ const sortedHealth = computed(() =>
                 v-else-if="task.status === 'failed'"
                 class="w-3 h-3 text-red-500 shrink-0"
               />
-              <Clock
-                v-else
-                class="w-3 h-3 text-yellow-500 shrink-0"
-              />
+              <Clock v-else class="w-3 h-3 text-yellow-500 shrink-0" />
               <span class="truncate text-muted-foreground">{{ task.description }}</span>
             </div>
           </div>

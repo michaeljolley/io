@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import AppSidebar from "@/components/AppSidebar.vue";
-import AppHeader from "@/components/AppHeader.vue";
-import ChatOverlay from "@/components/ChatOverlay.vue";
-import { useAuthStore } from "@/stores/auth";
-import { computed } from "vue";
-import { useRoute } from "vue-router";
+  import AppSidebar from "@/components/AppSidebar.vue";
+  import AppHeader from "@/components/AppHeader.vue";
+  import ChatOverlay from "@/components/ChatOverlay.vue";
+  import { useAuthStore } from "@/stores/auth";
+  import { computed } from "vue";
+  import { useRoute } from "vue-router";
 
-const auth = useAuthStore();
-const route = useRoute();
-const showChrome = computed(() => auth.isAuthenticated && route.name !== "login");
+  const auth = useAuthStore();
+  const route = useRoute();
+  const showChrome = computed(() => auth.isAuthenticated && route.name !== "login");
 </script>
 
 <template>

@@ -1,48 +1,48 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { apiGet } from "@/lib/api";
-import { Users, GitBranch, Layers } from "lucide-vue-next";
-import { getSquadLabelStyle } from "@/lib/squad-colors";
+  import { ref, onMounted } from "vue";
+  import { apiGet } from "@/lib/api";
+  import { Users, GitBranch, Layers } from "lucide-vue-next";
+  import { getSquadLabelStyle } from "@/lib/squad-colors";
 
-interface Squad {
-  id: string;
-  name: string;
-  universe: string;
-  color: string;
-  repo_url: string | null;
-  created_at: string;
-}
-
-interface Agent {
-  id: string;
-  squad_id: string;
-  character_name: string;
-  role_title: string;
-  status: string;
-  is_lead: number;
-  is_qa: number;
-  is_test: number;
-}
-
-const squads = ref<Squad[]>([]);
-const agents = ref<Agent[]>([]);
-const instanceCounts = ref<Record<string, number>>({});
-const loading = ref(true);
-
-onMounted(async () => {
-  try {
-    const data = await apiGet("/squads");
-    squads.value = data.squads;
-    agents.value = data.agents;
-    instanceCounts.value = data.instanceCounts ?? {};
-  } finally {
-    loading.value = false;
+  interface Squad {
+    id: string;
+    name: string;
+    universe: string;
+    color: string;
+    repo_url: string | null;
+    created_at: string;
   }
-});
 
-function getAgentsForSquad(squadId: string) {
-  return agents.value.filter((a) => a.squad_id === squadId);
-}
+  interface Agent {
+    id: string;
+    squad_id: string;
+    character_name: string;
+    role_title: string;
+    status: string;
+    is_lead: number;
+    is_qa: number;
+    is_test: number;
+  }
+
+  const squads = ref<Squad[]>([]);
+  const agents = ref<Agent[]>([]);
+  const instanceCounts = ref<Record<string, number>>({});
+  const loading = ref(true);
+
+  onMounted(async () => {
+    try {
+      const data = await apiGet("/squads");
+      squads.value = data.squads;
+      agents.value = data.agents;
+      instanceCounts.value = data.instanceCounts ?? {};
+    } finally {
+      loading.value = false;
+    }
+  });
+
+  function getAgentsForSquad(squadId: string) {
+    return agents.value.filter((a) => a.squad_id === squadId);
+  }
 </script>
 
 <template>
@@ -67,7 +67,10 @@ function getAgentsForSquad(squadId: string) {
       >
         <div class="flex items-start justify-between">
           <div class="min-w-0">
-            <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium" :style="getSquadLabelStyle(squad.color)">
+            <span
+              class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium"
+              :style="getSquadLabelStyle(squad.color)"
+            >
               {{ squad.name }}
             </span>
             <p class="text-sm text-muted-foreground mt-0.5">{{ squad.universe }}</p>

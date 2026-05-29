@@ -1,236 +1,238 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
-import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
-import { Puzzle, Plus, Trash2, Pencil, Save, X, Search, Globe } from "lucide-vue-next";
-import MarkdownContent from "@/components/MarkdownContent.vue";
-import { extractSkillFrontmatter } from "@/lib/skill-frontmatter";
+  import { ref, computed, onMounted } from "vue";
+  import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+  import { Puzzle, Plus, Trash2, Pencil, Save, X, Search, Globe } from "lucide-vue-next";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
+  import { extractSkillFrontmatter } from "@/lib/skill-frontmatter";
 
-interface Skill {
-  name: string;
-  slug: string;
-  description: string;
-  path: string;
-}
-
-interface DiscoveredSkill {
-  slug: string;
-  name: string;
-  description: string;
-  source: "awesome-copilot" | "skillssh";
-}
-
-const DEFAULT_SKILL_TEMPLATE =
-  "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n";
-
-// ---- Installed skills state ----
-const skills = ref<Skill[]>([]);
-const loading = ref(true);
-const showAddForm = ref(false);
-const addMode = ref<"git" | "create">("git");
-const newSkillUrl = ref("");
-const newSkillTitle = ref("");
-const newSkillContent = ref(DEFAULT_SKILL_TEMPLATE);
-const adding = ref(false);
-const error = ref("");
-
-// Derives a display slug from the title using the same normalisation rules as
-// createSkill() in src/copilot/skills.ts so the user sees the exact slug that
-// will be used before submitting the form.
-const newSkillSlug = computed(() =>
-  newSkillTitle.value
-    .trim()
-    .replace(/[^a-z0-9-]/gi, "-")
-    .toLowerCase()
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-);
-
-// View/Edit state
-const selectedSkill = ref<Skill | null>(null);
-const skillContent = ref("");
-const editMode = ref(false);
-const editContent = ref("");
-const loadingContent = ref(false);
-
-const installedSkillContent = computed(() => extractSkillFrontmatter(skillContent.value));
-const previewSkillContent = computed(() => extractSkillFrontmatter(previewContent.value));
-
-// ---- Discovery state ----
-type Tab = "installed" | "discover";
-const activeTab = ref<Tab>("installed");
-const discoverSource = ref<"awesome-copilot" | "skillssh">("awesome-copilot");
-const discoverQuery = ref("");
-const discoveredSkills = ref<DiscoveredSkill[]>([]);
-const discoverLoading = ref(false);
-const discoverError = ref("");
-const selectedDiscovered = ref<DiscoveredSkill | null>(null);
-const previewContent = ref("");
-const previewLoading = ref(false);
-const installingSlug = ref("");
-
-async function fetchSkills() {
-  loading.value = true;
-  try {
-    skills.value = await apiGet("/skills");
-  } finally {
-    loading.value = false;
+  interface Skill {
+    name: string;
+    slug: string;
+    description: string;
+    path: string;
   }
-}
 
-function openAddForm(mode: "git" | "create") {
-  addMode.value = mode;
-  showAddForm.value = true;
-  error.value = "";
-}
-
-function cancelAddForm() {
-  showAddForm.value = false;
-  newSkillUrl.value = "";
-  newSkillTitle.value = "";
-  newSkillContent.value = DEFAULT_SKILL_TEMPLATE;
-  error.value = "";
-}
-
-async function addSkillFromGit() {
-  if (!newSkillUrl.value.trim()) return;
-  adding.value = true;
-  error.value = "";
-  try {
-    await apiPost("/skills", { url: newSkillUrl.value.trim() });
-    cancelAddForm();
-    await fetchSkills();
-  } catch (err: any) {
-    error.value = err.message || "Failed to install skill";
-  } finally {
-    adding.value = false;
+  interface DiscoveredSkill {
+    slug: string;
+    name: string;
+    description: string;
+    source: "awesome-copilot" | "skillssh";
   }
-}
 
-async function createSkill() {
-  if (!newSkillTitle.value.trim() || !newSkillContent.value.trim()) return;
-  adding.value = true;
-  error.value = "";
-  try {
-    await apiPost("/skills", {
-      slug: newSkillSlug.value,
-      content: newSkillContent.value,
-    });
-    cancelAddForm();
-    await fetchSkills();
-  } catch (err: any) {
-    error.value = err.message || "Failed to create skill";
-  } finally {
-    adding.value = false;
-  }
-}
+  const DEFAULT_SKILL_TEMPLATE =
+    "# My Skill\n\nA brief description of what this skill does.\n\n## Usage\n\nInstructions for how to use this skill...\n";
 
-async function removeSkill(slug: string) {
-  try {
-    await apiDelete(`/skills/${slug}`);
-    if (selectedSkill.value?.slug === slug) {
-      selectedSkill.value = null;
-      skillContent.value = "";
+  // ---- Installed skills state ----
+  const skills = ref<Skill[]>([]);
+  const loading = ref(true);
+  const showAddForm = ref(false);
+  const addMode = ref<"git" | "create">("git");
+  const newSkillUrl = ref("");
+  const newSkillTitle = ref("");
+  const newSkillContent = ref(DEFAULT_SKILL_TEMPLATE);
+  const adding = ref(false);
+  const error = ref("");
+
+  // Derives a display slug from the title using the same normalisation rules as
+  // createSkill() in src/copilot/skills.ts so the user sees the exact slug that
+  // will be used before submitting the form.
+  const newSkillSlug = computed(() =>
+    newSkillTitle.value
+      .trim()
+      .replace(/[^a-z0-9-]/gi, "-")
+      .toLowerCase()
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+
+  // View/Edit state
+  const selectedSkill = ref<Skill | null>(null);
+  const skillContent = ref("");
+  const editMode = ref(false);
+  const editContent = ref("");
+  const loadingContent = ref(false);
+
+  const installedSkillContent = computed(() => extractSkillFrontmatter(skillContent.value));
+  const previewSkillContent = computed(() => extractSkillFrontmatter(previewContent.value));
+
+  // ---- Discovery state ----
+  type Tab = "installed" | "discover";
+  const activeTab = ref<Tab>("installed");
+  const discoverSource = ref<"awesome-copilot" | "skillssh">("awesome-copilot");
+  const discoverQuery = ref("");
+  const discoveredSkills = ref<DiscoveredSkill[]>([]);
+  const discoverLoading = ref(false);
+  const discoverError = ref("");
+  const selectedDiscovered = ref<DiscoveredSkill | null>(null);
+  const previewContent = ref("");
+  const previewLoading = ref(false);
+  const installingSlug = ref("");
+
+  async function fetchSkills() {
+    loading.value = true;
+    try {
+      skills.value = await apiGet("/skills");
+    } finally {
+      loading.value = false;
     }
-    await fetchSkills();
-  } catch (err: any) {
-    error.value = err.message || "Failed to remove skill";
   }
-}
 
-async function viewSkill(skill: Skill) {
-  selectedSkill.value = skill;
-  editMode.value = false;
-  loadingContent.value = true;
-  try {
-    const data = await apiGet(`/skills/${skill.slug}/content`);
-    skillContent.value = data.content;
-  } catch (err: any) {
-    skillContent.value = `Error loading skill: ${err.message}`;
-  } finally {
-    loadingContent.value = false;
+  function openAddForm(mode: "git" | "create") {
+    addMode.value = mode;
+    showAddForm.value = true;
+    error.value = "";
   }
-}
 
-function startEdit() {
-  editContent.value = skillContent.value;
-  editMode.value = true;
-}
+  function cancelAddForm() {
+    showAddForm.value = false;
+    newSkillUrl.value = "";
+    newSkillTitle.value = "";
+    newSkillContent.value = DEFAULT_SKILL_TEMPLATE;
+    error.value = "";
+  }
 
-async function saveSkill() {
-  if (!selectedSkill.value) return;
-  try {
-    await apiPut(`/skills/${selectedSkill.value.slug}/content`, { content: editContent.value });
-    skillContent.value = editContent.value;
+  async function addSkillFromGit() {
+    if (!newSkillUrl.value.trim()) return;
+    adding.value = true;
+    error.value = "";
+    try {
+      await apiPost("/skills", { url: newSkillUrl.value.trim() });
+      cancelAddForm();
+      await fetchSkills();
+    } catch (err: any) {
+      error.value = err.message || "Failed to install skill";
+    } finally {
+      adding.value = false;
+    }
+  }
+
+  async function createSkill() {
+    if (!newSkillTitle.value.trim() || !newSkillContent.value.trim()) return;
+    adding.value = true;
+    error.value = "";
+    try {
+      await apiPost("/skills", {
+        slug: newSkillSlug.value,
+        content: newSkillContent.value,
+      });
+      cancelAddForm();
+      await fetchSkills();
+    } catch (err: any) {
+      error.value = err.message || "Failed to create skill";
+    } finally {
+      adding.value = false;
+    }
+  }
+
+  async function removeSkill(slug: string) {
+    try {
+      await apiDelete(`/skills/${slug}`);
+      if (selectedSkill.value?.slug === slug) {
+        selectedSkill.value = null;
+        skillContent.value = "";
+      }
+      await fetchSkills();
+    } catch (err: any) {
+      error.value = err.message || "Failed to remove skill";
+    }
+  }
+
+  async function viewSkill(skill: Skill) {
+    selectedSkill.value = skill;
     editMode.value = false;
-    await fetchSkills();
-  } catch (err: any) {
-    error.value = err.message || "Failed to save skill";
+    loadingContent.value = true;
+    try {
+      const data = await apiGet(`/skills/${skill.slug}/content`);
+      skillContent.value = data.content;
+    } catch (err: any) {
+      skillContent.value = `Error loading skill: ${err.message}`;
+    } finally {
+      loadingContent.value = false;
+    }
   }
-}
 
-// ---- Discovery functions ----
-
-async function loadDiscovery() {
-  discoverLoading.value = true;
-  discoverError.value = "";
-  selectedDiscovered.value = null;
-  previewContent.value = "";
-  try {
-    const params = new URLSearchParams({ source: discoverSource.value });
-    if (discoverQuery.value.trim()) params.set("q", discoverQuery.value.trim());
-    discoveredSkills.value = await apiGet(`/skills/discover?${params}`);
-  } catch (err: any) {
-    discoverError.value = err.message || "Failed to fetch community skills";
-    discoveredSkills.value = [];
-  } finally {
-    discoverLoading.value = false;
+  function startEdit() {
+    editContent.value = skillContent.value;
+    editMode.value = true;
   }
-}
 
-async function previewDiscovered(skill: DiscoveredSkill) {
-  selectedDiscovered.value = skill;
-  previewLoading.value = true;
-  previewContent.value = "";
-  try {
-    const data = await apiGet(`/skills/preview?source=${skill.source}&slug=${encodeURIComponent(skill.slug)}`);
-    previewContent.value = data.content;
-  } catch (err: any) {
-    previewContent.value = `Error loading preview: ${err.message}`;
-  } finally {
-    previewLoading.value = false;
+  async function saveSkill() {
+    if (!selectedSkill.value) return;
+    try {
+      await apiPut(`/skills/${selectedSkill.value.slug}/content`, { content: editContent.value });
+      skillContent.value = editContent.value;
+      editMode.value = false;
+      await fetchSkills();
+    } catch (err: any) {
+      error.value = err.message || "Failed to save skill";
+    }
   }
-}
 
-async function installDiscovered(skill: DiscoveredSkill) {
-  installingSlug.value = skill.slug;
-  error.value = "";
-  try {
-    await apiPost("/skills", { source: skill.source, slug: skill.slug });
-    await fetchSkills();
-    activeTab.value = "installed";
-  } catch (err: any) {
-    error.value = err.message || "Failed to install skill";
-  } finally {
-    installingSlug.value = "";
+  // ---- Discovery functions ----
+
+  async function loadDiscovery() {
+    discoverLoading.value = true;
+    discoverError.value = "";
+    selectedDiscovered.value = null;
+    previewContent.value = "";
+    try {
+      const params = new URLSearchParams({ source: discoverSource.value });
+      if (discoverQuery.value.trim()) params.set("q", discoverQuery.value.trim());
+      discoveredSkills.value = await apiGet(`/skills/discover?${params}`);
+    } catch (err: any) {
+      discoverError.value = err.message || "Failed to fetch community skills";
+      discoveredSkills.value = [];
+    } finally {
+      discoverLoading.value = false;
+    }
   }
-}
 
-function isInstalled(slug: string): boolean {
-  return skills.value.some((s) => s.slug === slug);
-}
-
-function switchTab(tab: Tab) {
-  activeTab.value = tab;
-  selectedSkill.value = null;
-  selectedDiscovered.value = null;
-  skillContent.value = "";
-  previewContent.value = "";
-  if (tab === "discover" && discoveredSkills.value.length === 0) {
-    loadDiscovery();
+  async function previewDiscovered(skill: DiscoveredSkill) {
+    selectedDiscovered.value = skill;
+    previewLoading.value = true;
+    previewContent.value = "";
+    try {
+      const data = await apiGet(
+        `/skills/preview?source=${skill.source}&slug=${encodeURIComponent(skill.slug)}`
+      );
+      previewContent.value = data.content;
+    } catch (err: any) {
+      previewContent.value = `Error loading preview: ${err.message}`;
+    } finally {
+      previewLoading.value = false;
+    }
   }
-}
 
-onMounted(fetchSkills);
+  async function installDiscovered(skill: DiscoveredSkill) {
+    installingSlug.value = skill.slug;
+    error.value = "";
+    try {
+      await apiPost("/skills", { source: skill.source, slug: skill.slug });
+      await fetchSkills();
+      activeTab.value = "installed";
+    } catch (err: any) {
+      error.value = err.message || "Failed to install skill";
+    } finally {
+      installingSlug.value = "";
+    }
+  }
+
+  function isInstalled(slug: string): boolean {
+    return skills.value.some((s) => s.slug === slug);
+  }
+
+  function switchTab(tab: Tab) {
+    activeTab.value = tab;
+    selectedSkill.value = null;
+    selectedDiscovered.value = null;
+    skillContent.value = "";
+    previewContent.value = "";
+    if (tab === "discover" && discoveredSkills.value.length === 0) {
+      loadDiscovery();
+    }
+  }
+
+  onMounted(fetchSkills);
 </script>
 
 <template>
@@ -242,14 +244,22 @@ onMounted(fetchSkills);
         <button
           @click="switchTab('installed')"
           class="flex-1 px-3 py-2 text-xs font-medium transition-colors"
-          :class="activeTab === 'installed' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'"
+          :class="
+            activeTab === 'installed'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          "
         >
           Installed
         </button>
         <button
           @click="switchTab('discover')"
           class="flex-1 px-3 py-2 text-xs font-medium transition-colors"
-          :class="activeTab === 'discover' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'"
+          :class="
+            activeTab === 'discover'
+              ? 'border-b-2 border-primary text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          "
         >
           <Globe class="w-3 h-3 inline mr-1" />
           Discover
@@ -381,7 +391,9 @@ onMounted(fetchSkills);
           </select>
           <!-- Search -->
           <div class="relative">
-            <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+            <Search
+              class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground"
+            />
             <input
               v-model="discoverQuery"
               type="text"
@@ -401,8 +413,13 @@ onMounted(fetchSkills);
 
         <div class="flex-1 overflow-y-auto p-2">
           <div v-if="discoverLoading" class="text-xs text-muted-foreground p-2">Loading...</div>
-          <div v-else-if="discoverError" class="text-xs text-destructive p-2">{{ discoverError }}</div>
-          <div v-else-if="discoveredSkills.length === 0" class="text-center py-8 text-muted-foreground">
+          <div v-else-if="discoverError" class="text-xs text-destructive p-2">
+            {{ discoverError }}
+          </div>
+          <div
+            v-else-if="discoveredSkills.length === 0"
+            class="text-center py-8 text-muted-foreground"
+          >
             <Globe class="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p class="text-xs">No skills found.</p>
           </div>
@@ -415,7 +432,9 @@ onMounted(fetchSkills);
           >
             <div class="min-w-0 flex-1">
               <div class="font-medium truncate">{{ skill.slug }}</div>
-              <div class="text-muted-foreground line-clamp-2 mt-0.5" :title="skill.description">{{ skill.description }}</div>
+              <div class="text-muted-foreground line-clamp-2 mt-0.5" :title="skill.description">
+                {{ skill.description }}
+              </div>
             </div>
             <button
               v-if="!isInstalled(skill.slug)"
@@ -426,7 +445,10 @@ onMounted(fetchSkills);
             >
               {{ installingSlug === skill.slug ? "..." : "Install" }}
             </button>
-            <span v-else class="shrink-0 mt-0.5 px-1.5 py-0.5 text-xs rounded bg-muted text-muted-foreground">
+            <span
+              v-else
+              class="shrink-0 mt-0.5 px-1.5 py-0.5 text-xs rounded bg-muted text-muted-foreground"
+            >
               Installed
             </span>
           </div>
@@ -438,7 +460,10 @@ onMounted(fetchSkills);
     <div class="flex-1 flex flex-col">
       <!-- Installed skill viewer -->
       <template v-if="activeTab === 'installed'">
-        <div v-if="!selectedSkill" class="flex items-center justify-center h-full text-muted-foreground">
+        <div
+          v-if="!selectedSkill"
+          class="flex items-center justify-center h-full text-muted-foreground"
+        >
           <div class="text-center">
             <Puzzle class="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>Select a skill to view</p>
@@ -449,19 +474,33 @@ onMounted(fetchSkills);
           <div class="flex items-center justify-between px-4 py-2 border-b border-border">
             <div>
               <span class="text-sm font-medium">{{ selectedSkill.name }}</span>
-              <span class="text-xs text-muted-foreground ml-2 font-mono">{{ selectedSkill.slug }}/SKILL.md</span>
+              <span class="text-xs text-muted-foreground ml-2 font-mono"
+                >{{ selectedSkill.slug }}/SKILL.md</span
+              >
             </div>
             <div class="flex gap-1">
               <template v-if="!editMode">
-                <button @click="startEdit" class="p-1.5 rounded hover:bg-accent text-muted-foreground" title="Edit">
+                <button
+                  @click="startEdit"
+                  class="p-1.5 rounded hover:bg-accent text-muted-foreground"
+                  title="Edit"
+                >
                   <Pencil class="w-4 h-4" />
                 </button>
               </template>
               <template v-else>
-                <button @click="saveSkill" class="p-1.5 rounded hover:bg-accent text-green-500" title="Save">
+                <button
+                  @click="saveSkill"
+                  class="p-1.5 rounded hover:bg-accent text-green-500"
+                  title="Save"
+                >
                   <Save class="w-4 h-4" />
                 </button>
-                <button @click="editMode = false" class="p-1.5 rounded hover:bg-accent text-muted-foreground" title="Cancel">
+                <button
+                  @click="editMode = false"
+                  class="p-1.5 rounded hover:bg-accent text-muted-foreground"
+                  title="Cancel"
+                >
                   <X class="w-4 h-4" />
                 </button>
               </template>
@@ -481,16 +520,22 @@ onMounted(fetchSkills);
                 class="rounded-lg border border-border bg-card p-4"
               >
                 <div class="flex items-center justify-between">
-                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Metadata</p>
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Metadata
+                  </p>
                 </div>
                 <dl class="mt-3 grid gap-2 sm:grid-cols-2">
                   <div
-                    v-for="([key, value]) in Object.entries(installedSkillContent.frontmatter)"
+                    v-for="[key, value] in Object.entries(installedSkillContent.frontmatter)"
                     :key="key"
                     class="rounded-md bg-muted px-3 py-2"
                   >
-                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">{{ key }}</dt>
-                    <dd class="mt-1 text-sm text-foreground">{{ Array.isArray(value) ? value.join(', ') : String(value) }}</dd>
+                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {{ key }}
+                    </dt>
+                    <dd class="mt-1 text-sm text-foreground">
+                      {{ Array.isArray(value) ? value.join(", ") : String(value) }}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -502,7 +547,10 @@ onMounted(fetchSkills);
 
       <!-- Discovery preview -->
       <template v-else>
-        <div v-if="!selectedDiscovered" class="flex items-center justify-center h-full text-muted-foreground">
+        <div
+          v-if="!selectedDiscovered"
+          class="flex items-center justify-center h-full text-muted-foreground"
+        >
           <div class="text-center">
             <Globe class="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>Select a skill to preview</p>
@@ -513,7 +561,9 @@ onMounted(fetchSkills);
           <div class="flex items-center justify-between px-4 py-2 border-b border-border">
             <div class="min-w-0 flex-1">
               <span class="text-sm font-medium">{{ selectedDiscovered.slug }}</span>
-              <span class="text-xs text-muted-foreground ml-2">{{ selectedDiscovered.source }}</span>
+              <span class="text-xs text-muted-foreground ml-2">{{
+                selectedDiscovered.source
+              }}</span>
             </div>
             <button
               v-if="!isInstalled(selectedDiscovered.slug)"
@@ -523,29 +573,40 @@ onMounted(fetchSkills);
             >
               {{ installingSlug === selectedDiscovered.slug ? "Installing..." : "Install" }}
             </button>
-            <span v-else class="ml-2 shrink-0 px-3 py-1 text-xs rounded bg-muted text-muted-foreground">
+            <span
+              v-else
+              class="ml-2 shrink-0 px-3 py-1 text-xs rounded bg-muted text-muted-foreground"
+            >
               Installed
             </span>
           </div>
 
           <div class="flex-1 overflow-y-auto p-4">
-            <div v-if="previewLoading" class="text-muted-foreground text-sm">Loading preview...</div>
+            <div v-if="previewLoading" class="text-muted-foreground text-sm">
+              Loading preview...
+            </div>
             <div v-else class="space-y-4">
               <div
                 v-if="Object.keys(previewSkillContent.frontmatter).length > 0"
                 class="rounded-lg border border-border bg-card p-4"
               >
                 <div class="flex items-center justify-between">
-                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Metadata</p>
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Metadata
+                  </p>
                 </div>
                 <dl class="mt-3 grid gap-2 sm:grid-cols-2">
                   <div
-                    v-for="([key, value]) in Object.entries(previewSkillContent.frontmatter)"
+                    v-for="[key, value] in Object.entries(previewSkillContent.frontmatter)"
                     :key="key"
                     class="rounded-md bg-muted px-3 py-2"
                   >
-                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">{{ key }}</dt>
-                    <dd class="mt-1 text-sm text-foreground">{{ Array.isArray(value) ? value.join(', ') : String(value) }}</dd>
+                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      {{ key }}
+                    </dt>
+                    <dd class="mt-1 text-sm text-foreground">
+                      {{ Array.isArray(value) ? value.join(", ") : String(value) }}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -556,7 +617,11 @@ onMounted(fetchSkills);
       </template>
     </div>
 
-    <p v-if="error" class="absolute bottom-4 left-4 text-sm text-destructive bg-background border border-destructive/30 px-3 py-2 rounded-md">{{ error }}</p>
+    <p
+      v-if="error"
+      class="absolute bottom-4 left-4 text-sm text-destructive bg-background border border-destructive/30 px-3 py-2 rounded-md"
+    >
+      {{ error }}
+    </p>
   </div>
 </template>
-

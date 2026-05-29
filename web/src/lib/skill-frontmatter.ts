@@ -19,7 +19,10 @@ function parseScalar(value: string): string | number | boolean | string[] {
     return inner
       .split(",")
       .map((item) => parseScalar(item))
-      .filter((item): item is string | number | boolean => typeof item === "string" || typeof item === "number" || typeof item === "boolean") as string[];
+      .filter(
+        (item): item is string | number | boolean =>
+          typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+      ) as string[];
   }
 
   if (/^(true|false)$/i.test(trimmed)) {
@@ -30,7 +33,10 @@ function parseScalar(value: string): string | number | boolean | string[] {
     return Number(trimmed);
   }
 
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
     return trimmed.slice(1, -1);
   }
 

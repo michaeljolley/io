@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
-import { LogOut, Inbox, User } from "lucide-vue-next";
+  import { useAuthStore } from "@/stores/auth";
+  import { useRouter } from "vue-router";
+  import { LogOut, Inbox, User } from "lucide-vue-next";
 
-const auth = useAuthStore();
-const router = useRouter();
+  const auth = useAuthStore();
+  const router = useRouter();
 
-async function logout() {
-  await auth.logout();
-  router.push("/login");
-}
+  async function logout() {
+    await auth.logout();
+    router.push("/login");
+  }
 </script>
 
 <template>
-  <header class="h-12 border-b border-border bg-header flex items-center justify-between px-4 shrink-0">
+  <header
+    class="h-12 border-b border-border bg-header flex items-center justify-between px-4 shrink-0"
+  >
     <div></div>
     <div class="flex items-center gap-2">
       <router-link

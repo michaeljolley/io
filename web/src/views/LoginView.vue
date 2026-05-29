@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
-import LogoIcon from "@/components/LogoIcon.vue";
+  import { ref } from "vue";
+  import { useRouter } from "vue-router";
+  import { useAuthStore } from "@/stores/auth";
+  import LogoIcon from "@/components/LogoIcon.vue";
 
-const auth = useAuthStore();
-const router = useRouter();
-const email = ref("");
-const password = ref("");
-const error = ref("");
+  const auth = useAuthStore();
+  const router = useRouter();
+  const email = ref("");
+  const password = ref("");
+  const error = ref("");
 
-async function handleLogin() {
-  error.value = "";
-  try {
-    await auth.login(email.value, password.value);
-    router.push("/");
-  } catch (err: any) {
-    error.value = err.message ?? "Login failed";
+  async function handleLogin() {
+    error.value = "";
+    try {
+      await auth.login(email.value, password.value);
+      router.push("/");
+    } catch (err: any) {
+      error.value = err.message ?? "Login failed";
+    }
   }
-}
 </script>
 
 <template>
@@ -27,7 +27,9 @@ async function handleLogin() {
       <!-- Logo -->
       <div class="text-center">
         <LogoIcon :size="56" class="mx-auto mb-4" />
-        <h1 class="font-display text-4xl font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent">
+        <h1
+          class="font-display text-4xl font-normal uppercase tracking-[0.18em] bg-gradient-brand bg-clip-text text-transparent"
+        >
           IO
         </h1>
         <p class="text-sm text-muted-foreground mt-1">Sign in to your dashboard</p>
@@ -63,18 +65,12 @@ async function handleLogin() {
 
         <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
 
-        <button
-          type="submit"
-          :disabled="auth.loading"
-          class="btn-gradient w-full py-2.5"
-        >
+        <button type="submit" :disabled="auth.loading" class="btn-gradient w-full py-2.5">
           {{ auth.loading ? "Signing in..." : "Sign In" }}
         </button>
       </form>
 
-      <p class="text-center text-xs text-muted-foreground">
-        Personal AI Assistant Daemon
-      </p>
+      <p class="text-center text-xs text-muted-foreground">Personal AI Assistant Daemon</p>
     </div>
   </div>
 </template>

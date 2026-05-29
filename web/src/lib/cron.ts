@@ -1,5 +1,18 @@
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 function parseCronField(spec: string, min: number, max: number): number[] {
   const values = new Set<number>();
@@ -16,7 +29,10 @@ function parseCronField(spec: string, min: number, max: number): number[] {
     return Array.from(values);
   }
 
-  const parsedSegments = spec.split(",").map((segment) => segment.trim()).filter(Boolean);
+  const parsedSegments = spec
+    .split(",")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
   for (const segment of parsedSegments) {
     if (segment.includes("-")) {
       const [startRaw, endRaw] = segment.split("-");
@@ -65,8 +81,10 @@ function describeDayOfWeek(spec: string): string {
 
   const weekdays = [1, 2, 3, 4, 5];
   const weekend = [0, 6];
-  const weekdaysMatch = weekdays.every((day) => sorted.includes(day)) && sorted.length === weekdays.length;
-  const weekendMatch = weekend.every((day) => sorted.includes(day)) && sorted.length === weekend.length;
+  const weekdaysMatch =
+    weekdays.every((day) => sorted.includes(day)) && sorted.length === weekdays.length;
+  const weekendMatch =
+    weekend.every((day) => sorted.includes(day)) && sorted.length === weekend.length;
 
   if (weekdaysMatch) return "weekdays";
   if (weekendMatch) return "weekends";
@@ -78,7 +96,10 @@ function describeMonth(spec: string): string {
   const values = parseCronField(spec, 1, 12);
   if (values.length === 0) return "";
   if (values.length === 12) return "";
-  return formatDayList(values.map((value) => value - 1), MONTH_NAMES);
+  return formatDayList(
+    values.map((value) => value - 1),
+    MONTH_NAMES
+  );
 }
 
 function describeDayOfMonth(spec: string): string {
@@ -87,7 +108,15 @@ function describeDayOfMonth(spec: string): string {
   if (values.length === 31) return "";
 
   const ordinals = values.map((value) => {
-    const suffix = [11, 12, 13].includes(value) ? "th" : [1, 21, 31].includes(value) ? "st" : [2, 22].includes(value) ? "nd" : [3, 23].includes(value) ? "rd" : "th";
+    const suffix = [11, 12, 13].includes(value)
+      ? "th"
+      : [1, 21, 31].includes(value)
+        ? "st"
+        : [2, 22].includes(value)
+          ? "nd"
+          : [3, 23].includes(value)
+            ? "rd"
+            : "th";
     return `${value}${suffix}`;
   });
 
@@ -112,7 +141,8 @@ function describeTime(minuteSpec: string, hourSpec: string): string {
     if (!Number.isNaN(step) && step > 0) return `every ${step} minutes`;
   }
   if (minuteSpec === "*" && hourValues.length === 24) return "every hour";
-  if (minuteSpec === "*" && hourValues.length === 1) return `once each hour at ${formatTime(hourValues[0], 0)}`;
+  if (minuteSpec === "*" && hourValues.length === 1)
+    return `once each hour at ${formatTime(hourValues[0], 0)}`;
 
   if (minuteValues.length === 1 && hourValues.length === 1) {
     return `at ${formatTime(hourValues[0], minuteValues[0])}`;
@@ -141,15 +171,18 @@ export function describeCronExpression(cron: string): string {
 
   if (timePart === "every minute") return "every minute";
 
-  const dayDescriptor = dayOfWeekSpec !== "*" && dayOfMonthSpec === "*"
-    ? `on ${dayOfWeekPart}`
-    : dayOfMonthSpec !== "*" && dayOfWeekSpec === "*"
-      ? dayOfMonthPart
-      : dayOfWeekSpec === "*" && dayOfMonthSpec === "*"
-        ? "each day"
-        : "on matching days";
+  const dayDescriptor =
+    dayOfWeekSpec !== "*" && dayOfMonthSpec === "*"
+      ? `on ${dayOfWeekPart}`
+      : dayOfMonthSpec !== "*" && dayOfWeekSpec === "*"
+        ? dayOfMonthPart
+        : dayOfWeekSpec === "*" && dayOfMonthSpec === "*"
+          ? "each day"
+          : "on matching days";
 
-  const fragments = [timePart, dayDescriptor].filter((fragment) => fragment && fragment !== "custom times" && fragment !== "at matching times");
+  const fragments = [timePart, dayDescriptor].filter(
+    (fragment) => fragment && fragment !== "custom times" && fragment !== "at matching times"
+  );
   if (monthPart) fragments.push(`in ${monthPart}`);
 
   if (fragments.length === 0) return "custom schedule";

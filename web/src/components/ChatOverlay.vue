@@ -1,207 +1,215 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useChatStore } from "@/stores/chat";
-import { useAuthStore } from "@/stores/auth";
-import { useRoute } from "vue-router";
-import { Send, Square, Minimize2, Image as ImageIcon, FileText, ChevronDown, MessageSquare, Paperclip } from "lucide-vue-next";
-import LogoIcon from "@/components/LogoIcon.vue";
-import MarkdownContent from "@/components/MarkdownContent.vue";
-import {
-  fileToMessageAttachment,
-  formatAttachmentSize,
-  isImageAttachment,
-  MAX_ATTACHMENT_BYTES,
-  MAX_TOTAL_ATTACHMENT_BYTES,
-  toDataUrl,
-  type MessageAttachment,
-  validateAttachmentSizes,
-} from "@/lib/attachments";
+  import { computed, nextTick, onMounted, ref, watch } from "vue";
+  import { useChatStore } from "@/stores/chat";
+  import { useAuthStore } from "@/stores/auth";
+  import { useRoute } from "vue-router";
+  import {
+    Send,
+    Square,
+    Minimize2,
+    Image as ImageIcon,
+    FileText,
+    ChevronDown,
+    MessageSquare,
+    Paperclip,
+  } from "lucide-vue-next";
+  import LogoIcon from "@/components/LogoIcon.vue";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
+  import {
+    fileToMessageAttachment,
+    formatAttachmentSize,
+    isImageAttachment,
+    MAX_ATTACHMENT_BYTES,
+    MAX_TOTAL_ATTACHMENT_BYTES,
+    toDataUrl,
+    type MessageAttachment,
+    validateAttachmentSizes,
+  } from "@/lib/attachments";
 
-const chat = useChatStore();
-const auth = useAuthStore();
-const route = useRoute();
+  const chat = useChatStore();
+  const auth = useAuthStore();
+  const route = useRoute();
 
-const isOpen = ref(false);
-const input = ref("");
-const composerError = ref("");
-const isDragging = ref(false);
-const pendingAttachments = ref<MessageAttachment[]>([]);
+  const isOpen = ref(false);
+  const input = ref("");
+  const composerError = ref("");
+  const isDragging = ref(false);
+  const pendingAttachments = ref<MessageAttachment[]>([]);
 
-const messagesContainer = ref<HTMLElement>();
-const fileInput = ref<HTMLInputElement>();
-const textareaRef = ref<HTMLTextAreaElement>();
+  const messagesContainer = ref<HTMLElement>();
+  const fileInput = ref<HTMLInputElement>();
+  const textareaRef = ref<HTMLTextAreaElement>();
 
-const isNearBottom = ref(true);
-const showScrollHint = ref(false);
-const streamingDotDelays = [0, 110, 220];
+  const isNearBottom = ref(true);
+  const showScrollHint = ref(false);
+  const streamingDotDelays = [0, 110, 220];
 
-const hasMessages = computed(() => chat.messages.length > 0);
-const isOnChatPage = () => route.path === "/";
+  const hasMessages = computed(() => chat.messages.length > 0);
+  const isOnChatPage = () => route.path === "/";
 
-const totalPendingAttachmentBytes = computed(() =>
-  pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
-);
+  const totalPendingAttachmentBytes = computed(() =>
+    pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
+  );
 
-const userInitial = computed(() => {
-  const email = typeof auth.email === 'string' ? auth.email.trim() : '';
-  return email ? email.charAt(0).toUpperCase() : 'U';
-});
+  const userInitial = computed(() => {
+    const email = typeof auth.email === "string" ? auth.email.trim() : "";
+    return email ? email.charAt(0).toUpperCase() : "U";
+  });
 
-const canSend = computed(
-  () =>
-    !chat.isStreaming &&
-    (input.value.trim().length > 0 || pendingAttachments.value.length > 0)
-);
+  const canSend = computed(
+    () =>
+      !chat.isStreaming && (input.value.trim().length > 0 || pendingAttachments.value.length > 0)
+  );
 
-function toggle() {
-  if (isOnChatPage()) return;
-  isOpen.value = !isOpen.value;
-}
-
-function updateComposerHeight(): void {
-  if (!textareaRef.value) return;
-  textareaRef.value.style.height = "auto";
-  textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 136)}px`;
-}
-
-function updateScrollState(): void {
-  if (!messagesContainer.value) return;
-  const el = messagesContainer.value;
-  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-  isNearBottom.value = distanceFromBottom < 40;
-  showScrollHint.value = !isNearBottom.value;
-}
-
-function scrollToBottom(force = false) {
-  if (!messagesContainer.value) return;
-  if (force || isNearBottom.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    showScrollHint.value = false;
+  function toggle() {
+    if (isOnChatPage()) return;
+    isOpen.value = !isOpen.value;
   }
-}
 
-async function queueAttachments(files: FileList | null): Promise<void> {
-  if (!files || files.length === 0) return;
+  function updateComposerHeight(): void {
+    if (!textareaRef.value) return;
+    textareaRef.value.style.height = "auto";
+    textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 136)}px`;
+  }
 
-  composerError.value = "";
-  const parsed: MessageAttachment[] = [];
+  function updateScrollState(): void {
+    if (!messagesContainer.value) return;
+    const el = messagesContainer.value;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    isNearBottom.value = distanceFromBottom < 40;
+    showScrollHint.value = !isNearBottom.value;
+  }
 
-  try {
-    for (const file of Array.from(files)) {
-      parsed.push(await fileToMessageAttachment(file));
+  function scrollToBottom(force = false) {
+    if (!messagesContainer.value) return;
+    if (force || isNearBottom.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      showScrollHint.value = false;
     }
-  } catch (err: any) {
-    composerError.value = err?.message ?? "Unable to read one or more files.";
-    return;
   }
 
-  const next = [...pendingAttachments.value, ...parsed];
-  const validation = validateAttachmentSizes(next);
-  if (!validation.ok) {
-    composerError.value = validation.error;
-    return;
-  }
+  async function queueAttachments(files: FileList | null): Promise<void> {
+    if (!files || files.length === 0) return;
 
-  pendingAttachments.value = next;
-  if (fileInput.value) fileInput.value.value = "";
-}
+    composerError.value = "";
+    const parsed: MessageAttachment[] = [];
 
-function removeAttachment(index: number): void {
-  pendingAttachments.value.splice(index, 1);
-  composerError.value = "";
-}
-
-function openPicker(): void {
-  if (chat.isStreaming) return;
-  fileInput.value?.click();
-}
-
-function handleFileInput(event: Event): void {
-  const target = event.target as HTMLInputElement | null;
-  void queueAttachments(target?.files ?? null);
-}
-
-async function send() {
-  if (!canSend.value) return;
-
-  const text = input.value.trim();
-  const attachments = [...pendingAttachments.value];
-  const prompt = text || "Please review the attached file(s).";
-
-  input.value = "";
-  pendingAttachments.value = [];
-  composerError.value = "";
-  updateComposerHeight();
-
-  await chat.sendMessage(prompt, attachments);
-}
-
-function stopStreaming(): void {
-  chat.stopStreaming();
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    if (chat.isStreaming) {
-      stopStreaming();
+    try {
+      for (const file of Array.from(files)) {
+        parsed.push(await fileToMessageAttachment(file));
+      }
+    } catch (err: any) {
+      composerError.value = err?.message ?? "Unable to read one or more files.";
       return;
     }
-    void send();
+
+    const next = [...pendingAttachments.value, ...parsed];
+    const validation = validateAttachmentSizes(next);
+    if (!validation.ok) {
+      composerError.value = validation.error;
+      return;
+    }
+
+    pendingAttachments.value = next;
+    if (fileInput.value) fileInput.value.value = "";
   }
-}
 
-function onDragOver(event: DragEvent): void {
-  event.preventDefault();
-  if (chat.isStreaming) return;
-  isDragging.value = true;
-}
+  function removeAttachment(index: number): void {
+    pendingAttachments.value.splice(index, 1);
+    composerError.value = "";
+  }
 
-function onDragLeave(event: DragEvent): void {
-  event.preventDefault();
-  isDragging.value = false;
-}
+  function openPicker(): void {
+    if (chat.isStreaming) return;
+    fileInput.value?.click();
+  }
 
-async function onDrop(event: DragEvent): Promise<void> {
-  event.preventDefault();
-  isDragging.value = false;
-  if (chat.isStreaming) return;
-  await queueAttachments(event.dataTransfer?.files ?? null);
-}
+  function handleFileInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    void queueAttachments(target?.files ?? null);
+  }
 
-watch(input, () => updateComposerHeight());
+  async function send() {
+    if (!canSend.value) return;
 
-watch(
-  () => chat.messages.map((m) => m.content),
-  async () => {
+    const text = input.value.trim();
+    const attachments = [...pendingAttachments.value];
+    const prompt = text || "Please review the attached file(s).";
+
+    input.value = "";
+    pendingAttachments.value = [];
+    composerError.value = "";
+    updateComposerHeight();
+
+    await chat.sendMessage(prompt, attachments);
+  }
+
+  function stopStreaming(): void {
+    chat.stopStreaming();
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (chat.isStreaming) {
+        stopStreaming();
+        return;
+      }
+      void send();
+    }
+  }
+
+  function onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (chat.isStreaming) return;
+    isDragging.value = true;
+  }
+
+  function onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    isDragging.value = false;
+  }
+
+  async function onDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    isDragging.value = false;
+    if (chat.isStreaming) return;
+    await queueAttachments(event.dataTransfer?.files ?? null);
+  }
+
+  watch(input, () => updateComposerHeight());
+
+  watch(
+    () => chat.messages.map((m) => m.content),
+    async () => {
+      await nextTick();
+      updateScrollState();
+      scrollToBottom();
+    },
+    { deep: true }
+  );
+
+  watch(
+    () => chat.messages.length,
+    async () => {
+      await nextTick();
+      updateScrollState();
+      scrollToBottom(true);
+    }
+  );
+
+  watch(isOpen, async (open) => {
+    if (!open) return;
     await nextTick();
-    updateScrollState();
-    scrollToBottom();
-  },
-  { deep: true }
-);
-
-watch(
-  () => chat.messages.length,
-  async () => {
-    await nextTick();
+    updateComposerHeight();
     updateScrollState();
     scrollToBottom(true);
-  }
-);
+  });
 
-watch(isOpen, async (open) => {
-  if (!open) return;
-  await nextTick();
-  updateComposerHeight();
-  updateScrollState();
-  scrollToBottom(true);
-});
-
-onMounted(async () => {
-  await nextTick();
-  updateComposerHeight();
-});
+  onMounted(async () => {
+    await nextTick();
+    updateComposerHeight();
+  });
 </script>
 
 <template>
@@ -234,7 +242,13 @@ onMounted(async () => {
     >
       <header
         class="overlay-header"
-        style="background: linear-gradient(180deg, rgba(216,51,51,0.12) 0%, rgba(240,65,255,0.06) 100%);"
+        style="
+          background: linear-gradient(
+            180deg,
+            rgba(216, 51, 51, 0.12) 0%,
+            rgba(240, 65, 255, 0.06) 100%
+          );
+        "
       >
         <div class="flex items-center gap-2.5">
           <div class="overlay-brand-mark" aria-hidden="true">
@@ -259,7 +273,9 @@ onMounted(async () => {
         <div v-if="!hasMessages" class="flex h-full items-center justify-center px-5 text-center">
           <div>
             <LogoIcon :size="32" class="mx-auto mb-3 shrink-0" />
-            <p class="overlay-empty-copy">Ask IO about your workspace, agents, or recent changes.</p>
+            <p class="overlay-empty-copy">
+              Ask IO about your workspace, agents, or recent changes.
+            </p>
           </div>
         </div>
 
@@ -269,19 +285,28 @@ onMounted(async () => {
           class="flex"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <div class="flex max-w-full items-start gap-2" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
+          <div
+            class="flex max-w-full items-start gap-2"
+            :class="msg.role === 'user' ? 'flex-row-reverse' : ''"
+          >
             <div
               class="overlay-avatar"
               :class="msg.role === 'user' ? 'overlay-avatar-user' : 'overlay-avatar-assistant'"
               aria-hidden="true"
             >
-              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">{{ userInitial }}</span>
+              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">{{
+                userInitial
+              }}</span>
               <LogoIcon v-else :size="10" class="shrink-0" />
             </div>
 
             <article
               class="overlay-bubble"
-              :class="msg.role === 'user' ? 'overlay-bubble-user rounded-tr-sm' : 'overlay-bubble-assistant rounded-tl-sm'"
+              :class="
+                msg.role === 'user'
+                  ? 'overlay-bubble-user rounded-tr-sm'
+                  : 'overlay-bubble-assistant rounded-tl-sm'
+              "
             >
               <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
                 <div
@@ -314,10 +339,7 @@ onMounted(async () => {
             </article>
           </div>
 
-          <div
-            v-if="msg.streaming && msg.role === 'assistant'"
-            class="overlay-stream-indicator"
-          >
+          <div v-if="msg.streaming && msg.role === 'assistant'" class="overlay-stream-indicator">
             <span
               v-for="delay in streamingDotDelays"
               :key="delay"
@@ -340,13 +362,7 @@ onMounted(async () => {
       </button>
 
       <footer class="overlay-footer">
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          class="hidden"
-          @change="handleFileInput"
-        />
+        <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
 
         <div v-if="pendingAttachments.length > 0" class="mb-2 space-y-2">
           <div class="flex flex-wrap gap-1.5">
@@ -365,7 +381,9 @@ onMounted(async () => {
             </div>
           </div>
           <p class="overlay-meta text-zinc-500">
-            {{ formatAttachmentSize(totalPendingAttachmentBytes) }} · Max {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} file · {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }} total
+            {{ formatAttachmentSize(totalPendingAttachmentBytes) }} · Max
+            {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} file ·
+            {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }} total
           </p>
         </div>
 
@@ -408,202 +426,202 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.overlay-fab {
-  @apply fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-xl transition-all duration-150 sm:bottom-6 sm:right-6;
-  background: linear-gradient(135deg, #D83333 0%, #E43A9C 55%, #F041FF 100%);
-}
-
-.overlay-fab:hover {
-  @apply scale-105;
-}
-
-.overlay-fab:active {
-  @apply scale-95;
-}
-
-.overlay-fab:focus-visible {
-  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1a1a1a];
-}
-
-.overlay-panel {
-  @apply fixed bottom-5 right-5 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-[#2a2a2a] shadow-2xl;
-  background: #1c1c1c;
-}
-
-.overlay-panel-dragging {
-  @apply ring-2 ring-[#E43A9C]/40;
-}
-
-.overlay-header {
-  @apply flex flex-shrink-0 items-center justify-between px-4 py-3 border-b border-[#2b2b2b];
-}
-
-.overlay-brand-mark {
-  @apply flex h-5 w-5 items-center justify-center;
-}
-
-.overlay-title {
-  font-family: "Bebas Neue", sans-serif;
-  @apply text-lg leading-none tracking-[0.16em] text-white;
-}
-
-.overlay-icon-btn {
-  @apply rounded-lg p-1.5 text-zinc-500 transition-colors duration-150;
-}
-
-.overlay-icon-btn:hover {
-  @apply bg-white/[0.07] text-zinc-200;
-}
-
-.overlay-icon-btn:focus-visible {
-  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
-}
-
-.overlay-messages {
-  @apply relative flex-1 space-y-3 overflow-y-auto px-3 py-3;
-  background: #1c1c1c;
-}
-
-.overlay-empty-brand {
-  @apply mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#252525];
-}
-
-.overlay-empty-copy {
-  @apply mt-0 text-xs text-zinc-500;
-  font-family: "Inter", sans-serif;
-}
-
-.overlay-avatar {
-  @apply mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border text-[9px] font-bold;
-}
-
-.overlay-avatar-assistant {
-  background: #282828;
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
-.overlay-avatar-user {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
-  color: #fff;
-}
-
-.overlay-avatar-letter {
-  @apply leading-none;
-}
-
-.overlay-bubble {
-  @apply max-w-[82%] rounded-xl px-3 py-2 text-[9px] leading-relaxed;
-}
-
-.overlay-bubble-assistant {
-  background: #282828;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: rgb(228 228 231);
-}
-
-.overlay-bubble-user {
-  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
-  color: #fff;
-}
-
-.overlay-attachment {
-  @apply rounded-lg border border-[#2b2b2b] bg-[#252525]/90 p-2 text-[9px] text-zinc-200;
-}
-
-.overlay-markdown :deep(p:last-child) {
-  @apply mb-0;
-}
-
-.overlay-markdown :deep(pre) {
-  @apply rounded-lg border border-[#2b2b2b] bg-[#1f1f1f] p-0;
-}
-
-.overlay-markdown :deep(pre code) {
-  @apply block overflow-x-auto px-3 py-2 text-[11px];
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.overlay-stream-indicator {
-  @apply mt-1 flex w-fit items-center gap-1 rounded-xl rounded-tl-sm border border-[#2a2a2a] bg-[#282828] px-3 py-2.5;
-}
-
-.overlay-stream-dot {
-  @apply h-1 w-1 rounded-full bg-[#E43A9C];
-  animation: bounce 1s infinite;
-}
-
-.overlay-scroll-hint {
-  @apply absolute bottom-24 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-[#2a2a2a] bg-[#252525]/95 px-2.5 py-1 text-[10px] text-zinc-300 backdrop-blur;
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.overlay-footer {
-  @apply flex-shrink-0 border-t border-[#2a2a2a] bg-[#1c1c1c] p-2.5;
-}
-
-.overlay-chip {
-  @apply flex items-center gap-1.5 rounded-md border border-[#2d2d2d] bg-[#2c2c2c] px-1.5 py-1 text-[10px] text-zinc-200;
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.overlay-attach-btn {
-  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#2d2d2d] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
-}
-
-.overlay-attach-btn:hover:not(:disabled) {
-  @apply border-[#3a3a3a] bg-[#2a2a2a] text-zinc-300;
-}
-
-.overlay-attach-btn:focus-visible {
-  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
-}
-
-.overlay-composer-field {
-  @apply flex items-center gap-2;
-}
-
-.overlay-input {
-  @apply min-h-[36px] flex-1 resize-none rounded-xl border border-[#2d2d2d] bg-[#252525] px-3 py-2 text-[11px] leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
-  max-height: 100px;
-  font-family: "Inter", sans-serif;
-}
-
-.overlay-input:focus {
-  border-color: rgba(228, 58, 156, 0.3);
-}
-
-.overlay-send-btn {
-  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
-  background: linear-gradient(135deg, #D83333, #E43A9C);
-}
-
-.overlay-send-btn:hover:not(:disabled) {
-  @apply brightness-110;
-}
-
-.overlay-send-btn:active:not(:disabled) {
-  @apply brightness-100;
-}
-
-.overlay-send-btn:focus-visible {
-  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#252525];
-}
-
-.overlay-meta {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-@keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.55;
+  .overlay-fab {
+    @apply fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-xl transition-all duration-150 sm:bottom-6 sm:right-6;
+    background: linear-gradient(135deg, #d83333 0%, #e43a9c 55%, #f041ff 100%);
   }
-  40% {
-    transform: translateY(-3px);
-    opacity: 1;
+
+  .overlay-fab:hover {
+    @apply scale-105;
   }
-}
+
+  .overlay-fab:active {
+    @apply scale-95;
+  }
+
+  .overlay-fab:focus-visible {
+    @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1a1a1a];
+  }
+
+  .overlay-panel {
+    @apply fixed bottom-5 right-5 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-[#2a2a2a] shadow-2xl;
+    background: #1c1c1c;
+  }
+
+  .overlay-panel-dragging {
+    @apply ring-2 ring-[#E43A9C]/40;
+  }
+
+  .overlay-header {
+    @apply flex flex-shrink-0 items-center justify-between px-4 py-3 border-b border-[#2b2b2b];
+  }
+
+  .overlay-brand-mark {
+    @apply flex h-5 w-5 items-center justify-center;
+  }
+
+  .overlay-title {
+    font-family: "Bebas Neue", sans-serif;
+    @apply text-lg leading-none tracking-[0.16em] text-white;
+  }
+
+  .overlay-icon-btn {
+    @apply rounded-lg p-1.5 text-zinc-500 transition-colors duration-150;
+  }
+
+  .overlay-icon-btn:hover {
+    @apply bg-white/[0.07] text-zinc-200;
+  }
+
+  .overlay-icon-btn:focus-visible {
+    @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
+  }
+
+  .overlay-messages {
+    @apply relative flex-1 space-y-3 overflow-y-auto px-3 py-3;
+    background: #1c1c1c;
+  }
+
+  .overlay-empty-brand {
+    @apply mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#252525];
+  }
+
+  .overlay-empty-copy {
+    @apply mt-0 text-xs text-zinc-500;
+    font-family: "Inter", sans-serif;
+  }
+
+  .overlay-avatar {
+    @apply mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border text-[9px] font-bold;
+  }
+
+  .overlay-avatar-assistant {
+    background: #282828;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .overlay-avatar-user {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, #d83333 0%, #c0285e 100%);
+    color: #fff;
+  }
+
+  .overlay-avatar-letter {
+    @apply leading-none;
+  }
+
+  .overlay-bubble {
+    @apply max-w-[82%] rounded-xl px-3 py-2 text-[9px] leading-relaxed;
+  }
+
+  .overlay-bubble-assistant {
+    background: #282828;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgb(228 228 231);
+  }
+
+  .overlay-bubble-user {
+    background: linear-gradient(135deg, #d83333 0%, #c0285e 100%);
+    color: #fff;
+  }
+
+  .overlay-attachment {
+    @apply rounded-lg border border-[#2b2b2b] bg-[#252525]/90 p-2 text-[9px] text-zinc-200;
+  }
+
+  .overlay-markdown :deep(p:last-child) {
+    @apply mb-0;
+  }
+
+  .overlay-markdown :deep(pre) {
+    @apply rounded-lg border border-[#2b2b2b] bg-[#1f1f1f] p-0;
+  }
+
+  .overlay-markdown :deep(pre code) {
+    @apply block overflow-x-auto px-3 py-2 text-[11px];
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .overlay-stream-indicator {
+    @apply mt-1 flex w-fit items-center gap-1 rounded-xl rounded-tl-sm border border-[#2a2a2a] bg-[#282828] px-3 py-2.5;
+  }
+
+  .overlay-stream-dot {
+    @apply h-1 w-1 rounded-full bg-[#E43A9C];
+    animation: bounce 1s infinite;
+  }
+
+  .overlay-scroll-hint {
+    @apply absolute bottom-24 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-[#2a2a2a] bg-[#252525]/95 px-2.5 py-1 text-[10px] text-zinc-300 backdrop-blur;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .overlay-footer {
+    @apply flex-shrink-0 border-t border-[#2a2a2a] bg-[#1c1c1c] p-2.5;
+  }
+
+  .overlay-chip {
+    @apply flex items-center gap-1.5 rounded-md border border-[#2d2d2d] bg-[#2c2c2c] px-1.5 py-1 text-[10px] text-zinc-200;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .overlay-attach-btn {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#2d2d2d] bg-[#252525] text-zinc-500 transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
+  }
+
+  .overlay-attach-btn:hover:not(:disabled) {
+    @apply border-[#3a3a3a] bg-[#2a2a2a] text-zinc-300;
+  }
+
+  .overlay-attach-btn:focus-visible {
+    @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
+  }
+
+  .overlay-composer-field {
+    @apply flex items-center gap-2;
+  }
+
+  .overlay-input {
+    @apply min-h-[36px] flex-1 resize-none rounded-xl border border-[#2d2d2d] bg-[#252525] px-3 py-2 text-[11px] leading-relaxed text-zinc-200 placeholder:text-zinc-700 transition-colors duration-150 focus:outline-none;
+    max-height: 100px;
+    font-family: "Inter", sans-serif;
+  }
+
+  .overlay-input:focus {
+    border-color: rgba(228, 58, 156, 0.3);
+  }
+
+  .overlay-send-btn {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
+    background: linear-gradient(135deg, #d83333, #e43a9c);
+  }
+
+  .overlay-send-btn:hover:not(:disabled) {
+    @apply brightness-110;
+  }
+
+  .overlay-send-btn:active:not(:disabled) {
+    @apply brightness-100;
+  }
+
+  .overlay-send-btn:focus-visible {
+    @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#252525];
+  }
+
+  .overlay-meta {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @keyframes bounce {
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.55;
+    }
+    40% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
 </style>

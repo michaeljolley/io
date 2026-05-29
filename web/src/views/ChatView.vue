@@ -1,158 +1,157 @@
 <script setup lang="ts">
-import { computed, ref, nextTick, onMounted, watch } from "vue";
-import { useChatStore } from "@/stores/chat";
-import { Send, Square, Paperclip, X, Image as ImageIcon, FileText } from "lucide-vue-next";
-import MarkdownContent from "@/components/MarkdownContent.vue";
-import LogoIcon from "@/components/LogoIcon.vue";
-import {
-  fileToMessageAttachment,
-  formatAttachmentSize,
-  isImageAttachment,
-  MAX_ATTACHMENT_BYTES,
-  MAX_TOTAL_ATTACHMENT_BYTES,
-  toDataUrl,
-  type MessageAttachment,
-  validateAttachmentSizes,
-} from "@/lib/attachments";
+  import { computed, ref, nextTick, onMounted, watch } from "vue";
+  import { useChatStore } from "@/stores/chat";
+  import { Send, Square, Paperclip, X, Image as ImageIcon, FileText } from "lucide-vue-next";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
+  import LogoIcon from "@/components/LogoIcon.vue";
+  import {
+    fileToMessageAttachment,
+    formatAttachmentSize,
+    isImageAttachment,
+    MAX_ATTACHMENT_BYTES,
+    MAX_TOTAL_ATTACHMENT_BYTES,
+    toDataUrl,
+    type MessageAttachment,
+    validateAttachmentSizes,
+  } from "@/lib/attachments";
 
-const chat = useChatStore();
-const input = ref("");
-const composerError = ref("");
-const messagesContainer = ref<HTMLElement>();
-const fileInput = ref<HTMLInputElement>();
-const pendingAttachments = ref<MessageAttachment[]>([]);
-const textareaRef = ref<HTMLTextAreaElement>();
-const isDragging = ref(false);
+  const chat = useChatStore();
+  const input = ref("");
+  const composerError = ref("");
+  const messagesContainer = ref<HTMLElement>();
+  const fileInput = ref<HTMLInputElement>();
+  const pendingAttachments = ref<MessageAttachment[]>([]);
+  const textareaRef = ref<HTMLTextAreaElement>();
+  const isDragging = ref(false);
 
-const totalPendingAttachmentBytes = computed(() =>
-  pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
-);
+  const totalPendingAttachmentBytes = computed(() =>
+    pendingAttachments.value.reduce((sum, attachment) => sum + attachment.size, 0)
+  );
 
-const canSend = computed(
-  () =>
-    !chat.isStreaming &&
-    (input.value.trim().length > 0 || pendingAttachments.value.length > 0)
-);
+  const canSend = computed(
+    () =>
+      !chat.isStreaming && (input.value.trim().length > 0 || pendingAttachments.value.length > 0)
+  );
 
-async function queueAttachments(files: FileList | null): Promise<void> {
-  if (!files || files.length === 0) return;
+  async function queueAttachments(files: FileList | null): Promise<void> {
+    if (!files || files.length === 0) return;
 
-  composerError.value = "";
-  const parsed: MessageAttachment[] = [];
+    composerError.value = "";
+    const parsed: MessageAttachment[] = [];
 
-  try {
-    for (const file of Array.from(files)) {
-      parsed.push(await fileToMessageAttachment(file));
+    try {
+      for (const file of Array.from(files)) {
+        parsed.push(await fileToMessageAttachment(file));
+      }
+    } catch (err: any) {
+      composerError.value = err?.message ?? "Unable to read one or more files.";
+      return;
     }
-  } catch (err: any) {
-    composerError.value = err?.message ?? "Unable to read one or more files.";
-    return;
+
+    const next = [...pendingAttachments.value, ...parsed];
+    const validation = validateAttachmentSizes(next);
+    if (!validation.ok) {
+      composerError.value = validation.error;
+      return;
+    }
+
+    pendingAttachments.value = next;
+    if (fileInput.value) fileInput.value.value = "";
   }
 
-  const next = [...pendingAttachments.value, ...parsed];
-  const validation = validateAttachmentSizes(next);
-  if (!validation.ok) {
-    composerError.value = validation.error;
-    return;
+  function removeAttachment(index: number): void {
+    pendingAttachments.value.splice(index, 1);
+    composerError.value = "";
   }
 
-  pendingAttachments.value = next;
-  if (fileInput.value) fileInput.value.value = "";
-}
-
-function removeAttachment(index: number): void {
-  pendingAttachments.value.splice(index, 1);
-  composerError.value = "";
-}
-
-function openPicker(): void {
-  fileInput.value?.click();
-}
-
-function handleFileInput(event: Event): void {
-  const target = event.target as HTMLInputElement | null;
-  void queueAttachments(target?.files ?? null);
-}
-
-async function send() {
-  if (!canSend.value) return;
-
-  const text = input.value.trim();
-  const attachments = [...pendingAttachments.value];
-  const prompt = text || "Please review the attached file(s).";
-
-  input.value = "";
-  pendingAttachments.value = [];
-  composerError.value = "";
-
-  await chat.sendMessage(prompt, attachments);
-}
-
-function scrollToBottom() {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  function openPicker(): void {
+    fileInput.value?.click();
   }
-}
 
-function updateComposerHeight(): void {
-  if (!textareaRef.value) return;
-  textareaRef.value.style.height = "auto";
-  textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 120)}px`;
-}
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    send();
+  function handleFileInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    void queueAttachments(target?.files ?? null);
   }
-}
 
-function onDragOver(event: DragEvent): void {
-  event.preventDefault();
-  isDragging.value = true;
-}
+  async function send() {
+    if (!canSend.value) return;
 
-function onDragLeave(event: DragEvent): void {
-  event.preventDefault();
-  isDragging.value = false;
-}
+    const text = input.value.trim();
+    const attachments = [...pendingAttachments.value];
+    const prompt = text || "Please review the attached file(s).";
 
-async function onDrop(event: DragEvent): Promise<void> {
-  event.preventDefault();
-  isDragging.value = false;
-  await queueAttachments(event.dataTransfer?.files ?? null);
-}
+    input.value = "";
+    pendingAttachments.value = [];
+    composerError.value = "";
 
-// Auto-scroll whenever messages change (new message, streaming content updates)
-watch(
-  () => chat.messages.map((m) => m.content),
-  async () => {
-    await nextTick();
-    scrollToBottom();
-  },
-  { deep: true }
-);
-
-watch(
-  () => chat.messages.length,
-  async () => {
-    await nextTick();
-    scrollToBottom();
+    await chat.sendMessage(prompt, attachments);
   }
-);
 
-watch(
-  () => input.value,
-  async () => {
-    await nextTick();
+  function scrollToBottom() {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  }
+
+  function updateComposerHeight(): void {
+    if (!textareaRef.value) return;
+    textareaRef.value.style.height = "auto";
+    textareaRef.value.style.height = `${Math.min(textareaRef.value.scrollHeight, 120)}px`;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  }
+
+  function onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    isDragging.value = true;
+  }
+
+  function onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    isDragging.value = false;
+  }
+
+  async function onDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    isDragging.value = false;
+    await queueAttachments(event.dataTransfer?.files ?? null);
+  }
+
+  // Auto-scroll whenever messages change (new message, streaming content updates)
+  watch(
+    () => chat.messages.map((m) => m.content),
+    async () => {
+      await nextTick();
+      scrollToBottom();
+    },
+    { deep: true }
+  );
+
+  watch(
+    () => chat.messages.length,
+    async () => {
+      await nextTick();
+      scrollToBottom();
+    }
+  );
+
+  watch(
+    () => input.value,
+    async () => {
+      await nextTick();
+      updateComposerHeight();
+    }
+  );
+
+  onMounted(() => {
     updateComposerHeight();
-  }
-);
-
-onMounted(() => {
-  updateComposerHeight();
-  scrollToBottom();
-});
+    scrollToBottom();
+  });
 </script>
 
 <template>
@@ -176,9 +175,7 @@ onMounted(() => {
         <div
           class="max-w-[75%] rounded-lg px-4 py-2 text-sm"
           :class="
-            msg.role === 'user'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground'
+            msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
           "
         >
           <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
@@ -201,7 +198,11 @@ onMounted(() => {
               </div>
             </div>
           </div>
-          <MarkdownContent v-if="msg.content" :content="msg.content" :class="msg.role === 'user' ? 'prose-invert' : ''" />
+          <MarkdownContent
+            v-if="msg.content"
+            :content="msg.content"
+            :class="msg.role === 'user' ? 'prose-invert' : ''"
+          />
           <span v-else-if="!msg.streaming" class="text-muted-foreground">...</span>
           <div
             v-if="msg.streaming"
@@ -219,13 +220,7 @@ onMounted(() => {
       @dragleave="onDragLeave"
       @drop="onDrop"
     >
-      <input
-        ref="fileInput"
-        type="file"
-        multiple
-        class="hidden"
-        @change="handleFileInput"
-      />
+      <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInput" />
 
       <div v-if="pendingAttachments.length > 0" class="mb-2 space-y-2">
         <div class="flex flex-wrap gap-2">
@@ -244,7 +239,9 @@ onMounted(() => {
           </div>
         </div>
         <p class="text-xs text-muted-foreground">
-          {{ formatAttachmentSize(totalPendingAttachmentBytes) }} attached · Max per file {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} · Max total {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }}
+          {{ formatAttachmentSize(totalPendingAttachmentBytes) }} attached · Max per file
+          {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} · Max total
+          {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }}
         </p>
       </div>
 

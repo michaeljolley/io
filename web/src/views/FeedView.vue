@@ -1,86 +1,86 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { apiGet, apiPost, apiDelete } from "@/lib/api";
-import { Inbox, Check, Trash2 } from "lucide-vue-next";
-import MarkdownContent from "@/components/MarkdownContent.vue";
-import { getSquadLabelStyle } from "@/lib/squad-colors";
+  import { ref, onMounted, computed } from "vue";
+  import { apiGet, apiPost, apiDelete } from "@/lib/api";
+  import { Inbox, Check, Trash2 } from "lucide-vue-next";
+  import MarkdownContent from "@/components/MarkdownContent.vue";
+  import { getSquadLabelStyle } from "@/lib/squad-colors";
 
-interface FeedItem {
-  id: string;
-  source: string;
-  title: string;
-  content: string;
-  read: number;
-  created_at: string;
-}
-
-interface Squad {
-  id: string;
-  name: string;
-  color: string;
-}
-
-const items = ref<FeedItem[]>([]);
-const squads = ref<Squad[]>([]);
-const unreadCount = ref(0);
-const filter = ref<"all" | "unread">("all");
-const loading = ref(true);
-const expandedId = ref<string | null>(null);
-
-async function loadFeed() {
-  loading.value = true;
-  try {
-    const data = await apiGet(`/feed?unread=${filter.value === "unread"}`);
-    items.value = data.items;
-    unreadCount.value = data.unreadCount;
-  } finally {
-    loading.value = false;
+  interface FeedItem {
+    id: string;
+    source: string;
+    title: string;
+    content: string;
+    read: number;
+    created_at: string;
   }
-}
 
-async function loadSquads() {
-  const data = await apiGet("/squads");
-  squads.value = data.squads;
-}
-
-async function markRead(id: string) {
-  await apiPost(`/feed/${id}/read`);
-  const item = items.value.find((i) => i.id === id);
-  if (item) {
-    item.read = 1;
-    unreadCount.value = Math.max(0, unreadCount.value - 1);
+  interface Squad {
+    id: string;
+    name: string;
+    color: string;
   }
-}
 
-async function deleteItem(id: string) {
-  await apiDelete(`/feed/${id}`);
-  items.value = items.value.filter((i) => i.id !== id);
-}
+  const items = ref<FeedItem[]>([]);
+  const squads = ref<Squad[]>([]);
+  const unreadCount = ref(0);
+  const filter = ref<"all" | "unread">("all");
+  const loading = ref(true);
+  const expandedId = ref<string | null>(null);
 
-function toggle(id: string) {
-  expandedId.value = expandedId.value === id ? null : id;
-  if (expandedId.value === id) markRead(id);
-}
+  async function loadFeed() {
+    loading.value = true;
+    try {
+      const data = await apiGet(`/feed?unread=${filter.value === "unread"}`);
+      items.value = data.items;
+      unreadCount.value = data.unreadCount;
+    } finally {
+      loading.value = false;
+    }
+  }
 
-function getSquadForSource(source: string): Squad | undefined {
-  if (!source.startsWith("squad-")) return undefined;
-  const squadId = source.slice("squad-".length);
-  return squads.value.find((s) => s.id === squadId);
-}
+  async function loadSquads() {
+    const data = await apiGet("/squads");
+    squads.value = data.squads;
+  }
 
-const decoratedItems = computed(() =>
-  items.value.map((item) => {
-    const squad = getSquadForSource(item.source);
-    return { ...item, squad };
-  })
-);
+  async function markRead(id: string) {
+    await apiPost(`/feed/${id}/read`);
+    const item = items.value.find((i) => i.id === id);
+    if (item) {
+      item.read = 1;
+      unreadCount.value = Math.max(0, unreadCount.value - 1);
+    }
+  }
 
-onMounted(async () => {
-  await Promise.all([loadFeed(), loadSquads()]);
-});
-function getSourceLabel(item: FeedItem & { squad?: Squad }): string {
-  return item.squad?.name ?? item.source;
-}
+  async function deleteItem(id: string) {
+    await apiDelete(`/feed/${id}`);
+    items.value = items.value.filter((i) => i.id !== id);
+  }
+
+  function toggle(id: string) {
+    expandedId.value = expandedId.value === id ? null : id;
+    if (expandedId.value === id) markRead(id);
+  }
+
+  function getSquadForSource(source: string): Squad | undefined {
+    if (!source.startsWith("squad-")) return undefined;
+    const squadId = source.slice("squad-".length);
+    return squads.value.find((s) => s.id === squadId);
+  }
+
+  const decoratedItems = computed(() =>
+    items.value.map((item) => {
+      const squad = getSquadForSource(item.source);
+      return { ...item, squad };
+    })
+  );
+
+  onMounted(async () => {
+    await Promise.all([loadFeed(), loadSquads()]);
+  });
+  function getSourceLabel(item: FeedItem & { squad?: Squad }): string {
+    return item.squad?.name ?? item.source;
+  }
 </script>
 
 <template>
@@ -89,13 +89,20 @@ function getSourceLabel(item: FeedItem & { squad?: Squad }): string {
       <h1 class="text-2xl font-bold">Feed</h1>
       <div class="flex gap-2">
         <button
-          v-for="f in (['all', 'unread'] as const)"
+          v-for="f in ['all', 'unread'] as const"
           :key="f"
-          @click="filter = f; loadFeed()"
+          @click="
+            filter = f;
+            loadFeed();
+          "
           class="px-3 py-1.5 text-xs rounded-md border transition-colors"
-          :class="filter === f ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'"
+          :class="
+            filter === f
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'border-border text-muted-foreground hover:text-foreground'
+          "
         >
-          {{ f === 'all' ? 'All' : `Unread (${unreadCount})` }}
+          {{ f === "all" ? "All" : `Unread (${unreadCount})` }}
         </button>
       </div>
     </div>

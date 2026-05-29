@@ -1,163 +1,163 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { apiGet } from "@/lib/api";
-import { ClipboardList, Filter } from "lucide-vue-next";
+  import { ref, onMounted, computed } from "vue";
+  import { apiGet } from "@/lib/api";
+  import { ClipboardList, Filter } from "lucide-vue-next";
 
-interface AuditEntry {
-  id: string;
-  squad_id: string | null;
-  agent_id: string | null;
-  task_id: string | null;
-  action_type: string;
-  summary: string;
-  payload: string;
-  created_at: string;
-}
-
-interface Squad {
-  id: string;
-  name: string;
-}
-
-interface Agent {
-  id: string;
-  squad_id: string;
-  character_name: string;
-  role_title: string;
-}
-
-const entries = ref<AuditEntry[]>([]);
-const total = ref(0);
-const loading = ref(true);
-const expandedId = ref<string | null>(null);
-
-const squads = ref<Squad[]>([]);
-const agents = ref<Agent[]>([]);
-
-// Filters
-const filterSquad = ref("");
-const filterAgent = ref("");
-const filterActionType = ref("");
-const filterFrom = ref("");
-const filterTo = ref("");
-
-const limit = 50;
-const offset = ref(0);
-
-const ACTION_TYPES = [
-  "message_received",
-  "task_delegated",
-  "task_completed",
-  "task_failed",
-  "shell_command",
-  "squad_created",
-  "squad_meeting",
-];
-
-const ACTION_TYPE_COLORS: Record<string, string> = {
-  message_received: "bg-blue-500/20 text-blue-400",
-  task_delegated: "bg-purple-500/20 text-purple-400",
-  task_completed: "bg-green-500/20 text-green-400",
-  task_failed: "bg-red-500/20 text-red-400",
-  shell_command: "bg-yellow-500/20 text-yellow-400",
-  squad_created: "bg-indigo-500/20 text-indigo-400",
-  squad_meeting: "bg-teal-500/20 text-teal-400",
-};
-
-function actionTypeClass(type: string): string {
-  return ACTION_TYPE_COLORS[type] ?? "bg-secondary text-secondary-foreground";
-}
-
-async function loadData() {
-  loading.value = true;
-  try {
-    const params = new URLSearchParams();
-    if (filterSquad.value) params.set("squad_id", filterSquad.value);
-    if (filterAgent.value) params.set("agent_id", filterAgent.value);
-    if (filterActionType.value) params.set("action_type", filterActionType.value);
-    if (filterFrom.value) params.set("from", filterFrom.value);
-    if (filterTo.value) params.set("to", filterTo.value);
-    params.set("limit", String(limit));
-    params.set("offset", String(offset.value));
-    const data = await apiGet(`/audit-log?${params.toString()}`);
-    entries.value = data.entries;
-    total.value = data.total;
-  } finally {
-    loading.value = false;
+  interface AuditEntry {
+    id: string;
+    squad_id: string | null;
+    agent_id: string | null;
+    task_id: string | null;
+    action_type: string;
+    summary: string;
+    payload: string;
+    created_at: string;
   }
-}
 
-async function loadSquadsAndAgents() {
-  const data = await apiGet("/squads");
-  squads.value = data.squads;
-  agents.value = data.agents;
-}
+  interface Squad {
+    id: string;
+    name: string;
+  }
 
-function applyFilters() {
-  offset.value = 0;
-  loadData();
-}
+  interface Agent {
+    id: string;
+    squad_id: string;
+    character_name: string;
+    role_title: string;
+  }
 
-function resetFilters() {
-  filterSquad.value = "";
-  filterAgent.value = "";
-  filterActionType.value = "";
-  filterFrom.value = "";
-  filterTo.value = "";
-  offset.value = 0;
-  loadData();
-}
+  const entries = ref<AuditEntry[]>([]);
+  const total = ref(0);
+  const loading = ref(true);
+  const expandedId = ref<string | null>(null);
 
-function prevPage() {
-  if (offset.value > 0) {
-    offset.value = Math.max(0, offset.value - limit);
+  const squads = ref<Squad[]>([]);
+  const agents = ref<Agent[]>([]);
+
+  // Filters
+  const filterSquad = ref("");
+  const filterAgent = ref("");
+  const filterActionType = ref("");
+  const filterFrom = ref("");
+  const filterTo = ref("");
+
+  const limit = 50;
+  const offset = ref(0);
+
+  const ACTION_TYPES = [
+    "message_received",
+    "task_delegated",
+    "task_completed",
+    "task_failed",
+    "shell_command",
+    "squad_created",
+    "squad_meeting",
+  ];
+
+  const ACTION_TYPE_COLORS: Record<string, string> = {
+    message_received: "bg-blue-500/20 text-blue-400",
+    task_delegated: "bg-purple-500/20 text-purple-400",
+    task_completed: "bg-green-500/20 text-green-400",
+    task_failed: "bg-red-500/20 text-red-400",
+    shell_command: "bg-yellow-500/20 text-yellow-400",
+    squad_created: "bg-indigo-500/20 text-indigo-400",
+    squad_meeting: "bg-teal-500/20 text-teal-400",
+  };
+
+  function actionTypeClass(type: string): string {
+    return ACTION_TYPE_COLORS[type] ?? "bg-secondary text-secondary-foreground";
+  }
+
+  async function loadData() {
+    loading.value = true;
+    try {
+      const params = new URLSearchParams();
+      if (filterSquad.value) params.set("squad_id", filterSquad.value);
+      if (filterAgent.value) params.set("agent_id", filterAgent.value);
+      if (filterActionType.value) params.set("action_type", filterActionType.value);
+      if (filterFrom.value) params.set("from", filterFrom.value);
+      if (filterTo.value) params.set("to", filterTo.value);
+      params.set("limit", String(limit));
+      params.set("offset", String(offset.value));
+      const data = await apiGet(`/audit-log?${params.toString()}`);
+      entries.value = data.entries;
+      total.value = data.total;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function loadSquadsAndAgents() {
+    const data = await apiGet("/squads");
+    squads.value = data.squads;
+    agents.value = data.agents;
+  }
+
+  function applyFilters() {
+    offset.value = 0;
     loadData();
   }
-}
 
-function nextPage() {
-  if (offset.value + limit < total.value) {
-    offset.value = offset.value + limit;
+  function resetFilters() {
+    filterSquad.value = "";
+    filterAgent.value = "";
+    filterActionType.value = "";
+    filterFrom.value = "";
+    filterTo.value = "";
+    offset.value = 0;
     loadData();
   }
-}
 
-function toggle(id: string) {
-  expandedId.value = expandedId.value === id ? null : id;
-}
-
-function parsedPayload(entry: AuditEntry): string {
-  try {
-    return JSON.stringify(JSON.parse(entry.payload), null, 2);
-  } catch {
-    return entry.payload;
+  function prevPage() {
+    if (offset.value > 0) {
+      offset.value = Math.max(0, offset.value - limit);
+      loadData();
+    }
   }
-}
 
-function squadName(id: string | null): string {
-  if (!id) return "";
-  return squads.value.find((s) => s.id === id)?.name ?? id.slice(0, 8);
-}
+  function nextPage() {
+    if (offset.value + limit < total.value) {
+      offset.value = offset.value + limit;
+      loadData();
+    }
+  }
 
-function agentName(id: string | null): string {
-  if (!id) return "";
-  const a = agents.value.find((a) => a.id === id);
-  return a ? `${a.character_name} (${a.role_title})` : id.slice(0, 8);
-}
+  function toggle(id: string) {
+    expandedId.value = expandedId.value === id ? null : id;
+  }
 
-const hasNextPage = computed(() => offset.value + limit < total.value);
-const hasPrevPage = computed(() => offset.value > 0);
-const currentPage = computed(() => Math.floor(offset.value / limit) + 1);
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)));
+  function parsedPayload(entry: AuditEntry): string {
+    try {
+      return JSON.stringify(JSON.parse(entry.payload), null, 2);
+    } catch {
+      return entry.payload;
+    }
+  }
 
-const filteredAgents = computed(() => {
-  if (!filterSquad.value) return agents.value;
-  return agents.value.filter((a) => a.squad_id === filterSquad.value);
-});
+  function squadName(id: string | null): string {
+    if (!id) return "";
+    return squads.value.find((s) => s.id === id)?.name ?? id.slice(0, 8);
+  }
 
-onMounted(async () => {
-  await Promise.all([loadData(), loadSquadsAndAgents()]);
-});
+  function agentName(id: string | null): string {
+    if (!id) return "";
+    const a = agents.value.find((a) => a.id === id);
+    return a ? `${a.character_name} (${a.role_title})` : id.slice(0, 8);
+  }
+
+  const hasNextPage = computed(() => offset.value + limit < total.value);
+  const hasPrevPage = computed(() => offset.value > 0);
+  const currentPage = computed(() => Math.floor(offset.value / limit) + 1);
+  const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)));
+
+  const filteredAgents = computed(() => {
+    if (!filterSquad.value) return agents.value;
+    return agents.value.filter((a) => a.squad_id === filterSquad.value);
+  });
+
+  onMounted(async () => {
+    await Promise.all([loadData(), loadSquadsAndAgents()]);
+  });
 </script>
 
 <template>
@@ -287,7 +287,10 @@ onMounted(async () => {
           <div v-if="entry.task_id" class="text-xs text-muted-foreground mb-2">
             Task ID: <code class="font-mono">{{ entry.task_id }}</code>
           </div>
-          <pre class="text-xs bg-muted rounded p-3 overflow-x-auto whitespace-pre-wrap break-words">{{ parsedPayload(entry) }}</pre>
+          <pre
+            class="text-xs bg-muted rounded p-3 overflow-x-auto whitespace-pre-wrap break-words"
+            >{{ parsedPayload(entry) }}</pre
+          >
         </div>
       </div>
     </div>

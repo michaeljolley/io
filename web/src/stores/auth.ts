@@ -43,11 +43,14 @@ export const useAuthStore = defineStore("auth", () => {
 
   function startHealthCheck(): void {
     if (healthCheckInterval) return;
-    healthCheckInterval = setInterval(async () => {
-      if (token.value && isTokenNearExpiry(token.value)) {
-        await refreshToken();
-      }
-    }, 5 * 60 * 1000);
+    healthCheckInterval = setInterval(
+      async () => {
+        if (token.value && isTokenNearExpiry(token.value)) {
+          await refreshToken();
+        }
+      },
+      5 * 60 * 1000
+    );
   }
 
   async function login(emailInput: string, password: string): Promise<void> {
