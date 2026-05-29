@@ -2,17 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
-import {
-  MessageCircle,
-  Send,
-  Square,
-  Minimize2,
-  Paperclip,
-  X,
-  Image as ImageIcon,
-  FileText,
-  ChevronDown,
-} from "lucide-vue-next";
+import { Send, Square, X, Image as ImageIcon, FileText, ChevronDown, MessageSquare } from "lucide-vue-next";
+import LogoIcon from "@/components/LogoIcon.vue";
 import MarkdownContent from "@/components/MarkdownContent.vue";
 import {
   fileToMessageAttachment,
@@ -40,6 +31,7 @@ const textareaRef = ref<HTMLTextAreaElement>();
 
 const isNearBottom = ref(true);
 const showScrollHint = ref(false);
+const streamingDotDelays = [0, 110, 220];
 
 const hasMessages = computed(() => chat.messages.length > 0);
 const isOnChatPage = () => route.path === "/";
@@ -220,8 +212,7 @@ onMounted(async () => {
     title="Chat with IO"
     aria-label="Open chat overlay"
   >
-    <MessageCircle class="h-5 w-5 text-white" />
-    <span class="overlay-fab-label">IO</span>
+    <MessageSquare class="h-4 w-4 text-white" />
   </button>
 
   <Transition
@@ -241,30 +232,35 @@ onMounted(async () => {
       @dragleave="onDragLeave"
       @drop="onDrop"
     >
-      <header class="overlay-header">
-        <div class="flex items-center gap-3">
-          <div class="overlay-status-dot" />
-          <div>
-            <p class="overlay-title">IO ASSISTANT</p>
-            <p class="overlay-meta">LIVE</p>
+      <header
+        class="overlay-header"
+        style="background: linear-gradient(135deg, rgba(216,51,51,0.18) 0%, rgba(240,65,255,0.10) 100%);"
+      >
+        <div class="flex items-center gap-2.5">
+          <div class="overlay-brand-mark" aria-hidden="true">
+            <LogoIcon :size="18" class="shrink-0" />
+          </div>
+          <div class="flex flex-col leading-none">
+            <span class="overlay-title">IO</span>
+            <span class="overlay-quick-chat">quick chat</span>
           </div>
         </div>
 
         <button
           @click="isOpen = false"
           class="overlay-icon-btn"
-          aria-label="Minimize chat overlay"
-          title="Minimize"
+          aria-label="Close chat overlay"
+          title="Close chat"
         >
-          <Minimize2 class="h-4 w-4" />
+          <X class="h-3.5 w-3.5" />
         </button>
       </header>
 
       <div ref="messagesContainer" class="overlay-messages" @scroll="updateScrollState">
-        <div v-if="!hasMessages" class="flex h-full items-center justify-center px-8">
-          <div class="text-center">
-            <p class="overlay-title text-3xl">CHAT</p>
-            <p class="mt-2 text-sm text-muted-foreground">Ask IO about your workspace, agents, or recent changes.</p>
+        <div v-if="!hasMessages" class="flex h-full items-center justify-center px-5 text-center">
+          <div>
+            <p class="overlay-empty-title">CHAT</p>
+            <p class="overlay-empty-copy">Ask IO about your workspace, agents, or recent changes.</p>
           </div>
         </div>
 
@@ -274,51 +270,62 @@ onMounted(async () => {
           class="flex"
           :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
         >
-          <article class="overlay-bubble" :class="msg.role === 'user' ? 'overlay-bubble-user' : 'overlay-bubble-assistant'">
-            <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
-              <div
-                v-for="(attachment, idx) in msg.attachments"
-                :key="`${msg.id}-${idx}`"
-                class="overlay-attachment"
-              >
-                <img
-                  v-if="isImageAttachment(attachment)"
-                  :src="toDataUrl(attachment)"
-                  :alt="attachment.name"
-                  class="max-h-44 rounded-md mb-1 object-contain"
-                />
-                <div class="flex items-center gap-2 text-xs">
-                  <ImageIcon v-if="isImageAttachment(attachment)" class="w-3.5 h-3.5" />
-                  <FileText v-else class="w-3.5 h-3.5" />
-                  <span class="truncate">{{ attachment.name }}</span>
-                  <span class="opacity-70">{{ formatAttachmentSize(attachment.size) }}</span>
+          <div class="flex max-w-full items-start gap-2" :class="msg.role === 'user' ? 'flex-row-reverse' : ''">
+            <div
+              class="overlay-avatar"
+              :class="msg.role === 'user' ? 'overlay-avatar-user' : 'overlay-avatar-assistant'"
+              aria-hidden="true"
+            >
+              <span v-if="msg.role === 'user'" class="overlay-avatar-letter">U</span>
+              <LogoIcon v-else :size="10" class="shrink-0" />
+            </div>
+
+            <article
+              class="overlay-bubble"
+              :class="msg.role === 'user' ? 'overlay-bubble-user rounded-tr-sm' : 'overlay-bubble-assistant rounded-tl-sm'"
+            >
+              <div v-if="msg.attachments.length > 0" class="mb-2 space-y-2">
+                <div
+                  v-for="(attachment, idx) in msg.attachments"
+                  :key="`${msg.id}-${idx}`"
+                  class="overlay-attachment"
+                >
+                  <img
+                    v-if="isImageAttachment(attachment)"
+                    :src="toDataUrl(attachment)"
+                    :alt="attachment.name"
+                    class="mb-1 max-h-44 rounded-md object-contain"
+                  />
+                  <div class="flex items-center gap-2 text-[10px]">
+                    <ImageIcon v-if="isImageAttachment(attachment)" class="h-3.5 w-3.5" />
+                    <FileText v-else class="h-3.5 w-3.5" />
+                    <span class="truncate">{{ attachment.name }}</span>
+                    <span class="opacity-70">{{ formatAttachmentSize(attachment.size) }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <MarkdownContent
-              v-if="msg.content"
-              :content="msg.content"
-              class="overlay-markdown"
-              :class="msg.role === 'user' ? 'prose-invert' : ''"
+              <MarkdownContent
+                v-if="msg.content"
+                :content="msg.content"
+                class="overlay-markdown"
+                :class="msg.role === 'user' ? 'prose-invert' : ''"
+              />
+              <span v-else class="text-zinc-500">...</span>
+            </article>
+          </div>
+
+          <div
+            v-if="msg.streaming && msg.role === 'assistant'"
+            class="overlay-stream-indicator"
+          >
+            <span
+              v-for="delay in streamingDotDelays"
+              :key="delay"
+              class="overlay-stream-dot"
+              :style="{ animationDelay: `${delay}ms` }"
             />
-            <span v-else class="text-muted-foreground">...</span>
-
-            <div class="mt-2 flex items-center justify-between gap-3">
-              <span class="overlay-meta uppercase tracking-[0.18em]" :class="msg.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'">
-                {{ msg.role }}
-              </span>
-              <span class="overlay-meta" :class="msg.role === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'">
-                {{ formatTimestamp(msg.timestamp) }}
-              </span>
-            </div>
-
-            <div v-if="msg.streaming" class="mt-2 inline-flex items-center gap-1" aria-label="Streaming response">
-              <span class="overlay-dot animate-pulse" />
-              <span class="overlay-dot animate-pulse [animation-delay:140ms]" />
-              <span class="overlay-dot animate-pulse [animation-delay:280ms]" />
-            </div>
-          </article>
+          </div>
         </div>
       </div>
 
@@ -349,38 +356,28 @@ onMounted(async () => {
               :key="`${attachment.name}-${idx}`"
               class="overlay-chip"
             >
-              <ImageIcon v-if="isImageAttachment(attachment)" class="w-3.5 h-3.5" />
-              <FileText v-else class="w-3.5 h-3.5" />
+              <ImageIcon v-if="isImageAttachment(attachment)" class="h-3.5 w-3.5" />
+              <FileText v-else class="h-3.5 w-3.5" />
               <span class="max-w-[120px] truncate">{{ attachment.name }}</span>
               <span class="opacity-65">{{ formatAttachmentSize(attachment.size) }}</span>
               <button class="hover:text-destructive" @click="removeAttachment(idx)">
-                <X class="w-3.5 h-3.5" />
+                <X class="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <p class="overlay-meta text-muted-foreground">
+          <p class="overlay-meta text-zinc-500">
             {{ formatAttachmentSize(totalPendingAttachmentBytes) }} · Max {{ formatAttachmentSize(MAX_ATTACHMENT_BYTES) }} file · {{ formatAttachmentSize(MAX_TOTAL_ATTACHMENT_BYTES) }} total
           </p>
         </div>
 
-        <p v-if="composerError" class="text-xs text-destructive mb-2">{{ composerError }}</p>
+        <p v-if="composerError" class="mb-2 text-[11px] text-[#ef4444]">{{ composerError }}</p>
 
-        <div class="flex items-end gap-2">
-          <button
-            class="overlay-attach-btn"
-            :disabled="chat.isStreaming"
-            @click="openPicker"
-            title="Attach files"
-            aria-label="Attach files"
-          >
-            <Paperclip class="w-4 h-4" />
-          </button>
-
+        <div class="overlay-composer-field">
           <textarea
             ref="textareaRef"
             v-model="input"
             @keydown="handleKeydown"
-            placeholder="Message IO..."
+            placeholder="Message IO…"
             rows="1"
             class="overlay-input"
           />
@@ -392,8 +389,8 @@ onMounted(async () => {
             :aria-label="chat.isStreaming ? 'Stop generation' : 'Send message'"
             :title="chat.isStreaming ? 'Stop generation' : 'Send message'"
           >
-            <Send v-if="!chat.isStreaming" class="h-4 w-4" />
-            <Square v-else class="h-3.5 w-3.5" />
+            <Send v-if="!chat.isStreaming" class="h-3 w-3" />
+            <Square v-else class="h-3 w-3" />
           </button>
         </div>
       </footer>
@@ -403,114 +400,112 @@ onMounted(async () => {
 
 <style scoped>
 .overlay-fab {
-  @apply fixed bottom-4 right-4 z-50 flex h-12 items-center gap-2 rounded-full px-4 text-white shadow-glow-lg transition-all duration-200 sm:bottom-6 sm:right-6;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--gradient-start)),
-    hsl(var(--gradient-mid)),
-    hsl(var(--gradient-end))
-  );
-}
-
-.overlay-fab-label {
-  font-family: "Bebas Neue", "Inter", sans-serif;
-  @apply text-lg leading-none tracking-[0.1em];
+  @apply fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-xl transition-all duration-150 sm:bottom-6 sm:right-6;
+  background: linear-gradient(135deg, #D83333 0%, #E43A9C 55%, #F041FF 100%);
 }
 
 .overlay-fab:hover {
-  @apply -translate-y-0.5 scale-[1.02] shadow-glow;
+  @apply scale-105;
 }
 
 .overlay-fab:active {
-  @apply translate-y-0 scale-100;
+  @apply scale-95;
 }
 
 .overlay-fab:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1a1a1a];
 }
 
 .overlay-panel {
-  @apply fixed inset-x-0 bottom-0 z-50 flex h-[100dvh] flex-col overflow-hidden border border-border bg-card/95 shadow-2xl backdrop-blur;
-}
-
-@media (min-width: 768px) {
-  .overlay-panel {
-    @apply bottom-4 right-4 left-auto h-[min(44rem,85vh)] w-[min(27rem,calc(100vw-2.25rem))] rounded-2xl;
-  }
-}
-
-@media (min-width: 1024px) {
-  .overlay-panel {
-    @apply bottom-6 right-6 h-[min(46rem,86vh)] w-[29rem];
-  }
+  @apply fixed bottom-5 right-5 z-50 flex h-[460px] w-[340px] flex-col overflow-hidden rounded-2xl border border-white/[0.09] shadow-2xl;
+  background: #1c1c1c;
 }
 
 .overlay-panel-dragging {
-  @apply ring-2 ring-primary/50;
+  @apply ring-2 ring-[#E43A9C]/40;
 }
 
 .overlay-header {
-  @apply flex items-center justify-between border-b border-border/80 bg-header/85 px-4 py-3;
+  @apply flex flex-shrink-0 items-center justify-between px-4 py-3 border-b border-white/[0.07];
 }
 
-.overlay-status-dot {
-  @apply h-2.5 w-2.5 rounded-full bg-emerald-400;
-  box-shadow: 0 0 0 4px rgb(52 211 153 / 0.14);
+.overlay-brand-mark {
+  @apply flex h-5 w-5 items-center justify-center;
 }
 
 .overlay-title {
-  font-family: "Bebas Neue", "Inter", sans-serif;
-  @apply text-xl leading-none tracking-[0.08em] text-foreground;
+  font-family: "Bebas Neue", sans-serif;
+  @apply text-lg leading-none tracking-[0.16em] text-white;
 }
 
-.overlay-meta {
+.overlay-quick-chat {
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  @apply text-[10px] leading-4;
+  @apply mt-0.5 text-[10px] text-zinc-600;
 }
 
 .overlay-icon-btn {
-  @apply rounded-md p-1.5 text-muted-foreground transition-colors duration-150;
+  @apply rounded-lg p-1.5 text-zinc-500 transition-colors duration-150;
 }
 
 .overlay-icon-btn:hover {
-  @apply bg-accent text-foreground;
+  @apply bg-white/[0.07] text-zinc-200;
 }
 
 .overlay-icon-btn:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-card;
+  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#1c1c1c];
 }
 
 .overlay-messages {
-  @apply relative flex-1 space-y-3 overflow-y-auto px-3 py-3.5 md:px-4;
-  background:
-    radial-gradient(circle at 25% 0%, hsl(var(--primary) / 0.08), transparent 30%),
-    linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
+  @apply relative flex-1 space-y-3 overflow-y-auto px-3 py-3;
+  background: #1c1c1c;
+}
+
+.overlay-empty-title {
+  font-family: "Bebas Neue", sans-serif;
+  @apply text-3xl leading-none tracking-[0.12em] text-white;
+}
+
+.overlay-empty-copy {
+  @apply mt-2 text-xs text-zinc-500;
+  font-family: "Inter", sans-serif;
+}
+
+.overlay-avatar {
+  @apply mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border text-[9px] font-bold;
+}
+
+.overlay-avatar-assistant {
+  background: #282828;
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.overlay-avatar-user {
+  border-color: rgba(228, 58, 156, 0.3);
+  background: rgba(228, 58, 156, 0.12);
+  color: #E43A9C;
+}
+
+.overlay-avatar-letter {
+  @apply leading-none;
 }
 
 .overlay-bubble {
-  @apply max-w-[90%] rounded-xl border px-3 py-2.5 text-[13px] leading-relaxed md:max-w-[84%];
+  @apply max-w-[82%] rounded-xl px-3 py-2 text-xs leading-relaxed;
 }
 
 .overlay-bubble-assistant {
-  @apply border-border/70 bg-secondary text-foreground;
+  background: #282828;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgb(228 228 231);
 }
 
 .overlay-bubble-user {
-  @apply border-transparent text-primary-foreground;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--gradient-start) / 0.9),
-    hsl(var(--gradient-mid) / 0.95),
-    hsl(var(--gradient-end) / 0.92)
-  );
-}
-
-.overlay-dot {
-  @apply h-1.5 w-1.5 rounded-full bg-current;
+  background: linear-gradient(135deg, #D83333 0%, #C0285E 100%);
+  color: #fff;
 }
 
 .overlay-attachment {
-  @apply rounded-lg border border-border/60 bg-background/60 p-2 text-foreground;
+  @apply rounded-lg border border-white/[0.06] bg-[#252525]/90 p-2 text-[10px] text-zinc-200;
 }
 
 .overlay-markdown :deep(p:last-child) {
@@ -518,64 +513,54 @@ onMounted(async () => {
 }
 
 .overlay-markdown :deep(pre) {
-  @apply rounded-lg border border-border/80 bg-background/65 p-0;
+  @apply rounded-lg border border-white/[0.06] bg-[#1f1f1f] p-0;
 }
 
 .overlay-markdown :deep(pre code) {
-  @apply block overflow-x-auto px-3 py-2 text-[12px] font-medium;
+  @apply block overflow-x-auto px-3 py-2 text-[11px];
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.overlay-stream-indicator {
+  @apply mt-1 flex w-fit items-center gap-1 rounded-xl rounded-tl-sm border border-white/[0.06] bg-[#282828] px-3 py-2.5;
+}
+
+.overlay-stream-dot {
+  @apply h-1 w-1 rounded-full bg-[#E43A9C];
+  animation: bounce 1s infinite;
+}
+
 .overlay-scroll-hint {
-  @apply absolute bottom-[9.25rem] left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-card/95 px-2.5 py-1 text-[11px] text-muted-foreground backdrop-blur;
+  @apply absolute bottom-24 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/[0.08] bg-[#252525]/95 px-2.5 py-1 text-[10px] text-zinc-300 backdrop-blur;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .overlay-footer {
-  @apply border-t border-border/80 bg-card/95 p-3;
+  @apply flex-shrink-0 border-t border-white/[0.06] bg-[#1c1c1c] p-2.5;
 }
 
 .overlay-chip {
-  @apply flex items-center gap-1.5 rounded-md border border-border bg-muted/60 px-1.5 py-1 text-[11px] text-foreground;
+  @apply flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-[#2c2c2c] px-1.5 py-1 text-[10px] text-zinc-200;
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.overlay-composer-field {
+  @apply relative flex items-end gap-2 rounded-xl border border-white/[0.08] bg-[#252525] px-3 py-2 transition-colors duration-150;
+}
+
+.overlay-composer-field:focus-within {
+  border-color: rgba(228, 58, 156, 0.3);
+}
+
 .overlay-input {
-  @apply min-h-[42px] max-h-[136px] flex-1 resize-none rounded-lg border border-input bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-150;
-}
-
-.overlay-input:hover {
-  @apply border-border;
-}
-
-.overlay-input:focus {
-  @apply outline-none;
-}
-
-.overlay-input:focus-visible {
-  @apply border-ring ring-2 ring-ring ring-offset-1 ring-offset-card;
-}
-
-.overlay-attach-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-lg border border-input bg-input text-muted-foreground transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-45;
-}
-
-.overlay-attach-btn:hover:not(:disabled) {
-  @apply border-border bg-accent text-foreground;
-}
-
-.overlay-attach-btn:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-card;
+  @apply min-h-[18px] flex-1 resize-none bg-transparent text-xs leading-relaxed text-zinc-200 placeholder:text-zinc-700 focus:outline-none;
+  max-height: 100px;
+  font-family: "Inter", sans-serif;
 }
 
 .overlay-send-btn {
-  @apply flex h-10 w-10 items-center justify-center rounded-lg text-primary-foreground transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45;
-  background: linear-gradient(
-    135deg,
-    hsl(var(--gradient-start)),
-    hsl(var(--gradient-mid)),
-    hsl(var(--gradient-end))
-  );
+  @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-30;
+  background: linear-gradient(135deg, #D83333, #E43A9C);
 }
 
 .overlay-send-btn:hover:not(:disabled) {
@@ -587,6 +572,23 @@ onMounted(async () => {
 }
 
 .overlay-send-btn:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-card;
+  @apply outline-none ring-2 ring-[#E43A9C] ring-offset-2 ring-offset-[#252525];
+}
+
+.overlay-meta {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
 }
 </style>
