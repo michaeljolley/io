@@ -26,8 +26,11 @@ jobs:
       - name: Type check (Vue)
         run: npx vue-tsc --noEmit -p web/tsconfig.json
 
-      - name: Test
-        run: npm test
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Enforce coverage threshold
+        run: npm run coverage:check
 
       - name: Build
         run: npm run build:all
