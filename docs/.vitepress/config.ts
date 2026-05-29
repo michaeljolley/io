@@ -26,6 +26,7 @@ export default defineConfig({
           { text: "Web Dashboard", link: "/guide/web-dashboard" },
           { text: "Skills", link: "/guide/skills" },
           { text: "MCP Servers", link: "/guide/mcp" },
+          { text: "Troubleshooting", link: "/guide/troubleshooting" },
         ],
       },
       {
