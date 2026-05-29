@@ -80,13 +80,6 @@ function scrollToBottom(force = false) {
   }
 }
 
-function formatTimestamp(date: Date): string {
-  return new Date(date).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 async function queueAttachments(files: FileList | null): Promise<void> {
   if (!files || files.length === 0) return;
 

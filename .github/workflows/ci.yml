@@ -23,8 +23,14 @@ jobs:
       - name: Type check (backend)
         run: npx tsc --noEmit
 
+      - name: Lint (Vue)
+        run: npm run lint --prefix web
+
+      - name: Prettier check (Vue)
+        run: npm run format:check --prefix web
+
       - name: Type check (Vue)
-        run: npx vue-tsc --noEmit -p web/tsconfig.json
+        run: npm run typecheck --prefix web
 
       - name: Test with coverage
         run: npm run test:coverage

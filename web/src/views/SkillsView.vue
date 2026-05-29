@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { Puzzle, Plus, Trash2, Pencil, Save, X, Search, Globe } from "lucide-vue-next";
 import MarkdownContent from "@/components/MarkdownContent.vue";
+import { extractSkillFrontmatter } from "@/lib/skill-frontmatter";
 
 interface Skill {
   name: string;
@@ -50,6 +51,9 @@ const skillContent = ref("");
 const editMode = ref(false);
 const editContent = ref("");
 const loadingContent = ref(false);
+
+const installedSkillContent = computed(() => extractSkillFrontmatter(skillContent.value));
+const previewSkillContent = computed(() => extractSkillFrontmatter(previewContent.value));
 
 // ---- Discovery state ----
 type Tab = "installed" | "discover";
@@ -471,7 +475,27 @@ onMounted(fetchSkills);
               v-model="editContent"
               class="w-full h-full min-h-[400px] font-mono text-sm bg-background border border-input rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             ></textarea>
-            <MarkdownContent v-else :content="skillContent" />
+            <div v-else class="space-y-4">
+              <div
+                v-if="Object.keys(installedSkillContent.frontmatter).length > 0"
+                class="rounded-lg border border-border bg-card p-4"
+              >
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Metadata</p>
+                </div>
+                <dl class="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div
+                    v-for="([key, value]) in Object.entries(installedSkillContent.frontmatter)"
+                    :key="key"
+                    class="rounded-md bg-muted px-3 py-2"
+                  >
+                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">{{ key }}</dt>
+                    <dd class="mt-1 text-sm text-foreground">{{ Array.isArray(value) ? value.join(', ') : String(value) }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <MarkdownContent :content="installedSkillContent.body" />
+            </div>
           </div>
         </template>
       </template>
@@ -506,7 +530,27 @@ onMounted(fetchSkills);
 
           <div class="flex-1 overflow-y-auto p-4">
             <div v-if="previewLoading" class="text-muted-foreground text-sm">Loading preview...</div>
-            <MarkdownContent v-else :content="previewContent" />
+            <div v-else class="space-y-4">
+              <div
+                v-if="Object.keys(previewSkillContent.frontmatter).length > 0"
+                class="rounded-lg border border-border bg-card p-4"
+              >
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Metadata</p>
+                </div>
+                <dl class="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div
+                    v-for="([key, value]) in Object.entries(previewSkillContent.frontmatter)"
+                    :key="key"
+                    class="rounded-md bg-muted px-3 py-2"
+                  >
+                    <dt class="text-[10px] uppercase tracking-wide text-muted-foreground">{{ key }}</dt>
+                    <dd class="mt-1 text-sm text-foreground">{{ Array.isArray(value) ? value.join(', ') : String(value) }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <MarkdownContent :content="previewSkillContent.body" />
+            </div>
           </div>
         </template>
       </template>

@@ -123,7 +123,13 @@ export async function loadSkillDirectories(): Promise<string[]> {
 
 export type DiscoverySource = "awesome-copilot" | "skillssh";
 
-export interface DiscoveredSkill {
+export const GITHUB_REPO_PATH = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+
+export function isGitHubRepoPath(value: string): boolean {
+  return GITHUB_REPO_PATH.test(value.trim());
+}
+
+interface DiscoveredSkill {
   slug: string;
   name: string;
   description: string;
@@ -210,14 +216,16 @@ async function fetchSkillsShSkills(query?: string): Promise<DiscoveredSkill[]> {
     });
     if (!res.ok) return [];
     const data = (await res.json()) as SkillsShSearchResponse;
-    return data.skills.map((item) => ({
-      slug: item.skillId || item.name || "",
-      name: item.name || item.skillId || "",
-      description: "",
-      source: "skillssh" as const,
-      sourceRepo: item.source,
-      installs: item.installs,
-    }));
+    return data.skills
+      .map((item) => ({
+        slug: item.skillId || item.name || "",
+        name: item.name || item.skillId || "",
+        description: "",
+        source: "skillssh" as const,
+        sourceRepo: item.source,
+        installs: item.installs,
+      }))
+      .filter((item) => item.sourceRepo ? isGitHubRepoPath(item.sourceRepo) : false);
   } catch {
     return [];
   }
