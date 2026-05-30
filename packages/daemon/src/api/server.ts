@@ -10,6 +10,7 @@ import { attachmentsRouter } from './routes/attachments.js';
 import { healthRouter } from './routes/health.js';
 import { inboxRouter } from './routes/inbox.js';
 import { schedulesRouter } from './routes/schedules.js';
+import { skillsRouter } from './routes/skills.js';
 import { squadsRouter } from './routes/squads.js';
 import { usageRouter } from './routes/usage.js';
 import { wikiRouter } from './routes/wiki.js';
@@ -36,6 +37,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 	app.use('/api', inboxRouter());
 	app.use('/api', schedulesRouter());
 	app.use('/api/wiki', wikiRouter);
+	app.use('/api', skillsRouter);
 
 	// POST /api/messages — send a message to the orchestrator
 	app.post('/api/messages', async (req, res) => {

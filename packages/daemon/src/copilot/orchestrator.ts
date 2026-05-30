@@ -1,6 +1,7 @@
 import { approveAll } from '@github/copilot-sdk';
 import type { IOConfig } from '../config.js';
 import { createChildLogger } from '../logging/logger.js';
+import { getActiveSkillsContent } from '../skills/index.js';
 import { listSquads } from '../squad/manager.js';
 import { getDatabase } from '../store/db.js';
 import { getOrchestratorScopes, getPageListing } from '../wiki/index.js';
@@ -54,9 +55,12 @@ async function buildSystemMessage(): Promise<string> {
 	try {
 		const squads = await listSquads();
 		const wikiListing = getPageListing(getOrchestratorScopes());
+		const skillsContent = await getActiveSkillsContent('orchestrator');
+
+		const wikiSection = `\n## Wiki Knowledge\n${wikiListing}\n\nUse read_wiki to access page content. Use write_wiki to record important knowledge.\n`;
 
 		if (squads.length === 0) {
-			return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n(No squads currently active)\n\n## Wiki Knowledge\n${wikiListing}\n\nUse read_wiki to access page content. Use write_wiki to record important knowledge.\n`;
+			return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n(No squads currently active)${wikiSection}${skillsContent}`;
 		}
 
 		const squadList = squads
@@ -66,7 +70,7 @@ async function buildSystemMessage(): Promise<string> {
 			)
 			.join('\n');
 
-		return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n${squadList}\n\nWhen a user's message mentions any of the above projects (by name, path, or related topic), delegate to the corresponding squad.\n\n## Wiki Knowledge\n${wikiListing}\n\nUse read_wiki to access page content. Use write_wiki to record important knowledge.\n`;
+		return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n${squadList}\n\nWhen a user's message mentions any of the above projects (by name, path, or related topic), delegate to the corresponding squad.${wikiSection}${skillsContent}`;
 	} catch {
 		return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n(Unable to load squad registry)\n`;
 	}

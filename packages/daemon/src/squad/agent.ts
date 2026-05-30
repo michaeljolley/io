@@ -60,7 +60,12 @@ export class Agent {
 	/** Initialize the agent's Copilot session */
 	async init(squadContext?: string): Promise<void> {
 		const client = await getClient();
-		const systemPrompt = compileSystemPrompt(this.skill, squadContext, this.squadName);
+		const systemPrompt = await compileSystemPrompt(
+			this.skill,
+			squadContext,
+			this.squadName,
+			this.squadId,
+		);
 
 		this.session = await client.createSession({
 			model: this.model,

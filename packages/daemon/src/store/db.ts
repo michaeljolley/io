@@ -147,6 +147,20 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
 			'INSERT OR REPLACE INTO schema_version (version) VALUES (3)',
 		],
 	},
+	{
+		version: 4,
+		statements: [
+			`CREATE TABLE IF NOT EXISTS skill_activations (
+				skill_name TEXT NOT NULL,
+				target_type TEXT NOT NULL,
+				target_id TEXT,
+				activated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (skill_name, target_type, target_id)
+			)`,
+			'CREATE INDEX IF NOT EXISTS idx_skill_activations_target ON skill_activations(target_type, target_id)',
+			'INSERT OR REPLACE INTO schema_version (version) VALUES (4)',
+		],
+	},
 ];
 
 export async function initDatabase(dataDir: string): Promise<Client> {

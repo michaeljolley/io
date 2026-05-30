@@ -1,5 +1,13 @@
 import { defineTool } from '@github/copilot-sdk';
 import { z } from 'zod';
+import {
+	activateSkill,
+	deactivateSkill,
+	getActiveSkills,
+	installSkillFromUrl,
+	listInstalledSkills,
+	removeSkill,
+} from '../skills/index.js';
 import { runInstance } from '../squad/execution/runner.js';
 import { hireSquad } from '../squad/hiring.js';
 import {
@@ -492,6 +500,147 @@ export function createOrchestratorTools() {
 				}
 				return {
 					textResultForLlm: JSON.stringify({ results }),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('install_skill', {
+			description:
+				'Install a skill from a URL (raw GitHub URL to a SKILL.md file). Skills extend IO or squad capabilities with additional instructions and behaviors.',
+			parameters: z.object({
+				name: z
+					.string()
+					.describe('Name for the skill (kebab-case, e.g., "tdd-workflow" or "code-review")'),
+				url: z
+					.string()
+					.describe(
+						'URL to the raw SKILL.md content (e.g., raw.githubusercontent.com/.../SKILL.md)',
+					),
+			}),
+			handler: async (args: { name: string; url: string }) => {
+				try {
+					const skill = await installSkillFromUrl(args.name, args.url);
+					return {
+						textResultForLlm: JSON.stringify({
+							installed: true,
+							name: skill.name,
+							preview: skill.content.slice(0, 200),
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to install: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('list_skills', {
+			description: 'List all installed skills and their activation status.',
+			parameters: z.object({}).strict(),
+			handler: async () => {
+				const installed = listInstalledSkills();
+				const orchestratorActivations = await getActiveSkills('orchestrator');
+
+				const summary = installed.map((s) => ({
+					name: s.name,
+					activatedForOrchestrator: orchestratorActivations.some((a) => a.skillName === s.name),
+					preview: s.content.slice(0, 100),
+				}));
+
+				return {
+					textResultForLlm: JSON.stringify({
+						skills: summary.length > 0 ? summary : '(no skills installed)',
+					}),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('activate_skill', {
+			description:
+				'Activate an installed skill for the orchestrator or a specific squad. Active skills are injected into the system prompt.',
+			parameters: z.object({
+				skillName: z.string().describe('Name of the installed skill'),
+				targetType: z
+					.enum(['orchestrator', 'squad'])
+					.describe('Activate for orchestrator or a specific squad'),
+				targetId: z.string().optional().describe('Squad name (required if targetType is "squad")'),
+			}),
+			handler: async (args: {
+				skillName: string;
+				targetType: 'orchestrator' | 'squad';
+				targetId?: string;
+			}) => {
+				try {
+					let resolvedTargetId = args.targetId ?? null;
+					if (args.targetType === 'squad' && args.targetId) {
+						const squad = await getSquadByName(args.targetId);
+						if (!squad) {
+							return {
+								textResultForLlm: JSON.stringify({ error: `Squad '${args.targetId}' not found` }),
+								resultType: 'success' as const,
+							};
+						}
+						resolvedTargetId = squad.id;
+					}
+
+					await activateSkill(args.skillName, args.targetType, resolvedTargetId ?? undefined);
+					return {
+						textResultForLlm: JSON.stringify({
+							activated: true,
+							skillName: args.skillName,
+							target: args.targetType === 'orchestrator' ? 'orchestrator' : args.targetId,
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to activate: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('deactivate_skill', {
+			description: 'Deactivate a skill (stop injecting it into the system prompt).',
+			parameters: z.object({
+				skillName: z.string().describe('Name of the skill to deactivate'),
+				targetType: z
+					.enum(['orchestrator', 'squad'])
+					.describe('Deactivate from orchestrator or a specific squad'),
+				targetId: z.string().optional().describe('Squad name (required if targetType is "squad")'),
+			}),
+			handler: async (args: {
+				skillName: string;
+				targetType: 'orchestrator' | 'squad';
+				targetId?: string;
+			}) => {
+				await deactivateSkill(args.skillName, args.targetType, args.targetId ?? undefined);
+				return {
+					textResultForLlm: JSON.stringify({ deactivated: true, skillName: args.skillName }),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('remove_skill', {
+			description: 'Uninstall a skill completely (removes files and all activations).',
+			parameters: z.object({
+				skillName: z.string().describe('Name of the skill to remove'),
+			}),
+			handler: async (args: { skillName: string }) => {
+				removeSkill(args.skillName);
+				return {
+					textResultForLlm: JSON.stringify({ removed: true, skillName: args.skillName }),
 					resultType: 'success' as const,
 				};
 			},

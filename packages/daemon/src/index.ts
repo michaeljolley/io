@@ -10,6 +10,7 @@ import { destroyOrchestrator, initOrchestrator } from './copilot/orchestrator.js
 import { getLogger, initLogger } from './logging/logger.js';
 import { seedPricing } from './models/index.js';
 import { startScheduler, stopScheduler } from './scheduler/engine.js';
+import { initSkills } from './skills/index.js';
 import { getEventBus } from './squad/event-bus.js';
 import { initActivityLogger } from './store/activity.js';
 import { closeDatabase, initDatabase } from './store/db.js';
@@ -22,6 +23,9 @@ mkdirSync(config.dataDir, { recursive: true });
 
 // Initialize wiki directory structure
 initWiki(config.dataDir);
+
+// Initialize skills directory
+initSkills(config.dataDir);
 
 const logger = initLogger(config);
 logger.info({ config: { ...config, dataDir: config.dataDir } }, 'IO daemon starting');

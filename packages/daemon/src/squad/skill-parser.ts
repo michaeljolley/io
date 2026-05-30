@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import matter from 'gray-matter';
+import { getActiveSkillsContent } from '../skills/index.js';
 import { getPageListing, getSquadScopes } from '../wiki/index.js';
 
 export interface SkillDefinition {
@@ -64,11 +65,12 @@ export function parseSkillContent(content: string, filePath = '<inline>'): Skill
  * Compile a SkillDefinition into a full system message string for the LLM.
  * Injects role identity, boundaries, and tool context.
  */
-export function compileSystemPrompt(
+export async function compileSystemPrompt(
 	skill: SkillDefinition,
 	squadContext?: string,
 	squadName?: string,
-): string {
+	squadId?: string,
+): Promise<string> {
 	const parts: string[] = [];
 
 	parts.push(`You are the ${skill.role} agent in an IO squad.`);
@@ -95,6 +97,14 @@ export function compileSystemPrompt(
 		parts.push(
 			`\n## Wiki Knowledge\n${wikiListing}\n\nUse read_wiki to access page content. Use write_wiki to record important project knowledge.`,
 		);
+	}
+
+	// Inject active skills for this squad
+	if (squadId) {
+		const skillsContent = await getActiveSkillsContent('squad', squadId);
+		if (skillsContent) {
+			parts.push(skillsContent);
+		}
 	}
 
 	return parts.join('\n');

@@ -32,6 +32,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Hiring a Squad', slug: 'guides/hiring-a-squad' },
 							{ label: 'Wiki Knowledge Base', slug: 'guides/wiki' },
+							{ label: 'Skills', slug: 'guides/skills' },
 							{ label: 'Inbox & Notifications', slug: 'guides/inbox' },
 							{ label: 'Schedules', slug: 'guides/schedules' },
 							{ label: 'Configuration', slug: 'guides/configuration' },
