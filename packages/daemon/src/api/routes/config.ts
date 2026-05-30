@@ -32,6 +32,7 @@ export function configRouter(): Router {
 					botToken: config.telegram.botToken ? '••••••••' : null,
 					allowedChatIds: config.telegram.allowedChatIds,
 				},
+				supabase: config.supabase,
 			};
 			res.json({ config: redacted });
 		} catch (err) {
@@ -94,8 +95,9 @@ export function configRouter(): Router {
 						botToken: config.telegram.botToken ? '••••••••' : null,
 						allowedChatIds: config.telegram.allowedChatIds,
 					},
-				},
-			});
+						supabase: config.supabase,
+					},
+				});
 		} catch (err) {
 			res.status(500).json({ error: 'Failed to update config' });
 		}

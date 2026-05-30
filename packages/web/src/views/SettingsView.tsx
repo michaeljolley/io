@@ -11,9 +11,10 @@ interface Config {
 	dataDir: string;
 	pricing: { refreshIntervalHours: number };
 	telegram: { botToken: string | null; allowedChatIds: number[] };
+	supabase: { projectUrl: string | null; anonKey: string | null };
 }
 
-type TabId = "general" | "telegram" | "models" | "advanced";
+type TabId = "general" | "telegram" | "auth" | "models" | "advanced";
 
 export function SettingsView() {
 	const [config, setConfig] = useState<Config | null>(null);
@@ -53,6 +54,7 @@ export function SettingsView() {
 	const TABS: { id: TabId; label: string }[] = [
 		{ id: "general", label: "General" },
 		{ id: "telegram", label: "Telegram" },
+		{ id: "auth", label: "Auth" },
 		{ id: "models", label: "Models" },
 		{ id: "advanced", label: "Advanced" },
 	];
@@ -168,6 +170,37 @@ export function SettingsView() {
 								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] font-mono"
 							/>
 						</Field>
+					</div>
+				)}
+
+				{tab === "auth" && (
+					<div className="space-y-4">
+						<Field label="Supabase Project URL">
+							<input
+								type="text"
+								value={config.supabase.projectUrl ?? ""}
+								onChange={(e) =>
+									update({ supabase: { ...config.supabase, projectUrl: e.target.value || null } })
+								}
+								placeholder="https://your-project.supabase.co"
+								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] font-mono"
+							/>
+						</Field>
+						<Field label="Supabase Anon Key">
+							<input
+								type="password"
+								value={config.supabase.anonKey ?? ""}
+								onChange={(e) =>
+									update({ supabase: { ...config.supabase, anonKey: e.target.value || null } })
+								}
+								placeholder="eyJhbGciOiJIUzI1NiIs..."
+								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] font-mono"
+							/>
+						</Field>
+						<p className="text-xs text-[var(--color-muted-foreground)]">
+							When configured, the web dashboard requires Supabase authentication to access.
+							Find these values in your Supabase project settings → API.
+						</p>
 					</div>
 				)}
 

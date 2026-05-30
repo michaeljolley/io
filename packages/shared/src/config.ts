@@ -16,6 +16,10 @@ export interface IOConfig {
 		botToken: string | null;
 		allowedChatIds: number[];
 	};
+	supabase: {
+		projectUrl: string | null;
+		anonKey: string | null;
+	};
 }
 
 function resolveDataDir(dir: string): string {
@@ -57,6 +61,10 @@ export function loadConfig(): IOConfig {
 			allowedChatIds: process.env.TELEGRAM_ALLOWED_CHAT_IDS
 				? process.env.TELEGRAM_ALLOWED_CHAT_IDS.split(',').map((id) => Number.parseInt(id.trim(), 10))
 				: fileConfig.telegram?.allowedChatIds || [],
+		},
+		supabase: {
+			projectUrl: process.env.IO_SUPABASE_URL || fileConfig.supabase?.projectUrl || null,
+			anonKey: process.env.IO_SUPABASE_ANON_KEY || fileConfig.supabase?.anonKey || null,
 		},
 	};
 }
