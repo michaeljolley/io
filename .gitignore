@@ -1,12 +1,27 @@
 node_modules/
 dist/
-web-dist/
 *.swp
 *.swo
 .env
 
 # Docs
-docs/node_modules
-docs/.vitepress/dist
-docs/.vitepress/cache
-web/tsconfig.tsbuildinfo
+docs/node_modules/
+docs/dist/
+docs/.astro/
+
+# SQLite
+*.db
+*.db-journal
+*.db-wal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Coverage
+coverage/
