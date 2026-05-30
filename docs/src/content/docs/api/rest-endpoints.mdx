@@ -174,3 +174,132 @@ Upload a file (multipart form data).
 #### `GET /api/attachments/:id`
 
 Download an attachment by ID. Returns the file with appropriate Content-Type headers.
+
+---
+
+### Inbox
+
+#### `GET /api/inbox`
+
+List inbox entries.
+
+**Query Parameters:**
+- `status` — Filter by status (`unread`, `read`)
+- `kind` — Filter by kind (`deliverable`, `question`)
+- `squadId` — Filter by squad ID
+
+**Response:**
+```json
+{
+  "entries": [
+    {
+      "id": "uuid",
+      "kind": "question",
+      "squadId": "squad-123",
+      "title": "Database choice needed",
+      "body": "Should we use PostgreSQL or MySQL for the user service?",
+      "status": "unread",
+      "createdAt": "2025-01-15T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+#### `PATCH /api/inbox/:id`
+
+Update an inbox entry (e.g., mark as read).
+
+**Request:**
+```json
+{
+  "status": "read"
+}
+```
+
+#### `POST /api/inbox/:id/respond`
+
+Respond to a blocking question. Unblocks the waiting squad agent.
+
+**Request:**
+```json
+{
+  "response": "Use PostgreSQL"
+}
+```
+
+**Response:**
+```json
+{
+  "resolved": true,
+  "squadUnblocked": true
+}
+```
+
+---
+
+### Schedules
+
+#### `GET /api/schedules`
+
+List all configured schedules.
+
+**Response:**
+```json
+{
+  "schedules": [
+    {
+      "id": "uuid",
+      "name": "Daily Standup",
+      "targetType": "squad",
+      "targetId": "squad-123",
+      "cron": "0 9 * * 1-5",
+      "prompt": "Review open issues and report progress.",
+      "enabled": true,
+      "nextRun": "2025-01-16T09:00:00.000Z",
+      "lastRun": "2025-01-15T09:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### `POST /api/schedules`
+
+Create a new schedule.
+
+**Request:**
+```json
+{
+  "name": "Daily Standup",
+  "targetType": "squad",
+  "targetId": "squad-uuid",
+  "cron": "0 9 * * 1-5",
+  "prompt": "Review open issues and report progress."
+}
+```
+
+**Response (201):**
+```json
+{
+  "id": "uuid",
+  "name": "Daily Standup",
+  "cron": "0 9 * * 1-5",
+  "nextRun": "2025-01-16T09:00:00.000Z"
+}
+```
+
+#### `PATCH /api/schedules/:id`
+
+Update a schedule. Updatable fields: `name`, `cron`, `prompt`, `enabled`.
+
+**Request:**
+```json
+{
+  "enabled": false
+}
+```
+
+#### `DELETE /api/schedules/:id`
+
+Delete a schedule.
+
+**Response (204):** No content.

@@ -31,9 +31,11 @@ export default defineConfig({
 					label: 'Guides',
 					items: [
 						{ label: 'Hiring a Squad', slug: 'guides/hiring-a-squad' },
-						{ label: 'Configuration', slug: 'guides/configuration' },
-						{ label: 'Telegram Setup', slug: 'guides/telegram-setup' },
-					],
+							{ label: 'Inbox & Notifications', slug: 'guides/inbox' },
+							{ label: 'Schedules', slug: 'guides/schedules' },
+							{ label: 'Configuration', slug: 'guides/configuration' },
+							{ label: 'Telegram Setup', slug: 'guides/telegram-setup' },
+						],
 				},
 				{
 					label: 'API Reference',
