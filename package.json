@@ -5,7 +5,7 @@
 	"type": "module",
 	"workspaces": ["packages/shared", "packages/daemon", "packages/tui", "packages/telegram", "packages/web"],
 	"scripts": {
-		"build": "npm run build --workspaces",
+		"build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/daemon --workspace=packages/tui --workspace=packages/telegram --workspace=packages/web",
 		"build:docs": "cd docs && npm run build",
 		"dev": "npm run dev --workspace=packages/daemon",
 		"dev:tui": "npm run dev --workspace=packages/tui",
