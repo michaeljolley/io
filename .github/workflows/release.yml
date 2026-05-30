@@ -47,6 +47,6 @@ jobs:
 
       - name: Publish daemon to npm
         working-directory: packages/daemon
-        run: npm publish --access public
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

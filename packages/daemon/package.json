@@ -1,7 +1,6 @@
 {
-	"name": "@io/daemon",
+	"name": "heyio",
 	"version": "3.0.0",
-	"private": true,
 	"type": "module",
 	"main": "./dist/index.js",
 	"bin": {
