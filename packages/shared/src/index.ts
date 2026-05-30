@@ -14,6 +14,12 @@ export type {
 	SquadEventType,
 	AgentEvent,
 	AgentEventType,
+	InstanceEvent,
+	InstanceEventType,
+	MeetingEvent,
+	MeetingEventType,
+	IOEvent,
+	BaseEvent,
 } from './types/events.js';
 export type {
 	ApiMessage,

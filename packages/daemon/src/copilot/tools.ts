@@ -1,5 +1,13 @@
 import { defineTool } from '@github/copilot-sdk';
 import { z } from 'zod';
+import { hireSquad } from '../squad/hiring.js';
+import {
+	bootSquad,
+	delegateToSquad,
+	getSquadByName,
+	getSquadMembers,
+	listSquads,
+} from '../squad/manager.js';
 
 export function createOrchestratorTools() {
 	return [
@@ -8,9 +16,30 @@ export function createOrchestratorTools() {
 				'List all active squads and their current status. Use this when the user asks about their teams or projects.',
 			parameters: z.object({}).strict(),
 			handler: async () => {
-				// TODO: Query actual squads from database
+				const squads = await listSquads();
+				if (squads.length === 0) {
+					return {
+						textResultForLlm: JSON.stringify({
+							squads: [],
+							message: 'No squads currently active.',
+						}),
+						resultType: 'success' as const,
+					};
+				}
+				const summary = await Promise.all(
+					squads.map(async (s) => {
+						const members = await getSquadMembers(s.id);
+						return {
+							name: s.name,
+							project: s.projectPath,
+							autonomy: s.autonomyTier,
+							members: members.map((m) => m.roleName),
+							status: s.status,
+						};
+					}),
+				);
 				return {
-					textResultForLlm: JSON.stringify({ squads: [], message: 'No squads currently active.' }),
+					textResultForLlm: JSON.stringify({ squads: summary }),
 					resultType: 'success' as const,
 				};
 			},
@@ -23,9 +52,30 @@ export function createOrchestratorTools() {
 				squadName: z.string().describe('The name of the squad to check'),
 			}),
 			handler: async (args: { squadName: string }) => {
-				// TODO: Look up squad by name and return status
+				const squad = await getSquadByName(args.squadName);
+				if (!squad) {
+					return {
+						textResultForLlm: JSON.stringify({ error: `Squad '${args.squadName}' not found.` }),
+						resultType: 'success' as const,
+					};
+				}
+				const members = await getSquadMembers(squad.id);
 				return {
-					textResultForLlm: JSON.stringify({ error: `Squad '${args.squadName}' not found.` }),
+					textResultForLlm: JSON.stringify({
+						squad: {
+							name: squad.name,
+							project: squad.projectPath,
+							repo: squad.repoUrl,
+							autonomy: squad.autonomyTier,
+							status: squad.status,
+							createdAt: squad.createdAt.toISOString(),
+						},
+						members: members.map((m) => ({
+							role: m.roleName,
+							veto: m.isVetoMember,
+							tools: m.toolsAllowed,
+						})),
+					}),
 					resultType: 'success' as const,
 				};
 			},
@@ -40,13 +90,29 @@ export function createOrchestratorTools() {
 				name: z.string().optional().describe('Name for the squad (auto-generated if omitted)'),
 			}),
 			handler: async (args: { projectPath: string; repoUrl?: string; name?: string }) => {
-				// TODO: Analyze project, recommend team, create squad
-				return {
-					textResultForLlm: JSON.stringify({
-						message: `Squad creation for '${args.projectPath}' is not yet implemented.`,
-					}),
-					resultType: 'success' as const,
-				};
+				try {
+					const result = await hireSquad({
+						projectPath: args.projectPath,
+						repoUrl: args.repoUrl,
+						name: args.name,
+					});
+					return {
+						textResultForLlm: JSON.stringify({
+							message: `Squad '${args.name ?? result.analysis.name}' hired successfully!`,
+							squadId: result.squadId,
+							analysis: result.analysis,
+							members: result.members,
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to hire squad: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
 			},
 		}),
 
@@ -58,13 +124,39 @@ export function createOrchestratorTools() {
 				message: z.string().describe('The full message or task to delegate'),
 			}),
 			handler: async (args: { squadName: string; message: string }) => {
-				// TODO: Route message to squad's team lead
-				return {
-					textResultForLlm: JSON.stringify({
-						message: `Delegation to squad '${args.squadName}' is not yet implemented.`,
-					}),
-					resultType: 'success' as const,
-				};
+				const squad = await getSquadByName(args.squadName);
+				if (!squad) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Squad '${args.squadName}' not found.`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+
+				try {
+					// Boot squad if not already running
+					const { getSquadRuntime } = await import('../squad/manager.js');
+					if (!getSquadRuntime(squad.id)) {
+						await bootSquad(squad);
+					}
+
+					const response = await delegateToSquad(squad.id, args.message);
+					return {
+						textResultForLlm: JSON.stringify({
+							delegatedTo: args.squadName,
+							teamLeadResponse: response,
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to delegate: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
 			},
 		}),
 	];
