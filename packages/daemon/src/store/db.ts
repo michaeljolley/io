@@ -107,6 +107,26 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
 			'INSERT INTO schema_version (version) VALUES (1)',
 		],
 	},
+	{
+		version: 2,
+		statements: [
+			`CREATE TABLE IF NOT EXISTS inbox_entries (
+				id TEXT PRIMARY KEY,
+				squad_id TEXT NOT NULL REFERENCES squads(id),
+				instance_id TEXT REFERENCES squad_instances(id),
+				kind TEXT NOT NULL,
+				title TEXT NOT NULL,
+				content TEXT NOT NULL,
+				status TEXT DEFAULT 'unread',
+				response TEXT,
+				created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+				resolved_at DATETIME
+			)`,
+			'CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_entries(status)',
+			'CREATE INDEX IF NOT EXISTS idx_inbox_squad ON inbox_entries(squad_id)',
+			'INSERT OR REPLACE INTO schema_version (version) VALUES (2)',
+		],
+	},
 ];
 
 export async function initDatabase(dataDir: string): Promise<Client> {

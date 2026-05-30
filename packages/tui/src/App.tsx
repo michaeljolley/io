@@ -12,7 +12,7 @@ interface AppProps {
 export function App({ port }: AppProps) {
 	const app = useApp();
 	const { height } = useScreenSize();
-	const { messages, send, connected, error } = useDaemon(port);
+	const { messages, send, connected, error, unreadInbox } = useDaemon(port);
 
 	useInput((input, key) => {
 		if (input === 'q' && key.ctrl) {
@@ -38,7 +38,7 @@ export function App({ port }: AppProps) {
 					<ChatPanel messages={messages} height={chatHeight} />
 					<InputBox onSubmit={send} disabled={!connected} />
 				</Box>
-				<StatusBar connected={connected} error={error} />
+				<StatusBar connected={connected} error={error} unreadInbox={unreadInbox} />
 			</Box>
 
 			{/* Footer */}

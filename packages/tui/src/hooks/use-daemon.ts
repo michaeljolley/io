@@ -13,14 +13,35 @@ interface UseDaemonResult {
 	send: (content: string) => void;
 	connected: boolean;
 	error: string | null;
+	unreadInbox: number;
 }
 
 export function useDaemon(port: number): UseDaemonResult {
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [connected, setConnected] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [unreadInbox, setUnreadInbox] = useState(0);
 	const clientRef = useRef<DaemonClient | null>(null);
 	const streamingIdRef = useRef<string | null>(null);
+
+	// Poll unread inbox count
+	useEffect(() => {
+		if (!connected) return;
+
+		const fetchCount = () => {
+			fetch(`http://127.0.0.1:${port}/api/inbox/unread-count`)
+				.then((res) => res.json())
+				.then((data: unknown) => {
+					const d = data as { count?: number };
+					if (typeof d.count === 'number') setUnreadInbox(d.count);
+				})
+				.catch(() => {});
+		};
+
+		fetchCount();
+		const interval = setInterval(fetchCount, 10_000);
+		return () => clearInterval(interval);
+	}, [connected, port]);
 
 	useEffect(() => {
 		const client = createDaemonClient(port);
@@ -90,5 +111,5 @@ export function useDaemon(port: number): UseDaemonResult {
 		clientRef.current.send(content);
 	}, []);
 
-	return { messages, send, connected, error };
+	return { messages, send, connected, error, unreadInbox };
 }

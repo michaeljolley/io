@@ -10,6 +10,7 @@ import {
 	getSquadRuntime,
 	listSquads,
 } from '../squad/manager.js';
+import { listInboxEntries, resolveInboxEntry } from '../store/inbox.js';
 
 export function createOrchestratorTools() {
 	return [
@@ -198,6 +199,76 @@ export function createOrchestratorTools() {
 					return {
 						textResultForLlm: JSON.stringify({
 							error: `Failed to run instance: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('list_inbox', {
+			description:
+				"List unread inbox entries from squads. Shows deliverables and pending questions that need the user's attention.",
+			parameters: z.object({
+				status: z
+					.enum(['unread', 'read', 'resolved'])
+					.optional()
+					.describe('Filter by status (default: unread)'),
+			}),
+			handler: async (args: { status?: 'unread' | 'read' | 'resolved' }) => {
+				const entries = await listInboxEntries({
+					status: args.status ?? 'unread',
+					limit: 20,
+				});
+
+				if (entries.length === 0) {
+					return {
+						textResultForLlm: JSON.stringify({ entries: [], message: 'No inbox entries.' }),
+						resultType: 'success' as const,
+					};
+				}
+
+				const summary = entries.map((e) => ({
+					id: e.id,
+					squad: e.squadId,
+					kind: e.kind,
+					title: e.title,
+					content: e.content.slice(0, 500),
+					status: e.status,
+					createdAt: e.createdAt,
+				}));
+
+				return {
+					textResultForLlm: JSON.stringify({ entries: summary }),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('respond_to_inbox', {
+			description:
+				"Respond to an inbox question from a squad. Use this when the user provides an answer to a squad's pending question. This unblocks the squad so it can continue working.",
+			parameters: z.object({
+				entryId: z.string().describe('The inbox entry ID to respond to'),
+				response: z.string().describe("The user's response to the squad's question"),
+			}),
+			handler: async (args: { entryId: string; response: string }) => {
+				try {
+					const unblocked = await resolveInboxEntry(args.entryId, args.response);
+					return {
+						textResultForLlm: JSON.stringify({
+							resolved: true,
+							squadUnblocked: unblocked,
+							message: unblocked
+								? 'Response delivered — squad has been unblocked and will continue working.'
+								: 'Response recorded (squad was not actively waiting).',
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to respond: ${err instanceof Error ? err.message : String(err)}`,
 						}),
 						resultType: 'success' as const,
 					};

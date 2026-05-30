@@ -25,6 +25,8 @@ export type MeetingEventType =
 	| 'meeting:consensus_reached'
 	| 'meeting:veto';
 
+export type InboxEventType = 'inbox:new' | 'inbox:resolved';
+
 export interface BaseEvent {
 	id: string;
 	timestamp: Date;
@@ -56,4 +58,11 @@ export interface MeetingEvent extends BaseEvent {
 	content: string;
 }
 
-export type IOEvent = SquadEvent | AgentEvent | InstanceEvent | MeetingEvent;
+export interface InboxEvent extends BaseEvent {
+	type: InboxEventType;
+	kind: 'deliverable' | 'question';
+	title: string;
+	entryId: string;
+}
+
+export type IOEvent = SquadEvent | AgentEvent | InstanceEvent | MeetingEvent | InboxEvent;

@@ -8,6 +8,7 @@ import { initNotifications, subscribeClient, unsubscribeClient } from './notific
 import { activityRouter } from './routes/activity.js';
 import { attachmentsRouter } from './routes/attachments.js';
 import { healthRouter } from './routes/health.js';
+import { inboxRouter } from './routes/inbox.js';
 import { squadsRouter } from './routes/squads.js';
 import { usageRouter } from './routes/usage.js';
 
@@ -30,6 +31,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 	app.use('/api', squadsRouter());
 	app.use('/api', activityRouter());
 	app.use('/api', attachmentsRouter(config.dataDir));
+	app.use('/api', inboxRouter());
 
 	// POST /api/messages — send a message to the orchestrator
 	app.post('/api/messages', async (req, res) => {

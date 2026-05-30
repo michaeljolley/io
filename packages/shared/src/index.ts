@@ -19,6 +19,8 @@ export type {
 	InstanceEventType,
 	MeetingEvent,
 	MeetingEventType,
+	InboxEvent,
+	InboxEventType,
 	IOEvent,
 	BaseEvent,
 } from './types/events.js';

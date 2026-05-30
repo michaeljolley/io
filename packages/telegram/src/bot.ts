@@ -45,7 +45,7 @@ export function createTelegramBot(config: BotConfig, client: DaemonClient) {
 	bot.command('start', async (ctx) => {
 		if (!isAllowed(ctx)) return;
 		await ctx.reply(
-			"🤖 *IO Orchestrator*\n\nI'm your AI assistant. Send me a message and I'll respond.\n\nCommands:\n/status — Check daemon health\n/squads — List active squads",
+			"🤖 *IO Orchestrator*\n\nI'm your AI assistant. Send me a message and I'll respond.\n\nCommands:\n/status — Check daemon health\n/squads — List active squads\n/inbox — View unread inbox items",
 			{ parse_mode: 'Markdown' },
 		);
 	});
@@ -105,6 +105,45 @@ export function createTelegramBot(config: BotConfig, client: DaemonClient) {
 					`• *${s.name}* — ${s.projectPath}\n  ${s.memberCount} members, ${s.instanceCount} instances`,
 			);
 			await ctx.reply(`📋 *Active Squads*\n\n${lines.join('\n\n')}`, {
+				parse_mode: 'Markdown',
+			});
+		} catch {
+			await ctx.reply('❌ Cannot reach IO daemon API');
+		}
+	});
+
+	// /inbox command
+	bot.command('inbox', async (ctx) => {
+		if (!isAllowed(ctx)) return;
+
+		try {
+			const port = process.env.IO_API_PORT ?? '7777';
+			const res = await fetch(`http://127.0.0.1:${port}/api/inbox?status=unread`);
+			if (!res.ok) {
+				await ctx.reply('⚠️ Failed to fetch inbox');
+				return;
+			}
+
+			const data = (await res.json()) as {
+				entries: Array<{
+					id: string;
+					kind: string;
+					title: string;
+					content: string;
+					createdAt: string;
+				}>;
+			};
+
+			if (data.entries.length === 0) {
+				await ctx.reply('📭 Inbox is empty — no unread items');
+				return;
+			}
+
+			const lines = data.entries.map((e) => {
+				const icon = e.kind === 'question' ? '❓' : '📋';
+				return `${icon} *${e.title}*\n${e.content.slice(0, 200)}${e.content.length > 200 ? '...' : ''}`;
+			});
+			await ctx.reply(`📬 *Inbox* (${data.entries.length} unread)\n\n${lines.join('\n\n')}`, {
 				parse_mode: 'Markdown',
 			});
 		} catch {
