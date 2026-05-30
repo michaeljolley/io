@@ -1,15 +1,15 @@
-import { Navigate, Route, Routes } from "react-router";
-import { Layout } from "./components/Layout";
-import { AuthProvider, useAuth } from "./lib/auth";
-import { ChatView } from "./views/ChatView";
-import { FeedView } from "./views/FeedView";
-import { LoginView } from "./views/LoginView";
-import { SchedulesView } from "./views/SchedulesView";
-import { SettingsView } from "./views/SettingsView";
-import { SkillsView } from "./views/SkillsView";
-import { SquadsView } from "./views/SquadsView";
-import { UsageView } from "./views/UsageView";
-import { WikiView } from "./views/WikiView";
+import { Navigate, Route, Routes } from 'react-router';
+import { Layout } from './components/Layout';
+import { AuthProvider, useAuth } from './lib/auth';
+import { ChatView } from './views/ChatView';
+import { FeedView } from './views/FeedView';
+import { LoginView } from './views/LoginView';
+import { SchedulesView } from './views/SchedulesView';
+import { SettingsView } from './views/SettingsView';
+import { SkillsView } from './views/SkillsView';
+import { SquadsView } from './views/SquadsView';
+import { UsageView } from './views/UsageView';
+import { WikiView } from './views/WikiView';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
 	const { session, supabase, loading } = useAuth();

@@ -155,7 +155,9 @@ export function createOrchestratorTools() {
 				"Change a squad's pop-culture universe. Generates new character names and personas for all members from the specified universe.",
 			parameters: z.object({
 				squadName: z.string().describe('Name of the squad to retheme'),
-				universe: z.string().describe('New pop-culture universe (e.g. "The Office", "Star Wars", "Breaking Bad")'),
+				universe: z
+					.string()
+					.describe('New pop-culture universe (e.g. "The Office", "Star Wars", "Breaking Bad")'),
 			}),
 			handler: async (args: { squadName: string; universe: string }) => {
 				try {

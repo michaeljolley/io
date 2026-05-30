@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Save } from "lucide-react";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { api } from '@/lib/api';
+import { Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Config {
 	apiPort: number;
@@ -14,15 +14,18 @@ interface Config {
 	supabase: { projectUrl: string | null; anonKey: string | null; jwtSecret: string | null };
 }
 
-type TabId = "general" | "telegram" | "auth" | "models" | "advanced";
+type TabId = 'general' | 'telegram' | 'auth' | 'models' | 'advanced';
 
 export function SettingsView() {
 	const [config, setConfig] = useState<Config | null>(null);
-	const [tab, setTab] = useState<TabId>("general");
+	const [tab, setTab] = useState<TabId>('general');
 	const [dirty, setDirty] = useState(false);
 
 	useEffect(() => {
-		api.get<{ config: Config }>("/config").then((d) => setConfig(d.config)).catch(() => {});
+		api
+			.get<{ config: Config }>('/config')
+			.then((d) => setConfig(d.config))
+			.catch(() => {});
 	}, []);
 
 	function update(patch: Partial<Config>) {
@@ -35,11 +38,11 @@ export function SettingsView() {
 		if (!config) return;
 		try {
 			const { dataDir: _, ...rest } = config;
-			await api.patch("/config", rest);
-			toast.success("Settings saved");
+			await api.patch('/config', rest);
+			toast.success('Settings saved');
 			setDirty(false);
 		} catch {
-			toast.error("Failed to save settings");
+			toast.error('Failed to save settings');
 		}
 	}
 
@@ -52,11 +55,11 @@ export function SettingsView() {
 	}
 
 	const TABS: { id: TabId; label: string }[] = [
-		{ id: "general", label: "General" },
-		{ id: "telegram", label: "Telegram" },
-		{ id: "auth", label: "Auth" },
-		{ id: "models", label: "Models" },
-		{ id: "advanced", label: "Advanced" },
+		{ id: 'general', label: 'General' },
+		{ id: 'telegram', label: 'Telegram' },
+		{ id: 'auth', label: 'Auth' },
+		{ id: 'models', label: 'Models' },
+		{ id: 'advanced', label: 'Advanced' },
 	];
 
 	return (
@@ -87,7 +90,9 @@ export function SettingsView() {
 						type="button"
 						onClick={() => setTab(t.id)}
 						className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-							tab === t.id ? "bg-white/10 text-[var(--color-foreground)]" : "text-[var(--color-muted-foreground)]"
+							tab === t.id
+								? 'bg-white/10 text-[var(--color-foreground)]'
+								: 'text-[var(--color-muted-foreground)]'
 						}`}
 					>
 						{t.label}
@@ -97,7 +102,7 @@ export function SettingsView() {
 
 			{/* Content */}
 			<div className="glass-card p-6 max-w-2xl">
-				{tab === "general" && (
+				{tab === 'general' && (
 					<div className="space-y-4">
 						<Field label="Log Level">
 							<select
@@ -105,8 +110,10 @@ export function SettingsView() {
 								onChange={(e) => update({ logLevel: e.target.value })}
 								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none"
 							>
-								{["trace", "debug", "info", "warn", "error", "fatal"].map((l) => (
-									<option key={l} value={l}>{l}</option>
+								{['trace', 'debug', 'info', 'warn', 'error', 'fatal'].map((l) => (
+									<option key={l} value={l}>
+										{l}
+									</option>
 								))}
 							</select>
 						</Field>
@@ -139,12 +146,12 @@ export function SettingsView() {
 					</div>
 				)}
 
-				{tab === "telegram" && (
+				{tab === 'telegram' && (
 					<div className="space-y-4">
 						<Field label="Bot Token">
 							<input
 								type="password"
-								value={config.telegram.botToken ?? ""}
+								value={config.telegram.botToken ?? ''}
 								onChange={(e) =>
 									update({ telegram: { ...config.telegram, botToken: e.target.value || null } })
 								}
@@ -155,13 +162,13 @@ export function SettingsView() {
 						<Field label="Allowed Chat IDs (comma-separated)">
 							<input
 								type="text"
-								value={config.telegram.allowedChatIds.join(", ")}
+								value={config.telegram.allowedChatIds.join(', ')}
 								onChange={(e) =>
 									update({
 										telegram: {
 											...config.telegram,
 											allowedChatIds: e.target.value
-												.split(",")
+												.split(',')
 												.map((s) => Number(s.trim()))
 												.filter((n) => !Number.isNaN(n)),
 										},
@@ -173,12 +180,12 @@ export function SettingsView() {
 					</div>
 				)}
 
-				{tab === "auth" && (
+				{tab === 'auth' && (
 					<div className="space-y-4">
 						<Field label="Supabase Project URL">
 							<input
 								type="text"
-								value={config.supabase.projectUrl ?? ""}
+								value={config.supabase.projectUrl ?? ''}
 								onChange={(e) =>
 									update({ supabase: { ...config.supabase, projectUrl: e.target.value || null } })
 								}
@@ -189,7 +196,7 @@ export function SettingsView() {
 						<Field label="Supabase Anon Key">
 							<input
 								type="password"
-								value={config.supabase.anonKey ?? ""}
+								value={config.supabase.anonKey ?? ''}
 								onChange={(e) =>
 									update({ supabase: { ...config.supabase, anonKey: e.target.value || null } })
 								}
@@ -200,7 +207,7 @@ export function SettingsView() {
 						<Field label="JWT Secret">
 							<input
 								type="password"
-								value={config.supabase.jwtSecret ?? ""}
+								value={config.supabase.jwtSecret ?? ''}
 								onChange={(e) =>
 									update({ supabase: { ...config.supabase, jwtSecret: e.target.value || null } })
 								}
@@ -209,14 +216,14 @@ export function SettingsView() {
 							/>
 						</Field>
 						<p className="text-xs text-[var(--color-muted-foreground)]">
-							When configured, the web dashboard requires Supabase authentication to access.
-							The JWT Secret is used to verify tokens server-side — find it in Supabase project
-							settings → API → JWT Settings.
+							When configured, the web dashboard requires Supabase authentication to access. The JWT
+							Secret is used to verify tokens server-side — find it in Supabase project settings →
+							API → JWT Settings.
 						</p>
 					</div>
 				)}
 
-				{tab === "models" && (
+				{tab === 'models' && (
 					<div className="space-y-4">
 						<Field label="Pricing Refresh Interval (hours)">
 							<input
@@ -235,7 +242,7 @@ export function SettingsView() {
 					</div>
 				)}
 
-				{tab === "advanced" && (
+				{tab === 'advanced' && (
 					<div className="space-y-4">
 						<Field label="Data Directory">
 							<input

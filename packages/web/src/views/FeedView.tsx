@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Inbox } from "lucide-react";
-import { marked } from "marked";
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
+import { Inbox } from 'lucide-react';
+import { marked } from 'marked';
+import { useEffect, useState } from 'react';
 
 interface FeedItem {
 	id: string;
@@ -19,15 +19,21 @@ export function FeedView() {
 	const [selected, setSelected] = useState<FeedItem | null>(null);
 
 	useEffect(() => {
-		api.get<{ entries: FeedItem[] }>("/inbox").then((d) => setItems(d.entries)).catch(() => {});
+		api
+			.get<{ entries: FeedItem[] }>('/inbox')
+			.then((d) => setItems(d.entries))
+			.catch(() => {});
 	}, []);
 
 	function handleSelect(item: FeedItem) {
 		setSelected(item);
-		if (item.status === "unread") {
-			api.post(`/inbox/${item.id}/read`).then(() => {
-				setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: "read" } : i)));
-			}).catch(() => {});
+		if (item.status === 'unread') {
+			api
+				.post(`/inbox/${item.id}/read`)
+				.then(() => {
+					setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: 'read' } : i)));
+				})
+				.catch(() => {});
 		}
 	}
 
@@ -45,11 +51,11 @@ export function FeedView() {
 							onClick={() => handleSelect(item)}
 							type="button"
 							className={`w-full text-left px-4 py-3 border-b border-[var(--color-border)] hover:bg-white/3 transition-colors ${
-								selected?.id === item.id ? "bg-white/5" : ""
+								selected?.id === item.id ? 'bg-white/5' : ''
 							}`}
 						>
 							<div className="flex items-center gap-2">
-								{item.status === "unread" && (
+								{item.status === 'unread' && (
 									<span className="w-2 h-2 rounded-full bg-[var(--color-accent)] shrink-0" />
 								)}
 								<span className="text-xs text-[var(--color-muted-foreground)] uppercase">

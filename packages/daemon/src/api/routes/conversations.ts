@@ -11,10 +11,7 @@ export function conversationsRouter(): Router {
 	 */
 	router.get('/conversations', async (req, res) => {
 		try {
-			const limit = Math.min(
-				Number.parseInt(req.query.limit as string, 10) || 50,
-				200,
-			);
+			const limit = Math.min(Number.parseInt(req.query.limit as string, 10) || 50, 200);
 			const before = req.query.before as string | undefined;
 
 			const db = getDatabase();

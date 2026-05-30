@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from '@/lib/auth';
+import { useState } from 'react';
 
 export function LoginView() {
 	const { signIn } = useAuth();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
@@ -64,16 +64,14 @@ export function LoginView() {
 						/>
 					</div>
 
-					{error && (
-						<p className="text-sm text-[var(--color-destructive)]">{error}</p>
-					)}
+					{error && <p className="text-sm text-[var(--color-destructive)]">{error}</p>}
 
 					<button
 						type="submit"
 						disabled={loading}
 						className="w-full py-2.5 rounded-md bg-[var(--color-accent)] text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
 					>
-						{loading ? "Signing in..." : "Sign In"}
+						{loading ? 'Signing in...' : 'Sign In'}
 					</button>
 				</form>
 			</div>

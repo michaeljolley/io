@@ -1,5 +1,5 @@
-import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -7,8 +7,8 @@ import { type WebSocket, WebSocketServer } from 'ws';
 import type { IOConfig } from '../config.js';
 import { sendMessage } from '../copilot/orchestrator.js';
 import { createChildLogger } from '../logging/logger.js';
-import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
 import { authMiddleware, verifyWsToken } from './middleware/auth.js';
+import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
 import { activityRouter } from './routes/activity.js';
 import { attachmentsRouter } from './routes/attachments.js';
 import { configRouter } from './routes/config.js';

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { BookOpen, FileText, Save, Plus } from "lucide-react";
-import { marked } from "marked";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { api } from '@/lib/api';
+import { BookOpen, FileText, Plus, Save } from 'lucide-react';
+import { marked } from 'marked';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface WikiPage {
 	name: string;
@@ -10,14 +10,14 @@ interface WikiPage {
 }
 
 export function WikiView() {
-	const [scope, setScope] = useState("shared");
+	const [scope, setScope] = useState('shared');
 	const [pages, setPages] = useState<WikiPage[]>([]);
 	const [selectedPage, setSelectedPage] = useState<string | null>(null);
-	const [content, setContent] = useState("");
+	const [content, setContent] = useState('');
 	const [editing, setEditing] = useState(false);
-	const [editContent, setEditContent] = useState("");
+	const [editContent, setEditContent] = useState('');
 	const [creating, setCreating] = useState(false);
-	const [newPageName, setNewPageName] = useState("");
+	const [newPageName, setNewPageName] = useState('');
 
 	useEffect(() => {
 		loadPages();
@@ -37,7 +37,7 @@ export function WikiView() {
 			setSelectedPage(name);
 			setEditing(false);
 		} catch {
-			toast.error("Failed to load page");
+			toast.error('Failed to load page');
 		}
 	}
 
@@ -47,9 +47,9 @@ export function WikiView() {
 			await api.put(`/wiki/${scope}/${selectedPage}`, { content: editContent });
 			setContent(editContent);
 			setEditing(false);
-			toast.success("Page saved");
+			toast.success('Page saved');
 		} catch {
-			toast.error("Failed to save");
+			toast.error('Failed to save');
 		}
 	}
 
@@ -57,13 +57,13 @@ export function WikiView() {
 		if (!newPageName.trim()) return;
 		try {
 			await api.put(`/wiki/${scope}/${newPageName}`, { content: `# ${newPageName}\n\n` });
-			toast.success("Page created");
+			toast.success('Page created');
 			setCreating(false);
-			setNewPageName("");
+			setNewPageName('');
 			loadPages();
 			loadPage(newPageName);
 		} catch {
-			toast.error("Failed to create page");
+			toast.error('Failed to create page');
 		}
 	}
 
@@ -77,13 +77,18 @@ export function WikiView() {
 
 				{/* Scope selector */}
 				<div className="flex gap-1 p-2 border-b border-[var(--color-border)]">
-					{["io", "shared"].map((s) => (
+					{['io', 'shared'].map((s) => (
 						<button
 							key={s}
 							type="button"
-							onClick={() => { setScope(s); setSelectedPage(null); }}
+							onClick={() => {
+								setScope(s);
+								setSelectedPage(null);
+							}}
 							className={`px-2 py-1 rounded text-xs ${
-								scope === s ? "bg-white/10 text-[var(--color-foreground)]" : "text-[var(--color-muted-foreground)]"
+								scope === s
+									? 'bg-white/10 text-[var(--color-foreground)]'
+									: 'text-[var(--color-muted-foreground)]'
 							}`}
 						>
 							{s}
@@ -99,7 +104,7 @@ export function WikiView() {
 							type="button"
 							onClick={() => loadPage(page.name)}
 							className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center gap-2 transition-colors ${
-								selectedPage === page.name ? "bg-white/10" : "hover:bg-white/5"
+								selectedPage === page.name ? 'bg-white/10' : 'hover:bg-white/5'
 							}`}
 						>
 							<FileText size={14} className="text-[var(--color-muted-foreground)]" />
@@ -118,9 +123,13 @@ export function WikiView() {
 								onChange={(e) => setNewPageName(e.target.value)}
 								placeholder="page-name"
 								className="flex-1 px-2 py-1 rounded text-xs bg-[var(--color-input)] border border-[var(--color-border)] outline-none"
-								onKeyDown={(e) => e.key === "Enter" && createPage()}
+								onKeyDown={(e) => e.key === 'Enter' && createPage()}
 							/>
-							<button type="button" onClick={createPage} className="px-2 py-1 rounded text-xs bg-[var(--color-accent)] text-white">
+							<button
+								type="button"
+								onClick={createPage}
+								className="px-2 py-1 rounded text-xs bg-[var(--color-accent)] text-white"
+							>
 								OK
 							</button>
 						</div>
@@ -154,7 +163,10 @@ export function WikiView() {
 								) : (
 									<button
 										type="button"
-										onClick={() => { setEditing(true); setEditContent(content); }}
+										onClick={() => {
+											setEditing(true);
+											setEditContent(content);
+										}}
 										className="px-3 py-1.5 rounded-md bg-white/5 text-xs hover:bg-white/10"
 									>
 										Edit

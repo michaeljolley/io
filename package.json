@@ -3,7 +3,13 @@
 	"version": "3.0.0",
 	"private": true,
 	"type": "module",
-	"workspaces": ["packages/shared", "packages/daemon", "packages/tui", "packages/telegram", "packages/web"],
+	"workspaces": [
+		"packages/shared",
+		"packages/daemon",
+		"packages/tui",
+		"packages/telegram",
+		"packages/web"
+	],
 	"scripts": {
 		"build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/daemon --workspace=packages/tui --workspace=packages/telegram --workspace=packages/web",
 		"build:docs": "cd docs && npm run build",

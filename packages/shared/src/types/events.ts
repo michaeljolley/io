@@ -72,4 +72,10 @@ export interface ScheduleEvent extends BaseEvent {
 	data?: Record<string, unknown>;
 }
 
-export type IOEvent = SquadEvent | AgentEvent | InstanceEvent | MeetingEvent | InboxEvent | ScheduleEvent;
+export type IOEvent =
+	| SquadEvent
+	| AgentEvent
+	| InstanceEvent
+	| MeetingEvent
+	| InboxEvent
+	| ScheduleEvent;

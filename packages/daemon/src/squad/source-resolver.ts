@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from '@io/shared';
 import { createChildLogger } from '../logging/logger.js';

@@ -6,12 +6,15 @@ const config = loadConfig();
 
 const token = config.telegram.botToken;
 if (!token) {
-	console.error('Error: Telegram bot token is required. Set TELEGRAM_BOT_TOKEN env var or telegram.botToken in ~/.io/config.json');
+	console.error(
+		'Error: Telegram bot token is required. Set TELEGRAM_BOT_TOKEN env var or telegram.botToken in ~/.io/config.json',
+	);
 	process.exit(1);
 }
 
 const port = config.apiPort;
-const allowedChats = config.telegram.allowedChatIds.length > 0 ? config.telegram.allowedChatIds : undefined;
+const allowedChats =
+	config.telegram.allowedChatIds.length > 0 ? config.telegram.allowedChatIds : undefined;
 
 const client = createDaemonClient(port);
 const bot = createTelegramBot({ token, allowedChatIds: allowedChats, apiPort: port }, client);

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Users, Activity, ExternalLink } from "lucide-react";
-import { useParams } from "react-router";
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
+import { Activity, ExternalLink, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router';
 
 interface SquadSummary {
 	id: string;
@@ -59,7 +59,10 @@ function SquadListView() {
 	const [squads, setSquads] = useState<SquadSummary[]>([]);
 
 	useEffect(() => {
-		api.get<{ squads: SquadSummary[] }>("/squads").then((d) => setSquads(d.squads)).catch(() => {});
+		api
+			.get<{ squads: SquadSummary[] }>('/squads')
+			.then((d) => setSquads(d.squads))
+			.catch(() => {});
 	}, []);
 
 	return (
@@ -119,7 +122,10 @@ function SquadDetailView({ name }: { name: string }) {
 	const [detail, setDetail] = useState<SquadDetail | null>(null);
 
 	useEffect(() => {
-		api.get<SquadDetail>(`/squads/${name}`).then(setDetail).catch(() => {});
+		api
+			.get<SquadDetail>(`/squads/${name}`)
+			.then(setDetail)
+			.catch(() => {});
 	}, [name]);
 
 	if (!detail) {
@@ -181,7 +187,9 @@ function SquadDetailView({ name }: { name: string }) {
 									<div>
 										<span className="font-mono text-xs">{inst.id.slice(0, 8)}</span>
 										{inst.issueRef && (
-											<span className="ml-2 text-xs text-[var(--color-accent)]">{inst.issueRef}</span>
+											<span className="ml-2 text-xs text-[var(--color-accent)]">
+												{inst.issueRef}
+											</span>
 										)}
 									</div>
 									<StatusBadge status={inst.status} />
@@ -201,14 +209,14 @@ function SquadDetailView({ name }: { name: string }) {
 
 function StatusBadge({ status }: { status: string }) {
 	const colors: Record<string, string> = {
-		active: "bg-[var(--color-success)]/10 text-[var(--color-success)]",
-		working: "bg-[var(--color-info)]/10 text-[var(--color-info)]",
-		idle: "bg-white/5 text-[var(--color-muted-foreground)]",
-		reviewing: "bg-[var(--color-warning)]/10 text-[var(--color-warning)]",
-		complete: "bg-[var(--color-success)]/10 text-[var(--color-success)]",
-		failed: "bg-[var(--color-destructive)]/10 text-[var(--color-destructive)]",
-		planning: "bg-[var(--color-info)]/10 text-[var(--color-info)]",
-		meeting: "bg-[var(--color-warning)]/10 text-[var(--color-warning)]",
+		active: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+		working: 'bg-[var(--color-info)]/10 text-[var(--color-info)]',
+		idle: 'bg-white/5 text-[var(--color-muted-foreground)]',
+		reviewing: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
+		complete: 'bg-[var(--color-success)]/10 text-[var(--color-success)]',
+		failed: 'bg-[var(--color-destructive)]/10 text-[var(--color-destructive)]',
+		planning: 'bg-[var(--color-info)]/10 text-[var(--color-info)]',
+		meeting: 'bg-[var(--color-warning)]/10 text-[var(--color-warning)]',
 	};
 
 	return (

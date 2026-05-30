@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Zap, Trash2, Plus } from "lucide-react";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { api } from '@/lib/api';
+import { Plus, Trash2, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Skill {
 	name: string;
@@ -12,28 +12,31 @@ interface Skill {
 export function SkillsView() {
 	const [skills, setSkills] = useState<Skill[]>([]);
 	const [showInstall, setShowInstall] = useState(false);
-	const [installUrl, setInstallUrl] = useState("");
-	const [installName, setInstallName] = useState("");
+	const [installUrl, setInstallUrl] = useState('');
+	const [installName, setInstallName] = useState('');
 
 	useEffect(() => {
 		loadSkills();
 	}, []);
 
 	function loadSkills() {
-		api.get<{ skills: Skill[] }>("/skills").then((d) => setSkills(d.skills)).catch(() => {});
+		api
+			.get<{ skills: Skill[] }>('/skills')
+			.then((d) => setSkills(d.skills))
+			.catch(() => {});
 	}
 
 	async function handleInstall() {
 		if (!installName.trim() || !installUrl.trim()) return;
 		try {
-			await api.post("/skills/install", { name: installName, url: installUrl });
+			await api.post('/skills/install', { name: installName, url: installUrl });
 			toast.success(`Skill "${installName}" installed`);
 			setShowInstall(false);
-			setInstallUrl("");
-			setInstallName("");
+			setInstallUrl('');
+			setInstallName('');
 			loadSkills();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Install failed");
+			toast.error(err instanceof Error ? err.message : 'Install failed');
 		}
 	}
 
@@ -43,7 +46,7 @@ export function SkillsView() {
 			toast.success(`Skill "${name}" removed`);
 			loadSkills();
 		} catch {
-			toast.error("Failed to remove skill");
+			toast.error('Failed to remove skill');
 		}
 	}
 

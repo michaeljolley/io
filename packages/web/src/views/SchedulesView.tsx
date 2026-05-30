@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import { Calendar, Plus, Trash2, Play, Pause } from "lucide-react";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
+import { api } from '@/lib/api';
+import { Calendar, Pause, Play, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Schedule {
 	id: string;
 	name: string;
-	targetType: "squad" | "orchestrator";
+	targetType: 'squad' | 'orchestrator';
 	targetId: string | null;
 	cron: string;
 	prompt: string;
@@ -17,30 +17,38 @@ interface Schedule {
 
 export function SchedulesView() {
 	const [schedules, setSchedules] = useState<Schedule[]>([]);
-	const [tab, setTab] = useState<"all" | "squad" | "orchestrator">("all");
+	const [tab, setTab] = useState<'all' | 'squad' | 'orchestrator'>('all');
 	const [showCreate, setShowCreate] = useState(false);
-	const [form, setForm] = useState({ name: "", cron: "", prompt: "", targetType: "orchestrator" as const });
+	const [form, setForm] = useState({
+		name: '',
+		cron: '',
+		prompt: '',
+		targetType: 'orchestrator' as const,
+	});
 
 	useEffect(() => {
 		loadSchedules();
 	}, []);
 
 	function loadSchedules() {
-		api.get<{ schedules: Schedule[] }>("/schedules").then((d) => setSchedules(d.schedules)).catch(() => {});
+		api
+			.get<{ schedules: Schedule[] }>('/schedules')
+			.then((d) => setSchedules(d.schedules))
+			.catch(() => {});
 	}
 
-	const filtered = schedules.filter((s) => tab === "all" || s.targetType === tab);
+	const filtered = schedules.filter((s) => tab === 'all' || s.targetType === tab);
 
 	async function handleCreate() {
 		if (!form.name || !form.cron || !form.prompt) return;
 		try {
-			await api.post("/schedules", form);
+			await api.post('/schedules', form);
 			toast.success(`Schedule "${form.name}" created`);
 			setShowCreate(false);
-			setForm({ name: "", cron: "", prompt: "", targetType: "orchestrator" });
+			setForm({ name: '', cron: '', prompt: '', targetType: 'orchestrator' });
 			loadSchedules();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Failed to create");
+			toast.error(err instanceof Error ? err.message : 'Failed to create');
 		}
 	}
 
@@ -49,17 +57,17 @@ export function SchedulesView() {
 			await api.patch(`/schedules/${id}`, { enabled: !enabled });
 			loadSchedules();
 		} catch {
-			toast.error("Failed to toggle schedule");
+			toast.error('Failed to toggle schedule');
 		}
 	}
 
 	async function handleDelete(id: string) {
 		try {
 			await api.delete(`/schedules/${id}`);
-			toast.success("Schedule deleted");
+			toast.success('Schedule deleted');
 			loadSchedules();
 		} catch {
-			toast.error("Failed to delete");
+			toast.error('Failed to delete');
 		}
 	}
 
@@ -68,7 +76,9 @@ export function SchedulesView() {
 			<header className="flex items-center justify-between mb-6">
 				<div>
 					<h1 className="text-2xl font-bold gradient-text">Schedules</h1>
-					<p className="text-sm text-[var(--color-muted-foreground)] mt-1">Automated cron-based tasks</p>
+					<p className="text-sm text-[var(--color-muted-foreground)] mt-1">
+						Automated cron-based tasks
+					</p>
 				</div>
 				<button
 					type="button"
@@ -81,16 +91,18 @@ export function SchedulesView() {
 
 			{/* Tabs */}
 			<div className="flex gap-1 mb-4 p-1 rounded-lg bg-white/3 w-fit">
-				{(["all", "orchestrator", "squad"] as const).map((t) => (
+				{(['all', 'orchestrator', 'squad'] as const).map((t) => (
 					<button
 						key={t}
 						type="button"
 						onClick={() => setTab(t)}
 						className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-							tab === t ? "bg-white/10 text-[var(--color-foreground)]" : "text-[var(--color-muted-foreground)]"
+							tab === t
+								? 'bg-white/10 text-[var(--color-foreground)]'
+								: 'text-[var(--color-muted-foreground)]'
 						}`}
 					>
-						{t === "all" ? "All" : t === "orchestrator" ? "IO" : "Squad"}
+						{t === 'all' ? 'All' : t === 'orchestrator' ? 'IO' : 'Squad'}
 					</button>
 				))}
 			</div>
@@ -121,10 +133,18 @@ export function SchedulesView() {
 						className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] resize-none"
 					/>
 					<div className="flex gap-2">
-						<button type="button" onClick={handleCreate} className="px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-white text-sm">
+						<button
+							type="button"
+							onClick={handleCreate}
+							className="px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-white text-sm"
+						>
 							Create
 						</button>
-						<button type="button" onClick={() => setShowCreate(false)} className="px-3 py-1.5 rounded-md bg-white/5 text-sm">
+						<button
+							type="button"
+							onClick={() => setShowCreate(false)}
+							className="px-3 py-1.5 rounded-md bg-white/5 text-sm"
+						>
 							Cancel
 						</button>
 					</div>
@@ -143,7 +163,9 @@ export function SchedulesView() {
 									{sched.targetType}
 								</span>
 							</div>
-							<p className="text-xs text-[var(--color-muted-foreground)] mt-1 font-mono">{sched.cron}</p>
+							<p className="text-xs text-[var(--color-muted-foreground)] mt-1 font-mono">
+								{sched.cron}
+							</p>
 							<p className="text-xs text-[var(--color-muted-foreground)] mt-0.5 truncate max-w-md">
 								{sched.prompt}
 							</p>
@@ -153,9 +175,11 @@ export function SchedulesView() {
 								type="button"
 								onClick={() => handleToggle(sched.id, sched.enabled)}
 								className={`p-1.5 rounded-md transition-colors ${
-									sched.enabled ? "text-[var(--color-success)] hover:bg-[var(--color-success)]/10" : "text-[var(--color-muted)] hover:bg-white/5"
+									sched.enabled
+										? 'text-[var(--color-success)] hover:bg-[var(--color-success)]/10'
+										: 'text-[var(--color-muted)] hover:bg-white/5'
 								}`}
-								title={sched.enabled ? "Pause" : "Resume"}
+								title={sched.enabled ? 'Pause' : 'Resume'}
 							>
 								{sched.enabled ? <Play size={14} /> : <Pause size={14} />}
 							</button>

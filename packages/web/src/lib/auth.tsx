@@ -1,6 +1,6 @@
-import { createClient, type SupabaseClient, type Session } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { api, setTokenGetter } from "./api";
+import { type Session, type SupabaseClient, createClient } from '@supabase/supabase-js';
+import { type ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
+import { api, setTokenGetter } from './api';
 
 interface AuthContextType {
 	session: Session | null;
@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextType>({
 	session: null,
 	supabase: null,
 	loading: true,
-	signIn: async () => ({ error: "Not initialized" }),
+	signIn: async () => ({ error: 'Not initialized' }),
 	signOut: async () => {},
 });
 
@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// Fetch Supabase config from daemon and initialize client
 	useEffect(() => {
 		api
-			.get<{ config: { supabase: { projectUrl: string | null; anonKey: string | null } } }>("/config")
+			.get<{ config: { supabase: { projectUrl: string | null; anonKey: string | null } } }>(
+				'/config',
+			)
 			.then(({ config }) => {
 				if (config.supabase.projectUrl && config.supabase.anonKey) {
 					const client = createClient(config.supabase.projectUrl, config.supabase.anonKey);
@@ -54,7 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					});
 
 					// Listen for auth changes
-					const { data: { subscription } } = client.auth.onAuthStateChange((_event, sess) => {
+					const {
+						data: { subscription },
+					} = client.auth.onAuthStateChange((_event, sess) => {
 						setSession(sess);
 					});
 
@@ -69,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	async function signIn(email: string, password: string) {
-		if (!supabase) return { error: "Supabase not configured" };
+		if (!supabase) return { error: 'Supabase not configured' };
 		const { error } = await supabase.auth.signInWithPassword({ email, password });
 		return { error: error?.message ?? null };
 	}

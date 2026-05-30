@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
-import { marked } from "marked";
-import { useWebSocket, type WsMessage } from "@/hooks/use-websocket";
-import { api } from "@/lib/api";
+import { type WsMessage, useWebSocket } from '@/hooks/use-websocket';
+import { api } from '@/lib/api';
+import { Send } from 'lucide-react';
+import { marked } from 'marked';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Message {
 	id: string;
-	role: "user" | "assistant";
+	role: 'user' | 'assistant';
 	content: string;
 	timestamp: string;
 }
 
 export function ChatView() {
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [input, setInput] = useState("");
-	const [streaming, setStreaming] = useState("");
+	const [input, setInput] = useState('');
+	const [streaming, setStreaming] = useState('');
 	const [isStreaming, setIsStreaming] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -22,7 +22,7 @@ export function ChatView() {
 	// Load conversation history
 	useEffect(() => {
 		api
-			.get<{ messages: Message[] }>("/conversations?limit=50")
+			.get<{ messages: Message[] }>('/conversations?limit=50')
 			.then((data) => setMessages(data.messages))
 			.catch(() => {});
 	}, []);
@@ -34,12 +34,12 @@ export function ChatView() {
 
 	const handleMessage = useCallback((content: string) => {
 		setIsStreaming(false);
-		setStreaming("");
+		setStreaming('');
 		setMessages((prev) => [
 			...prev,
 			{
 				id: crypto.randomUUID(),
-				role: "assistant",
+				role: 'assistant',
 				content,
 				timestamp: new Date().toISOString(),
 			},
@@ -58,7 +58,7 @@ export function ChatView() {
 
 	// Auto-scroll
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	}, [messages, streaming]);
 
 	function handleSend() {
@@ -67,14 +67,14 @@ export function ChatView() {
 
 		setMessages((prev) => [
 			...prev,
-			{ id: crypto.randomUUID(), role: "user", content: text, timestamp: new Date().toISOString() },
+			{ id: crypto.randomUUID(), role: 'user', content: text, timestamp: new Date().toISOString() },
 		]);
-		setInput("");
+		setInput('');
 		sendMessage(text);
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent) {
-		if (e.key === "Enter" && !e.shiftKey) {
+		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
 			handleSend();
 		}
@@ -87,10 +87,10 @@ export function ChatView() {
 				<h1 className="text-lg font-semibold gradient-text">Chat</h1>
 				<div className="ml-auto flex items-center gap-2">
 					<span
-						className={`w-2 h-2 rounded-full ${connected ? "bg-[var(--color-success)]" : "bg-[var(--color-destructive)]"}`}
+						className={`w-2 h-2 rounded-full ${connected ? 'bg-[var(--color-success)]' : 'bg-[var(--color-destructive)]'}`}
 					/>
 					<span className="text-xs text-[var(--color-muted-foreground)]">
-						{connected ? "Connected" : "Disconnected"}
+						{connected ? 'Connected' : 'Disconnected'}
 					</span>
 				</div>
 			</header>
@@ -102,7 +102,7 @@ export function ChatView() {
 				))}
 				{isStreaming && (
 					<MessageBubble
-						message={{ id: "streaming", role: "assistant", content: streaming, timestamp: "" }}
+						message={{ id: 'streaming', role: 'assistant', content: streaming, timestamp: '' }}
 					/>
 				)}
 				<div ref={messagesEndRef} />
@@ -134,7 +134,7 @@ export function ChatView() {
 }
 
 function MessageBubble({ message }: { message: Message }) {
-	const isUser = message.role === "user";
+	const isUser = message.role === 'user';
 
 	if (isUser) {
 		return (

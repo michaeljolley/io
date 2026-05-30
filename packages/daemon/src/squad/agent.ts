@@ -53,7 +53,9 @@ export class Agent {
 		this.instanceId = config.instanceId;
 		this.model = config.model ?? 'claude-opus-4.6';
 		this.identity = config.identity;
-		this.logger = createChildLogger(`agent:${config.squadName}:${config.identity?.displayName ?? this.role}`);
+		this.logger = createChildLogger(
+			`agent:${config.squadName}:${config.identity?.displayName ?? this.role}`,
+		);
 	}
 
 	get status(): AgentStatus {

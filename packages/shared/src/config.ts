@@ -60,7 +60,9 @@ export function loadConfig(): IOConfig {
 		telegram: {
 			botToken: process.env.TELEGRAM_BOT_TOKEN || fileConfig.telegram?.botToken || null,
 			allowedChatIds: process.env.TELEGRAM_ALLOWED_CHAT_IDS
-				? process.env.TELEGRAM_ALLOWED_CHAT_IDS.split(',').map((id) => Number.parseInt(id.trim(), 10))
+				? process.env.TELEGRAM_ALLOWED_CHAT_IDS.split(',').map((id) =>
+						Number.parseInt(id.trim(), 10),
+					)
 				: fileConfig.telegram?.allowedChatIds || [],
 		},
 		supabase: {

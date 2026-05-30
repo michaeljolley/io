@@ -1,5 +1,5 @@
-import { createChildLogger } from '../logging/logger.js';
 import { getClient } from '../copilot/client.js';
+import { createChildLogger } from '../logging/logger.js';
 
 const logger = () => createChildLogger('name-generator');
 

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getCurrentToken } from "@/lib/api";
+import { getCurrentToken } from '@/lib/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-export type WsMessageType = "connected" | "delta" | "message" | "event" | "error";
+export type WsMessageType = 'connected' | 'delta' | 'message' | 'event' | 'error';
 
 export interface WsMessage {
 	type: WsMessageType;
@@ -33,7 +33,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 	optionsRef.current = options;
 
 	useEffect(() => {
-		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		let wsUrl = `${protocol}//${window.location.host}/ws`;
 
 		// Attach token as query param for server-side verification
@@ -56,20 +56,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 				try {
 					const msg = JSON.parse(event.data) as WsMessage;
 					switch (msg.type) {
-						case "connected":
+						case 'connected':
 							setConnectionId(msg.connectionId ?? null);
 							break;
-						case "delta":
-							optionsRef.current.onDelta?.(msg.content ?? "");
+						case 'delta':
+							optionsRef.current.onDelta?.(msg.content ?? '');
 							break;
-						case "message":
-							optionsRef.current.onMessage?.(msg.content ?? "");
+						case 'message':
+							optionsRef.current.onMessage?.(msg.content ?? '');
 							break;
-						case "event":
+						case 'event':
 							optionsRef.current.onEvent?.(msg);
 							break;
-						case "error":
-							optionsRef.current.onError?.(msg.content ?? "Unknown error");
+						case 'error':
+							optionsRef.current.onError?.(msg.content ?? 'Unknown error');
 							break;
 					}
 				} catch {
@@ -98,14 +98,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 		};
 	}, []);
 
-	const sendMessage = useCallback(
-		(content: string, source: string = "web") => {
-			if (wsRef.current?.readyState === WebSocket.OPEN) {
-				wsRef.current.send(JSON.stringify({ type: "message", content, source }));
-			}
-		},
-		[],
-	);
+	const sendMessage = useCallback((content: string, source = 'web') => {
+		if (wsRef.current?.readyState === WebSocket.OPEN) {
+			wsRef.current.send(JSON.stringify({ type: 'message', content, source }));
+		}
+	}, []);
 
 	return { connected, connectionId, sendMessage };
 }

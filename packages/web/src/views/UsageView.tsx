@@ -1,6 +1,16 @@
-import { useEffect, useState } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import {
+	Area,
+	AreaChart,
+	Cell,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from 'recharts';
 
 interface UsageEntry {
 	id: number;
@@ -23,16 +33,16 @@ interface UsageResponse {
 	};
 }
 
-const CHART_COLORS = ["#E43A9C", "#D83333", "#F041FF", "#38bdf8", "#a78bfa", "#34d399", "#f59e0b"];
+const CHART_COLORS = ['#E43A9C', '#D83333', '#F041FF', '#38bdf8', '#a78bfa', '#34d399', '#f59e0b'];
 
 export function UsageView() {
 	const [data, setData] = useState<UsageResponse | null>(null);
-	const [range, setRange] = useState("7d");
+	const [range, setRange] = useState('7d');
 
 	useEffect(() => {
 		const since = new Date();
-		if (range === "7d") since.setDate(since.getDate() - 7);
-		else if (range === "30d") since.setDate(since.getDate() - 30);
+		if (range === '7d') since.setDate(since.getDate() - 7);
+		else if (range === '30d') since.setDate(since.getDate() - 30);
 		else since.setDate(since.getDate() - 1);
 
 		api
@@ -63,7 +73,10 @@ export function UsageView() {
 	// Aggregate by model for pie chart
 	const byModel = new Map<string, number>();
 	for (const entry of data.entries) {
-		byModel.set(entry.model, (byModel.get(entry.model) ?? 0) + entry.inputTokens + entry.outputTokens);
+		byModel.set(
+			entry.model,
+			(byModel.get(entry.model) ?? 0) + entry.inputTokens + entry.outputTokens,
+		);
 	}
 	const modelData = Array.from(byModel.entries()).map(([name, value]) => ({ name, value }));
 
@@ -72,16 +85,20 @@ export function UsageView() {
 			<header className="flex items-center justify-between mb-6">
 				<div>
 					<h1 className="text-2xl font-bold gradient-text">Usage</h1>
-					<p className="text-sm text-[var(--color-muted-foreground)] mt-1">Token usage and cost tracking</p>
+					<p className="text-sm text-[var(--color-muted-foreground)] mt-1">
+						Token usage and cost tracking
+					</p>
 				</div>
 				<div className="flex gap-1 p-1 rounded-lg bg-white/3">
-					{["1d", "7d", "30d"].map((r) => (
+					{['1d', '7d', '30d'].map((r) => (
 						<button
 							key={r}
 							type="button"
 							onClick={() => setRange(r)}
 							className={`px-3 py-1.5 rounded-md text-xs font-medium ${
-								range === r ? "bg-white/10 text-[var(--color-foreground)]" : "text-[var(--color-muted-foreground)]"
+								range === r
+									? 'bg-white/10 text-[var(--color-foreground)]'
+									: 'text-[var(--color-muted-foreground)]'
 							}`}
 						>
 							{r}
@@ -92,7 +109,10 @@ export function UsageView() {
 
 			{/* Summary cards */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-				<SummaryCard label="Total Tokens" value={formatNumber(data.totals.inputTokens + data.totals.outputTokens)} />
+				<SummaryCard
+					label="Total Tokens"
+					value={formatNumber(data.totals.inputTokens + data.totals.outputTokens)}
+				/>
 				<SummaryCard label="Input Tokens" value={formatNumber(data.totals.inputTokens)} />
 				<SummaryCard label="Output Tokens" value={formatNumber(data.totals.outputTokens)} />
 				<SummaryCard label="Est. Cost" value={`$${data.totals.estimatedCost.toFixed(4)}`} />
@@ -112,13 +132,34 @@ export function UsageView() {
 										<stop offset="95%" stopColor="#E43A9C" stopOpacity={0} />
 									</linearGradient>
 								</defs>
-								<XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-								<YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={formatNumber} />
-								<Tooltip
-									contentStyle={{ background: "#222", border: "1px solid #333", borderRadius: "8px", fontSize: "12px" }}
-									labelStyle={{ color: "#9ca3af" }}
+								<XAxis
+									dataKey="date"
+									tick={{ fontSize: 11, fill: '#9ca3af' }}
+									axisLine={false}
+									tickLine={false}
 								/>
-								<Area type="monotone" dataKey="tokens" stroke="#E43A9C" fill="url(#colorTokens)" strokeWidth={2} />
+								<YAxis
+									tick={{ fontSize: 11, fill: '#9ca3af' }}
+									axisLine={false}
+									tickLine={false}
+									tickFormatter={formatNumber}
+								/>
+								<Tooltip
+									contentStyle={{
+										background: '#222',
+										border: '1px solid #333',
+										borderRadius: '8px',
+										fontSize: '12px',
+									}}
+									labelStyle={{ color: '#9ca3af' }}
+								/>
+								<Area
+									type="monotone"
+									dataKey="tokens"
+									stroke="#E43A9C"
+									fill="url(#colorTokens)"
+									strokeWidth={2}
+								/>
 							</AreaChart>
 						</ResponsiveContainer>
 					) : (
@@ -135,20 +176,36 @@ export function UsageView() {
 						<>
 							<ResponsiveContainer width="100%" height={180}>
 								<PieChart>
-									<Pie data={modelData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} strokeWidth={0}>
+									<Pie
+										data={modelData}
+										dataKey="value"
+										nameKey="name"
+										cx="50%"
+										cy="50%"
+										outerRadius={70}
+										strokeWidth={0}
+									>
 										{modelData.map((_, i) => (
 											<Cell key={modelData[i]?.name} fill={CHART_COLORS[i % CHART_COLORS.length]} />
 										))}
 									</Pie>
 									<Tooltip
-										contentStyle={{ background: "#222", border: "1px solid #333", borderRadius: "8px", fontSize: "12px" }}
+										contentStyle={{
+											background: '#222',
+											border: '1px solid #333',
+											borderRadius: '8px',
+											fontSize: '12px',
+										}}
 									/>
 								</PieChart>
 							</ResponsiveContainer>
 							<div className="space-y-1 mt-2">
 								{modelData.map((m, i) => (
 									<div key={m.name} className="flex items-center gap-2 text-xs">
-										<span className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+										<span
+											className="w-2 h-2 rounded-full"
+											style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+										/>
 										<span className="text-[var(--color-muted-foreground)] truncate">{m.name}</span>
 										<span className="ml-auto font-mono">{formatNumber(m.value)}</span>
 									</div>

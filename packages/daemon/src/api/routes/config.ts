@@ -99,13 +99,13 @@ export function configRouter(): Router {
 						botToken: config.telegram.botToken ? '••••••••' : null,
 						allowedChatIds: config.telegram.allowedChatIds,
 					},
-						supabase: {
-							projectUrl: config.supabase.projectUrl,
-							anonKey: config.supabase.anonKey,
-							jwtSecret: config.supabase.jwtSecret ? '••••••••' : null,
-						},
+					supabase: {
+						projectUrl: config.supabase.projectUrl,
+						anonKey: config.supabase.anonKey,
+						jwtSecret: config.supabase.jwtSecret ? '••••••••' : null,
 					},
-				});
+				},
+			});
 		} catch (err) {
 			res.status(500).json({ error: 'Failed to update config' });
 		}

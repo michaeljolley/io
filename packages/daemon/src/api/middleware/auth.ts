@@ -12,9 +12,7 @@ const EXEMPT_ROUTES: Array<{ method: string; path: string }> = [
 ];
 
 function isExempt(method: string, path: string): boolean {
-	return EXEMPT_ROUTES.some(
-		(r) => r.method === method.toUpperCase() && path.startsWith(r.path),
-	);
+	return EXEMPT_ROUTES.some((r) => r.method === method.toUpperCase() && path.startsWith(r.path));
 }
 
 /**

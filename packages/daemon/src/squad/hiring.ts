@@ -187,7 +187,10 @@ export async function hireSquad(params: {
 		memberRoles.push(`${displayName} (${role})`);
 	}
 
-	log.info({ squadId: squad.id, members: memberRoles, universe: generated.universe }, 'Squad hired successfully');
+	log.info(
+		{ squadId: squad.id, members: memberRoles, universe: generated.universe },
+		'Squad hired successfully',
+	);
 	return { squadId: squad.id, analysis, members: memberRoles, universe: generated.universe };
 }
 
