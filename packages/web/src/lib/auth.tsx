@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient, type Session } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api } from "./api";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { api, setTokenGetter } from "./api";
 
 interface AuthContextType {
 	session: Session | null;
@@ -26,6 +26,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 	const [session, setSession] = useState<Session | null>(null);
 	const [loading, setLoading] = useState(true);
+	const sessionRef = useRef<Session | null>(null);
+
+	// Keep ref in sync for the token getter
+	useEffect(() => {
+		sessionRef.current = session;
+	}, [session]);
+
+	// Register token getter so api.ts can attach Bearer token
+	useEffect(() => {
+		setTokenGetter(() => sessionRef.current?.access_token ?? null);
+	}, []);
 
 	// Fetch Supabase config from daemon and initialize client
 	useEffect(() => {

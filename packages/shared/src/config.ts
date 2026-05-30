@@ -19,6 +19,7 @@ export interface IOConfig {
 	supabase: {
 		projectUrl: string | null;
 		anonKey: string | null;
+		jwtSecret: string | null;
 	};
 }
 
@@ -65,6 +66,7 @@ export function loadConfig(): IOConfig {
 		supabase: {
 			projectUrl: process.env.IO_SUPABASE_URL || fileConfig.supabase?.projectUrl || null,
 			anonKey: process.env.IO_SUPABASE_ANON_KEY || fileConfig.supabase?.anonKey || null,
+			jwtSecret: process.env.IO_SUPABASE_JWT_SECRET || fileConfig.supabase?.jwtSecret || null,
 		},
 	};
 }

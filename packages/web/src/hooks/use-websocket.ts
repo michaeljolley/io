@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getCurrentToken } from "@/lib/api";
 
 export type WsMessageType = "connected" | "delta" | "message" | "event" | "error";
 
@@ -33,7 +34,13 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
 	useEffect(() => {
 		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-		const wsUrl = `${protocol}//${window.location.host}/ws`;
+		let wsUrl = `${protocol}//${window.location.host}/ws`;
+
+		// Attach token as query param for server-side verification
+		const token = getCurrentToken();
+		if (token) {
+			wsUrl += `?token=${encodeURIComponent(token)}`;
+		}
 
 		let ws: WebSocket;
 		let reconnectTimeout: ReturnType<typeof setTimeout>;

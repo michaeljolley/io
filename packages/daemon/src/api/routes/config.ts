@@ -32,7 +32,11 @@ export function configRouter(): Router {
 					botToken: config.telegram.botToken ? '••••••••' : null,
 					allowedChatIds: config.telegram.allowedChatIds,
 				},
-				supabase: config.supabase,
+				supabase: {
+					projectUrl: config.supabase.projectUrl,
+					anonKey: config.supabase.anonKey,
+					jwtSecret: config.supabase.jwtSecret ? '••••••••' : null,
+				},
 			};
 			res.json({ config: redacted });
 		} catch (err) {
@@ -95,7 +99,11 @@ export function configRouter(): Router {
 						botToken: config.telegram.botToken ? '••••••••' : null,
 						allowedChatIds: config.telegram.allowedChatIds,
 					},
-						supabase: config.supabase,
+						supabase: {
+							projectUrl: config.supabase.projectUrl,
+							anonKey: config.supabase.anonKey,
+							jwtSecret: config.supabase.jwtSecret ? '••••••••' : null,
+						},
 					},
 				});
 		} catch (err) {

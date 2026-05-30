@@ -11,7 +11,7 @@ interface Config {
 	dataDir: string;
 	pricing: { refreshIntervalHours: number };
 	telegram: { botToken: string | null; allowedChatIds: number[] };
-	supabase: { projectUrl: string | null; anonKey: string | null };
+	supabase: { projectUrl: string | null; anonKey: string | null; jwtSecret: string | null };
 }
 
 type TabId = "general" | "telegram" | "auth" | "models" | "advanced";
@@ -197,9 +197,21 @@ export function SettingsView() {
 								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] font-mono"
 							/>
 						</Field>
+						<Field label="JWT Secret">
+							<input
+								type="password"
+								value={config.supabase.jwtSecret ?? ""}
+								onChange={(e) =>
+									update({ supabase: { ...config.supabase, jwtSecret: e.target.value || null } })
+								}
+								placeholder="your-jwt-secret"
+								className="w-full px-3 py-2 rounded-md bg-[var(--color-input)] border border-[var(--color-border)] text-sm outline-none focus:border-[var(--color-accent)] font-mono"
+							/>
+						</Field>
 						<p className="text-xs text-[var(--color-muted-foreground)]">
 							When configured, the web dashboard requires Supabase authentication to access.
-							Find these values in your Supabase project settings → API.
+							The JWT Secret is used to verify tokens server-side — find it in Supabase project
+							settings → API → JWT Settings.
 						</p>
 					</div>
 				)}

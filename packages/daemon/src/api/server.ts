@@ -8,6 +8,7 @@ import type { IOConfig } from '../config.js';
 import { sendMessage } from '../copilot/orchestrator.js';
 import { createChildLogger } from '../logging/logger.js';
 import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
+import { authMiddleware, verifyWsToken } from './middleware/auth.js';
 import { activityRouter } from './routes/activity.js';
 import { attachmentsRouter } from './routes/attachments.js';
 import { configRouter } from './routes/config.js';
@@ -32,6 +33,9 @@ export function createApiServer(config: IOConfig): ApiServer {
 	const logger = createChildLogger('api');
 	const app = express();
 	app.use(express.json());
+
+	// Auth middleware — verifies Supabase JWT if configured
+	app.use('/api', authMiddleware(config));
 
 	// Routes
 	app.use('/api', healthRouter());
@@ -98,7 +102,14 @@ export function createApiServer(config: IOConfig): ApiServer {
 	// WebSocket server for streaming
 	const wss = new WebSocketServer({ server, path: '/ws' });
 
-	wss.on('connection', (ws) => {
+	wss.on('connection', (ws, req) => {
+		// Verify token from query string if auth is configured
+		const url = new URL(req.url ?? '', `http://${req.headers.host}`);
+		const token = url.searchParams.get('token');
+		if (!verifyWsToken(config, token)) {
+			ws.close(4001, 'Unauthorized');
+			return;
+		}
 		const connectionId = crypto.randomUUID();
 		wsClients.set(connectionId, ws);
 		subscribeClient(connectionId, ws);

@@ -1,12 +1,30 @@
 const API_BASE = "/api";
 
+// Global token getter — set by AuthProvider
+let getAccessToken: (() => string | null) | null = null;
+
+export function setTokenGetter(getter: () => string | null) {
+	getAccessToken = getter;
+}
+
+export function getCurrentToken(): string | null {
+	return getAccessToken?.() ?? null;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+	const token = getAccessToken?.();
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		...(options?.headers as Record<string, string>),
+	};
+
+	if (token) {
+		headers.Authorization = `Bearer ${token}`;
+	}
+
 	const res = await fetch(`${API_BASE}${path}`, {
 		...options,
-		headers: {
-			"Content-Type": "application/json",
-			...options?.headers,
-		},
+		headers,
 	});
 
 	if (!res.ok) {
