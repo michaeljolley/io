@@ -103,16 +103,17 @@ export function createOrchestratorTools() {
 
 		defineTool('hire_squad', {
 			description:
-				'Create a new squad for a project. Analyzes the project repository and recommends team composition. Use when the user wants to create a new team for a codebase.',
+				'Create a new squad for a project. Provide a GitHub repo URL and the project will be cloned automatically to ~/.io/source/{owner}/{repo}. Analyzes the project and recommends team composition.',
 			parameters: z.object({
-				projectPath: z.string().describe('Absolute path to the project directory'),
-				repoUrl: z.string().optional().describe('GitHub repository URL if applicable'),
+				repoUrl: z.string().describe('GitHub repository URL (e.g. https://github.com/owner/repo)'),
 				name: z.string().optional().describe('Name for the squad (auto-generated if omitted)'),
 			}),
-			handler: async (args: { projectPath: string; repoUrl?: string; name?: string }) => {
+			handler: async (args: { repoUrl: string; name?: string }) => {
 				try {
+					const { ensureCloned } = await import('../squad/source-resolver.js');
+					const projectPath = ensureCloned(args.repoUrl);
 					const result = await hireSquad({
-						projectPath: args.projectPath,
+						projectPath,
 						repoUrl: args.repoUrl,
 						name: args.name,
 					});
@@ -120,6 +121,7 @@ export function createOrchestratorTools() {
 						textResultForLlm: JSON.stringify({
 							message: `Squad '${args.name ?? result.analysis.name}' hired successfully!`,
 							squadId: result.squadId,
+							projectPath,
 							analysis: result.analysis,
 							members: result.members,
 						}),
