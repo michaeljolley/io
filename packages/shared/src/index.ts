@@ -3,6 +3,7 @@ export type {
 	Squad,
 	SquadMember,
 	SquadInstance,
+	InstanceStatus,
 	AutonomyTier,
 	AutonomyConfig,
 } from './types/squads.js';
