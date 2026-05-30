@@ -74,19 +74,21 @@ export async function addMember(params: {
 	squadId: string;
 	skill: SkillDefinition;
 	displayName: string;
+	persona?: string;
 	isVetoMember?: boolean;
 }): Promise<SquadMember> {
 	const db = getDatabase();
 	const id = crypto.randomUUID();
 
 	await db.execute({
-		sql: `INSERT INTO squad_members (id, squad_id, display_name, role_name, skill_file_path, tools_allowed, is_veto_member, status)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+		sql: `INSERT INTO squad_members (id, squad_id, display_name, role_name, persona, skill_file_path, tools_allowed, is_veto_member, status)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
 		args: [
 			id,
 			params.squadId,
 			params.displayName,
 			params.skill.role,
+			params.persona ?? null,
 			params.skill.filePath,
 			JSON.stringify(params.skill.tools),
 			params.isVetoMember ? 1 : 0,
@@ -98,6 +100,7 @@ export async function addMember(params: {
 		squadId: params.squadId,
 		displayName: params.displayName,
 		roleName: params.skill.role,
+		persona: params.persona,
 		skillFilePath: params.skill.filePath,
 		toolsAllowed: params.skill.tools,
 		isVetoMember: params.isVetoMember ?? false,
@@ -163,6 +166,7 @@ export async function getSquadMembers(squadId: string): Promise<SquadMember[]> {
 		squadId: row.squad_id as string,
 		displayName: (row.display_name as string) || (row.role_name as string),
 		roleName: row.role_name as string,
+		persona: (row.persona as string) || undefined,
 		skillFilePath: (row.skill_file_path as string) || undefined,
 		toolsAllowed: JSON.parse((row.tools_allowed as string) || '[]') as string[],
 		isVetoMember: Boolean(row.is_veto_member),
@@ -203,6 +207,70 @@ export async function disbandSquad(squadId: string): Promise<void> {
 	logger().info({ squadId }, 'Squad disbanded');
 }
 
+/** Retheme a squad with a new universe — updates display names and personas */
+export async function rethemeSquad(
+	squadId: string,
+	newUniverse: string,
+	assignments: { role: string; displayName: string; persona: string }[],
+): Promise<void> {
+	const db = getDatabase();
+
+	// Update squad universe
+	await db.execute({
+		sql: 'UPDATE squads SET universe = ? WHERE id = ?',
+		args: [newUniverse, squadId],
+	});
+
+	// Update each member
+	for (const assignment of assignments) {
+		await db.execute({
+			sql: 'UPDATE squad_members SET display_name = ?, persona = ? WHERE squad_id = ? AND role_name = ?',
+			args: [assignment.displayName, assignment.persona, squadId, assignment.role],
+		});
+	}
+
+	// If squad is running, destroy and reboot agents
+	const runtime = activeSquads.get(squadId);
+	if (runtime) {
+		for (const agent of runtime.members.values()) {
+			await agent.destroy().catch(() => {});
+		}
+		activeSquads.delete(squadId);
+
+		// Reload squad data and reboot
+		const squad = await getSquadById(squadId);
+		if (squad) {
+			await bootSquad(squad);
+		}
+	}
+
+	logger().info({ squadId, universe: newUniverse }, 'Squad rethemed');
+}
+
+/** Get squad by ID */
+export async function getSquadById(squadId: string): Promise<Squad | null> {
+	const db = getDatabase();
+	const result = await db.execute({
+		sql: 'SELECT * FROM squads WHERE id = ?',
+		args: [squadId],
+	});
+
+	if (result.rows.length === 0) return null;
+	const row = result.rows[0];
+
+	return {
+		id: row.id as string,
+		name: row.name as string,
+		projectPath: row.project_path as string,
+		repoUrl: (row.repo_url as string) || undefined,
+		universe: (row.universe as string) || undefined,
+		autonomyTier: row.autonomy_tier as AutonomyTier,
+		autonomyConfig: JSON.parse((row.autonomy_config as string) || '{}') as AutonomyConfig,
+		status: row.status as Squad['status'],
+		createdAt: new Date(row.created_at as string),
+	};
+}
+
 /** Boot a squad's agents (creates sessions for each member) */
 export async function bootSquad(squad: Squad): Promise<SquadRuntime> {
 	const members = await getSquadMembers(squad.id);
@@ -232,6 +300,11 @@ export async function bootSquad(squad: Squad): Promise<SquadRuntime> {
 			squadId: squad.id,
 			squadName: squad.name,
 			model: 'claude-opus-4.6',
+			identity: {
+				displayName: member.displayName,
+				persona: member.persona,
+				universe: squad.universe,
+			},
 		});
 
 		await agent.init(squadContext);

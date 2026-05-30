@@ -17,6 +17,7 @@ import {
 	getSquadMembers,
 	getSquadRuntime,
 	listSquads,
+	rethemeSquad,
 } from '../squad/manager.js';
 import { listInboxEntries, resolveInboxEntry } from '../store/inbox.js';
 import { createSchedule, deleteSchedule, listSchedules } from '../store/schedules.js';
@@ -142,6 +143,48 @@ export function createOrchestratorTools() {
 					return {
 						textResultForLlm: JSON.stringify({
 							error: `Failed to hire squad: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('retheme_squad', {
+			description:
+				"Change a squad's pop-culture universe. Generates new character names and personas for all members from the specified universe.",
+			parameters: z.object({
+				squadName: z.string().describe('Name of the squad to retheme'),
+				universe: z.string().describe('New pop-culture universe (e.g. "The Office", "Star Wars", "Breaking Bad")'),
+			}),
+			handler: async (args: { squadName: string; universe: string }) => {
+				try {
+					const squad = await getSquadByName(args.squadName);
+					if (!squad) {
+						return {
+							textResultForLlm: JSON.stringify({ error: `Squad '${args.squadName}' not found.` }),
+							resultType: 'success' as const,
+						};
+					}
+					const members = await getSquadMembers(squad.id);
+					const roles = members.map((m) => m.roleName);
+
+					const { generateSquadNames } = await import('../squad/name-generator.js');
+					const generated = await generateSquadNames(roles, args.universe);
+
+					await rethemeSquad(squad.id, generated.universe, generated.assignments);
+
+					return {
+						textResultForLlm: JSON.stringify({
+							message: `Squad '${args.squadName}' rethemed to ${generated.universe}!`,
+							members: generated.assignments.map((a) => `${a.displayName} (${a.role})`),
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to retheme squad: ${err instanceof Error ? err.message : String(err)}`,
 						}),
 						resultType: 'success' as const,
 					};

@@ -19,6 +19,7 @@ export interface AgentConfig {
 	squadName: string;
 	instanceId?: string;
 	model?: string;
+	identity?: { displayName: string; persona?: string; universe?: string };
 }
 
 export interface AgentMessage {
@@ -40,6 +41,7 @@ export class Agent {
 	private session: Session | null = null;
 	private skill: SkillDefinition;
 	private model: string;
+	private identity?: { displayName: string; persona?: string; universe?: string };
 	private logger;
 	private _status: AgentStatus = 'idle';
 
@@ -50,7 +52,8 @@ export class Agent {
 		this.squadName = config.squadName;
 		this.instanceId = config.instanceId;
 		this.model = config.model ?? 'claude-opus-4.6';
-		this.logger = createChildLogger(`agent:${config.squadName}:${this.role}`);
+		this.identity = config.identity;
+		this.logger = createChildLogger(`agent:${config.squadName}:${config.identity?.displayName ?? this.role}`);
 	}
 
 	get status(): AgentStatus {
@@ -65,6 +68,7 @@ export class Agent {
 			squadContext,
 			this.squadName,
 			this.squadId,
+			this.identity,
 		);
 
 		this.session = await client.createSession({

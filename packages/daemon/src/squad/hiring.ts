@@ -4,9 +4,9 @@ import { basename, join } from 'node:path';
 import { createChildLogger } from '../logging/logger.js';
 import { ensureSquadWiki } from '../wiki/index.js';
 import { addMember, createSquad } from './manager.js';
+import { generateSquadNames } from './name-generator.js';
 import { QA_TESTER_SKILL, SCRIBE_SKILL, TEAM_LEAD_SKILL } from './roles/templates.js';
 import { parseSkillContent } from './skill-parser.js';
-import { assignCharacterNames, getUniverse, pickRandomUniverse } from './universes.js';
 
 const logger = () => createChildLogger('hiring');
 
@@ -139,24 +139,7 @@ export async function hireSquad(params: {
 	const squadName = params.name ?? analysis.name;
 	log.info({ squadName, analysis }, 'Project analyzed');
 
-	// 2. Pick universe
-	const universe = params.universe
-		? (getUniverse(params.universe) ?? pickRandomUniverse())
-		: pickRandomUniverse();
-	log.info({ squadName, universe: universe.id }, 'Universe selected');
-
-	// 3. Create squad
-	const squad = await createSquad({
-		name: squadName,
-		projectPath: params.projectPath,
-		repoUrl: params.repoUrl,
-		universe: universe.id,
-	});
-
-	// 3. Create wiki folder for this squad
-	ensureSquadWiki(squadName);
-
-	// 4. Write SKILL.md files
+	// 2. Build skill files
 	const skillsDir = join(homedir(), '.io', 'squads', squadName);
 	mkdirSync(skillsDir, { recursive: true });
 
@@ -166,7 +149,6 @@ export async function hireSquad(params: {
 		{ role: 'qa-tester', content: QA_TESTER_SKILL, veto: true },
 	];
 
-	// Add detected specialists
 	for (const specialist of analysis.suggestedSpecialists) {
 		skillFiles.push({
 			role: specialist,
@@ -175,9 +157,21 @@ export async function hireSquad(params: {
 		});
 	}
 
-	// 5. Assign character names from universe
+	// 3. Generate character names from universe via LLM
 	const allRoles = skillFiles.map((f) => f.role);
-	const characterMap = assignCharacterNames(universe.id, allRoles);
+	const generated = await generateSquadNames(allRoles, params.universe);
+	log.info({ squadName, universe: generated.universe }, 'Universe names generated');
+
+	// 4. Create squad
+	const squad = await createSquad({
+		name: squadName,
+		projectPath: params.projectPath,
+		repoUrl: params.repoUrl,
+		universe: generated.universe,
+	});
+
+	// 5. Create wiki folder for this squad
+	ensureSquadWiki(squadName);
 
 	// 6. Write files and add members
 	const memberRoles: string[] = [];
@@ -186,13 +180,15 @@ export async function hireSquad(params: {
 		writeFileSync(filePath, content, 'utf-8');
 
 		const skill = parseSkillContent(content, filePath);
-		const displayName = characterMap.get(role) ?? role;
-		await addMember({ squadId: squad.id, skill, displayName, isVetoMember: veto });
+		const assignment = generated.assignments.find((a) => a.role === role);
+		const displayName = assignment?.displayName ?? role;
+		const persona = assignment?.persona;
+		await addMember({ squadId: squad.id, skill, displayName, persona, isVetoMember: veto });
 		memberRoles.push(`${displayName} (${role})`);
 	}
 
-	log.info({ squadId: squad.id, members: memberRoles, universe: universe.id }, 'Squad hired successfully');
-	return { squadId: squad.id, analysis, members: memberRoles, universe: universe.id };
+	log.info({ squadId: squad.id, members: memberRoles, universe: generated.universe }, 'Squad hired successfully');
+	return { squadId: squad.id, analysis, members: memberRoles, universe: generated.universe };
 }
 
 // Helpers

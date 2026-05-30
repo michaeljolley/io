@@ -70,10 +70,19 @@ export async function compileSystemPrompt(
 	squadContext?: string,
 	squadName?: string,
 	squadId?: string,
+	identity?: { displayName: string; persona?: string; universe?: string },
 ): Promise<string> {
 	const parts: string[] = [];
 
-	parts.push(`You are the ${skill.role} agent in an IO squad.`);
+	if (identity?.displayName && identity.displayName !== skill.role) {
+		const intro = `You are ${identity.displayName}${identity.universe ? ` from ${identity.universe}` : ''}, the ${skill.role} agent in an IO squad.`;
+		parts.push(intro);
+		if (identity.persona) {
+			parts.push(identity.persona);
+		}
+	} else {
+		parts.push(`You are the ${skill.role} agent in an IO squad.`);
+	}
 
 	if (squadContext) {
 		parts.push(`\n## Squad Context\n${squadContext}`);

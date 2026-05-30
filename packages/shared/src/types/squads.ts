@@ -25,6 +25,7 @@ export interface SquadMember {
 	squadId: string;
 	displayName: string;
 	roleName: string;
+	persona?: string;
 	skillFilePath?: string;
 	toolsAllowed: string[];
 	isVetoMember: boolean;

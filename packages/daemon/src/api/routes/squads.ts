@@ -70,6 +70,7 @@ export function squadsRouter(): Router {
 					id: m.id,
 					displayName: m.displayName,
 					role: m.roleName,
+					persona: m.persona,
 					veto: m.isVetoMember,
 					tools: m.toolsAllowed,
 					status: m.status,
