@@ -16,6 +16,7 @@
 		"@github/copilot-sdk": "^1.0.0-beta.9",
 		"@io/shared": "*",
 		"@libsql/client": "^0.14.0",
+		"cron-parser": "^5.5.0",
 		"express": "^5.1.0",
 		"gray-matter": "^4.0.3",
 		"multer": "^2.1.1",

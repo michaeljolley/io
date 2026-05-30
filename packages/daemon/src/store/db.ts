@@ -127,6 +127,26 @@ const MIGRATIONS: { version: number; statements: string[] }[] = [
 			'INSERT OR REPLACE INTO schema_version (version) VALUES (2)',
 		],
 	},
+	{
+		version: 3,
+		statements: [
+			`CREATE TABLE IF NOT EXISTS schedules (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				target_type TEXT NOT NULL,
+				target_id TEXT,
+				cron TEXT NOT NULL,
+				prompt TEXT NOT NULL,
+				enabled INTEGER DEFAULT 1,
+				last_run DATETIME,
+				next_run DATETIME,
+				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			)`,
+			'CREATE INDEX IF NOT EXISTS idx_schedules_enabled ON schedules(enabled)',
+			'CREATE INDEX IF NOT EXISTS idx_schedules_next_run ON schedules(next_run)',
+			'INSERT OR REPLACE INTO schema_version (version) VALUES (3)',
+		],
+	},
 ];
 
 export async function initDatabase(dataDir: string): Promise<Client> {

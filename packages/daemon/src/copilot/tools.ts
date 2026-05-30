@@ -11,6 +11,7 @@ import {
 	listSquads,
 } from '../squad/manager.js';
 import { listInboxEntries, resolveInboxEntry } from '../store/inbox.js';
+import { createSchedule, deleteSchedule, listSchedules } from '../store/schedules.js';
 
 export function createOrchestratorTools() {
 	return [
@@ -269,6 +270,134 @@ export function createOrchestratorTools() {
 					return {
 						textResultForLlm: JSON.stringify({
 							error: `Failed to respond: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('create_schedule', {
+			description:
+				'Create a cron-based schedule that triggers a squad or the orchestrator with a predefined prompt at specified times. Use standard cron syntax (e.g., "0 9 * * 1-5" for weekdays at 9am).',
+			parameters: z.object({
+				name: z.string().describe('Human-readable name for the schedule (e.g., "Daily Standup")'),
+				targetType: z
+					.enum(['squad', 'orchestrator'])
+					.describe('Whether to target a squad or the orchestrator'),
+				targetId: z.string().optional().describe('Squad name (required if targetType is "squad")'),
+				cron: z.string().describe('Cron expression (e.g., "0 9 * * 1-5" for weekdays at 9am)'),
+				prompt: z.string().describe('The prompt/message to send when the schedule fires'),
+			}),
+			handler: async (args: {
+				name: string;
+				targetType: 'squad' | 'orchestrator';
+				targetId?: string;
+				cron: string;
+				prompt: string;
+			}) => {
+				try {
+					// Validate squad exists if targeting a squad
+					if (args.targetType === 'squad') {
+						if (!args.targetId) {
+							return {
+								textResultForLlm: JSON.stringify({
+									error: 'targetId (squad name) is required for squad schedules',
+								}),
+								resultType: 'success' as const,
+							};
+						}
+						const squad = await getSquadByName(args.targetId);
+						if (!squad) {
+							return {
+								textResultForLlm: JSON.stringify({ error: `Squad '${args.targetId}' not found` }),
+								resultType: 'success' as const,
+							};
+						}
+						args.targetId = squad.id;
+					}
+
+					const schedule = await createSchedule({
+						name: args.name,
+						targetType: args.targetType,
+						targetId: args.targetId,
+						cron: args.cron,
+						prompt: args.prompt,
+					});
+
+					return {
+						textResultForLlm: JSON.stringify({
+							created: true,
+							schedule: {
+								id: schedule.id,
+								name: schedule.name,
+								cron: schedule.cron,
+								nextRun: schedule.nextRun,
+							},
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to create schedule: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('list_schedules', {
+			description: 'List all configured schedules (cron-based automations).',
+			parameters: z.object({}).strict(),
+			handler: async () => {
+				const schedules = await listSchedules();
+				if (schedules.length === 0) {
+					return {
+						textResultForLlm: JSON.stringify({
+							schedules: [],
+							message: 'No schedules configured.',
+						}),
+						resultType: 'success' as const,
+					};
+				}
+
+				const summary = schedules.map((s) => ({
+					id: s.id,
+					name: s.name,
+					targetType: s.targetType,
+					targetId: s.targetId,
+					cron: s.cron,
+					prompt: s.prompt.slice(0, 100),
+					enabled: s.enabled,
+					nextRun: s.nextRun,
+					lastRun: s.lastRun,
+				}));
+
+				return {
+					textResultForLlm: JSON.stringify({ schedules: summary }),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('delete_schedule', {
+			description: 'Delete a schedule by ID. Use list_schedules first to find the ID.',
+			parameters: z.object({
+				scheduleId: z.string().describe('The ID of the schedule to delete'),
+			}),
+			handler: async (args: { scheduleId: string }) => {
+				try {
+					await deleteSchedule(args.scheduleId);
+					return {
+						textResultForLlm: JSON.stringify({ deleted: true, scheduleId: args.scheduleId }),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to delete: ${err instanceof Error ? err.message : String(err)}`,
 						}),
 						resultType: 'success' as const,
 					};

@@ -27,6 +27,8 @@ export type MeetingEventType =
 
 export type InboxEventType = 'inbox:new' | 'inbox:resolved';
 
+export type ScheduleEventType = 'schedule:fired' | 'schedule:completed' | 'schedule:failed';
+
 export interface BaseEvent {
 	id: string;
 	timestamp: Date;
@@ -65,4 +67,9 @@ export interface InboxEvent extends BaseEvent {
 	entryId: string;
 }
 
-export type IOEvent = SquadEvent | AgentEvent | InstanceEvent | MeetingEvent | InboxEvent;
+export interface ScheduleEvent extends BaseEvent {
+	type: ScheduleEventType;
+	data?: Record<string, unknown>;
+}
+
+export type IOEvent = SquadEvent | AgentEvent | InstanceEvent | MeetingEvent | InboxEvent | ScheduleEvent;

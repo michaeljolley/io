@@ -71,6 +71,12 @@ function renderNotification(event: IOEvent): string {
 				: `📋 Squad delivered: "${event.title}"`;
 		case 'inbox:resolved':
 			return `✅ Inbox item resolved: "${event.title}"`;
+		case 'schedule:fired':
+			return `⏰ Schedule fired: "${(event.data as { name?: string })?.name ?? 'unknown'}"`;
+		case 'schedule:completed':
+			return `✅ Schedule completed: "${(event.data as { name?: string })?.name ?? 'unknown'}"`;
+		case 'schedule:failed':
+			return `❌ Schedule failed: "${(event.data as { name?: string })?.name ?? 'unknown'}"`;
 		default:
 			return `📣 Event: ${(event as { type: string }).type}`;
 	}

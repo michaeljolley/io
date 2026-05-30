@@ -9,6 +9,7 @@ import { startHealthMonitor, stopHealthMonitor } from './copilot/health-monitor.
 import { destroyOrchestrator, initOrchestrator } from './copilot/orchestrator.js';
 import { getLogger, initLogger } from './logging/logger.js';
 import { seedPricing } from './models/index.js';
+import { startScheduler, stopScheduler } from './scheduler/engine.js';
 import { getEventBus } from './squad/event-bus.js';
 import { initActivityLogger } from './store/activity.js';
 import { closeDatabase, initDatabase } from './store/db.js';
@@ -43,6 +44,9 @@ async function start(): Promise<void> {
 	// Start health monitoring
 	startHealthMonitor();
 
+	// Start schedule engine (evaluates cron schedules every 60s)
+	startScheduler();
+
 	await apiServer.start();
 	logger.info('IO daemon ready');
 }
@@ -58,6 +62,7 @@ async function shutdown(signal: string): Promise<void> {
 
 	// Stop accepting new requests
 	stopHealthMonitor();
+	stopScheduler();
 
 	// Stop API server (closes WebSocket connections)
 	await apiServer.stop();
