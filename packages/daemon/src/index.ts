@@ -5,9 +5,12 @@ import { initNotifications } from './api/notifications.js';
 import { createApiServer } from './api/server.js';
 import { loadConfig } from './config.js';
 import { stopClient } from './copilot/client.js';
+import { startHealthMonitor, stopHealthMonitor } from './copilot/health-monitor.js';
 import { destroyOrchestrator, initOrchestrator } from './copilot/orchestrator.js';
 import { getLogger, initLogger } from './logging/logger.js';
 import { seedPricing } from './models/index.js';
+import { getEventBus } from './squad/event-bus.js';
+import { initActivityLogger } from './store/activity.js';
 import { closeDatabase, initDatabase } from './store/db.js';
 
 const config = loadConfig();
@@ -31,21 +34,44 @@ async function start(): Promise<void> {
 	// Initialize notification system (event bus → WebSocket broadcast)
 	initNotifications();
 
+	// Initialize activity logger (event bus → SQLite)
+	initActivityLogger(getEventBus());
+
 	// Initialize Copilot orchestrator
 	await initOrchestrator(config);
+
+	// Start health monitoring
+	startHealthMonitor();
 
 	await apiServer.start();
 	logger.info('IO daemon ready');
 }
 
 // Graceful shutdown
+let shuttingDown = false;
 async function shutdown(signal: string): Promise<void> {
+	if (shuttingDown) return;
+	shuttingDown = true;
+
 	const log = getLogger();
 	log.info({ signal }, 'Shutting down...');
 
+	// Stop accepting new requests
+	stopHealthMonitor();
+
+	// Stop API server (closes WebSocket connections)
 	await apiServer.stop();
+
+	// Destroy orchestrator session (drains queue)
 	await destroyOrchestrator();
+
+	// Stop Copilot SDK client
 	await stopClient();
+
+	// Clear event bus
+	getEventBus().clear();
+
+	// Close database
 	closeDatabase();
 
 	log.info('Shutdown complete');
@@ -54,6 +80,18 @@ async function shutdown(signal: string): Promise<void> {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Handle uncaught errors gracefully
+process.on('uncaughtException', (err) => {
+	const log = getLogger();
+	log.fatal({ err }, 'Uncaught exception');
+	shutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason) => {
+	const log = getLogger();
+	log.error({ err: reason }, 'Unhandled rejection');
+});
 
 start().catch((err) => {
 	logger.fatal({ err }, 'Failed to start IO daemon');

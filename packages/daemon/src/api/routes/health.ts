@@ -1,17 +1,16 @@
 import { Router } from 'express';
+import { getHealthStatus } from '../../copilot/health-monitor.js';
 
 export function healthRouter(): Router {
 	const router = Router();
 
-	const startTime = Date.now();
-
 	router.get('/health', (_req, res) => {
+		const health = getHealthStatus();
 		res.json({
-			status: 'healthy',
-			uptime: Math.floor((Date.now() - startTime) / 1000),
-			copilotConnected: false, // TODO: check actual connection
-			activeSquads: 0,
-			activeInstances: 0,
+			status: health.status,
+			uptime: health.uptime,
+			copilotConnected: health.copilotConnected,
+			lastCheck: health.lastCheck.toISOString(),
 		});
 	});
 
