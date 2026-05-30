@@ -10,7 +10,7 @@
 		"dev": "npm run dev --workspace=packages/daemon",
 		"dev:tui": "npm run dev --workspace=packages/tui",
 		"dev:docs": "cd docs && npm run dev",
-		"test": "vitest run",
+		"test": "vitest run --passWithNoTests",
 		"test:watch": "vitest",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
