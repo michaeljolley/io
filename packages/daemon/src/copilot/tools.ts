@@ -1,11 +1,13 @@
 import { defineTool } from '@github/copilot-sdk';
 import { z } from 'zod';
+import { runInstance } from '../squad/execution/runner.js';
 import { hireSquad } from '../squad/hiring.js';
 import {
 	bootSquad,
 	delegateToSquad,
 	getSquadByName,
 	getSquadMembers,
+	getSquadRuntime,
 	listSquads,
 } from '../squad/manager.js';
 
@@ -136,7 +138,6 @@ export function createOrchestratorTools() {
 
 				try {
 					// Boot squad if not already running
-					const { getSquadRuntime } = await import('../squad/manager.js');
 					if (!getSquadRuntime(squad.id)) {
 						await bootSquad(squad);
 					}
@@ -153,6 +154,50 @@ export function createOrchestratorTools() {
 					return {
 						textResultForLlm: JSON.stringify({
 							error: `Failed to delegate: ${err instanceof Error ? err.message : String(err)}`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+			},
+		}),
+
+		defineTool('run_squad_instance', {
+			description:
+				'Start a new work instance for a squad. This kicks off the full lifecycle: meeting → task execution → PR creation. Use when the user asks a squad to work on something specific.',
+			parameters: z.object({
+				squadName: z.string().describe('Name of the squad'),
+				objective: z.string().describe('What the squad should accomplish'),
+				issueRef: z.string().optional().describe('GitHub issue reference (e.g., #42)'),
+			}),
+			handler: async (args: { squadName: string; objective: string; issueRef?: string }) => {
+				const squad = await getSquadByName(args.squadName);
+				if (!squad) {
+					return {
+						textResultForLlm: JSON.stringify({ error: `Squad '${args.squadName}' not found.` }),
+						resultType: 'success' as const,
+					};
+				}
+
+				try {
+					const result = await runInstance({
+						squad,
+						objective: args.objective,
+						issueRef: args.issueRef,
+					});
+
+					return {
+						textResultForLlm: JSON.stringify({
+							instanceId: result.instanceId,
+							success: result.success,
+							pr: result.pr ? { url: result.pr.url, number: result.pr.number } : null,
+							error: result.error,
+						}),
+						resultType: 'success' as const,
+					};
+				} catch (err) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Failed to run instance: ${err instanceof Error ? err.message : String(err)}`,
 						}),
 						resultType: 'success' as const,
 					};

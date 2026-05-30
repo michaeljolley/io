@@ -1,6 +1,7 @@
 import { approveAll } from '@github/copilot-sdk';
 import type { IOConfig } from '../config.js';
 import { createChildLogger } from '../logging/logger.js';
+import { listSquads } from '../squad/manager.js';
 import { getDatabase } from '../store/db.js';
 import { getClient } from './client.js';
 import { createOrchestratorTools } from './tools.js';
@@ -23,7 +24,7 @@ interface QueuedMessage {
 const messageQueue: QueuedMessage[] = [];
 let processing = false;
 
-const SYSTEM_MESSAGE = `You are IO, an AI orchestrator daemon. You help users manage their software projects through intelligent conversation and by coordinating specialized agent squads.
+const SYSTEM_MESSAGE_BASE = `You are IO, an AI orchestrator daemon. You help users manage their software projects through intelligent conversation and by coordinating specialized agent squads.
 
 ## Your Capabilities
 - Answer general questions directly
@@ -35,20 +36,43 @@ const SYSTEM_MESSAGE = `You are IO, an AI orchestrator daemon. You help users ma
 - If the user's message relates to a project that has an assigned squad, ALWAYS delegate to that squad using the delegate_to_squad tool
 - If the user asks about squad status, use the appropriate squad tools
 - For general questions unrelated to any squad's project, answer directly
-
-## Active Squads
-(No squads currently active)
+- NEVER answer project-specific questions yourself if a squad exists for that project
 `;
+
+/**
+ * Build the system message with current squad registry context.
+ */
+async function buildSystemMessage(): Promise<string> {
+	try {
+		const squads = await listSquads();
+		if (squads.length === 0) {
+			return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n(No squads currently active)\n`;
+		}
+
+		const squadList = squads
+			.map(
+				(s) =>
+					`- **${s.name}**: project at \`${s.projectPath}\`${s.repoUrl ? ` (${s.repoUrl})` : ''} [autonomy: ${s.autonomyTier}]`,
+			)
+			.join('\n');
+
+		return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n${squadList}\n\nWhen a user's message mentions any of the above projects (by name, path, or related topic), delegate to the corresponding squad.\n`;
+	} catch {
+		return `${SYSTEM_MESSAGE_BASE}\n## Active Squads\n(Unable to load squad registry)\n`;
+	}
+}
 
 export async function initOrchestrator(config: IOConfig): Promise<void> {
 	logger = createChildLogger('orchestrator');
 	const client = await getClient();
 
+	const systemMessage = await buildSystemMessage();
+
 	const sessionOptions = {
 		model: config.defaultModel,
 		streaming: true,
 		tools: createOrchestratorTools(),
-		systemMessage: { mode: 'replace' as const, content: SYSTEM_MESSAGE },
+		systemMessage: { mode: 'replace' as const, content: systemMessage },
 		onPermissionRequest: approveAll,
 		infiniteSessions: {
 			enabled: true,

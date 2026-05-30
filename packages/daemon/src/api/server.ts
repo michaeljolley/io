@@ -4,7 +4,9 @@ import { type WebSocket, WebSocketServer } from 'ws';
 import type { IOConfig } from '../config.js';
 import { sendMessage } from '../copilot/orchestrator.js';
 import { createChildLogger } from '../logging/logger.js';
+import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
 import { healthRouter } from './routes/health.js';
+import { squadsRouter } from './routes/squads.js';
 import { usageRouter } from './routes/usage.js';
 
 export interface ApiServer {
@@ -23,6 +25,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 	// Routes
 	app.use('/api', healthRouter());
 	app.use('/api', usageRouter());
+	app.use('/api', squadsRouter());
 
 	// POST /api/messages — send a message to the orchestrator
 	app.post('/api/messages', async (req, res) => {
@@ -67,6 +70,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 	wss.on('connection', (ws) => {
 		const connectionId = crypto.randomUUID();
 		wsClients.set(connectionId, ws);
+		subscribeClient(connectionId, ws);
 		logger.info({ connectionId }, 'WebSocket client connected');
 
 		// Send the connection ID to the client
@@ -108,6 +112,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 
 		ws.on('close', () => {
 			wsClients.delete(connectionId);
+			unsubscribeClient(connectionId);
 			logger.info({ connectionId }, 'WebSocket client disconnected');
 		});
 	});

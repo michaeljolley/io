@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdirSync } from 'node:fs';
+import { initNotifications } from './api/notifications.js';
 import { createApiServer } from './api/server.js';
 import { loadConfig } from './config.js';
 import { stopClient } from './copilot/client.js';
@@ -26,6 +27,9 @@ async function start(): Promise<void> {
 
 	// Seed model pricing defaults
 	await seedPricing();
+
+	// Initialize notification system (event bus → WebSocket broadcast)
+	initNotifications();
 
 	// Initialize Copilot orchestrator
 	await initOrchestrator(config);
