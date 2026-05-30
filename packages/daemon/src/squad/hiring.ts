@@ -6,6 +6,7 @@ import { ensureSquadWiki } from '../wiki/index.js';
 import { addMember, createSquad } from './manager.js';
 import { QA_TESTER_SKILL, SCRIBE_SKILL, TEAM_LEAD_SKILL } from './roles/templates.js';
 import { parseSkillContent } from './skill-parser.js';
+import { assignCharacterNames, getUniverse, pickRandomUniverse } from './universes.js';
 
 const logger = () => createChildLogger('hiring');
 
@@ -129,7 +130,8 @@ export async function hireSquad(params: {
 	projectPath: string;
 	repoUrl?: string;
 	name?: string;
-}): Promise<{ squadId: string; analysis: ProjectAnalysis; members: string[] }> {
+	universe?: string;
+}): Promise<{ squadId: string; analysis: ProjectAnalysis; members: string[]; universe: string }> {
 	const log = logger();
 
 	// 1. Analyze
@@ -137,11 +139,18 @@ export async function hireSquad(params: {
 	const squadName = params.name ?? analysis.name;
 	log.info({ squadName, analysis }, 'Project analyzed');
 
-	// 2. Create squad
+	// 2. Pick universe
+	const universe = params.universe
+		? (getUniverse(params.universe) ?? pickRandomUniverse())
+		: pickRandomUniverse();
+	log.info({ squadName, universe: universe.id }, 'Universe selected');
+
+	// 3. Create squad
 	const squad = await createSquad({
 		name: squadName,
 		projectPath: params.projectPath,
 		repoUrl: params.repoUrl,
+		universe: universe.id,
 	});
 
 	// 3. Create wiki folder for this squad
@@ -166,19 +175,24 @@ export async function hireSquad(params: {
 		});
 	}
 
-	// 4. Write files and add members
+	// 5. Assign character names from universe
+	const allRoles = skillFiles.map((f) => f.role);
+	const characterMap = assignCharacterNames(universe.id, allRoles);
+
+	// 6. Write files and add members
 	const memberRoles: string[] = [];
 	for (const { role, content, veto } of skillFiles) {
 		const filePath = join(skillsDir, `${role}.skill.md`);
 		writeFileSync(filePath, content, 'utf-8');
 
 		const skill = parseSkillContent(content, filePath);
-		await addMember({ squadId: squad.id, skill, isVetoMember: veto });
-		memberRoles.push(role);
+		const displayName = characterMap.get(role) ?? role;
+		await addMember({ squadId: squad.id, skill, displayName, isVetoMember: veto });
+		memberRoles.push(`${displayName} (${role})`);
 	}
 
-	log.info({ squadId: squad.id, members: memberRoles }, 'Squad hired successfully');
-	return { squadId: squad.id, analysis, members: memberRoles };
+	log.info({ squadId: squad.id, members: memberRoles, universe: universe.id }, 'Squad hired successfully');
+	return { squadId: squad.id, analysis, members: memberRoles, universe: universe.id };
 }
 
 // Helpers

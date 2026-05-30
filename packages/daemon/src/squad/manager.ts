@@ -22,6 +22,7 @@ export async function createSquad(params: {
 	name: string;
 	projectPath: string;
 	repoUrl?: string;
+	universe?: string;
 	autonomyTier?: AutonomyTier;
 }): Promise<Squad> {
 	const db = getDatabase();
@@ -30,13 +31,14 @@ export async function createSquad(params: {
 	const autonomyConfig = AUTONOMY_TIERS[tier];
 
 	await db.execute({
-		sql: `INSERT INTO squads (id, name, project_path, repo_url, autonomy_tier, autonomy_config, status)
-		      VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+		sql: `INSERT INTO squads (id, name, project_path, repo_url, universe, autonomy_tier, autonomy_config, status)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
 		args: [
 			id,
 			params.name,
 			params.projectPath,
 			params.repoUrl ?? null,
+			params.universe ?? null,
 			tier,
 			JSON.stringify(autonomyConfig),
 		],
@@ -47,6 +49,7 @@ export async function createSquad(params: {
 		name: params.name,
 		projectPath: params.projectPath,
 		repoUrl: params.repoUrl,
+		universe: params.universe,
 		autonomyTier: tier,
 		autonomyConfig,
 		status: 'active',
@@ -70,17 +73,19 @@ export async function createSquad(params: {
 export async function addMember(params: {
 	squadId: string;
 	skill: SkillDefinition;
+	displayName: string;
 	isVetoMember?: boolean;
 }): Promise<SquadMember> {
 	const db = getDatabase();
 	const id = crypto.randomUUID();
 
 	await db.execute({
-		sql: `INSERT INTO squad_members (id, squad_id, role_name, skill_file_path, tools_allowed, is_veto_member, status)
-		      VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+		sql: `INSERT INTO squad_members (id, squad_id, display_name, role_name, skill_file_path, tools_allowed, is_veto_member, status)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
 		args: [
 			id,
 			params.squadId,
+			params.displayName,
 			params.skill.role,
 			params.skill.filePath,
 			JSON.stringify(params.skill.tools),
@@ -91,6 +96,7 @@ export async function addMember(params: {
 	const member: SquadMember = {
 		id,
 		squadId: params.squadId,
+		displayName: params.displayName,
 		roleName: params.skill.role,
 		skillFilePath: params.skill.filePath,
 		toolsAllowed: params.skill.tools,
@@ -112,6 +118,7 @@ export async function listSquads(): Promise<Squad[]> {
 		name: row.name as string,
 		projectPath: row.project_path as string,
 		repoUrl: (row.repo_url as string) || undefined,
+		universe: (row.universe as string) || undefined,
 		autonomyTier: row.autonomy_tier as AutonomyTier,
 		autonomyConfig: JSON.parse((row.autonomy_config as string) || '{}') as AutonomyConfig,
 		status: row.status as Squad['status'],
@@ -135,6 +142,7 @@ export async function getSquadByName(name: string): Promise<Squad | null> {
 		name: row.name as string,
 		projectPath: row.project_path as string,
 		repoUrl: (row.repo_url as string) || undefined,
+		universe: (row.universe as string) || undefined,
 		autonomyTier: row.autonomy_tier as AutonomyTier,
 		autonomyConfig: JSON.parse((row.autonomy_config as string) || '{}') as AutonomyConfig,
 		status: row.status as Squad['status'],
@@ -153,6 +161,7 @@ export async function getSquadMembers(squadId: string): Promise<SquadMember[]> {
 	return result.rows.map((row) => ({
 		id: row.id as string,
 		squadId: row.squad_id as string,
+		displayName: (row.display_name as string) || (row.role_name as string),
 		roleName: row.role_name as string,
 		skillFilePath: (row.skill_file_path as string) || undefined,
 		toolsAllowed: JSON.parse((row.tools_allowed as string) || '[]') as string[],

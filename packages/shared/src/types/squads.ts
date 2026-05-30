@@ -13,6 +13,7 @@ export interface Squad {
 	name: string;
 	projectPath: string;
 	repoUrl?: string;
+	universe?: string;
 	autonomyTier: AutonomyTier;
 	autonomyConfig: AutonomyConfig;
 	status: 'active' | 'paused' | 'disbanded';
@@ -22,6 +23,7 @@ export interface Squad {
 export interface SquadMember {
 	id: string;
 	squadId: string;
+	displayName: string;
 	roleName: string;
 	skillFilePath?: string;
 	toolsAllowed: string[];

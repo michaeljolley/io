@@ -52,8 +52,9 @@ export function createOrchestratorTools() {
 						return {
 							name: s.name,
 							project: s.projectPath,
+							universe: s.universe,
 							autonomy: s.autonomyTier,
-							members: members.map((m) => m.roleName),
+							members: members.map((m) => `${m.displayName} (${m.roleName})`),
 							status: s.status,
 						};
 					}),
@@ -86,11 +87,13 @@ export function createOrchestratorTools() {
 							name: squad.name,
 							project: squad.projectPath,
 							repo: squad.repoUrl,
+							universe: squad.universe,
 							autonomy: squad.autonomyTier,
 							status: squad.status,
 							createdAt: squad.createdAt.toISOString(),
 						},
 						members: members.map((m) => ({
+							name: m.displayName,
 							role: m.roleName,
 							veto: m.isVetoMember,
 							tools: m.toolsAllowed,
@@ -103,12 +106,18 @@ export function createOrchestratorTools() {
 
 		defineTool('hire_squad', {
 			description:
-				'Create a new squad for a project. Provide a GitHub repo URL and the project will be cloned automatically to ~/.io/source/{owner}/{repo}. Analyzes the project and recommends team composition.',
+				'Create a new squad for a project. Provide a GitHub repo URL and the project will be cloned automatically to ~/.io/source/{owner}/{repo}. Analyzes the project and recommends team composition. Each squad member gets a character name from a pop-culture universe.',
 			parameters: z.object({
 				repoUrl: z.string().describe('GitHub repository URL (e.g. https://github.com/owner/repo)'),
 				name: z.string().optional().describe('Name for the squad (auto-generated if omitted)'),
+				universe: z
+					.string()
+					.optional()
+					.describe(
+						'Pop-culture universe for member names (a-team, marvel, star-wars, lord-of-the-rings, star-trek, firefly). Random if omitted.',
+					),
 			}),
-			handler: async (args: { repoUrl: string; name?: string }) => {
+			handler: async (args: { repoUrl: string; name?: string; universe?: string }) => {
 				try {
 					const { ensureCloned } = await import('../squad/source-resolver.js');
 					const projectPath = ensureCloned(args.repoUrl);
@@ -116,12 +125,14 @@ export function createOrchestratorTools() {
 						projectPath,
 						repoUrl: args.repoUrl,
 						name: args.name,
+						universe: args.universe,
 					});
 					return {
 						textResultForLlm: JSON.stringify({
 							message: `Squad '${args.name ?? result.analysis.name}' hired successfully!`,
 							squadId: result.squadId,
 							projectPath,
+							universe: result.universe,
 							analysis: result.analysis,
 							members: result.members,
 						}),

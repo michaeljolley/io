@@ -22,6 +22,7 @@ export function squadsRouter(): Router {
 						name: s.name,
 						projectPath: s.projectPath,
 						repoUrl: s.repoUrl,
+						universe: s.universe,
 						autonomyTier: s.autonomyTier,
 						status: s.status,
 						memberCount: members.length,
@@ -59,6 +60,7 @@ export function squadsRouter(): Router {
 					name: squad.name,
 					projectPath: squad.projectPath,
 					repoUrl: squad.repoUrl,
+					universe: squad.universe,
 					autonomyTier: squad.autonomyTier,
 					autonomyConfig: squad.autonomyConfig,
 					status: squad.status,
@@ -66,6 +68,7 @@ export function squadsRouter(): Router {
 				},
 				members: members.map((m) => ({
 					id: m.id,
+					displayName: m.displayName,
 					role: m.roleName,
 					veto: m.isVetoMember,
 					tools: m.toolsAllowed,
