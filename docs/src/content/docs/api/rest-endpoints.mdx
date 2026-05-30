@@ -303,3 +303,65 @@ Update a schedule. Updatable fields: `name`, `cron`, `prompt`, `enabled`.
 Delete a schedule.
 
 **Response (204):** No content.
+
+---
+
+### Wiki
+
+#### `GET /api/wiki/:scope`
+
+List all pages in a wiki scope. Scope can be `io`, `shared`, or a squad name.
+
+**Response:**
+```json
+{
+  "scope": "shared",
+  "pages": ["conventions", "architecture", "deployment"]
+}
+```
+
+#### `GET /api/wiki/:scope/:page`
+
+Read a specific wiki page.
+
+**Response:**
+```json
+{
+  "scope": "shared",
+  "name": "conventions",
+  "content": "# Conventions\n\n- Use TypeScript strict mode..."
+}
+```
+
+#### `PUT /api/wiki/:scope/:page`
+
+Write (create or overwrite) a wiki page.
+
+**Request:**
+```json
+{
+  "content": "# Architecture\n\nThis project uses a layered architecture..."
+}
+```
+
+#### `GET /api/wiki?q=keyword&scopes=shared,my-app`
+
+Search across wiki pages by keyword.
+
+**Query Parameters:**
+- `q` — Search keyword (required)
+- `scopes` — Comma-separated scopes to search (default: `io,shared`)
+
+**Response:**
+```json
+{
+  "keyword": "database",
+  "results": [
+    {
+      "scope": "shared",
+      "name": "conventions",
+      "matches": ["- Always use PostgreSQL for database services"]
+    }
+  ]
+}
+```

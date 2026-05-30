@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import matter from 'gray-matter';
+import { getPageListing, getSquadScopes } from '../wiki/index.js';
 
 export interface SkillDefinition {
 	role: string;
@@ -63,7 +64,11 @@ export function parseSkillContent(content: string, filePath = '<inline>'): Skill
  * Compile a SkillDefinition into a full system message string for the LLM.
  * Injects role identity, boundaries, and tool context.
  */
-export function compileSystemPrompt(skill: SkillDefinition, squadContext?: string): string {
+export function compileSystemPrompt(
+	skill: SkillDefinition,
+	squadContext?: string,
+	squadName?: string,
+): string {
 	const parts: string[] = [];
 
 	parts.push(`You are the ${skill.role} agent in an IO squad.`);
@@ -81,6 +86,14 @@ export function compileSystemPrompt(skill: SkillDefinition, squadContext?: strin
 	if (skill.veto) {
 		parts.push(
 			'\n## Veto Power\nYou have veto power in meetings. Use it when you identify critical issues.',
+		);
+	}
+
+	// Inject wiki page listing so agents know what knowledge is available
+	if (squadName) {
+		const wikiListing = getPageListing(getSquadScopes(squadName));
+		parts.push(
+			`\n## Wiki Knowledge\n${wikiListing}\n\nUse read_wiki to access page content. Use write_wiki to record important project knowledge.`,
 		);
 	}
 

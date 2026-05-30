@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 import { createChildLogger } from '../logging/logger.js';
+import { ensureSquadWiki } from '../wiki/index.js';
 import { addMember, createSquad } from './manager.js';
 import { QA_TESTER_SKILL, SCRIBE_SKILL, TEAM_LEAD_SKILL } from './roles/templates.js';
 import { parseSkillContent } from './skill-parser.js';
@@ -143,7 +144,10 @@ export async function hireSquad(params: {
 		repoUrl: params.repoUrl,
 	});
 
-	// 3. Write SKILL.md files
+	// 3. Create wiki folder for this squad
+	ensureSquadWiki(squadName);
+
+	// 4. Write SKILL.md files
 	const skillsDir = join(homedir(), '.io', 'squads', squadName);
 	mkdirSync(skillsDir, { recursive: true });
 

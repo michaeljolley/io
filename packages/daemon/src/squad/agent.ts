@@ -3,6 +3,13 @@ import type { AgentEvent, AgentStatus } from '@io/shared';
 import { z } from 'zod';
 import { getClient } from '../copilot/client.js';
 import { createChildLogger } from '../logging/logger.js';
+import {
+	getSquadScopes,
+	listWikiPages,
+	readWikiPage,
+	searchWiki,
+	writeWikiPage,
+} from '../wiki/index.js';
 import { getEventBus } from './event-bus.js';
 import { type SkillDefinition, compileSystemPrompt } from './skill-parser.js';
 
@@ -28,6 +35,7 @@ type Session = Awaited<ReturnType<Awaited<ReturnType<typeof getClient>>['createS
 export class Agent {
 	readonly role: string;
 	readonly squadId: string;
+	readonly squadName: string;
 	readonly instanceId?: string;
 	private session: Session | null = null;
 	private skill: SkillDefinition;
@@ -39,6 +47,7 @@ export class Agent {
 		this.skill = config.skill;
 		this.role = config.skill.role;
 		this.squadId = config.squadId;
+		this.squadName = config.squadName;
 		this.instanceId = config.instanceId;
 		this.model = config.model ?? 'claude-opus-4.6';
 		this.logger = createChildLogger(`agent:${config.squadName}:${this.role}`);
@@ -51,7 +60,7 @@ export class Agent {
 	/** Initialize the agent's Copilot session */
 	async init(squadContext?: string): Promise<void> {
 		const client = await getClient();
-		const systemPrompt = compileSystemPrompt(this.skill, squadContext);
+		const systemPrompt = compileSystemPrompt(this.skill, squadContext, this.squadName);
 
 		this.session = await client.createSession({
 			model: this.model,
@@ -198,6 +207,91 @@ export class Agent {
 				}),
 			);
 		}
+
+		// Wiki tools — always available to all agents
+		tools.push(
+			defineTool('read_wiki', {
+				description:
+					'Read from the wiki knowledge base. Call with no pageName to list available pages, or with a pageName to read a specific page. You can access Shared wiki and your squad wiki.',
+				parameters: z.object({
+					scope: z
+						.enum(['shared', 'squad'])
+						.describe('"shared" for cross-squad knowledge, "squad" for this squad\'s knowledge'),
+					pageName: z.string().optional().describe('Page name to read (omit to list all pages)'),
+				}),
+				handler: async (args: { scope: 'shared' | 'squad'; pageName?: string }) => {
+					const resolvedScope = args.scope === 'squad' ? this.squadName : 'shared';
+					if (!args.pageName) {
+						const pages = listWikiPages(resolvedScope);
+						return {
+							textResultForLlm: JSON.stringify({
+								scope: args.scope,
+								pages: pages.length > 0 ? pages : '(empty)',
+							}),
+							resultType: 'success' as const,
+						};
+					}
+					const page = readWikiPage(resolvedScope, args.pageName);
+					if (!page) {
+						return {
+							textResultForLlm: JSON.stringify({
+								error: `Page '${args.pageName}' not found in ${args.scope} wiki`,
+							}),
+							resultType: 'success' as const,
+						};
+					}
+					return {
+						textResultForLlm: JSON.stringify({
+							scope: args.scope,
+							name: page.name,
+							content: page.content,
+						}),
+						resultType: 'success' as const,
+					};
+				},
+			}),
+			defineTool('write_wiki', {
+				description:
+					"Write a page to your squad's wiki knowledge base. Read the existing page first and merge knowledge if updating. You can only write to your squad wiki (not shared).",
+				parameters: z.object({
+					pageName: z
+						.string()
+						.describe('Page name (no .md extension, e.g., "architecture" or "conventions")'),
+					content: z.string().describe('Full markdown content for the page'),
+				}),
+				handler: async (args: { pageName: string; content: string }) => {
+					writeWikiPage(this.squadName, args.pageName, args.content);
+					return {
+						textResultForLlm: JSON.stringify({
+							written: true,
+							scope: 'squad',
+							pageName: args.pageName,
+						}),
+						resultType: 'success' as const,
+					};
+				},
+			}),
+			defineTool('search_wiki', {
+				description:
+					'Search across all accessible wiki pages by keyword. Searches both Shared and your squad wiki.',
+				parameters: z.object({
+					keyword: z.string().describe('Keyword or phrase to search for'),
+				}),
+				handler: async (args: { keyword: string }) => {
+					const results = searchWiki(args.keyword, getSquadScopes(this.squadName));
+					if (results.length === 0) {
+						return {
+							textResultForLlm: JSON.stringify({ results: [], message: 'No matches found.' }),
+							resultType: 'success' as const,
+						};
+					}
+					return {
+						textResultForLlm: JSON.stringify({ results }),
+						resultType: 'success' as const,
+					};
+				},
+			}),
+		);
 
 		return tools;
 	}

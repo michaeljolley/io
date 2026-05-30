@@ -13,11 +13,15 @@ import { startScheduler, stopScheduler } from './scheduler/engine.js';
 import { getEventBus } from './squad/event-bus.js';
 import { initActivityLogger } from './store/activity.js';
 import { closeDatabase, initDatabase } from './store/db.js';
+import { initWiki } from './wiki/index.js';
 
 const config = loadConfig();
 
 // Ensure data directory exists
 mkdirSync(config.dataDir, { recursive: true });
+
+// Initialize wiki directory structure
+initWiki(config.dataDir);
 
 const logger = initLogger(config);
 logger.info({ config: { ...config, dataDir: config.dataDir } }, 'IO daemon starting');

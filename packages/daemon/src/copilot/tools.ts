@@ -12,6 +12,14 @@ import {
 } from '../squad/manager.js';
 import { listInboxEntries, resolveInboxEntry } from '../store/inbox.js';
 import { createSchedule, deleteSchedule, listSchedules } from '../store/schedules.js';
+import {
+	getOrchestratorScopes,
+	getPageListing,
+	listWikiPages,
+	readWikiPage,
+	searchWiki,
+	writeWikiPage,
+} from '../wiki/index.js';
 
 export function createOrchestratorTools() {
 	return [
@@ -402,6 +410,90 @@ export function createOrchestratorTools() {
 						resultType: 'success' as const,
 					};
 				}
+			},
+		}),
+
+		defineTool('read_wiki', {
+			description:
+				'Read from the wiki knowledge base. Call with no pageName to list available pages, or with a pageName to read its content. You have access to IO-level and Shared wiki scopes.',
+			parameters: z.object({
+				scope: z.enum(['io', 'shared']).describe('Which wiki scope to read from'),
+				pageName: z
+					.string()
+					.optional()
+					.describe('Page name to read (omit to list all pages in scope)'),
+			}),
+			handler: async (args: { scope: 'io' | 'shared'; pageName?: string }) => {
+				if (!args.pageName) {
+					const pages = listWikiPages(args.scope);
+					return {
+						textResultForLlm: JSON.stringify({
+							scope: args.scope,
+							pages: pages.length > 0 ? pages : '(empty)',
+						}),
+						resultType: 'success' as const,
+					};
+				}
+				const page = readWikiPage(args.scope, args.pageName);
+				if (!page) {
+					return {
+						textResultForLlm: JSON.stringify({
+							error: `Page '${args.pageName}' not found in ${args.scope} wiki`,
+						}),
+						resultType: 'success' as const,
+					};
+				}
+				return {
+					textResultForLlm: JSON.stringify({
+						scope: page.scope,
+						name: page.name,
+						content: page.content,
+					}),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('write_wiki', {
+			description:
+				'Write a page to the wiki knowledge base. Provide the full page content (read existing first and merge if updating). You can write to IO-level and Shared scopes.',
+			parameters: z.object({
+				scope: z.enum(['io', 'shared']).describe('Which wiki scope to write to'),
+				pageName: z
+					.string()
+					.describe('Page name (no .md extension, e.g., "preferences" or "routing-conventions")'),
+				content: z.string().describe('Full markdown content for the page'),
+			}),
+			handler: async (args: { scope: 'io' | 'shared'; pageName: string; content: string }) => {
+				writeWikiPage(args.scope, args.pageName, args.content);
+				return {
+					textResultForLlm: JSON.stringify({
+						written: true,
+						scope: args.scope,
+						pageName: args.pageName,
+					}),
+					resultType: 'success' as const,
+				};
+			},
+		}),
+
+		defineTool('search_wiki', {
+			description: 'Search across wiki pages by keyword. Searches IO-level and Shared scopes.',
+			parameters: z.object({
+				keyword: z.string().describe('Keyword or phrase to search for'),
+			}),
+			handler: async (args: { keyword: string }) => {
+				const results = searchWiki(args.keyword, getOrchestratorScopes());
+				if (results.length === 0) {
+					return {
+						textResultForLlm: JSON.stringify({ results: [], message: 'No matches found.' }),
+						resultType: 'success' as const,
+					};
+				}
+				return {
+					textResultForLlm: JSON.stringify({ results }),
+					resultType: 'success' as const,
+				};
 			},
 		}),
 	];
