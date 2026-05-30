@@ -18,6 +18,11 @@ Create `~/.io/config.json` with any settings you want to override:
   "telegram": {
     "botToken": "123456789:ABCdefGHIjklMNOpqrSTUvwxYZ",
     "allowedChatIds": [12345678, 87654321]
+  },
+  "supabase": {
+    "projectUrl": "https://your-project.supabase.co",
+    "anonKey": "eyJhbGciOiJIUzI1NiIs...",
+    "jwtSecret": "your-jwt-secret-from-supabase-settings"
   }
 }
 ```
@@ -36,6 +41,15 @@ Environment variables override config file values:
 | `IO_DATA_DIR` | `dataDir` | `~/.io` | Base directory for all IO data |
 | `TELEGRAM_BOT_TOKEN` | `telegram.botToken` | — | Telegram bot token from @BotFather |
 | `TELEGRAM_ALLOWED_CHAT_IDS` | `telegram.allowedChatIds` | — | Comma-separated chat IDs to whitelist |
+| `IO_SUPABASE_URL` | `supabase.projectUrl` | — | Supabase project URL |
+| `IO_SUPABASE_ANON_KEY` | `supabase.anonKey` | — | Supabase publishable anon key |
+| `IO_SUPABASE_JWT_SECRET` | `supabase.jwtSecret` | — | Supabase JWT secret for API auth |
+
+## Authentication (Supabase)
+
+When `supabase.projectUrl` and `supabase.anonKey` are set, the web dashboard shows a login page and requires authentication. When `supabase.jwtSecret` is also set, all API endpoints (except `GET /api/health` and `GET /api/config`) require a valid JWT in the `Authorization: Bearer <token>` header.
+
+If Supabase is **not** configured, authentication is skipped entirely — suitable for local-only use behind a firewall.
 
 ## Data Directory
 
@@ -46,14 +60,25 @@ Environment variables override config file values:
 ├── attachments/         # Uploaded files
 │   └── {id}/
 │       └── {filename}
+├── source/              # Cloned project repos
+│   └── {owner}/
+│       └── {repo}/
 ├── squads/
 │   └── {squad-name}/
 │       ├── team-lead.skill.md
 │       ├── scribe.skill.md
 │       ├── qa-tester.skill.md
 │       └── {specialist}.skill.md
+├── wiki/                # Knowledge base pages
+│   ├── io/
+│   ├── shared/
+│   └── squads/{name}/
 └── sessions/            # Copilot SDK session state
 ```
+
+### Source Directory Convention
+
+When the orchestrator clones repos for squad work, they are stored at `~/.io/source/{owner}/{repo}`. For example, `https://github.com/microsoft/powertoys` is cloned to `~/.io/source/microsoft/powertoys`.
 
 ## Autonomy Tiers
 

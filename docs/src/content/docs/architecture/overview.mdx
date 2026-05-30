@@ -12,6 +12,7 @@ io/
 ├── packages/
 │   ├── daemon/      # Core: orchestrator, squads, API server
 │   ├── shared/      # Shared types and constants
+│   ├── web/         # Web dashboard (React + Vite + Tailwind)
 │   ├── tui/         # Terminal UI (Ink)
 │   └── telegram/    # Telegram bot client
 └── docs/            # This documentation (Astro Starlight)
@@ -33,7 +34,7 @@ The daemon is the heart of IO. It runs continuously and manages:
 ### Communication Flow
 
 ```
-User → (TUI | Telegram | REST) → WebSocket → Daemon
+User → (TUI | Telegram | Web Dashboard | REST) → WebSocket → Daemon
   ↓
 Orchestrator (LLM decides: answer directly or delegate)
   ↓                           ↓
@@ -46,6 +47,8 @@ Client ← WebSocket     Team Lead → Agents → PR
 
 - **SQLite** (`~/.io/io.db`) — Conversations, squads, instances, token usage, activity logs
 - **Disk** (`~/.io/squads/`) — SKILL.md files defining agent roles
+- **Disk** (`~/.io/source/`) — Cloned project repos (`{owner}/{repo}`)
+- **Disk** (`~/.io/wiki/`) — Knowledge base pages (io, shared, per-squad)
 - **Disk** (`~/.io/attachments/`) — Uploaded files
 - **Git Worktrees** — Isolated working copies per squad instance
 

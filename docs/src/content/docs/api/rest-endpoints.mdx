@@ -9,6 +9,20 @@ description: HTTP API reference
 http://localhost:7777/api
 ```
 
+## Authentication
+
+When Supabase is configured with a JWT secret, all endpoints require a valid access token:
+
+```
+Authorization: Bearer <supabase-access-token>
+```
+
+**Exempt routes** (no auth required):
+- `GET /api/health`
+- `GET /api/config`
+
+If Supabase is not configured, all endpoints are open.
+
 ## Endpoints
 
 ### Health
@@ -24,6 +38,64 @@ Returns daemon health status.
   "uptime": 3600,
   "copilotConnected": true,
   "lastCheck": "2025-01-15T10:30:00.000Z"
+}
+```
+
+---
+
+### Configuration
+
+#### `GET /api/config`
+
+Returns the current daemon configuration (safe subset for client bootstrap).
+
+**Response:**
+```json
+{
+  "apiPort": 7777,
+  "supabase": {
+    "projectUrl": "https://your-project.supabase.co",
+    "anonKey": "eyJ..."
+  }
+}
+```
+
+#### `PATCH /api/config`
+
+Update configuration values at runtime. Changes are written to `~/.io/config.json`.
+
+**Request:**
+```json
+{
+  "logLevel": "debug",
+  "defaultModel": "claude-sonnet-4.5"
+}
+```
+
+---
+
+### Conversations
+
+#### `GET /api/conversations`
+
+Returns the orchestrator conversation history.
+
+**Query Parameters:**
+- `limit` — Max entries (default: 50)
+- `offset` — Pagination offset
+
+**Response:**
+```json
+{
+  "conversations": [
+    {
+      "id": "uuid",
+      "role": "user",
+      "content": "Hello IO!",
+      "source": "web",
+      "createdAt": "2025-01-15T10:30:00.000Z"
+    }
+  ]
 }
 ```
 
