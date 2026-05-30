@@ -5,6 +5,7 @@ import type { IOConfig } from '../config.js';
 import { sendMessage } from '../copilot/orchestrator.js';
 import { createChildLogger } from '../logging/logger.js';
 import { healthRouter } from './routes/health.js';
+import { usageRouter } from './routes/usage.js';
 
 export interface ApiServer {
 	start(): Promise<void>;
@@ -21,6 +22,7 @@ export function createApiServer(config: IOConfig): ApiServer {
 
 	// Routes
 	app.use('/api', healthRouter());
+	app.use('/api', usageRouter());
 
 	// POST /api/messages — send a message to the orchestrator
 	app.post('/api/messages', async (req, res) => {

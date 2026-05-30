@@ -6,6 +6,7 @@ import { loadConfig } from './config.js';
 import { stopClient } from './copilot/client.js';
 import { destroyOrchestrator, initOrchestrator } from './copilot/orchestrator.js';
 import { getLogger, initLogger } from './logging/logger.js';
+import { seedPricing } from './models/index.js';
 import { closeDatabase, initDatabase } from './store/db.js';
 
 const config = loadConfig();
@@ -22,6 +23,9 @@ const apiServer = createApiServer(config);
 async function start(): Promise<void> {
 	// Initialize database
 	await initDatabase(config.dataDir);
+
+	// Seed model pricing defaults
+	await seedPricing();
 
 	// Initialize Copilot orchestrator
 	await initOrchestrator(config);
