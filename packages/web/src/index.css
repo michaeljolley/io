@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* ─── Theme Tokens ─────────────────────────────────────────────────────────── */
+
+@theme {
+	--color-background: #1a1a1a;
+	--color-foreground: #f0ece8;
+	--color-muted: #6b7280;
+	--color-muted-foreground: #9ca3af;
+	--color-card: #222222;
+	--color-card-foreground: #f0ece8;
+	--color-border: #333333;
+	--color-input: #2a2a2a;
+	--color-ring: #E43A9C;
+	--color-accent: #E43A9C;
+	--color-accent-foreground: #ffffff;
+	--color-destructive: #ef4444;
+	--color-success: #22c55e;
+	--color-warning: #f59e0b;
+	--color-info: #3b82f6;
+
+	--font-sans: "Inter", system-ui, -apple-system, sans-serif;
+	--font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+}
+
+/* ─── Base Styles ──────────────────────────────────────────────────────────── */
+
+body {
+	background-color: var(--color-background);
+	color: var(--color-foreground);
+	font-family: var(--font-sans);
+	min-height: 100vh;
+	overflow: hidden;
+}
+
+#root {
+	min-height: 100vh;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: #444;
+	border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+
+/* ─── Glass Card ───────────────────────────────────────────────────────────── */
+
+.glass-card {
+	background: rgba(34, 34, 34, 0.7);
+	backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: var(--radius-lg);
+}
+
+/* ─── Gradient Text ────────────────────────────────────────────────────────── */
+
+.gradient-text {
+	background: linear-gradient(135deg, #D83333 0%, #E43A9C 50%, #F041FF 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* ─── Floating Orbs (ambient background) ───────────────────────────────────── */
+
+.orb {
+	position: fixed;
+	border-radius: 50%;
+	filter: blur(80px);
+	opacity: 0.15;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.orb-1 {
+	width: 400px;
+	height: 400px;
+	background: #E43A9C;
+	top: -100px;
+	right: -100px;
+	animation: orb-float-1 20s ease-in-out infinite;
+}
+
+.orb-2 {
+	width: 300px;
+	height: 300px;
+	background: #D83333;
+	bottom: -50px;
+	left: -50px;
+	animation: orb-float-2 25s ease-in-out infinite;
+}
+
+.orb-3 {
+	width: 250px;
+	height: 250px;
+	background: #F041FF;
+	top: 40%;
+	left: 30%;
+	animation: orb-float-3 18s ease-in-out infinite;
+}
+
+@keyframes orb-float-1 {
+	0%, 100% { transform: translate(0, 0) scale(1); }
+	33% { transform: translate(-30px, 20px) scale(1.05); }
+	66% { transform: translate(20px, -10px) scale(0.95); }
+}
+
+@keyframes orb-float-2 {
+	0%, 100% { transform: translate(0, 0) scale(1); }
+	33% { transform: translate(20px, -30px) scale(1.1); }
+	66% { transform: translate(-15px, 15px) scale(0.9); }
+}
+
+@keyframes orb-float-3 {
+	0%, 100% { transform: translate(0, 0) scale(1); }
+	50% { transform: translate(-25px, 25px) scale(1.05); }
+}
+
+/* ─── Prose (markdown content) ─────────────────────────────────────────────── */
+
+.prose-io h1, .prose-io h2, .prose-io h3, .prose-io h4 {
+	background: linear-gradient(135deg, #D83333 0%, #E43A9C 50%, #F041FF 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	font-weight: 600;
+	margin: 1.1em 0 0.4em;
+}
+
+.prose-io h1 { font-size: 1.35em; }
+.prose-io h2 { font-size: 1.15em; }
+.prose-io h3 { font-size: 1em; }
+
+.prose-io p { margin: 0.5em 0; }
+.prose-io ul, .prose-io ol { margin: 0.5em 0; padding-left: 1.5em; }
+.prose-io li { margin: 0.25em 0; }
+.prose-io code {
+	background: rgba(255,255,255,0.06);
+	padding: 0.15em 0.4em;
+	border-radius: 4px;
+	font-family: var(--font-mono);
+	font-size: 0.85em;
+}
+.prose-io pre {
+	background: rgba(0,0,0,0.4);
+	border-radius: var(--radius-md);
+	padding: 1em;
+	overflow-x: auto;
+	margin: 0.75em 0;
+}
+.prose-io pre code {
+	background: none;
+	padding: 0;
+}
+.prose-io a {
+	color: var(--color-accent);
+	text-decoration: underline;
+}
+.prose-io table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.75em 0;
+}
+.prose-io th, .prose-io td {
+	border: 1px solid var(--color-border);
+	padding: 0.4em 0.75em;
+	text-align: left;
+}
+.prose-io th {
+	background: rgba(255,255,255,0.03);
+	font-weight: 600;
+}

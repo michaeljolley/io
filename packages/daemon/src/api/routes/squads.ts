@@ -54,6 +54,18 @@ export function squadsRouter(): Router {
 			const members = await getSquadMembers(squad.id);
 			const instances = getSquadInstances(squad.id);
 
+			// Build a map of role -> current task (from active instances)
+			const currentTasks = new Map<string, string>();
+			for (const inst of instances) {
+				if (inst.status !== 'complete' && inst.status !== 'failed') {
+					for (const task of inst.tasks) {
+						if (task.status === 'in_progress') {
+							currentTasks.set(task.assignedTo, task.description);
+						}
+					}
+				}
+			}
+
 			res.json({
 				squad: {
 					id: squad.id,
@@ -74,6 +86,7 @@ export function squadsRouter(): Router {
 					veto: m.isVetoMember,
 					tools: m.toolsAllowed,
 					status: m.status,
+					currentTask: currentTasks.get(m.roleName) ?? null,
 				})),
 				instances: instances.map((i) => ({
 					id: i.id,

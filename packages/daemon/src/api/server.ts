@@ -1,4 +1,7 @@
 import { createServer } from 'node:http';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { type WebSocket, WebSocketServer } from 'ws';
 import type { IOConfig } from '../config.js';
@@ -7,6 +10,8 @@ import { createChildLogger } from '../logging/logger.js';
 import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
 import { activityRouter } from './routes/activity.js';
 import { attachmentsRouter } from './routes/attachments.js';
+import { configRouter } from './routes/config.js';
+import { conversationsRouter } from './routes/conversations.js';
 import { healthRouter } from './routes/health.js';
 import { inboxRouter } from './routes/inbox.js';
 import { schedulesRouter } from './routes/schedules.js';
@@ -36,6 +41,8 @@ export function createApiServer(config: IOConfig): ApiServer {
 	app.use('/api', attachmentsRouter(config.dataDir));
 	app.use('/api', inboxRouter());
 	app.use('/api', schedulesRouter());
+	app.use('/api', conversationsRouter());
+	app.use('/api', configRouter());
 	app.use('/api/wiki', wikiRouter);
 	app.use('/api', skillsRouter);
 
@@ -73,6 +80,18 @@ export function createApiServer(config: IOConfig): ApiServer {
 			res.status(500).json({ error: 'Failed to process message' });
 		}
 	});
+
+	// Serve web frontend static files (production build)
+	const __dirname = fileURLToPath(new URL('.', import.meta.url));
+	const webDistPath = resolve(__dirname, '../../../web/dist');
+	if (existsSync(webDistPath)) {
+		app.use(express.static(webDistPath));
+		// SPA fallback: serve index.html for any non-API route
+		app.get('*', (_req, res) => {
+			res.sendFile(join(webDistPath, 'index.html'));
+		});
+		logger.info({ path: webDistPath }, 'Serving web frontend');
+	}
 
 	const server = createServer(app);
 
