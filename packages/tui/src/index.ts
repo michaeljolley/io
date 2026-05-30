@@ -1,9 +1,8 @@
 #!/usr/bin/env node
+import { loadConfig } from '@io/shared';
 import { withFullScreen } from 'fullscreen-ink';
 import { createElement } from 'react';
 import { App } from './App.js';
-
-const DEFAULT_PORT = 7777;
 
 async function isDaemonRunning(port: number): Promise<boolean> {
 	try {
@@ -15,7 +14,8 @@ async function isDaemonRunning(port: number): Promise<boolean> {
 }
 
 async function main() {
-	const port = Number(process.env.IO_PORT) || DEFAULT_PORT;
+	const config = loadConfig();
+	const port = config.apiPort;
 
 	const running = await isDaemonRunning(port);
 	if (!running) {

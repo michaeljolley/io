@@ -33,3 +33,5 @@ export type {
 	ApiHealthResponse,
 } from './types/api.js';
 export { AUTONOMY_TIERS, DEFAULT_CONFIG } from './constants.js';
+export { loadConfig } from './config.js';
+export type { IOConfig } from './config.js';

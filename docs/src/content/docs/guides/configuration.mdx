@@ -3,20 +3,45 @@ title: Configuration
 description: Configuring IO's behavior
 ---
 
+IO uses a layered configuration system. **Environment variables** take priority over the **config file**, which takes priority over **defaults**.
+
+## Config File
+
+Create `~/.io/config.json` with any settings you want to override:
+
+```json
+{
+  "apiPort": 7777,
+  "logLevel": "info",
+  "defaultModel": "claude-opus-4.6",
+  "maxInstancesPerSquad": 3,
+  "telegram": {
+    "botToken": "123456789:ABCdefGHIjklMNOpqrSTUvwxYZ",
+    "allowedChatIds": [12345678, 87654321]
+  }
+}
+```
+
+All fields are optional — only specify what you want to change from defaults.
+
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `IO_API_PORT` | `7777` | HTTP/WebSocket server port |
-| `IO_LOG_LEVEL` | `info` | Pino log level (`debug`, `info`, `warn`, `error`) |
-| `IO_DATA_DIR` | `~/.io` | Base directory for all IO data |
-| `IO_DEFAULT_MODEL` | `claude-opus-4.6` | Default LLM model for orchestrator |
+Environment variables override config file values:
+
+| Variable | Config Key | Default | Description |
+|----------|-----------|---------|-------------|
+| `IO_PORT` | `apiPort` | `7777` | HTTP/WebSocket server port |
+| `IO_LOG_LEVEL` | `logLevel` | `info` | Log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`) |
+| `IO_MODEL` | `defaultModel` | `claude-opus-4.6` | Default LLM model |
+| `IO_DATA_DIR` | `dataDir` | `~/.io` | Base directory for all IO data |
+| `TELEGRAM_BOT_TOKEN` | `telegram.botToken` | — | Telegram bot token from @BotFather |
+| `TELEGRAM_ALLOWED_CHAT_IDS` | `telegram.allowedChatIds` | — | Comma-separated chat IDs to whitelist |
 
 ## Data Directory
 
 ```
 ~/.io/
-├── config.json          # (future) persistent config overrides
+├── config.json          # Configuration overrides
 ├── io.db                # SQLite database
 ├── attachments/         # Uploaded files
 │   └── {id}/

@@ -5,6 +5,7 @@ import { type StreamingEditor, createStreamingEditor } from './streaming.js';
 interface BotConfig {
 	token: string;
 	allowedChatIds?: number[];
+	apiPort: number;
 }
 
 /**
@@ -60,7 +61,7 @@ export function createTelegramBot(config: BotConfig, client: DaemonClient) {
 		}
 
 		try {
-			const port = process.env.IO_API_PORT ?? '7777';
+			const port = config.apiPort;
 			const res = await fetch(`http://127.0.0.1:${port}/api/health`);
 			if (res.ok) {
 				const data = (await res.json()) as { status: string; uptime?: number };
@@ -79,7 +80,7 @@ export function createTelegramBot(config: BotConfig, client: DaemonClient) {
 		if (!isAllowed(ctx)) return;
 
 		try {
-			const port = process.env.IO_API_PORT ?? '7777';
+			const port = config.apiPort;
 			const res = await fetch(`http://127.0.0.1:${port}/api/squads`);
 			if (!res.ok) {
 				await ctx.reply('⚠️ Failed to fetch squads');
@@ -117,7 +118,7 @@ export function createTelegramBot(config: BotConfig, client: DaemonClient) {
 		if (!isAllowed(ctx)) return;
 
 		try {
-			const port = process.env.IO_API_PORT ?? '7777';
+			const port = config.apiPort;
 			const res = await fetch(`http://127.0.0.1:${port}/api/inbox?status=unread`);
 			if (!res.ok) {
 				await ctx.reply('⚠️ Failed to fetch inbox');

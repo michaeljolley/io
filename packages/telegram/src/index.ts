@@ -1,19 +1,20 @@
+import { loadConfig } from '@io/shared';
 import { createTelegramBot } from './bot.js';
 import { createDaemonClient } from './client.js';
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
+const config = loadConfig();
+
+const token = config.telegram.botToken;
 if (!token) {
-	console.error('Error: TELEGRAM_BOT_TOKEN environment variable is required');
+	console.error('Error: Telegram bot token is required. Set TELEGRAM_BOT_TOKEN env var or telegram.botToken in ~/.io/config.json');
 	process.exit(1);
 }
 
-const port = Number.parseInt(process.env.IO_API_PORT ?? '7777', 10);
-const allowedChats = process.env.TELEGRAM_ALLOWED_CHAT_IDS
-	? process.env.TELEGRAM_ALLOWED_CHAT_IDS.split(',').map((id) => Number.parseInt(id.trim(), 10))
-	: undefined;
+const port = config.apiPort;
+const allowedChats = config.telegram.allowedChatIds.length > 0 ? config.telegram.allowedChatIds : undefined;
 
 const client = createDaemonClient(port);
-const bot = createTelegramBot({ token, allowedChatIds: allowedChats }, client);
+const bot = createTelegramBot({ token, allowedChatIds: allowedChats, apiPort: port }, client);
 
 async function start() {
 	console.log('IO Telegram Bot starting...');
