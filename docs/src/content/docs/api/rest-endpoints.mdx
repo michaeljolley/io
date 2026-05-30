@@ -1,0 +1,176 @@
+---
+title: REST Endpoints
+description: HTTP API reference
+---
+
+## Base URL
+
+```
+http://localhost:7777/api
+```
+
+## Endpoints
+
+### Health
+
+#### `GET /api/health`
+
+Returns daemon health status.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "uptime": 3600,
+  "copilotConnected": true,
+  "lastCheck": "2025-01-15T10:30:00.000Z"
+}
+```
+
+---
+
+### Messages
+
+#### `POST /api/messages`
+
+Send a message to the orchestrator.
+
+**Request:**
+```json
+{
+  "content": "Hello, IO!",
+  "source": "web",
+  "connectionId": "uuid-of-websocket-connection"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "content": "Hello! How can I help you today?"
+}
+```
+
+If `connectionId` is provided and the client is connected via WebSocket, streaming deltas will be sent over the WebSocket connection.
+
+---
+
+### Squads
+
+#### `GET /api/squads`
+
+List all active squads.
+
+**Response:**
+```json
+{
+  "squads": [
+    {
+      "name": "my-app",
+      "projectPath": "/home/user/projects/my-app",
+      "memberCount": 4,
+      "instanceCount": 1
+    }
+  ]
+}
+```
+
+#### `GET /api/squads/:name`
+
+Get detailed squad information including members and instances.
+
+#### `POST /api/squads/:name/run`
+
+Start a new instance on a squad.
+
+**Request:**
+```json
+{
+  "objective": "Add dark mode toggle to settings page",
+  "issueRef": "#42"
+}
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "instanceId": "uuid",
+  "status": "planning"
+}
+```
+
+---
+
+### Token Usage
+
+#### `GET /api/usage`
+
+Query token usage with optional filters.
+
+**Query Parameters:**
+- `squad` — Filter by squad ID
+- `model` — Filter by model name
+- `from` — Start date (ISO 8601)
+- `to` — End date (ISO 8601)
+
+---
+
+### Activity
+
+#### `GET /api/activity`
+
+Query the agent activity log.
+
+**Query Parameters:**
+- `squad` — Filter by squad ID
+- `instance` — Filter by instance ID
+- `agent` — Filter by agent role
+- `type` — Filter by activity type (`tool_call`, `message`, `meeting_contribution`, `task_start`, `task_complete`, `error`)
+- `limit` — Max results (default: 50)
+- `offset` — Pagination offset
+
+**Response:**
+```json
+{
+  "entries": [
+    {
+      "id": 1,
+      "squadId": "squad-123",
+      "instanceId": "instance-456",
+      "agentRole": "team-lead",
+      "activityType": "task_start",
+      "modelUsed": "claude-opus-4.6",
+      "content": "{\"task\": \"implement-feature\"}",
+      "tokensUsed": null,
+      "timestamp": "2025-01-15T10:30:00"
+    }
+  ]
+}
+```
+
+---
+
+### Attachments
+
+#### `POST /api/attachments`
+
+Upload a file (multipart form data).
+
+**Form Fields:**
+- `file` — The file to upload (max 50MB)
+- `messageId` — Optional associated message ID
+
+**Response (201):**
+```json
+{
+  "id": "uuid",
+  "filename": "screenshot.png",
+  "mimeType": "image/png",
+  "sizeBytes": 45678
+}
+```
+
+#### `GET /api/attachments/:id`
+
+Download an attachment by ID. Returns the file with appropriate Content-Type headers.
