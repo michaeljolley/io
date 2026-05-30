@@ -28,21 +28,24 @@ IO is an always-running daemon that acts as your personal AI orchestrator. You t
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────┐
-│                   You                        │
-│         (TUI / Telegram / API)              │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│              Orchestrator                    │
-│   (Copilot SDK session, tool-calling)       │
-└──────┬───────────┬──────────────┬───────────┘
-       │           │              │
-┌──────▼──┐ ┌─────▼────┐ ┌──────▼──────┐
-│ Squad A │ │ Squad B  │ │ Scheduler   │
-│ (team)  │ │ (team)   │ │ (cron jobs) │
-└─────────┘ └──────────┘ └─────────────┘
+```mermaid
+graph TD
+    User["🧑 You<br/>(TUI / Telegram / API)"]
+    Orch["🤖 Orchestrator<br/>(Copilot SDK · tool-calling)"]
+    Wiki["📚 Wiki<br/>(Knowledge Base)"]
+    Skills["🧩 Skills<br/>(SKILL.md)"]
+    Sched["⏰ Scheduler<br/>(cron jobs)"]
+    SquadA["👥 Squad A<br/>(Team Lead + Agents)"]
+    SquadB["👥 Squad B<br/>(Team Lead + Agents)"]
+
+    User --> Orch
+    Orch --> SquadA
+    Orch --> SquadB
+    Orch --> Sched
+    Orch --> Wiki
+    Orch --> Skills
+    SquadA --> Wiki
+    SquadB --> Wiki
 ```
 
 Each squad has:
