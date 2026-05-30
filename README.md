@@ -85,12 +85,29 @@ Create `~/.io/config.json`:
 
 ```json
 {
+  "apiPort": 7777,
   "defaultModel": "claude-opus-4.6",
-  "apiPort": 7777
+  "logLevel": "info",
+  "maxInstancesPerSquad": 3,
+  "telegram": {
+    "botToken": "your-token-from-botfather",
+    "allowedChatIds": [12345678]
+  }
 }
 ```
 
-See the [Configuration Guide](https://michaeljolley.github.io/io/guides/configuration/) for all options.
+All settings can also be controlled via environment variables (which take priority):
+
+| Variable | Config Key | Default |
+|----------|-----------|---------|
+| `IO_PORT` | `apiPort` | `7777` |
+| `IO_LOG_LEVEL` | `logLevel` | `info` |
+| `IO_MODEL` | `defaultModel` | `claude-opus-4.6` |
+| `IO_DATA_DIR` | `dataDir` | `~/.io` |
+| `TELEGRAM_BOT_TOKEN` | `telegram.botToken` | — |
+| `TELEGRAM_ALLOWED_CHAT_IDS` | `telegram.allowedChatIds` | — |
+
+See the [Configuration Guide](https://michaeljolley.github.io/io/guides/configuration/) for full details.
 
 ## Key Features
 
