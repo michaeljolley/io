@@ -10,7 +10,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github-dark-dimmed.min.css';
-import { marked } from 'marked';
+import { marked, type Tokens } from 'marked';
 import { useMemo } from 'react';
 
 hljs.registerLanguage('javascript', javascript);
@@ -33,16 +33,12 @@ hljs.registerLanguage('css', css);
 
 marked.use({
 	renderer: {
-		heading({ tokens, depth }: { tokens: { raw: string }[]; depth: number }) {
-			const text = tokens.map((t: { raw: string }) => t.raw).join('');
-			const tag = `h${depth}`;
-			const sizes: Record<number, string> = {
-				1: '2em',
-				2: '1.65em',
-				3: '1.35em',
-				4: '1.15em',
-			};
-			return `<${tag} style="background:linear-gradient(135deg, #D83333 0%, #E43A9C 50%, #F041FF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:${sizes[depth] ?? '1em'};font-weight:600;margin:1.1em 0 0.4em;line-height:1.4;text-transform:none;">${text}</${tag}>`;
+		heading(this: { parser: { parseInline(tokens: Tokens.Token[]): string } }, token: Tokens.Heading) {
+			// Use parser.parseInline so inline content (links, em, strong, etc.)
+			// is rendered as proper HTML rather than raw markdown text.
+			const text = this.parser.parseInline(token.tokens);
+			const tag = `h${token.depth}`;
+			return `<${tag}>${text}</${tag}>`;
 		},
 		code({ text, lang }: { text: string; lang?: string }) {
 			let highlighted: string;
