@@ -10,7 +10,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github-dark-dimmed.min.css';
-import { marked } from 'marked';
+import { marked, type Token } from 'marked';
 import { useMemo } from 'react';
 
 hljs.registerLanguage('javascript', javascript);
@@ -33,8 +33,8 @@ hljs.registerLanguage('css', css);
 
 marked.use({
 	renderer: {
-		heading({ tokens, depth }: { tokens: { raw: string }[]; depth: number }) {
-			const text = tokens.map((t: { raw: string }) => t.raw).join('');
+		heading({ tokens, depth }: { tokens: Token[]; depth: number }) {
+			const text = tokens.map((t) => t.raw).join('');
 			const tag = `h${depth}`;
 			const sizes: Record<number, string> = {
 				1: '2em',
