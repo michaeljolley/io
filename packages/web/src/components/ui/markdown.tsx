@@ -10,7 +10,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github-dark-dimmed.min.css';
-import { marked, type Tokens } from 'marked';
+import { marked, type Tokens, type Token } from 'marked';
 import { useMemo } from 'react';
 
 hljs.registerLanguage('javascript', javascript);
@@ -33,7 +33,7 @@ hljs.registerLanguage('css', css);
 
 marked.use({
 	renderer: {
-		heading(this: { parser: { parseInline(tokens: Tokens.Token[]): string } }, token: Tokens.Heading) {
+		heading(this: { parser: { parseInline(tokens: Token[]): string } }, token: Tokens.Heading) {
 			// Use parser.parseInline so inline content (links, em, strong, etc.)
 			// is rendered as proper HTML rather than raw markdown text.
 			const text = this.parser.parseInline(token.tokens);
