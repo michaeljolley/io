@@ -36,6 +36,9 @@ logger.info(
 			logLevel: config.logLevel,
 			defaultModel: config.defaultModel,
 			dataDir: config.dataDir,
+			byok: config.byok
+				? { type: config.byok.type, baseUrl: config.byok.baseUrl }
+				: null,
 		},
 	},
 	'IO daemon starting',

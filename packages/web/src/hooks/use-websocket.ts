@@ -46,6 +46,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 	optionsRef.current = options;
 
 	useEffect(() => {
+		// Reset on (re)mount. React 18 StrictMode runs effects mount→cleanup→mount
+		// in dev; the cleanup sets this to false, so without resetting here the
+		// second invocation would bail in connect() and never establish the socket.
+		shouldReconnectRef.current = true;
+
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		let wsUrl = `${protocol}//${window.location.host}/ws`;
 
@@ -140,7 +145,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 			if (reconnectTimeoutRef.current) {
 				clearTimeout(reconnectTimeoutRef.current);
 			}
-			wsRef.current?.close();
+			const ws = wsRef.current;
+			if (!ws) {
+				return;
+			}
+			// Detach handlers so teardown doesn't trigger the reconnect cascade.
+			ws.onclose = null;
+			ws.onerror = null;
+			if (ws.readyState === WebSocket.CONNECTING) {
+				// Chrome logs an error if you close() a socket mid-handshake.
+				// Wait until it opens, then close cleanly.
+				ws.onopen = () => ws.close();
+			} else {
+				ws.close();
+			}
 		};
 	}, []);
 

@@ -1,5 +1,6 @@
 import { AUTONOMY_TIERS, SQUAD_COLORS, type AutonomyConfig, type Squad, type SquadMember } from '@io/shared';
 import type { AutonomyTier } from '@io/shared';
+import { loadConfig } from '../config.js';
 import { createChildLogger } from '../logging/logger.js';
 import { getDatabase } from '../store/db.js';
 import { Agent, type AgentConfig } from './agent.js';
@@ -393,6 +394,7 @@ export async function bootSquad(squad: Squad): Promise<SquadRuntime> {
 			squadId: squad.id,
 			squadName: squad.name,
 			model: selectModelForRole(member.roleName, 'meeting'),
+			byok: loadConfig().byok,
 			identity: {
 				displayName: member.displayName,
 				persona: member.persona,

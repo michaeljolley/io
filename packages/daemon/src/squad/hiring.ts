@@ -1,7 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
+import { loadConfig } from '../config.js';
 import { getClient } from '../copilot/client.js';
+import { buildProvider } from '../copilot/provider.js';
 import { createChildLogger } from '../logging/logger.js';
 import { ensureSquadWiki } from '../wiki/index.js';
 import { addMember, createSquad } from './manager.js';
@@ -196,9 +198,13 @@ ${summary.ciFiles.length > 0 ? summary.ciFiles.map((c) => `\`\`\`yaml\n${c}\n\`\
 Based on this codebase, what senior/principal-level specialist roles does this project need?`;
 
 	try {
+		const config = loadConfig();
+		const provider = buildProvider(config.byok);
 		const client = await getClient();
 		const session = await client.createSession({
+			model: config.defaultModel,
 			systemMessage: { mode: 'replace' as const, content: ANALYZER_PROMPT },
+			...(provider && { provider }),
 		});
 
 		const result = await session.sendAndWait({ prompt: userMessage }, 90_000);

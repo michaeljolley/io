@@ -8,6 +8,7 @@ import { appendConversationMessage } from '../store/conversations.js';
 import { getDatabase } from '../store/db.js';
 import { getOrchestratorScopes, getPageListing } from '../wiki/index.js';
 import { getClient } from './client.js';
+import { buildProvider } from './provider.js';
 import { createOrchestratorTools } from './tools.js';
 
 type Session = Awaited<ReturnType<Awaited<ReturnType<typeof getClient>>['createSession']>>;
@@ -17,6 +18,7 @@ let logger: ReturnType<typeof createChildLogger>;
 let session: Session | undefined;
 let sessionId: string | undefined;
 let currentModel: string = '';
+let currentByokHash: string = '';
 
 interface QueuedMessage {
 	prompt: string;
@@ -96,6 +98,14 @@ export async function initOrchestrator(config: IOConfig): Promise<void> {
 	logger = createChildLogger('orchestrator');
 	const client = await getClient();
 	currentModel = config.defaultModel;
+	currentByokHash = hashByok(config.byok);
+
+	const provider = buildProvider(config.byok);
+	if (provider) {
+		logger.info({ type: provider.type, baseUrl: provider.baseUrl }, 'BYOK provider configured');
+	} else {
+		logger.info('Using GitHub Copilot authentication (no BYOK provider)');
+	}
 
 	const systemMessage = await buildSystemMessage();
 
@@ -110,6 +120,7 @@ export async function initOrchestrator(config: IOConfig): Promise<void> {
 			backgroundCompactionThreshold: 0.8,
 			bufferExhaustionThreshold: 0.95,
 		},
+		...(provider && { provider }),
 	};
 
 	// Try to resume existing session
@@ -163,18 +174,20 @@ async function processQueue(): Promise<void> {
 	if (processing || messageQueue.length === 0) return;
 	processing = true;
 
-	while (messageQueue.length > 0) {
-		const msg = messageQueue.shift()!;
-		try {
-			const response = await processMessage(msg);
-			msg.resolve(response);
-		} catch (err) {
-			logger.error({ err }, 'Error processing message');
-			msg.reject(err);
+	try {
+		while (messageQueue.length > 0) {
+			const msg = messageQueue.shift()!;
+			try {
+				const response = await processMessage(msg);
+				msg.resolve(response);
+			} catch (err) {
+				logger.error({ err }, 'Error processing message');
+				msg.reject(err);
+			}
 		}
+	} finally {
+		processing = false;
 	}
-
-	processing = false;
 }
 
 async function processMessage(msg: QueuedMessage): Promise<string> {
@@ -182,14 +195,26 @@ async function processMessage(msg: QueuedMessage): Promise<string> {
 		throw new Error('Orchestrator session not initialized');
 	}
 
-	// Check if the configured model has changed — if so, recreate the session
+	// Check if model or BYOK config changed — if so, recreate the session
 	const freshConfig = loadConfig();
-	if (freshConfig.defaultModel !== currentModel) {
-		logger.info(
-			{ from: currentModel, to: freshConfig.defaultModel },
-			'Default model changed, recreating orchestrator session',
-		);
+	const freshByokHash = hashByok(freshConfig.byok);
+	const modelChanged = freshConfig.defaultModel !== currentModel;
+	const byokChanged = freshByokHash !== currentByokHash;
+
+	if (modelChanged || byokChanged) {
+		if (modelChanged) {
+			logger.info({ from: currentModel, to: freshConfig.defaultModel }, 'Model changed, recreating orchestrator session');
+		}
+		if (byokChanged) {
+			const provider = buildProvider(freshConfig.byok);
+			logger.info(
+				{ byok: provider ? { type: provider.type, baseUrl: provider.baseUrl } : null },
+				'BYOK config changed, recreating orchestrator session',
+			);
+		}
 		currentModel = freshConfig.defaultModel;
+		currentByokHash = freshByokHash;
+		const provider = buildProvider(freshConfig.byok);
 		const client = await getClient();
 		const systemMessage = await buildSystemMessage();
 		session = await client.createSession({
@@ -203,11 +228,12 @@ async function processMessage(msg: QueuedMessage): Promise<string> {
 				backgroundCompactionThreshold: 0.8,
 				bufferExhaustionThreshold: 0.95,
 			},
+			...(provider && { provider }),
 		});
 		sessionId = session.sessionId;
 		subscribeToUsage(session);
 		await saveSessionId(sessionId);
-		logger.info({ sessionId, model: currentModel }, 'Orchestrator session recreated with new model');
+		logger.info({ sessionId, model: currentModel }, 'Orchestrator session recreated');
 	}
 
 	await appendConversationMessage({
@@ -275,5 +301,11 @@ async function saveSessionId(id: string): Promise<void> {
 		sql: "INSERT OR REPLACE INTO io_state (key, value) VALUES ('orchestrator_session_id', ?)",
 		args: [id],
 	});
+}
+
+/** Stable hash of BYOK config for change detection (does not include the API key in logs). */
+function hashByok(byok: IOConfig['byok']): string {
+	if (!byok) return '';
+	return `${byok.type}|${byok.baseUrl}|${byok.apiKey}`;
 }
 

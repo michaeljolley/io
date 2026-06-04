@@ -1,11 +1,12 @@
 import { type CopilotSession, approveAll, defineTool } from '@github/copilot-sdk';
-import type { AgentEvent, AgentStatus } from '@io/shared';
+import type { AgentEvent, AgentStatus, ByokConfig } from '@io/shared';
 import { exec as execCb } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { z } from 'zod';
 import { getClient } from '../copilot/client.js';
+import { buildProvider } from '../copilot/provider.js';
 import { createChildLogger } from '../logging/logger.js';
 import { recordTokenUsage } from '../models/token-tracker.js';
 import { addInboxEntry } from '../store/inbox.js';
@@ -27,6 +28,7 @@ export interface AgentConfig {
 	squadName: string;
 	instanceId?: string;
 	model?: string;
+	byok?: ByokConfig | null;
 	identity?: { displayName: string; persona?: string; universe?: string };
 }
 
@@ -57,6 +59,7 @@ export class Agent {
 	private session: Session | null = null;
 	private skill: SkillDefinition;
 	private model: string;
+	private byok: ByokConfig | null;
 	private identity?: { displayName: string; persona?: string; universe?: string };
 	private logger;
 	private _status: AgentStatus = 'idle';
@@ -68,6 +71,7 @@ export class Agent {
 		this.squadName = config.squadName;
 		this.instanceId = config.instanceId;
 		this.model = config.model ?? 'claude-sonnet-4.6';
+		this.byok = config.byok ?? null;
 		this.identity = config.identity;
 		this.logger = createChildLogger(
 			`agent:${config.squadName}:${config.identity?.displayName ?? this.role}`,
@@ -114,6 +118,7 @@ export class Agent {
 			systemMessage: { mode: 'replace', content: systemPrompt },
 			onPermissionRequest: approveAll,
 			tools: this.buildTools(),
+			...(buildProvider(this.byok) && { provider: buildProvider(this.byok) }),
 		});
 
 		this.session.on('assistant.usage', (event) => {

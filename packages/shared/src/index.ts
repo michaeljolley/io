@@ -43,4 +43,4 @@ export type {
 } from './types/api.js';
 export { AUTONOMY_TIERS, DEFAULT_CONFIG, SQUAD_COLORS } from './constants.js';
 export { loadConfig } from './config.js';
-export type { IOConfig } from './config.js';
+export type { IOConfig, ByokConfig } from './config.js';

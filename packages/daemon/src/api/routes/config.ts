@@ -38,6 +38,9 @@ export function configRouter(): Router {
 						anonKey: config.supabase.anonKey,
 							jwtSecret: config.supabase.jwtSecret,
 					},
+					byok: config.byok
+						? { type: config.byok.type, baseUrl: config.byok.baseUrl, configured: true }
+						: null,
 				};
 			res.json({ config: redacted });
 		} catch (err) {
@@ -105,6 +108,9 @@ export function configRouter(): Router {
 						anonKey: config.supabase.anonKey,
 							jwtSecret: config.supabase.jwtSecret,
 					},
+					byok: config.byok
+						? { type: config.byok.type, baseUrl: config.byok.baseUrl, configured: true }
+						: null,
 				},
 			});
 		} catch (err) {
