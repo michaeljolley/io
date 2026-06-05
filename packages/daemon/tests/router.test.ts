@@ -12,19 +12,17 @@ describe("model router", () => {
 		resetRouterState();
 	});
 
-	it.each([
-		["hi"],
-		["thanks"],
-		["what's my name?"],
-		["status"],
-	])("routes fast tier messages like %s", (message) => {
-		expect(classifyMessage(message)).toBe("fast");
-		expect(routeMessage(message)).toMatchObject({
-			requestedTier: "fast",
-			effectiveTier: "fast",
-			model: FAST_MODEL,
-		});
-	});
+	it.each([["hi"], ["thanks"], ["what's my name?"], ["status"]])(
+		"routes fast tier messages like %s",
+		(message) => {
+			expect(classifyMessage(message)).toBe("fast");
+			expect(routeMessage(message)).toMatchObject({
+				requestedTier: "fast",
+				effectiveTier: "fast",
+				model: FAST_MODEL,
+			});
+		},
+	);
 
 	it.each([
 		["explain how promises work"],
@@ -68,7 +66,11 @@ describe("model router", () => {
 		const thirdFastAttempt = routeMessage("status");
 		const switched = routeMessage("what's my name?");
 
-		expect(initial).toMatchObject({ effectiveTier: "premium", switched: true, cooldownRemaining: 3 });
+		expect(initial).toMatchObject({
+			effectiveTier: "premium",
+			switched: true,
+			cooldownRemaining: 3,
+		});
 		expect(firstFastAttempt).toMatchObject({
 			requestedTier: "fast",
 			effectiveTier: "premium",

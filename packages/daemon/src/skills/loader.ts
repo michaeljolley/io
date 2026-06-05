@@ -3,7 +3,7 @@ import { basename, dirname, join } from "node:path";
 
 import matter from "gray-matter";
 
-import { SKILLS_DIR } from "@io/shared";
+import { SKILLS_DIR } from "@io/shared/paths";
 
 export interface Skill {
 	id: string;

@@ -1,22 +1,15 @@
 import { EVENT_NAMES } from "@io/shared";
 
-import { createSquad } from "../src/store/index.js";
+import { eventBus } from "../src/event-bus.js";
+import { activateSquad, deactivateSquad, isSquadAvailable } from "../src/squad/manager.js";
 import {
-	activateSquad,
-	deactivateSquad,
-	isSquadAvailable,
-} from "../src/squad/manager.js";
-import {
-	generateRolePrompt,
 	QA_PROMPT,
 	ROLE_GENERATION_PROMPT,
 	TEAM_LEAD_PROMPT,
+	generateRolePrompt,
 } from "../src/squad/roles.js";
-import { eventBus } from "../src/event-bus.js";
-import {
-	cleanupGlobalStoreTestContext,
-	createGlobalStoreTestContext,
-} from "./helpers.js";
+import { createSquad } from "../src/store/index.js";
+import { cleanupGlobalStoreTestContext, createGlobalStoreTestContext } from "./helpers.js";
 
 async function loadModelSelector() {
 	vi.resetModules();
@@ -49,9 +42,9 @@ describe("squad model selector", () => {
 	it("selects the premium model for complex tasks", async () => {
 		const { selectModelForTask } = await loadModelSelector();
 
-		await expect(selectModelForTask("design a multi-file architecture migration plan")).resolves.toBe(
-			"premium-model",
-		);
+		await expect(
+			selectModelForTask("design a multi-file architecture migration plan"),
+		).resolves.toBe("premium-model");
 	});
 
 	it("falls back to the best available model when the preferred model is unavailable", async () => {

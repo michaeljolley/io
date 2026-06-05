@@ -2,10 +2,10 @@ import { mkdir, mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
+	type DatabaseClient,
 	closeDatabase,
 	createDatabaseClient,
 	resetDatabase,
-	type DatabaseClient,
 } from "../src/store/db.js";
 
 const TEMP_ROOT = join(process.cwd(), ".vitest-temp");
@@ -43,7 +43,9 @@ export async function createGlobalStoreTestContext(): Promise<DatabaseTestContex
 	return { db, dir, dbPath };
 }
 
-export async function cleanupGlobalStoreTestContext(context: DatabaseTestContext | null): Promise<void> {
+export async function cleanupGlobalStoreTestContext(
+	context: DatabaseTestContext | null,
+): Promise<void> {
 	if (!context) {
 		return;
 	}

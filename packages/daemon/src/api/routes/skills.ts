@@ -1,7 +1,8 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
-import { type InstallSkillRequest, SKILLS_DIR, SKILLS_LOCK_PATH } from "@io/shared";
+import type { InstallSkillRequest } from "@io/shared";
+import { SKILLS_DIR, SKILLS_LOCK_PATH } from "@io/shared/paths";
 import { Router } from "express";
 
 const router = Router();

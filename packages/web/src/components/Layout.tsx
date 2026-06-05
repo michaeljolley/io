@@ -1,8 +1,10 @@
-import { APP_VERSION, type InboxItem } from '@io/shared';
-import { cn } from '@/lib/utils';
-import { IoMark } from '@/components/ui/io-mark';
-import { StatusDot } from '@/components/ui/shared';
-import { NotificationBell } from '@/components/NotificationPanel';
+import { NotificationBell } from "@/components/NotificationPanel";
+import { IoMark } from "@/components/ui/io-mark";
+import { StatusDot } from "@/components/ui/shared";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import { APP_VERSION, type InboxItem } from "@io/shared";
 import {
 	BarChart2,
 	BookOpen,
@@ -16,24 +18,22 @@ import {
 	Settings,
 	Users,
 	Zap,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router';
-import { useAuth } from '@/lib/auth';
-import { api } from '@/lib/api';
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet } from "react-router";
 
 const NAV_TOP = [
-	{ to: '/squads', icon: Users, label: 'Squads' },
-	{ to: '/skills', icon: Zap, label: 'Skills' },
-	{ to: '/schedules', icon: Calendar, label: 'Schedules' },
-	{ to: '/wiki', icon: BookOpen, label: 'Wiki' },
-	{ to: '/usage', icon: BarChart2, label: 'Usage' },
+	{ to: "/squads", icon: Users, label: "Squads" },
+	{ to: "/skills", icon: Zap, label: "Skills" },
+	{ to: "/schedules", icon: Calendar, label: "Schedules" },
+	{ to: "/wiki", icon: BookOpen, label: "Wiki" },
+	{ to: "/usage", icon: BarChart2, label: "Usage" },
 ] as const;
 
 const NAV_BOTTOM = [
-	{ to: '/', icon: MessageSquare, label: 'Chat' },
-	{ to: '/feed', icon: Inbox, label: 'Inbox' },
-	{ to: '/settings', icon: Settings, label: 'Settings' },
+	{ to: "/", icon: MessageSquare, label: "Chat" },
+	{ to: "/feed", icon: Inbox, label: "Inbox" },
+	{ to: "/settings", icon: Settings, label: "Settings" },
 ] as const;
 
 function NavBtn({
@@ -46,24 +46,22 @@ function NavBtn({
 	return (
 		<NavLink
 			to={to}
-			end={to === '/'}
+			end={to === "/"}
 			title={collapsed ? label : undefined}
 			className={({ isActive }) =>
 				cn(
-					'w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono transition-colors cursor-pointer relative',
-					collapsed ? 'justify-center' : '',
-					isActive
-						? 'text-[#E43A9C]'
-						: 'text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04]',
+					"w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono transition-colors cursor-pointer relative",
+					collapsed ? "justify-center" : "",
+					isActive ? "text-[#E43A9C]" : "text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04]",
 				)
 			}
-			style={({ isActive }) => (isActive ? { background: 'rgba(228,58,156,0.1)' } : undefined)}
+			style={({ isActive }) => (isActive ? { background: "rgba(228,58,156,0.1)" } : undefined)}
 		>
 			<Icon className="w-3.5 h-3.5 flex-shrink-0" />
 			{!collapsed && label}
 			{badge != null && badge > 0 && (
 				<span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[#E43A9C] text-[9px] text-white font-mono px-1">
-					{badge > 99 ? '99+' : badge}
+					{badge > 99 ? "99+" : badge}
 				</span>
 			)}
 		</NavLink>
@@ -81,13 +79,13 @@ export function Layout() {
 
 		const loadUnreadCount = () => {
 			api
-				.get<{ entries?: InboxItem[] }>('/inbox?limit=200')
+				.get<{ entries?: InboxItem[] }>("/inbox?limit=200")
 				.then((response) => {
 					if (!active) {
 						return;
 					}
 					const entries = response.entries ?? [];
-					setUnreadCount(entries.filter((item) => item.status === 'pending').length);
+					setUnreadCount(entries.filter((item) => item.status === "pending").length);
 				})
 				.catch(() => {});
 		};
@@ -106,15 +104,15 @@ export function Layout() {
 			{/* Sidebar */}
 			<div
 				className={cn(
-					'flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[#181818] transition-all duration-200',
-					collapsed ? 'w-[52px]' : 'w-[210px]',
+					"flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[#181818] transition-all duration-200",
+					collapsed ? "w-[52px]" : "w-[210px]",
 				)}
 			>
 				{/* Logo header */}
 				<div
 					className={cn(
-						'h-[52px] flex items-center border-b border-white/[0.06] flex-shrink-0',
-						collapsed ? 'justify-center px-3' : 'justify-between pl-4 pr-3',
+						"h-[52px] flex items-center border-b border-white/[0.06] flex-shrink-0",
+						collapsed ? "justify-center px-3" : "justify-between pl-4 pr-3",
 					)}
 				>
 					{collapsed ? (
@@ -143,14 +141,14 @@ export function Layout() {
 				<div className="flex-shrink-0 border-t border-white/[0.06]">
 					<div className="py-1.5 px-1.5 space-y-0.5">
 						{NAV_BOTTOM.map((item) => (
-								<NavBtn
-									key={item.to}
-									collapsed={collapsed}
-									badge={item.to === '/feed' ? unreadCount : undefined}
-									{...item}
-								/>
-							))}
-						</div>
+							<NavBtn
+								key={item.to}
+								collapsed={collapsed}
+								badge={item.to === "/feed" ? unreadCount : undefined}
+								{...item}
+							/>
+						))}
+					</div>
 					<div className="border-t border-white/[0.05] py-1.5 px-1.5 space-y-0.5">
 						<a
 							href={`https://github.com/michaeljolley/io/releases/tag/v${version}`}
@@ -158,8 +156,8 @@ export function Layout() {
 							rel="noreferrer"
 							title="GitHub"
 							className={cn(
-								'flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors cursor-pointer',
-								collapsed && 'justify-center',
+								"flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors cursor-pointer",
+								collapsed && "justify-center",
 							)}
 						>
 							<ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -168,10 +166,10 @@ export function Layout() {
 						<button
 							type="button"
 							onClick={() => setCollapsed(!collapsed)}
-							title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+							title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 							className={cn(
-								'w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors cursor-pointer',
-								collapsed && 'justify-center',
+								"w-full flex items-center gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors cursor-pointer",
+								collapsed && "justify-center",
 							)}
 						>
 							{collapsed ? (
@@ -193,8 +191,8 @@ export function Layout() {
 						<span className="text-[11px] font-mono text-green-400">connected</span>
 					</div>
 					<div className="flex items-center gap-1.5">
-							{/* Notification bell */}
-							<NotificationBell />
+						{/* Notification bell */}
+						<NotificationBell />
 
 						{/* Logout */}
 						{supabase && (

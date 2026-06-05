@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { Bell } from 'lucide-react';
-import { useTimezone } from '@/hooks/use-config';
-import { formatTime } from '@/lib/timezone';
+import { useTimezone } from "@/hooks/use-config";
+import { formatTime } from "@/lib/timezone";
+import { Bell } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export interface Notification {
 	id: string;
@@ -29,7 +29,9 @@ function useNotifications() {
 	useEffect(() => {
 		const listener = () => forceUpdate((n) => n + 1);
 		listeners.add(listener);
-		return () => { listeners.delete(listener); };
+		return () => {
+			listeners.delete(listener);
+		};
 	}, []);
 	return globalNotifications;
 }
@@ -50,8 +52,8 @@ export function NotificationBell() {
 			}
 		}
 		if (open) {
-			document.addEventListener('mousedown', handleClickOutside);
-			return () => document.removeEventListener('mousedown', handleClickOutside);
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => document.removeEventListener("mousedown", handleClickOutside);
 		}
 	}, [open]);
 

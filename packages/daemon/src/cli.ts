@@ -4,7 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "node:readline/promises";
 
-import { APP_VERSION, CONFIG_PATH } from "@io/shared";
+import { APP_VERSION } from "@io/shared";
+import { CONFIG_PATH } from "@io/shared/paths";
 
 import { ensureDataDirectories } from "./data-dir.js";
 

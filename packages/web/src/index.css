@@ -279,7 +279,7 @@ body {
 .prose-io h4,
 .prose-io h5,
 .prose-io h6 {
-	background: linear-gradient(135deg, #D83333 0%, #E43A9C 50%, #F041FF 100%);
+	background: linear-gradient(135deg, #d83333 0%, #e43a9c 50%, #f041ff 100%);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	background-clip: text;
@@ -288,10 +288,18 @@ body {
 	margin: 1.1em 0 0.4em;
 	line-height: 1.4;
 }
-.prose-io h1 { font-size: 2em; }
-.prose-io h2 { font-size: 1.65em; }
-.prose-io h3 { font-size: 1.35em; }
-.prose-io h4 { font-size: 1.15em; }
+.prose-io h1 {
+	font-size: 2em;
+}
+.prose-io h2 {
+	font-size: 1.65em;
+}
+.prose-io h3 {
+	font-size: 1.35em;
+}
+.prose-io h4 {
+	font-size: 1.15em;
+}
 
 .prose-io p {
 	margin: 0.6em 0;

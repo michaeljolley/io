@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate release notes
         id: notes
-        uses: github/copilot-release-notes@main
+        uses: github/copilot-release-notes@v1
         with:
           base-ref: ${{ env.VERSION }}
         env:

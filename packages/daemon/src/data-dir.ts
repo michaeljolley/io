@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { DATA_DIR, LOGS_DIR, SKILLS_DIR, WIKI_DIR } from "@io/shared";
+import { DATA_DIR, LOGS_DIR, SKILLS_DIR, WIKI_DIR } from "@io/shared/paths";
 
 const WIKI_PAGES_DIR = join(WIKI_DIR, "pages");
 

@@ -1,11 +1,11 @@
-import { IoMark } from '@/components/ui/io-mark';
-import { useAuth } from '@/lib/auth';
-import { useState } from 'react';
+import { IoMark } from "@/components/ui/io-mark";
+import { useAuth } from "@/lib/auth";
+import { useState } from "react";
 
 export function LoginView() {
 	const { signIn } = useAuth();
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
@@ -27,15 +27,15 @@ export function LoginView() {
 			<div
 				className="absolute inset-0 opacity-[0.04]"
 				style={{
-					backgroundImage: 'radial-gradient(circle, #E43A9C 1px, transparent 1px)',
-					backgroundSize: '32px 32px',
+					backgroundImage: "radial-gradient(circle, #E43A9C 1px, transparent 1px)",
+					backgroundSize: "32px 32px",
 				}}
 			/>
 			{/* Glow behind logo */}
 			<div
 				className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-[400px] h-[300px] rounded-full blur-3xl pointer-events-none"
 				style={{
-					background: 'radial-gradient(ellipse, rgba(228,58,156,0.12) 0%, transparent 70%)',
+					background: "radial-gradient(ellipse, rgba(228,58,156,0.12) 0%, transparent 70%)",
 				}}
 			/>
 
@@ -76,16 +76,14 @@ export function LoginView() {
 						/>
 					</div>
 
-					{error && (
-						<p className="text-[11px] font-mono text-red-400">{error}</p>
-					)}
+					{error && <p className="text-[11px] font-mono text-red-400">{error}</p>}
 
 					<button
 						type="submit"
 						disabled={loading}
 						className="w-full text-white font-mono text-sm rounded-xl py-3 mt-1 transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
 						style={{
-							background: 'linear-gradient(135deg, #D83333 0%, #E43A9C 55%, #F041FF 100%)',
+							background: "linear-gradient(135deg, #D83333 0%, #E43A9C 55%, #F041FF 100%)",
 						}}
 					>
 						{loading ? (
@@ -94,7 +92,7 @@ export function LoginView() {
 								Authenticating…
 							</>
 						) : (
-							'Sign In'
+							"Sign In"
 						)}
 					</button>
 				</form>

@@ -1,18 +1,22 @@
 {
-  "name": "@io/shared",
-  "version": "4.0.0",
-  "type": "module",
-  "private": true,
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsc"
-  },
-  "devDependencies": {
-    "typescript": "^5.6.0"
-  }
+	"name": "@io/shared",
+	"version": "4.0.0",
+	"type": "module",
+	"private": true,
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./paths": {
+			"import": "./dist/paths.js",
+			"types": "./dist/paths.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"typescript": "^5.6.0"
+	}
 }

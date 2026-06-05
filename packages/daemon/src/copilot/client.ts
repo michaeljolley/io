@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { CopilotClient, type CopilotClientOptions } from "@github/copilot-sdk";
-import { DATA_DIR } from "@io/shared";
+import { DATA_DIR } from "@io/shared/paths";
 
 const COPILOT_AUTH_ERROR_HINT =
 	"Set GITHUB_TOKEN or authenticate with the GitHub CLI (`gh auth login`) so `gh auth token` returns a valid token.";

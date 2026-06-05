@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pathToFileURL } from "node:url";
-import { DB_PATH } from "@io/shared";
+import { DB_PATH } from "@io/shared/paths";
 import { type Client, type Row, createClient } from "@libsql/client";
 
 export type DatabaseClient = Client;

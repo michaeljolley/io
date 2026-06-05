@@ -1,18 +1,18 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from '@/lib/api';
+import { api } from "@/lib/api";
+import { type ReactNode, createContext, useContext, useEffect, useState } from "react";
 
 interface ConfigContextValue {
 	timezone: string;
 }
 
-const ConfigContext = createContext<ConfigContextValue>({ timezone: 'UTC' });
+const ConfigContext = createContext<ConfigContextValue>({ timezone: "UTC" });
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
-	const [timezone, setTimezone] = useState('UTC');
+	const [timezone, setTimezone] = useState("UTC");
 
 	useEffect(() => {
 		api
-			.get<{ config: { timezone?: string } }>('/config')
+			.get<{ config: { timezone?: string } }>("/config")
 			.then((d) => {
 				if (d.config.timezone) setTimezone(d.config.timezone);
 			})

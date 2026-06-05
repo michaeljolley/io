@@ -1,6 +1,7 @@
 import { join } from "node:path";
 
-import { APP_NAME, LOGS_DIR } from "@io/shared";
+import { APP_NAME } from "@io/shared";
+import { LOGS_DIR } from "@io/shared/paths";
 import pino, { multistream, type DestinationStream, type Logger } from "pino";
 import pretty from "pino-pretty";
 

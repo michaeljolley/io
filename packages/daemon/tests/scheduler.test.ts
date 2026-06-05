@@ -1,5 +1,6 @@
 import { CronExpressionParser } from "cron-parser";
 
+import type { DatabaseClient } from "../src/store/db.js";
 import {
 	createSchedule,
 	getDueSchedules,
@@ -7,7 +8,6 @@ import {
 	markScheduleRun,
 	updateSchedule,
 } from "../src/store/index.js";
-import type { DatabaseClient } from "../src/store/db.js";
 import { cleanupStoreTestContext, createStoreTestContext } from "./helpers.js";
 
 async function runDueSchedules(
@@ -119,16 +119,14 @@ describe("scheduler concepts", () => {
 			db,
 		);
 		const sentPrompts: Array<{ prompt: string; scheduleId: string }> = [];
-		const now = [first.nextRunAt, second.nextRunAt].filter(Boolean).sort()[1] ?? new Date().toISOString();
+		const now =
+			[first.nextRunAt, second.nextRunAt].filter(Boolean).sort()[1] ?? new Date().toISOString();
 
 		const dueIds = await runDueSchedules(now, db, async (prompt, scheduleId) => {
 			sentPrompts.push({ prompt, scheduleId });
 		});
 		const rerunDue = await getDueSchedules(now, db);
-		const refreshed = await Promise.all([
-			getSchedule(first.id, db),
-			getSchedule(second.id, db),
-		]);
+		const refreshed = await Promise.all([getSchedule(first.id, db), getSchedule(second.id, db)]);
 
 		expect([...dueIds].sort()).toEqual([first.id, second.id].sort());
 		expect(

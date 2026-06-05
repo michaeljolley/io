@@ -3,7 +3,7 @@ import { basename, dirname, join } from "node:path";
 
 import matter from "gray-matter";
 
-import { SKILLS_DIR, SKILLS_LOCK_PATH } from "@io/shared";
+import { SKILLS_DIR, SKILLS_LOCK_PATH } from "@io/shared/paths";
 
 export interface InstalledSkill {
 	id: string;

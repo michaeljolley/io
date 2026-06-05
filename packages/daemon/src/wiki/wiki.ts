@@ -3,7 +3,7 @@ import { basename, dirname, extname, join, relative, resolve } from "node:path";
 
 import matter from "gray-matter";
 
-import { WIKI_DIR } from "@io/shared";
+import { WIKI_DIR } from "@io/shared/paths";
 
 let wikiDirectoryOverride: string | null = null;
 

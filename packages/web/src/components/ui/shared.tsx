@@ -1,18 +1,18 @@
-import type React from 'react';
+import type React from "react";
 
-type StatusKind = 'connected' | 'disconnected' | 'error' | 'idle' | 'working' | 'reviewing';
-type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'muted';
+type StatusKind = "connected" | "disconnected" | "error" | "idle" | "working" | "reviewing";
+type BadgeVariant = "default" | "success" | "warning" | "error" | "info" | "muted";
 
 export function StatusDot({ status }: { status: StatusKind }) {
 	const color = {
-		connected: 'bg-green-500',
-		idle: 'bg-green-500',
-		disconnected: 'bg-zinc-600',
-		error: 'bg-red-500',
-		working: 'bg-amber-400',
-		reviewing: 'bg-blue-400',
+		connected: "bg-green-500",
+		idle: "bg-green-500",
+		disconnected: "bg-zinc-600",
+		error: "bg-red-500",
+		working: "bg-amber-400",
+		reviewing: "bg-blue-400",
 	}[status];
-	const pulse = status === 'connected' || status === 'working';
+	const pulse = status === "connected" || status === "working";
 	return (
 		<span className="relative inline-flex items-center justify-center w-2 h-2">
 			{pulse && (
@@ -27,16 +27,16 @@ export function StatusDot({ status }: { status: StatusKind }) {
 
 export function Chip({
 	children,
-	variant = 'muted',
-	className = '',
+	variant = "muted",
+	className = "",
 }: { children: React.ReactNode; variant?: BadgeVariant; className?: string }) {
 	const cls = {
-		default: 'bg-[#E43A9C]/15 text-[#F041FF] border-[#E43A9C]/20',
-		success: 'bg-green-500/15 text-green-400 border-green-500/20',
-		warning: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-		error: 'bg-red-500/15 text-red-400 border-red-500/20',
-		info: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-		muted: 'bg-white/5 text-zinc-400 border-white/10',
+		default: "bg-[#E43A9C]/15 text-[#F041FF] border-[#E43A9C]/20",
+		success: "bg-green-500/15 text-green-400 border-green-500/20",
+		warning: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+		error: "bg-red-500/15 text-red-400 border-red-500/20",
+		info: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+		muted: "bg-white/5 text-zinc-400 border-white/10",
 	}[variant];
 	return (
 		<span
@@ -64,14 +64,14 @@ export function SquadChip({ name, color }: { name: string; color?: string }) {
 export function PrimaryBtn({
 	children,
 	onClick,
-	className = '',
-	type = 'button',
+	className = "",
+	type = "button",
 	disabled = false,
 }: {
 	children: React.ReactNode;
 	onClick?: () => void;
 	className?: string;
-	type?: 'button' | 'submit';
+	type?: "button" | "submit";
 	disabled?: boolean;
 }) {
 	return (
@@ -89,7 +89,7 @@ export function PrimaryBtn({
 export function SecondaryBtn({
 	children,
 	onClick,
-	className = '',
+	className = "",
 }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
 	return (
 		<button
@@ -105,7 +105,7 @@ export function SecondaryBtn({
 export function DangerBtn({
 	children,
 	onClick,
-	className = '',
+	className = "",
 }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
 	return (
 		<button
@@ -121,7 +121,7 @@ export function DangerBtn({
 export function WarnBtn({
 	children,
 	onClick,
-	className = '',
+	className = "",
 }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
 	return (
 		<button
@@ -135,9 +135,9 @@ export function WarnBtn({
 }
 
 export function statusToVariant(s: string): BadgeVariant {
-	if (s === 'connected' || s === 'idle') return 'success';
-	if (s === 'active' || s === 'working') return 'warning';
-	if (s === 'reviewing' || s === 'in meeting' || s === 'planning' || s === 'meeting') return 'info';
-	if (s === 'error' || s === 'failed') return 'error';
-	return 'muted';
+	if (s === "connected" || s === "idle") return "success";
+	if (s === "active" || s === "working") return "warning";
+	if (s === "reviewing" || s === "in meeting" || s === "planning" || s === "meeting") return "info";
+	if (s === "error" || s === "failed") return "error";
+	return "muted";
 }

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
-import { API_PORT, CONFIG_PATH, DEFAULT_MODEL, SESSION_RESET_THRESHOLD } from "@io/shared";
+import { API_PORT, DEFAULT_MODEL, SESSION_RESET_THRESHOLD } from "@io/shared";
+import { CONFIG_PATH } from "@io/shared/paths";
 import { z } from "zod";
 
 const logLevelSchema = z.enum(["trace", "debug", "info", "warn", "error"]);

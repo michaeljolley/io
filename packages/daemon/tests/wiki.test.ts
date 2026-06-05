@@ -4,9 +4,9 @@ import {
 	createPage,
 	deletePage,
 	getEpisode,
+	getPage,
 	getRecentEpisodes,
 	getRecentPages,
-	getPage,
 	searchPages,
 	setWikiDirectory,
 	updatePage,
@@ -67,9 +67,13 @@ describe("wiki", () => {
 	});
 
 	it("searches pages by keyword with title matches ranked ahead of content matches", async () => {
-		await createPage("architecture/auth", "OAuth2 Migration", "Move auth to OAuth2 flows", ["security"]);
+		await createPage("architecture/auth", "OAuth2 Migration", "Move auth to OAuth2 flows", [
+			"security",
+		]);
 		await pause();
-		await createPage("notes/incidents", "Incident Review", "OAuth2 token failure root cause", ["ops"]);
+		await createPage("notes/incidents", "Incident Review", "OAuth2 token failure root cause", [
+			"ops",
+		]);
 
 		const results = await searchPages("oauth2");
 
@@ -119,6 +123,8 @@ describe("wiki", () => {
 
 	it("returns empty results for empty search queries and rejects invalid paths", async () => {
 		expect(await searchPages("   ")).toEqual([]);
-		await expect(createPage("../outside", "Invalid", "Nope")).rejects.toThrow("Invalid wiki page path");
+		await expect(createPage("../outside", "Invalid", "Nope")).rejects.toThrow(
+			"Invalid wiki page path",
+		);
 	});
 });

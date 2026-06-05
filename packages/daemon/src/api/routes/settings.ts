@@ -1,7 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import { type AppSettings, CONFIG_PATH } from "@io/shared";
+import type { AppSettings } from "@io/shared";
+import { CONFIG_PATH } from "@io/shared/paths";
 import { Router } from "express";
 
 import { loadConfig } from "../../config.js";

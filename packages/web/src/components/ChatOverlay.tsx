@@ -1,7 +1,7 @@
-import { IoMark } from '@/components/ui/io-mark';
-import { useChat } from '@/hooks/use-chat';
-import { MessageCircle, Paperclip, Send, Square, X } from 'lucide-react';
-import { configuredMarked as marked } from '@/components/ui/markdown';
+import { IoMark } from "@/components/ui/io-mark";
+import { configuredMarked as marked } from "@/components/ui/markdown";
+import { useChat } from "@/hooks/use-chat";
+import { MessageCircle, Paperclip, Send, Square, X } from "lucide-react";
 import {
 	type ChangeEvent,
 	type KeyboardEvent,
@@ -9,17 +9,25 @@ import {
 	useMemo,
 	useRef,
 	useState,
-} from 'react';
+} from "react";
 
 export function ChatOverlay() {
 	const [open, setOpen] = useState(false);
-	const [input, setInput] = useState('');
+	const [input, setInput] = useState("");
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const messagesRef = useRef<HTMLDivElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const { messages, streaming, isStreaming, connected, sendChatMessage, addUserMessage, uploadAttachment } = useChat();
+	const {
+		messages,
+		streaming,
+		isStreaming,
+		connected,
+		sendChatMessage,
+		addUserMessage,
+		uploadAttachment,
+	} = useChat();
 
 	const recentMessages = useMemo(() => messages.slice(-10), [messages]);
 
@@ -36,21 +44,21 @@ export function ChatOverlay() {
 
 		const messageId = crypto.randomUUID();
 		const attachmentName = selectedFile?.name;
-		const outboundContent = [text, attachmentName ? `Attachment: ${attachmentName}` : '']
+		const outboundContent = [text, attachmentName ? `Attachment: ${attachmentName}` : ""]
 			.filter(Boolean)
-			.join('\n\n');
+			.join("\n\n");
 
 		addUserMessage({
 			id: messageId,
-			role: 'user',
+			role: "user",
 			content: text,
 			timestamp: new Date().toISOString(),
 			attachmentName,
 		});
-		setInput('');
+		setInput("");
 		setSelectedFile(null);
-		if (fileInputRef.current) fileInputRef.current.value = '';
-		if (textareaRef.current) textareaRef.current.style.height = 'auto';
+		if (fileInputRef.current) fileInputRef.current.value = "";
+		if (textareaRef.current) textareaRef.current.style.height = "auto";
 
 		try {
 			if (selectedFile) {
@@ -66,13 +74,13 @@ export function ChatOverlay() {
 	function handleInput(event: ChangeEvent<HTMLTextAreaElement>) {
 		setInput(event.target.value);
 		if (textareaRef.current) {
-			textareaRef.current.style.height = 'auto';
+			textareaRef.current.style.height = "auto";
 			textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 96)}px`;
 		}
 	}
 
 	function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-		if (event.key === 'Enter' && !event.shiftKey) {
+		if (event.key === "Enter" && !event.shiftKey) {
 			event.preventDefault();
 			void handleSend();
 		}
@@ -81,14 +89,25 @@ export function ChatOverlay() {
 	return (
 		<div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
 			{open && (
-				<div className="w-[340px] h-[460px] rounded-2xl border border-white/[0.09] shadow-2xl overflow-hidden flex flex-col" style={{ background: '#1c1c1c' }}>
+				<div
+					className="w-[340px] h-[460px] rounded-2xl border border-white/[0.09] shadow-2xl overflow-hidden flex flex-col"
+					style={{ background: "#1c1c1c" }}
+				>
 					<div
 						className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] flex-shrink-0"
-						style={{ background: 'linear-gradient(135deg, rgba(216,51,51,0.18) 0%, rgba(240,65,255,0.10) 100%)' }}
+						style={{
+							background:
+								"linear-gradient(135deg, rgba(216,51,51,0.18) 0%, rgba(240,65,255,0.10) 100%)",
+						}}
 					>
 						<div className="flex items-center gap-2.5">
 							<IoMark height={20} />
-							<span className="text-xl text-white tracking-wider leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>IO</span>
+							<span
+								className="text-xl text-white tracking-wider leading-none"
+								style={{ fontFamily: "'Bebas Neue', sans-serif" }}
+							>
+								IO
+							</span>
 							<span className="text-[10px] font-mono text-zinc-600 mt-0.5">quick chat</span>
 						</div>
 						<button
@@ -109,10 +128,10 @@ export function ChatOverlay() {
 							recentMessages.map((message) => (
 								<div
 									key={message.id}
-									className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+									className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
 									title={message.timestamp}
 								>
-									<div className={`max-w-[85%] ${message.role === 'user' ? 'ml-8' : 'mr-8'}`}>
+									<div className={`max-w-[85%] ${message.role === "user" ? "ml-8" : "mr-8"}`}>
 										{message.attachmentName && (
 											<div className="mb-1 rounded-xl border border-white/[0.08] bg-[#1e1e1e] px-3 py-2 text-[11px] font-mono text-zinc-400">
 												{message.attachmentName}
@@ -120,15 +139,21 @@ export function ChatOverlay() {
 										)}
 										{message.content && (
 											<div
-												className={message.role === 'user' ? 'bg-gradient-to-br from-[#E43A9C] to-[#D83333] rounded-xl px-3 py-2 text-xs text-white whitespace-pre-wrap' : 'bg-[#2a2a2a] rounded-xl px-3 py-2 text-xs text-zinc-200'}
+												className={
+													message.role === "user"
+														? "bg-gradient-to-br from-[#E43A9C] to-[#D83333] rounded-xl px-3 py-2 text-xs text-white whitespace-pre-wrap"
+														: "bg-[#2a2a2a] rounded-xl px-3 py-2 text-xs text-zinc-200"
+												}
 											>
-												{message.role === 'user' ? (
+												{message.role === "user" ? (
 													message.content
 												) : (
 													<div
 														className="prose-io [&_*]:text-xs"
 														// biome-ignore lint: markdown rendering
-														dangerouslySetInnerHTML={{ __html: marked.parse(message.content) as string }}
+														dangerouslySetInnerHTML={{
+															__html: marked.parse(message.content) as string,
+														}}
 													/>
 												)}
 											</div>
@@ -172,7 +197,9 @@ export function ChatOverlay() {
 								onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
 							/>
 							{selectedFile && (
-								<div className="px-3 pt-2 text-[10px] font-mono text-zinc-400">Attached: {selectedFile.name}</div>
+								<div className="px-3 pt-2 text-[10px] font-mono text-zinc-400">
+									Attached: {selectedFile.name}
+								</div>
 							)}
 							<div className="flex items-center gap-1.5 px-2.5 py-2">
 								<button
@@ -190,14 +217,14 @@ export function ChatOverlay() {
 									placeholder="Message IO…"
 									rows={1}
 									className="flex-1 bg-transparent text-xs text-zinc-200 placeholder:text-zinc-700 resize-none focus:outline-none leading-relaxed"
-									style={{ minHeight: '18px', maxHeight: '96px', fontFamily: 'Inter, sans-serif' }}
+									style={{ minHeight: "18px", maxHeight: "96px", fontFamily: "Inter, sans-serif" }}
 								/>
 								<button
 									type="button"
 									onClick={() => void handleSend()}
 									disabled={(!input.trim() && !selectedFile) || (!connected && !isStreaming)}
 									className="p-1.5 rounded-lg text-white disabled:opacity-25 disabled:cursor-not-allowed transition-opacity hover:opacity-90 flex-shrink-0 cursor-pointer"
-									style={{ background: 'linear-gradient(135deg, #D83333, #E43A9C)' }}
+									style={{ background: "linear-gradient(135deg, #D83333, #E43A9C)" }}
 								>
 									{isStreaming ? <Square className="w-3 h-3" /> : <Send className="w-3 h-3" />}
 								</button>
@@ -211,7 +238,7 @@ export function ChatOverlay() {
 				type="button"
 				onClick={() => setOpen((prev) => !prev)}
 				className="w-12 h-12 rounded-full primary-btn shadow-lg text-white flex items-center justify-center hover:opacity-95 transition-opacity"
-				aria-label={open ? 'Close quick chat' : 'Open quick chat'}
+				aria-label={open ? "Close quick chat" : "Open quick chat"}
 			>
 				<MessageCircle className="w-5 h-5" />
 			</button>

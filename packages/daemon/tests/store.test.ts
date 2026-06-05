@@ -1,3 +1,4 @@
+import type { DatabaseClient } from "../src/store/db.js";
 import {
 	addMember,
 	appendMessage,
@@ -41,7 +42,6 @@ import {
 	updateSquad,
 	updateTaskStatus,
 } from "../src/store/index.js";
-import type { DatabaseClient } from "../src/store/db.js";
 import { cleanupStoreTestContext, createStoreTestContext, pause } from "./helpers.js";
 
 describe("daemon store", () => {
@@ -229,7 +229,11 @@ describe("daemon store", () => {
 		);
 		const loaded = await getSchedule(schedule.id, db);
 		const due = await getDueSchedules(updated?.nextRunAt ?? new Date().toISOString(), db);
-		const marked = await markScheduleRun(schedule.id, updated?.nextRunAt ?? new Date().toISOString(), db);
+		const marked = await markScheduleRun(
+			schedule.id,
+			updated?.nextRunAt ?? new Date().toISOString(),
+			db,
+		);
 
 		expect(disabled.nextRunAt).toBeNull();
 		expect(updated).toMatchObject({ name: "Hourly triage", prompt: "Check pending work" });
@@ -292,15 +296,36 @@ describe("daemon store", () => {
 			{ startDate: "2025-01-01T00:00:00.000Z", endDate: "2025-01-31T23:59:59.999Z" },
 			db,
 		);
-		const bySquad = await getUsageBySquad(squad.id, "2025-01-01T00:00:00.000Z", "2025-01-31T23:59:59.999Z", db);
-		const byAgent = await getUsageByAgent(member.id, "2025-01-01T00:00:00.000Z", "2025-01-31T23:59:59.999Z", db);
+		const bySquad = await getUsageBySquad(
+			squad.id,
+			"2025-01-01T00:00:00.000Z",
+			"2025-01-31T23:59:59.999Z",
+			db,
+		);
+		const byAgent = await getUsageByAgent(
+			member.id,
+			"2025-01-01T00:00:00.000Z",
+			"2025-01-31T23:59:59.999Z",
+			db,
+		);
 
 		expect(summary.totalInputTokens).toBe(150);
 		expect(summary.totalOutputTokens).toBe(50);
 		expect(summary.totalCost).toBeCloseTo(4, 6);
-		expect(summary.bySquad[0]).toMatchObject({ squadId: squad.id, squadName: "Alpha Squad", cost: 4 });
-		expect(summary.byAgent[0]).toMatchObject({ agentId: member.id, agentName: "Casey", squadId: squad.id });
-		expect(summary.byModel.map((item) => item.model)).toEqual(["claude-sonnet-4.6", "gpt-4.1-mini"]);
+		expect(summary.bySquad[0]).toMatchObject({
+			squadId: squad.id,
+			squadName: "Alpha Squad",
+			cost: 4,
+		});
+		expect(summary.byAgent[0]).toMatchObject({
+			agentId: member.id,
+			agentName: "Casey",
+			squadId: squad.id,
+		});
+		expect(summary.byModel.map((item) => item.model)).toEqual([
+			"claude-sonnet-4.6",
+			"gpt-4.1-mini",
+		]);
 		expect(summary.daily.map((point) => point.date)).toEqual(["2025-01-01", "2025-01-02"]);
 		expect(bySquad.totalCost).toBeCloseTo(4, 6);
 		expect(byAgent.totalInputTokens).toBe(150);

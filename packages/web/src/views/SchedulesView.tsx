@@ -1,15 +1,33 @@
-import { Chip, DangerBtn, PrimaryBtn, SecondaryBtn, SquadChip, WarnBtn } from '@/components/ui/shared';
-import { useTimezone } from '@/hooks/use-config';
-import { api } from '@/lib/api';
-import { formatDateTime } from '@/lib/timezone';
-import { Activity, ChevronLeft, Clock, Edit2, Pause, Play, Plus, Save, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import {
+	Chip,
+	DangerBtn,
+	PrimaryBtn,
+	SecondaryBtn,
+	SquadChip,
+	WarnBtn,
+} from "@/components/ui/shared";
+import { useTimezone } from "@/hooks/use-config";
+import { api } from "@/lib/api";
+import { formatDateTime } from "@/lib/timezone";
+import {
+	Activity,
+	ChevronLeft,
+	Clock,
+	Edit2,
+	Pause,
+	Play,
+	Plus,
+	Save,
+	Trash2,
+	X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface Schedule {
 	id: string;
 	name: string;
-	targetType: 'squad' | 'orchestrator';
+	targetType: "squad" | "orchestrator";
 	targetId: string | null;
 	cron: string;
 	prompt: string;
@@ -18,28 +36,28 @@ interface Schedule {
 	nextRun: string | null;
 }
 
-type SchedKind = 'squad' | 'io';
+type SchedKind = "squad" | "io";
 
 const FI =
-	'w-full bg-[#161616] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#E43A9C]/40 focus:ring-1 focus:ring-[#E43A9C]/10 transition-colors';
+	"w-full bg-[#161616] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#E43A9C]/40 focus:ring-1 focus:ring-[#E43A9C]/10 transition-colors";
 const FI_S =
-	'bg-[#161616] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#E43A9C]/40 focus:ring-1 focus:ring-[#E43A9C]/10 transition-colors';
+	"bg-[#161616] border border-white/[0.08] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#E43A9C]/40 focus:ring-1 focus:ring-[#E43A9C]/10 transition-colors";
 
 function FormRow({
 	label,
 	hint,
-	align = 'center',
+	align = "center",
 	children,
 }: {
 	label: string;
 	hint?: string;
-	align?: 'center' | 'start';
+	align?: "center" | "start";
 	children: React.ReactNode;
 }) {
-	const rightClass = align === 'start' ? 'flex-1 min-w-0' : 'flex-1 flex justify-end items-center';
+	const rightClass = align === "start" ? "flex-1 min-w-0" : "flex-1 flex justify-end items-center";
 	return (
 		<div
-			className={`glass-card border border-white/[0.07] rounded-2xl px-4 py-3.5 flex gap-4 ${align === 'start' ? 'items-start' : 'items-center'}`}
+			className={`glass-card border border-white/[0.07] rounded-2xl px-4 py-3.5 flex gap-4 ${align === "start" ? "items-start" : "items-center"}`}
 		>
 			<div className="w-[140px] shrink-0">
 				<span className="text-[11px] font-mono text-zinc-400">{label}</span>
@@ -57,22 +75,28 @@ function SchedEditor({
 	onCancel,
 	squads,
 }: {
-	onSave: (data: { name: string; targetType: 'squad' | 'orchestrator'; targetId?: string; cron: string; prompt: string }) => void;
+	onSave: (data: {
+		name: string;
+		targetType: "squad" | "orchestrator";
+		targetId?: string;
+		cron: string;
+		prompt: string;
+	}) => void;
 	onCancel: () => void;
 	squads: { id: string; name: string }[];
 }) {
-	const [kind, setKind] = useState<SchedKind>('io');
-	const [squadId, setSquadId] = useState(squads[0]?.id ?? '');
-	const [name, setName] = useState('');
-	const [cron, setCron] = useState('');
-	const [prompt, setPrompt] = useState('');
+	const [kind, setKind] = useState<SchedKind>("io");
+	const [squadId, setSquadId] = useState(squads[0]?.id ?? "");
+	const [name, setName] = useState("");
+	const [cron, setCron] = useState("");
+	const [prompt, setPrompt] = useState("");
 
 	const save = () => {
 		if (!cron.trim() || !prompt.trim() || !name.trim()) return;
 		onSave({
 			name: name.trim(),
-			targetType: kind === 'io' ? 'orchestrator' : 'squad',
-			targetId: kind === 'squad' ? squadId : undefined,
+			targetType: kind === "io" ? "orchestrator" : "squad",
+			targetId: kind === "squad" ? squadId : undefined,
 			cron: cron.trim(),
 			prompt: prompt.trim(),
 		});
@@ -81,11 +105,11 @@ function SchedEditor({
 	return (
 		<div
 			className="fixed inset-0 z-40 flex items-center justify-center p-6"
-			style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+			style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
 		>
 			<div
 				className="glass-card border border-white/[0.09] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col"
-				style={{ maxHeight: '90vh' }}
+				style={{ maxHeight: "90vh" }}
 			>
 				<div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
 					<h3
@@ -115,25 +139,25 @@ function SchedEditor({
 
 					<FormRow label="Type">
 						<div className="flex gap-2">
-							{(['io', 'squad'] as SchedKind[]).map((k) => (
+							{(["io", "squad"] as SchedKind[]).map((k) => (
 								<button
 									key={k}
 									type="button"
 									onClick={() => setKind(k)}
 									className={`px-4 py-1.5 rounded-xl text-[11px] font-mono capitalize transition-colors border cursor-pointer ${
 										kind === k
-											? 'text-[#E43A9C] border-[#E43A9C]/30'
-											: 'text-zinc-500 border-white/[0.08] hover:text-zinc-300 hover:bg-white/[0.04]'
+											? "text-[#E43A9C] border-[#E43A9C]/30"
+											: "text-zinc-500 border-white/[0.08] hover:text-zinc-300 hover:bg-white/[0.04]"
 									}`}
-									style={kind === k ? { background: 'rgba(228,58,156,0.08)' } : undefined}
+									style={kind === k ? { background: "rgba(228,58,156,0.08)" } : undefined}
 								>
-									{k === 'io' ? 'IO' : 'Squad'}
+									{k === "io" ? "IO" : "Squad"}
 								</button>
 							))}
 						</div>
 					</FormRow>
 
-					{kind === 'squad' && (
+					{kind === "squad" && (
 						<FormRow label="Squad">
 							<select
 								value={squadId}
@@ -141,7 +165,11 @@ function SchedEditor({
 								className={`${FI_S} w-48`}
 							>
 								{squads.map((s) => (
-									<option key={s.id} value={s.id} style={{ background: '#1a1a1a', color: '#d4d4d8' }}>
+									<option
+										key={s.id}
+										value={s.id}
+										style={{ background: "#1a1a1a", color: "#d4d4d8" }}
+									>
 										{s.name}
 									</option>
 								))}
@@ -197,7 +225,7 @@ function SchedEditPage({
 	const [name, setName] = useState(sched.name);
 	const [cron, setCron] = useState(sched.cron);
 	const [prompt, setPrompt] = useState(sched.prompt);
-	const [targetId, setTargetId] = useState(sched.targetId ?? squads[0]?.id ?? '');
+	const [targetId, setTargetId] = useState(sched.targetId ?? squads[0]?.id ?? "");
 
 	const save = () => {
 		if (!cron.trim() || !prompt.trim() || !name.trim()) return;
@@ -205,11 +233,14 @@ function SchedEditPage({
 			name: name.trim(),
 			cron: cron.trim(),
 			prompt: prompt.trim(),
-			targetId: sched.targetType === 'squad' ? targetId : undefined,
+			targetId: sched.targetType === "squad" ? targetId : undefined,
 		});
 	};
 
-	const typeLabel = sched.targetType === 'orchestrator' ? 'IO Schedule' : `Squad — ${squads.find((s) => s.id === sched.targetId)?.name ?? 'Unknown'}`;
+	const typeLabel =
+		sched.targetType === "orchestrator"
+			? "IO Schedule"
+			: `Squad — ${squads.find((s) => s.id === sched.targetId)?.name ?? "Unknown"}`;
 
 	return (
 		<div className="flex-1 overflow-y-auto p-6 max-w-3xl">
@@ -256,7 +287,7 @@ function SchedEditPage({
 					/>
 				</FormRow>
 
-				{sched.targetType === 'squad' && (
+				{sched.targetType === "squad" && (
 					<FormRow label="Squad">
 						<select
 							value={targetId}
@@ -264,7 +295,7 @@ function SchedEditPage({
 							className={`${FI_S} w-48`}
 						>
 							{squads.map((s) => (
-								<option key={s.id} value={s.id} style={{ background: '#1a1a1a', color: '#d4d4d8' }}>
+								<option key={s.id} value={s.id} style={{ background: "#1a1a1a", color: "#d4d4d8" }}>
 									{s.name}
 								</option>
 							))}
@@ -288,7 +319,7 @@ function SchedEditPage({
 							onChange={(e) => setPrompt(e.target.value)}
 							placeholder="Describe what IO or the squad should do when this schedule fires."
 							className={`${FI} leading-relaxed resize-y`}
-							style={{ minHeight: '360px' }}
+							style={{ minHeight: "360px" }}
 						/>
 						<p className="text-[10px] font-mono text-zinc-700">
 							Tip: use # headings and - lists to structure multi-step instructions.
@@ -303,7 +334,7 @@ function SchedEditPage({
 // ─── Main Schedules View ──────────────────────────────────────────────────────
 
 export function SchedulesView() {
-	const [tab, setTab] = useState<SchedKind>('squad');
+	const [tab, setTab] = useState<SchedKind>("squad");
 	const [schedules, setSchedules] = useState<Schedule[]>([]);
 	const [squads, setSquads] = useState<{ id: string; name: string; color?: string }[]>([]);
 	const [addingNew, setAddingNew] = useState(false);
@@ -317,30 +348,36 @@ export function SchedulesView() {
 
 	function loadSchedules() {
 		api
-			.get<{ schedules: Schedule[] }>('/schedules')
+			.get<{ schedules: Schedule[] }>("/schedules")
 			.then((d) => setSchedules(d.schedules))
 			.catch(() => {});
 	}
 
 	function loadSquads() {
 		api
-			.get<{ squads: { id: string; name: string }[] }>('/squads')
+			.get<{ squads: { id: string; name: string }[] }>("/squads")
 			.then((d) => setSquads(d.squads))
 			.catch(() => {});
 	}
 
-	const squadScheds = schedules.filter((s) => s.targetType === 'squad');
-	const ioScheds = schedules.filter((s) => s.targetType === 'orchestrator');
-	const rows = tab === 'squad' ? squadScheds : ioScheds;
+	const squadScheds = schedules.filter((s) => s.targetType === "squad");
+	const ioScheds = schedules.filter((s) => s.targetType === "orchestrator");
+	const rows = tab === "squad" ? squadScheds : ioScheds;
 
-	async function handleCreate(data: { name: string; targetType: 'squad' | 'orchestrator'; targetId?: string; cron: string; prompt: string }) {
+	async function handleCreate(data: {
+		name: string;
+		targetType: "squad" | "orchestrator";
+		targetId?: string;
+		cron: string;
+		prompt: string;
+	}) {
 		try {
-			await api.post('/schedules', data);
-			toast.success('Schedule created');
+			await api.post("/schedules", data);
+			toast.success("Schedule created");
 			setAddingNew(false);
 			loadSchedules();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to create');
+			toast.error(err instanceof Error ? err.message : "Failed to create");
 		}
 	}
 
@@ -348,11 +385,11 @@ export function SchedulesView() {
 		if (!editingSched) return;
 		try {
 			await api.patch(`/schedules/${editingSched.id}`, updates);
-			toast.success('Schedule saved');
+			toast.success("Schedule saved");
 			setEditingSched(null);
 			loadSchedules();
 		} catch {
-			toast.error('Failed to save schedule');
+			toast.error("Failed to save schedule");
 		}
 	}
 
@@ -362,10 +399,10 @@ export function SchedulesView() {
 		setActionPending(id);
 		try {
 			await api.patch(`/schedules/${id}`, { enabled: !enabled });
-			toast.success(enabled ? 'Schedule paused' : 'Schedule resumed');
+			toast.success(enabled ? "Schedule paused" : "Schedule resumed");
 			loadSchedules();
 		} catch {
-			toast.error('Failed to toggle schedule');
+			toast.error("Failed to toggle schedule");
 		} finally {
 			setActionPending(null);
 		}
@@ -375,9 +412,9 @@ export function SchedulesView() {
 		setActionPending(id);
 		try {
 			await api.post(`/schedules/${id}/run`, {});
-			toast.success('Schedule triggered');
+			toast.success("Schedule triggered");
 		} catch {
-			toast.error('Failed to trigger schedule');
+			toast.error("Failed to trigger schedule");
 		} finally {
 			setActionPending(null);
 		}
@@ -387,10 +424,10 @@ export function SchedulesView() {
 		setActionPending(id);
 		try {
 			await api.delete(`/schedules/${id}`);
-			toast.success('Schedule deleted');
+			toast.success("Schedule deleted");
 			loadSchedules();
 		} catch {
-			toast.error('Failed to delete');
+			toast.error("Failed to delete");
 		} finally {
 			setActionPending(null);
 		}
@@ -398,14 +435,26 @@ export function SchedulesView() {
 
 	// Edit page
 	if (editingSched) {
-		return <SchedEditPage sched={editingSched} squads={squads} onSave={handleSaveEdit} onBack={() => setEditingSched(null)} />;
+		return (
+			<SchedEditPage
+				sched={editingSched}
+				squads={squads}
+				onSave={handleSaveEdit}
+				onBack={() => setEditingSched(null)}
+			/>
+		);
 	}
 
-	const cols = tab === 'squad' ? ['Squad', 'Name', 'Cron', 'Next Run', 'Status', ''] : ['Name', 'Cron', 'Next Run', 'Status', ''];
+	const cols =
+		tab === "squad"
+			? ["Squad", "Name", "Cron", "Next Run", "Status", ""]
+			: ["Name", "Cron", "Next Run", "Status", ""];
 
 	return (
 		<div className="flex-1 overflow-y-auto p-6">
-			{addingNew && <SchedEditor onSave={handleCreate} onCancel={() => setAddingNew(false)} squads={squads} />}
+			{addingNew && (
+				<SchedEditor onSave={handleCreate} onCancel={() => setAddingNew(false)} squads={squads} />
+			)}
 
 			<div className="flex items-center justify-between mb-5">
 				<div>
@@ -416,7 +465,8 @@ export function SchedulesView() {
 						Schedules
 					</h2>
 					<p className="text-[11px] text-zinc-600 font-mono mt-0.5">
-						{schedules.filter((s) => s.enabled).length} active · {schedules.filter((s) => !s.enabled).length} paused
+						{schedules.filter((s) => s.enabled).length} active ·{" "}
+						{schedules.filter((s) => !s.enabled).length} paused
 					</p>
 				</div>
 				<PrimaryBtn onClick={() => setAddingNew(true)} className="px-3 py-1.5">
@@ -426,15 +476,22 @@ export function SchedulesView() {
 			</div>
 
 			<div className="flex gap-1 mb-4">
-				{([['squad', 'Squad Schedules'], ['io', 'IO Schedules']] as const).map(([key, label]) => (
+				{(
+					[
+						["squad", "Squad Schedules"],
+						["io", "IO Schedules"],
+					] as const
+				).map(([key, label]) => (
 					<button
 						key={key}
 						type="button"
 						onClick={() => setTab(key)}
 						className={`px-4 py-2 text-[11px] font-mono rounded-xl transition-colors cursor-pointer ${
-							tab === key ? 'text-[#E43A9C]' : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04]'
+							tab === key
+								? "text-[#E43A9C]"
+								: "text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04]"
 						}`}
-						style={tab === key ? { background: 'rgba(228,58,156,0.12)' } : undefined}
+						style={tab === key ? { background: "rgba(228,58,156,0.12)" } : undefined}
 					>
 						{label}
 					</button>
@@ -449,7 +506,10 @@ export function SchedulesView() {
 				) : (
 					<table className="w-full text-[11px] font-mono min-w-[640px]">
 						<thead>
-							<tr className="border-b border-white/[0.06]" style={{ background: 'rgba(20,20,20,0.6)' }}>
+							<tr
+								className="border-b border-white/[0.06]"
+								style={{ background: "rgba(20,20,20,0.6)" }}
+							>
 								{cols.map((h) => (
 									<th key={h} className="text-left px-4 py-2.5 text-zinc-600 font-medium">
 										{h}
@@ -461,11 +521,14 @@ export function SchedulesView() {
 							{rows.map((s) => (
 								<tr
 									key={s.id}
-									className={`border-b border-white/[0.04] hover:bg-white/[0.015] transition-colors ${!s.enabled ? 'opacity-50' : ''}`}
+									className={`border-b border-white/[0.04] hover:bg-white/[0.015] transition-colors ${!s.enabled ? "opacity-50" : ""}`}
 								>
-									{tab === 'squad' ? (
+									{tab === "squad" ? (
 										<td className="px-4 py-3">
-											<SquadChip name={squads.find((sq) => sq.id === s.targetId)?.name ?? 'Unknown'} color={squads.find((sq) => sq.id === s.targetId)?.color} />
+											<SquadChip
+												name={squads.find((sq) => sq.id === s.targetId)?.name ?? "Unknown"}
+												color={squads.find((sq) => sq.id === s.targetId)?.color}
+											/>
 										</td>
 									) : null}
 									<td className="px-4 py-3 text-zinc-300">{s.name}</td>
@@ -473,20 +536,18 @@ export function SchedulesView() {
 									<td className="px-4 py-3 text-zinc-600">
 										<span className="flex items-center gap-1">
 											<Clock className="w-3 h-3" />
-											{!s.enabled
-												? '—'
-												: s.nextRun
-													? formatDateTime(s.nextRun, timezone)
-													: '—'}
+											{!s.enabled ? "—" : s.nextRun ? formatDateTime(s.nextRun, timezone) : "—"}
 										</span>
 									</td>
 									<td className="px-4 py-3">
-										<Chip variant={!s.enabled ? 'muted' : 'success'}>
-											{!s.enabled ? 'paused' : 'active'}
+										<Chip variant={!s.enabled ? "muted" : "success"}>
+											{!s.enabled ? "paused" : "active"}
 										</Chip>
 									</td>
 									<td className="px-4 py-3">
-											<div className={`flex items-center gap-1 ${actionPending === s.id ? 'opacity-50 pointer-events-none' : ''}`}>
+										<div
+											className={`flex items-center gap-1 ${actionPending === s.id ? "opacity-50 pointer-events-none" : ""}`}
+										>
 											<SecondaryBtn onClick={() => runNow(s.id)}>
 												<Play className="w-3 h-3" />
 												Run now
