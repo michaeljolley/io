@@ -6,8 +6,8 @@ dist/
 
 # Docs
 docs/node_modules/
-docs/dist/
-docs/.astro/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
 
 # SQLite
 *.db
