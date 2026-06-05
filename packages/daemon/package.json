@@ -3,6 +3,21 @@
   "version": "4.0.0",
   "type": "module",
   "private": true,
+	"keywords": [
+		"copilot",
+		"telegram",
+		"orchestrator",
+		"ai",
+		"cli",
+		"assistant"
+	],
+	"author": "Michael Jolley",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/michaeljolley/io.git"
+	},
+	"homepage": "https://github.com/michaeljolley/io#readme",
   "scripts": {
     "build": "node ../../scripts/build-daemon.js",
     "dev": "tsx --watch src/index.ts"

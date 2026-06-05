@@ -40,10 +40,19 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Generate release notes
+        id: notes
+        uses: github/copilot-release-notes@main
+        with:
+          base-ref: ${{ env.VERSION }}
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          model: claude-sonnet-4
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.release-notes }}
 
       - name: Publish to npm
         run: npm publish --workspace=packages/daemon
