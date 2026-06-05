@@ -36,7 +36,7 @@ export function ChatOverlay() {
 		if (container) {
 			container.scrollTop = container.scrollHeight;
 		}
-	}, [recentMessages, streaming, isStreaming, open]);
+	});
 
 	async function handleSend() {
 		const text = input.trim();

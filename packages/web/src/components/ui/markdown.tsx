@@ -68,6 +68,7 @@ export function MarkdownRenderer({
 		<div
 			className={`prose-io ${className}`}
 			style={{ color: "#d4d4d8", fontSize: "0.875rem", lineHeight: "1.7" }}
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: markdown rendering requires innerHTML
 			dangerouslySetInnerHTML={{ __html: html }}
 		/>
 	);

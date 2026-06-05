@@ -33,7 +33,7 @@ export function ChatView() {
 		if (container) {
 			container.scrollTop = container.scrollHeight;
 		}
-	}, [messages, streaming, isThinking]);
+	});
 
 	async function handleSend() {
 		const text = input.trim();

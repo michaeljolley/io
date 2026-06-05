@@ -8,6 +8,10 @@ import { toast } from "sonner";
 type SkillSourceTab = "installed" | "awesome-copilot" | "skillssh";
 type RemoteSkillSource = Exclude<SkillSourceTab, "installed">;
 
+function getSkillKey(skill: { name: string; url?: string }): string {
+	return "url" in skill && skill.url ? skill.url : skill.name;
+}
+
 interface InstalledSkillSummary {
 	name: string;
 	activatedForOrchestrator: boolean;
@@ -142,8 +146,8 @@ function SkillContentView({ content }: { content: string }) {
 									<div className="flex-1 min-w-0">
 										{Array.isArray(val) ? (
 											<div className="flex flex-wrap gap-1">
-												{val.map((v, i) => (
-													<Chip key={i} variant="muted">
+												{val.map((v) => (
+													<Chip key={`${key}-${v}`} variant="muted">
 														{v}
 													</Chip>
 												))}
@@ -188,9 +192,6 @@ export function SkillsView() {
 	const [remoteSkills, setRemoteSkills] = useState<RemoteSkill[]>([]);
 	const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-	function getSkillKey(skill: { name: string; url?: string }): string {
-		return "url" in skill && skill.url ? skill.url : skill.name;
-	}
 	const [selectedInstalledSkill, setSelectedInstalledSkill] = useState<InstalledSkillDetail | null>(
 		null,
 	);

@@ -55,8 +55,11 @@ export function LoginView() {
 					className="glass-card border border-white/[0.07] rounded-2xl p-6 space-y-4"
 				>
 					<div className="space-y-1">
-						<label className="text-[11px] font-mono text-zinc-500 block">Email</label>
+						<label htmlFor="login-email" className="text-[11px] font-mono text-zinc-500 block">
+							Email
+						</label>
 						<input
+							id="login-email"
 							type="email"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
@@ -65,8 +68,11 @@ export function LoginView() {
 						/>
 					</div>
 					<div className="space-y-1">
-						<label className="text-[11px] font-mono text-zinc-500 block">Password</label>
+						<label htmlFor="login-password" className="text-[11px] font-mono text-zinc-500 block">
+							Password
+						</label>
 						<input
+							id="login-password"
 							type="password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}

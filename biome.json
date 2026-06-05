@@ -30,6 +30,6 @@
 		}
 	},
 	"files": {
-		"ignore": ["node_modules", "dist", "coverage", "*.d.ts", "packages/web", "docs"]
+		"ignore": ["node_modules", "dist", "coverage", "*.d.ts", "docs"]
 	}
 }

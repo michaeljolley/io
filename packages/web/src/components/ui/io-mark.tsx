@@ -5,7 +5,8 @@ const IO_MARK_PATH =
 export function IoMark({ height = 32 }: { height?: number }) {
 	const width = Math.round(height * (480 / 480));
 	return (
-		<svg width={width} height={height} viewBox="0 0 480 480" fill="none" aria-hidden>
+		<svg width={width} height={height} viewBox="0 0 480 480" fill="none" aria-hidden="true">
+			<title>IO</title>
 			<path d={IO_MARK_PATH} fill="url(#io-grad)" />
 			<defs>
 				<linearGradient

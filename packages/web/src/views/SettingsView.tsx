@@ -251,7 +251,7 @@ export function SettingsView() {
 function FormRow({ label, children }: { label: string; children: ReactNode }) {
 	return (
 		<div className="flex items-center justify-between gap-6 border-b border-white/[0.07] py-3">
-			<label className="text-[11px] font-mono text-zinc-400 shrink-0">{label}</label>
+			<span className="text-[11px] font-mono text-zinc-400 shrink-0">{label}</span>
 			<div className="flex justify-end">{children}</div>
 		</div>
 	);

@@ -183,7 +183,12 @@ export function FeedView() {
 							}`}
 						>
 							{allChecked && (
-								<svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 8 8">
+								<svg
+									className="w-2 h-2 text-white"
+									fill="none"
+									viewBox="0 0 8 8"
+									aria-hidden="true"
+								>
 									<path
 										d="M1 4l2 2 4-4"
 										stroke="currentColor"
@@ -224,7 +229,12 @@ export function FeedView() {
 									}`}
 								>
 									{isChecked && (
-										<svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 8 8">
+										<svg
+											className="w-2 h-2 text-white"
+											fill="none"
+											viewBox="0 0 8 8"
+											aria-hidden="true"
+										>
 											<path
 												d="M1 4l2 2 4-4"
 												stroke="currentColor"
