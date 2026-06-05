@@ -2,7 +2,7 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [dev/4]
+    branches: [main]
     paths:
       - 'docs/**'
   workflow_dispatch:
