@@ -1,219 +1,124 @@
-import { existsSync } from 'node:fs';
-import { createServer } from 'node:http';
-import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import express from 'express';
-import { type RawData, type WebSocket, WebSocketServer } from 'ws';
-import type { IOConfig } from '../config.js';
-import { sendMessage } from '../copilot/orchestrator.js';
-import { createChildLogger } from '../logging/logger.js';
-import { authMiddleware, verifyWsToken } from './middleware/auth.js';
-import { initNotifications, subscribeClient, unsubscribeClient } from './notifications.js';
-import { activityRouter } from './routes/activity.js';
-import { attachmentsRouter } from './routes/attachments.js';
-import { configRouter } from './routes/config.js';
-import { conversationsRouter } from './routes/conversations.js';
-import { healthRouter } from './routes/health.js';
-import { inboxRouter } from './routes/inbox.js';
-import { schedulesRouter } from './routes/schedules.js';
-import { skillsRouter } from './routes/skills.js';
-import { squadsRouter } from './routes/squads.js';
-import { usageRouter } from './routes/usage.js';
-import { wikiRouter } from './routes/wiki.js';
+import { existsSync } from "node:fs";
+import { type Server as HttpServer, createServer } from "node:http";
+import { resolve } from "node:path";
 
-export interface ApiServer {
-	start(): Promise<void>;
-	stop(): Promise<void>;
+import { API_HOST } from "@io/shared";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
+
+import { eventBus } from "../event-bus.js";
+import { type AuthConfig, createAuthMiddleware } from "./auth.js";
+import { initNotifications } from "./notifications.js";
+import { activityRouter } from "./routes/activity.js";
+import { chatRouter } from "./routes/chat.js";
+import { inboxRouter } from "./routes/inbox.js";
+import { schedulesRouter } from "./routes/schedules.js";
+import { settingsRouter } from "./routes/settings.js";
+import { skillsRouter } from "./routes/skills.js";
+import { squadsRouter } from "./routes/squads.js";
+import { usageRouter } from "./routes/usage.js";
+import { wikiRouter } from "./routes/wiki.js";
+import { initWebSocket } from "./websocket.js";
+
+export interface ApiServerConfig extends AuthConfig {
+	port: number;
+	host?: string;
+	webDir?: string;
 }
 
-// Connected WebSocket clients keyed by connection ID
-const wsClients = new Map<string, WebSocket>();
-// Track which clients are alive (responded to last ping)
-const wsAlive = new Map<string, boolean>();
+export interface ApiServer {
+	app: Express;
+	server: HttpServer;
+	start(): Promise<HttpServer>;
+}
 
-const PING_INTERVAL_MS = 30_000; // 30 seconds — keeps Cloudflare Tunnel alive
-
-export function createApiServer(config: IOConfig): ApiServer {
-	const logger = createChildLogger('api');
+export function createApiServer(config: ApiServerConfig): ApiServer {
 	const app = express();
-	app.use(express.json());
+	const server = createServer(app);
+	const webDirectory = resolve(config.webDir ?? resolve(process.cwd(), "dist", "web"));
 
-	// Auth middleware — verifies Supabase JWT if configured
-	app.use('/api', authMiddleware(config));
-
-	// Routes
-	app.use('/api', healthRouter());
-	app.use('/api', usageRouter());
-	app.use('/api', squadsRouter());
-	app.use('/api', activityRouter());
-	app.use('/api', attachmentsRouter(config.dataDir));
-	app.use('/api', inboxRouter());
-	app.use('/api', schedulesRouter());
-	app.use('/api', conversationsRouter());
-	app.use('/api', configRouter());
-	app.use('/api/wiki', wikiRouter);
-	app.use('/api', skillsRouter);
-
-	// POST /api/messages — send a message to the orchestrator
-	app.post('/api/messages', async (req, res) => {
-		const { content, source, connectionId } = req.body as {
-			content?: string;
-			source?: 'tui' | 'telegram' | 'web';
-			connectionId?: string;
-		};
-
-		if (!content) {
-			res.status(400).json({ error: 'content is required' });
+	app.use((req, res, next) => {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "Authorization, Content-Type");
+		res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+		if (req.method === "OPTIONS") {
+			res.status(204).end();
 			return;
 		}
 
-		const ws = connectionId ? wsClients.get(connectionId) : undefined;
-
-		const onDelta = (accumulated: string, done: boolean) => {
-			if (ws && ws.readyState === ws.OPEN) {
-				ws.send(
-					JSON.stringify({
-						type: done ? 'message' : 'delta',
-						content: accumulated,
-					}),
-				);
-			}
-		};
-
-		try {
-			const response = await sendMessage(content, source ?? 'web', onDelta);
-			res.json({ status: 'ok', content: response });
-		} catch (err) {
-			logger.error({ err }, 'Error processing message');
-			res.status(500).json({ error: 'Failed to process message' });
-		}
+		next();
+	});
+	app.use(express.json({ limit: "1mb" }));
+	app.use("/api", createAuthMiddleware(config));
+	app.use(chatRouter);
+	app.use(squadsRouter);
+	app.use(inboxRouter);
+	app.use(schedulesRouter);
+	app.use(wikiRouter);
+	app.use(skillsRouter);
+	app.use(usageRouter);
+	app.use(settingsRouter);
+	app.use(activityRouter);
+	app.use("/api", (_req, res) => {
+		res.status(404).json({ error: "API route not found" });
 	});
 
-	// Serve web frontend static files (production build)
-	const __dirname = fileURLToPath(new URL('.', import.meta.url));
-	const webDistPath = resolve(__dirname, '../../public');
-	if (existsSync(webDistPath)) {
-		app.use(express.static(webDistPath));
-		// SPA fallback: serve index.html for any non-API route
-		app.get('/{*splat}', (_req, res) => {
-			res.sendFile(join(webDistPath, 'index.html'));
-		});
-		logger.info({ path: webDistPath }, 'Serving web frontend');
-	} else {
-		logger.warn({ path: webDistPath }, 'Web frontend not found');
+	if (existsSync(webDirectory)) {
+		app.use(express.static(webDirectory));
 	}
 
-	const server = createServer(app);
-
-	// WebSocket server for streaming
-	const wss = new WebSocketServer({ server, path: '/ws' });
-
-	wss.on('connection', async (ws, req) => {
-		// Verify token from query string if auth is configured
-		const url = new URL(req.url ?? '', `http://${req.headers.host}`);
-		const token = url.searchParams.get('token');
-		if (!(await verifyWsToken(config, token))) {
-			ws.close(4001, 'Unauthorized');
+	app.use((error: unknown, _req: Request, res: Response, next: NextFunction) => {
+		if (res.headersSent) {
+			next(error);
 			return;
 		}
-		const connectionId = crypto.randomUUID();
-		wsClients.set(connectionId, ws);
-		wsAlive.set(connectionId, true);
-		subscribeClient(connectionId, ws);
-		logger.debug({ connectionId }, 'WebSocket client connected');
 
-		// Send the connection ID to the client
-		ws.send(JSON.stringify({ type: 'connected', connectionId }));
-
-		// Mark alive on pong response
-		ws.on('pong', () => {
-			wsAlive.set(connectionId, true);
-		});
-
-		ws.on('message', (data: RawData) => {
-			try {
-				const parsed = JSON.parse(data.toString()) as {
-					type?: string;
-					content?: string;
-					source?: string;
-				};
-
-				if (parsed.type === 'message' && parsed.content) {
-					const source = (parsed.source as 'tui' | 'telegram' | 'web') ?? 'tui';
-
-					const onDelta = (accumulated: string, done: boolean) => {
-						if (ws.readyState === ws.OPEN) {
-							ws.send(
-								JSON.stringify({
-									type: done ? 'message' : 'delta',
-									content: accumulated,
-								}),
-							);
-						}
-					};
-
-					sendMessage(parsed.content, source, onDelta).catch((err) => {
-						logger.error({ err }, 'Error processing WebSocket message');
-						if (ws.readyState === ws.OPEN) {
-							ws.send(JSON.stringify({ type: 'error', content: 'Failed to process message' }));
-						}
-					});
-				}
-			} catch (err) {
-				logger.error({ err }, 'Failed to parse WebSocket message');
-			}
-		});
-
-		ws.on('close', () => {
-			wsClients.delete(connectionId);
-			wsAlive.delete(connectionId);
-			unsubscribeClient(connectionId);
-			logger.debug({ connectionId }, 'WebSocket client disconnected');
+		const statusCode =
+			typeof error === "object" &&
+			error !== null &&
+			"status" in error &&
+			typeof error.status === "number"
+				? error.status
+				: 500;
+		res.status(statusCode).json({
+			error: statusCode === 500 ? "Internal server error" : "Request failed",
+			details: error instanceof Error ? error.message : "Unknown error",
 		});
 	});
 
-	// Ping all clients periodically to keep Cloudflare Tunnel connections alive
-	// and detect dead clients
-	const pingInterval = setInterval(() => {
-		for (const [id, ws] of wsClients) {
-			if (!wsAlive.get(id)) {
-				// Client didn't respond to last ping — terminate
-				logger.debug({ connectionId: id }, 'Terminating unresponsive WebSocket client');
-				ws.terminate();
-				wsClients.delete(id);
-				wsAlive.delete(id);
-				unsubscribeClient(id);
-				continue;
-			}
-			wsAlive.set(id, false);
-			ws.ping();
-		}
-	}, PING_INTERVAL_MS);
+	initWebSocket(server, eventBus);
+	initNotifications(eventBus);
+
+	let startPromise: Promise<HttpServer> | null = null;
 
 	return {
-		async start() {
-			return new Promise<void>((resolve) => {
-				server.listen(config.apiPort, () => {
-					logger.info({ port: config.apiPort }, 'API server listening');
-					resolve();
-				});
-			});
-		},
+		app,
+		server,
+		start() {
+			if (server.listening) {
+				return Promise.resolve(server);
+			}
 
-		async stop() {
-			clearInterval(pingInterval);
-			return new Promise<void>((resolve, reject) => {
-				for (const ws of wsClients.values()) {
-					ws.close();
-				}
-				wsClients.clear();
-				wsAlive.clear();
-				wss.close();
-				server.close((err) => {
-					if (err) reject(err);
-					else resolve();
-				});
+			if (startPromise) {
+				return startPromise;
+			}
+
+			startPromise = new Promise<HttpServer>((resolveServer, rejectServer) => {
+				const handleError = (error: Error) => {
+					server.off("listening", handleListening);
+					startPromise = null;
+					rejectServer(error);
+				};
+				const handleListening = () => {
+					server.off("error", handleError);
+					resolveServer(server);
+				};
+
+				server.once("error", handleError);
+				server.once("listening", handleListening);
+				server.listen(config.port, config.host ?? API_HOST);
 			});
+
+			return startPromise;
 		},
 	};
 }

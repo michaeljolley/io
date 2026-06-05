@@ -1,241 +1,170 @@
-import { createChildLogger } from '../logging/logger.js';
-import { getEventBus } from '../squad/event-bus.js';
-import { getDatabase } from './db.js';
+import type { InboxItem, InboxItemStatus, InboxItemType } from "@io/shared";
+import {
+	type DatabaseClient,
+	asNullableString,
+	asString,
+	generateId,
+	getDatabase,
+	nowIso,
+} from "./db.js";
 
-const logger = () => createChildLogger('inbox');
-
-export type InboxKind = 'deliverable' | 'question' | 'note';
-export type InboxStatus = 'unread' | 'read' | 'resolved';
-
-export interface InboxEntry {
-	id: string;
-	squadId: string | null;
-	instanceId: string | null;
-	kind: InboxKind;
+export interface CreateInboxItemInput {
+	squadId?: string | null;
+	objectiveId?: string | null;
+	type: InboxItemType;
 	title: string;
 	content: string;
-	status: InboxStatus;
-	response: string | null;
-	createdAt: string;
-	resolvedAt: string | null;
+	status?: InboxItemStatus;
 }
 
-// Pending question resolvers — keyed by entry ID
-const pendingQuestions = new Map<string, (response: string) => void>();
+export async function createInboxItem(
+	data: CreateInboxItemInput,
+	db?: DatabaseClient,
+): Promise<InboxItem> {
+	const database = db ?? (await getDatabase());
+	const timestamp = nowIso();
+	const item: InboxItem = {
+		id: generateId(),
+		squadId: data.squadId ?? null,
+		objectiveId: data.objectiveId ?? null,
+		type: data.type,
+		title: data.title,
+		content: data.content,
+		status: data.status ?? "pending",
+		reply: null,
+		createdAt: timestamp,
+		updatedAt: timestamp,
+	};
 
-/**
- * Add a new inbox entry. For questions, returns a promise that resolves when the user responds.
- */
-export async function addInboxEntry(params: {
-	squadId?: string;
-	instanceId?: string;
-	kind: InboxKind;
-	title: string;
-	content: string;
-}): Promise<{ entry: InboxEntry; waitForResponse?: Promise<string> }> {
-	const db = getDatabase();
-	const id = crypto.randomUUID();
-
-	await db.execute({
-		sql: `INSERT INTO inbox_entries (id, squad_id, instance_id, kind, title, content)
-		      VALUES (?, ?, ?, ?, ?, ?)`,
+	await database.execute({
+		sql: `INSERT INTO inbox (id, squad_id, objective_id, type, title, content, status, reply, created_at, updated_at)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		args: [
-			id,
-			params.squadId ?? null,
-			params.instanceId ?? null,
-			params.kind,
-			params.title,
-			params.content,
+			item.id,
+			item.squadId,
+			item.objectiveId,
+			item.type,
+			item.title,
+			item.content,
+			item.status,
+			item.reply,
+			item.createdAt,
+			item.updatedAt,
 		],
 	});
 
-	const entry: InboxEntry = {
-		id,
-		squadId: params.squadId ?? null,
-		instanceId: params.instanceId ?? null,
-		kind: params.kind,
-		title: params.title,
-		content: params.content,
-		status: 'unread',
-		response: null,
-		createdAt: new Date().toISOString(),
-		resolvedAt: null,
-	};
-
-	let waitForResponse: Promise<string> | undefined;
-
-	if (params.kind === 'question') {
-		waitForResponse = new Promise<string>((resolve) => {
-			pendingQuestions.set(id, resolve);
-		});
-	}
-
-	// Emit event for WebSocket broadcast
-	getEventBus().emit({
-		type: 'inbox:new',
-		id: crypto.randomUUID(),
-		timestamp: new Date(),
-		squadId: params.squadId,
-		instanceId: params.instanceId,
-		kind: params.kind,
-		title: params.title,
-		entryId: id,
-	});
-
-	logger().info({ id, kind: params.kind, title: params.title }, 'Inbox entry created');
-	return { entry, waitForResponse };
+	return item;
 }
 
-/**
- * List inbox entries with optional filters.
- */
-export async function listInboxEntries(filters?: {
-	status?: InboxStatus;
-	squadId?: string;
-	kind?: InboxKind;
-	limit?: number;
-}): Promise<(InboxEntry & { squadName?: string })[]> {
-	const db = getDatabase();
-	const conditions: string[] = [];
-	const args: (string | number)[] = [];
-
-	if (filters?.status) {
-		conditions.push('i.status = ?');
-		args.push(filters.status);
-	}
-	if (filters?.squadId) {
-		conditions.push('i.squad_id = ?');
-		args.push(filters.squadId);
-	}
-	if (filters?.kind) {
-		conditions.push('i.kind = ?');
-		args.push(filters.kind);
-	}
-
-	const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-	const limit = filters?.limit ?? 50;
-
-	const result = await db.execute({
-		sql: `SELECT i.id, i.squad_id, i.instance_id, i.kind, i.title, i.content, i.status, i.response, i.created_at, i.resolved_at, s.name as squad_name, s.color as squad_color
-		      FROM inbox_entries i LEFT JOIN squads s ON i.squad_id = s.id
-		      ${where}
-		      ORDER BY i.created_at DESC
-		      LIMIT ?`,
-		args: [...args, limit],
+export async function listInboxItems(
+	status?: InboxItemStatus,
+	limit = 50,
+	offset = 0,
+	db?: DatabaseClient,
+): Promise<InboxItem[]> {
+	const database = db ?? (await getDatabase());
+	const safeLimit = Math.max(1, limit);
+	const safeOffset = Math.max(0, offset);
+	const hasStatusFilter = typeof status === "string";
+	const result = await database.execute({
+		sql: `SELECT * FROM inbox ${hasStatusFilter ? "WHERE status = ?" : ""}
+		      ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+		args: hasStatusFilter ? [status, safeLimit, safeOffset] : [safeLimit, safeOffset],
 	});
 
-	return result.rows.map((row) => ({
-		...rowToEntry(row),
-		squadName: (row.squad_name as string | null) ?? undefined,
-		squadColor: (row.squad_color as string | null) ?? undefined,
-	}));
+	return result.rows.map((row) => mapInboxItem(row));
 }
 
-/**
- * Get a single inbox entry by ID.
- */
-export async function getInboxEntry(id: string): Promise<InboxEntry | null> {
-	const db = getDatabase();
-	const result = await db.execute({
-		sql: 'SELECT id, squad_id, instance_id, kind, title, content, status, response, created_at, resolved_at FROM inbox_entries WHERE id = ?',
+export async function getInboxItem(id: string, db?: DatabaseClient): Promise<InboxItem | null> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "SELECT * FROM inbox WHERE id = ? LIMIT 1",
 		args: [id],
 	});
-	if (result.rows.length === 0) return null;
-	return rowToEntry(result.rows[0]);
+	const row = result.rows[0];
+
+	return row ? mapInboxItem(row) : null;
 }
 
-/**
- * Mark an entry as read.
- */
-export async function markInboxRead(id: string): Promise<void> {
-	const db = getDatabase();
-	await db.execute({
-		sql: "UPDATE inbox_entries SET status = 'read' WHERE id = ? AND status = 'unread'",
-		args: [id],
-	});
-}
-
-/**
- * Respond to an inbox question. Resolves the blocking promise if the squad is waiting.
- */
-export async function resolveInboxEntry(id: string, response: string): Promise<boolean> {
-	const db = getDatabase();
-	await db.execute({
-		sql: "UPDATE inbox_entries SET status = 'resolved', response = ?, resolved_at = CURRENT_TIMESTAMP WHERE id = ?",
-		args: [response, id],
+export async function replyToItem(
+	id: string,
+	reply: string,
+	db?: DatabaseClient,
+): Promise<InboxItem | null> {
+	const database = db ?? (await getDatabase());
+	const updatedAt = nowIso();
+	const result = await database.execute({
+		sql: "UPDATE inbox SET reply = ?, status = 'replied', updated_at = ? WHERE id = ?",
+		args: [reply, updatedAt, id],
 	});
 
-	// Resolve the pending promise if squad is waiting
-	const resolver = pendingQuestions.get(id);
-	if (resolver) {
-		resolver(response);
-		pendingQuestions.delete(id);
-		logger().info({ id }, 'Inbox question resolved — squad unblocked');
-		return true;
+	if (result.rowsAffected === 0) {
+		return null;
 	}
 
-	return false;
+	return getInboxItem(id, database);
 }
 
-/**
- * Get count of unread entries.
- */
-export async function getUnreadCount(): Promise<number> {
-	const db = getDatabase();
-	const result = await db.execute(
-		"SELECT COUNT(*) as count FROM inbox_entries WHERE status = 'unread'",
-	);
-	return (result.rows[0]?.count as number) ?? 0;
-}
-
-/**
- * Delete an inbox entry by ID.
- */
-export async function deleteInboxEntry(id: string): Promise<void> {
-	const db = getDatabase();
-	await db.execute({
-		sql: 'DELETE FROM inbox_entries WHERE id = ?',
-		args: [id],
+export async function markRead(id: string, db?: DatabaseClient): Promise<InboxItem | null> {
+	const database = db ?? (await getDatabase());
+	const updatedAt = nowIso();
+	const result = await database.execute({
+		sql: "UPDATE inbox SET status = 'read', updated_at = ? WHERE id = ? AND status = 'pending'",
+		args: [updatedAt, id],
 	});
+
+	if (result.rowsAffected === 0) {
+		return getInboxItem(id, database);
+	}
+
+	return getInboxItem(id, database);
 }
 
-/**
- * Delete multiple inbox entries by ID.
- */
-export async function deleteInboxEntries(ids: string[]): Promise<void> {
-	if (ids.length === 0) return;
-	const db = getDatabase();
-	const placeholders = ids.map(() => '?').join(',');
-	await db.execute({
-		sql: `DELETE FROM inbox_entries WHERE id IN (${placeholders})`,
-		args: ids,
+export async function resolveItem(id: string, db?: DatabaseClient): Promise<InboxItem | null> {
+	const database = db ?? (await getDatabase());
+	const updatedAt = nowIso();
+	const result = await database.execute({
+		sql: "UPDATE inbox SET status = 'resolved', updated_at = ? WHERE id = ?",
+		args: [updatedAt, id],
 	});
+
+	if (result.rowsAffected === 0) {
+		return null;
+	}
+
+	return getInboxItem(id, database);
 }
 
-/**
- * Mark multiple inbox entries as read.
- */
-export async function markInboxReadBulk(ids: string[]): Promise<void> {
-	if (ids.length === 0) return;
-	const db = getDatabase();
-	const placeholders = ids.map(() => '?').join(',');
-	await db.execute({
-		sql: `UPDATE inbox_entries SET status = 'read' WHERE id IN (${placeholders}) AND status = 'unread'`,
-		args: ids,
+export async function getPendingBlockingQuestions(
+	squadId?: string,
+	db?: DatabaseClient,
+): Promise<InboxItem[]> {
+	const database = db ?? (await getDatabase());
+	const hasSquadFilter = typeof squadId === "string";
+	const result = await database.execute({
+		sql: `SELECT * FROM inbox
+		      WHERE type = 'blocking_question'
+		        AND reply IS NULL
+		        AND status IN ('pending', 'read')
+		        ${hasSquadFilter ? "AND squad_id = ?" : ""}
+		      ORDER BY created_at ASC, id ASC`,
+		args: hasSquadFilter ? [squadId] : [],
 	});
+
+	return result.rows.map((row) => mapInboxItem(row));
 }
 
-function rowToEntry(row: Record<string, unknown>): InboxEntry {
+function mapInboxItem(row: Record<string, unknown>): InboxItem {
 	return {
-		id: row.id as string,
-		squadId: row.squad_id as string,
-		instanceId: row.instance_id as string | null,
-		kind: row.kind as InboxKind,
-		title: row.title as string,
-		content: row.content as string,
-		status: row.status as InboxStatus,
-		response: row.response as string | null,
-		createdAt: row.created_at as string,
-		resolvedAt: row.resolved_at as string | null,
+		id: asString(row.id),
+		squadId: asNullableString(row.squad_id),
+		objectiveId: asNullableString(row.objective_id),
+		type: asString(row.type) as InboxItemType,
+		title: asString(row.title),
+		content: asString(row.content),
+		status: asString(row.status) as InboxItemStatus,
+		reply: asNullableString(row.reply),
+		createdAt: asString(row.created_at),
+		updatedAt: asString(row.updated_at),
 	};
 }

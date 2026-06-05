@@ -1,80 +1,92 @@
-/**
- * Model selection logic for squad agents.
- *
- * Strategy:
- * - Fixed roles (scribe, technical-pm) have predetermined tiers
- * - Dynamic roles get their tier from the team lead's task assignment
- * - On retry after failed review, tier automatically escalates
- */
+import { FAST_MODEL, PREMIUM_MODEL, STANDARD_MODEL } from "@io/shared";
 
-import { type ModelTier, DEFAULT_MODELS } from '../models/registry.js';
+const SIMPLE_KEYWORDS = [
+	"rename",
+	"typo",
+	"spelling",
+	"copy change",
+	"config",
+	"configuration",
+	"lint",
+	"format",
+	"documentation",
+	"readme",
+	"comment",
+	"small fix",
+	"minor",
+];
 
-export type { ModelTier } from '../models/registry.js';
+const COMPLEX_KEYWORDS = [
+	"refactor",
+	"architecture",
+	"pipeline",
+	"orchestr",
+	"multi-file",
+	"cross-cutting",
+	"migration",
+	"performance",
+	"security",
+	"concurrency",
+	"parallel",
+	"worktree",
+	"design",
+	"planning",
+	"system",
+	"integration",
+];
 
-/**
- * Tier escalation order: fast → standard → reasoning
- */
-const TIER_ORDER: ModelTier[] = ['fast', 'standard', 'reasoning'];
-
-/**
- * Select model for a fixed-role agent based on their role and current phase.
- */
-export function selectModelForRole(
-	role: string,
-	phase: 'meeting' | 'task' | 'review',
-): string {
-	const normalizedRole = role.toLowerCase().replace(/[\s_-]+/g, '');
-
-	// Scribe always uses fast tier
-	if (normalizedRole === 'scribe') {
-		return DEFAULT_MODELS.fast;
-	}
-
-	// Technical PM: standard for meetings/tasks, reasoning for final review
-	if (normalizedRole === 'technicalpm' || normalizedRole === 'teamlead') {
-		return phase === 'review' ? DEFAULT_MODELS.reasoning : DEFAULT_MODELS.standard;
-	}
-
-	// All other roles default to standard during meetings
-	if (phase === 'meeting') {
-		return DEFAULT_MODELS.standard;
-	}
-
-	// For task execution, return standard as default (team lead can override)
-	return DEFAULT_MODELS.standard;
+function normalize(text: string): string {
+	return text.trim().toLowerCase();
 }
 
-/**
- * Select model for task execution based on team-lead-assigned tier and retry count.
- * Each retry bumps the tier up one level (fast→standard→reasoning).
- */
-export function selectModelForTask(
-	tierHint: ModelTier | undefined,
-	retryCount: number,
-): string {
-	const baseTier = tierHint ?? 'standard';
-	const escalatedTier = tierForRetry(baseTier, retryCount);
-	return DEFAULT_MODELS[escalatedTier];
-}
-
-/**
- * Escalate tier based on retry count.
- * Each retry bumps up one tier. Max is 'reasoning'.
- */
-export function tierForRetry(baseTier: ModelTier, retries: number): ModelTier {
-	const baseIndex = TIER_ORDER.indexOf(baseTier);
-	const escalatedIndex = Math.min(baseIndex + retries, TIER_ORDER.length - 1);
-	return TIER_ORDER[escalatedIndex] as ModelTier;
-}
-
-/**
- * Parse a MODEL_TIER string into a validated ModelTier value.
- */
-export function parseTierHint(hint: string | undefined): ModelTier | undefined {
-	if (!hint) return undefined;
-	const normalized = hint.toLowerCase().trim();
-	if (normalized === 'fast' || normalized === 'standard' || normalized === 'reasoning') {
-		return normalized;
+function pickAvailableModel(preferred: string, availableModels?: string[]): string {
+	if (!availableModels || availableModels.length === 0) {
+		return preferred;
 	}
-	return undefined;
+
+	if (availableModels.includes(preferred)) {
+		return preferred;
+	}
+
+	if (preferred === PREMIUM_MODEL && availableModels.includes(STANDARD_MODEL)) {
+		return STANDARD_MODEL;
+	}
+
+	if (preferred === FAST_MODEL && availableModels.includes(STANDARD_MODEL)) {
+		return STANDARD_MODEL;
+	}
+
+	if (availableModels.includes(PREMIUM_MODEL)) {
+		return PREMIUM_MODEL;
+	}
+
+	if (availableModels.includes(STANDARD_MODEL)) {
+		return STANDARD_MODEL;
+	}
+
+	if (availableModels.includes(FAST_MODEL)) {
+		return FAST_MODEL;
+	}
+
+	return availableModels[0] ?? preferred;
+}
+
+export async function selectModelForTask(
+	taskDescription: string,
+	availableModels?: string[],
+): Promise<string> {
+	const normalized = normalize(taskDescription);
+
+	const isComplex = COMPLEX_KEYWORDS.some((keyword) => normalized.includes(keyword));
+	const isSimple = SIMPLE_KEYWORDS.some((keyword) => normalized.includes(keyword));
+
+	let preferred = STANDARD_MODEL;
+
+	if (isComplex) {
+		preferred = PREMIUM_MODEL;
+	} else if (isSimple) {
+		preferred = FAST_MODEL;
+	}
+
+	return pickAvailableModel(preferred, availableModels);
 }

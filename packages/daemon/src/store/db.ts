@@ -1,303 +1,360 @@
-import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { type Client, createClient } from '@libsql/client';
-import type { Logger } from 'pino';
-import { createChildLogger } from '../logging/logger.js';
+import { mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
+import { pathToFileURL } from "node:url";
+import { DB_PATH } from "@io/shared";
+import { type Client, type Row, createClient } from "@libsql/client";
 
-let db: Client;
-let logger: Logger;
+export type DatabaseClient = Client;
+export type DatabaseRow = Row;
 
-const MIGRATIONS: { version: number; statements: string[] }[] = [
+export interface DatabaseConnectionOptions {
+	path?: string;
+	url?: string;
+}
+
+interface Migration {
+	version: number;
+	name: string;
+	statements: string[];
+}
+
+const MIGRATIONS: Migration[] = [
 	{
 		version: 1,
+		name: "create-store-schema",
 		statements: [
-			`CREATE TABLE IF NOT EXISTS conversations (
-				id TEXT PRIMARY KEY,
-				role TEXT NOT NULL,
-				content TEXT NOT NULL,
-				source TEXT,
-				attachments TEXT,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-			)`,
 			`CREATE TABLE IF NOT EXISTS squads (
 				id TEXT PRIMARY KEY,
-				name TEXT NOT NULL UNIQUE,
-				project_path TEXT NOT NULL,
-				repo_url TEXT,
-				autonomy_tier TEXT NOT NULL DEFAULT 'medium',
-				autonomy_config TEXT,
-				status TEXT DEFAULT 'active',
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+				name TEXT NOT NULL,
+				repo_url TEXT NOT NULL,
+				repo_owner TEXT NOT NULL,
+				repo_name TEXT NOT NULL,
+				status TEXT NOT NULL,
+				config TEXT NOT NULL,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL,
+				UNIQUE (repo_owner, repo_name)
 			)`,
 			`CREATE TABLE IF NOT EXISTS squad_members (
 				id TEXT PRIMARY KEY,
-				squad_id TEXT NOT NULL REFERENCES squads(id),
-				role_name TEXT NOT NULL,
-				skill_file_path TEXT,
-				tools_allowed TEXT,
-				is_veto_member INTEGER DEFAULT 0,
-				status TEXT DEFAULT 'active',
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+				squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+				role TEXT NOT NULL,
+				name TEXT NOT NULL,
+				system_prompt TEXT NOT NULL,
+				model TEXT,
+				created_at TEXT NOT NULL
 			)`,
-			`CREATE TABLE IF NOT EXISTS squad_instances (
+			`CREATE TABLE IF NOT EXISTS objectives (
 				id TEXT PRIMARY KEY,
-				squad_id TEXT NOT NULL REFERENCES squads(id),
-				issue_ref TEXT,
-				worktree_path TEXT,
-				branch_name TEXT,
-				status TEXT DEFAULT 'planning',
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-				completed_at DATETIME
+				squad_id TEXT NOT NULL REFERENCES squads(id) ON DELETE CASCADE,
+				description TEXT NOT NULL,
+				status TEXT NOT NULL,
+				plan TEXT,
+				revision_count INTEGER NOT NULL DEFAULT 0,
+				branch TEXT,
+				pr_url TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
 			)`,
-			`CREATE TABLE IF NOT EXISTS decisions (
+			`CREATE TABLE IF NOT EXISTS tasks (
 				id TEXT PRIMARY KEY,
-				squad_id TEXT NOT NULL REFERENCES squads(id),
-				instance_id TEXT REFERENCES squad_instances(id),
-				agent_role TEXT NOT NULL,
-				decision_type TEXT,
+				objective_id TEXT NOT NULL REFERENCES objectives(id) ON DELETE CASCADE,
+				assignee_id TEXT REFERENCES squad_members(id) ON DELETE SET NULL,
+				title TEXT NOT NULL,
+				description TEXT NOT NULL,
+				status TEXT NOT NULL,
+				result TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			)`,
+			`CREATE TABLE IF NOT EXISTS conversations (
+				id TEXT PRIMARY KEY,
+				title TEXT,
+				source TEXT NOT NULL,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			)`,
+			`CREATE TABLE IF NOT EXISTS messages (
+				id TEXT PRIMARY KEY,
+				conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+				role TEXT NOT NULL,
 				content TEXT NOT NULL,
-				rationale TEXT,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+				model TEXT,
+				input_tokens INTEGER,
+				output_tokens INTEGER,
+				created_at TEXT NOT NULL
 			)`,
-			`CREATE TABLE IF NOT EXISTS token_usage (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				squad_id TEXT REFERENCES squads(id),
-				instance_id TEXT REFERENCES squad_instances(id),
-				agent_role TEXT,
-				model TEXT NOT NULL,
-				input_tokens INTEGER NOT NULL,
-				output_tokens INTEGER NOT NULL,
-				estimated_cost_usd REAL,
-				timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-			)`,
-			`CREATE TABLE IF NOT EXISTS model_pricing (
-				model TEXT PRIMARY KEY,
-				input_cost_per_1m REAL NOT NULL,
-				output_cost_per_1m REAL NOT NULL,
-				tier TEXT,
-				last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-			)`,
-			`CREATE TABLE IF NOT EXISTS attachments (
+			`CREATE TABLE IF NOT EXISTS inbox (
 				id TEXT PRIMARY KEY,
-				message_id TEXT,
-				filename TEXT NOT NULL,
-				mime_type TEXT,
-				size_bytes INTEGER,
-				disk_path TEXT NOT NULL,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-			)`,
-			`CREATE TABLE IF NOT EXISTS agent_activity (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				squad_id TEXT REFERENCES squads(id),
-				instance_id TEXT REFERENCES squad_instances(id),
-				agent_role TEXT NOT NULL,
-				activity_type TEXT NOT NULL,
-				model_used TEXT,
-				content TEXT,
-				tokens_used INTEGER,
-				timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-			)`,
-			`CREATE TABLE IF NOT EXISTS schema_version (
-				version INTEGER PRIMARY KEY
-			)`,
-			`CREATE TABLE IF NOT EXISTS io_state (
-				key TEXT PRIMARY KEY,
-				value TEXT NOT NULL
-			)`,
-			'INSERT INTO schema_version (version) VALUES (1)',
-		],
-	},
-	{
-		version: 2,
-		statements: [
-			`CREATE TABLE IF NOT EXISTS inbox_entries (
-				id TEXT PRIMARY KEY,
-				squad_id TEXT REFERENCES squads(id),
-				instance_id TEXT REFERENCES squad_instances(id),
-				kind TEXT NOT NULL,
+				squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+				objective_id TEXT REFERENCES objectives(id) ON DELETE SET NULL,
+				type TEXT NOT NULL,
 				title TEXT NOT NULL,
 				content TEXT NOT NULL,
-				status TEXT DEFAULT 'unread',
-				response TEXT,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-				resolved_at DATETIME
+				status TEXT NOT NULL,
+				reply TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
 			)`,
-			'CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_entries(status)',
-			'CREATE INDEX IF NOT EXISTS idx_inbox_squad ON inbox_entries(squad_id)',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (2)',
-		],
-	},
-	{
-		version: 3,
-		statements: [
 			`CREATE TABLE IF NOT EXISTS schedules (
 				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL,
-				target_type TEXT NOT NULL,
-				target_id TEXT,
-				cron TEXT NOT NULL,
+				cron_expression TEXT NOT NULL,
 				prompt TEXT NOT NULL,
-				enabled INTEGER DEFAULT 1,
-				last_run DATETIME,
-				next_run DATETIME,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+				enabled INTEGER NOT NULL DEFAULT 1,
+				last_run_at TEXT,
+				next_run_at TEXT,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
 			)`,
-			'CREATE INDEX IF NOT EXISTS idx_schedules_enabled ON schedules(enabled)',
-			'CREATE INDEX IF NOT EXISTS idx_schedules_next_run ON schedules(next_run)',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (3)',
-		],
-	},
-	{
-		version: 4,
-		statements: [
-			`CREATE TABLE IF NOT EXISTS skill_activations (
-				skill_name TEXT NOT NULL,
-				target_type TEXT NOT NULL,
-				target_id TEXT,
-				activated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-				PRIMARY KEY (skill_name, target_type, target_id)
-			)`,
-			'CREATE INDEX IF NOT EXISTS idx_skill_activations_target ON skill_activations(target_type, target_id)',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (4)',
-		],
-	},
-	{
-		version: 5,
-		statements: [
-			'ALTER TABLE squads ADD COLUMN universe TEXT',
-			'ALTER TABLE squad_members ADD COLUMN display_name TEXT',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (5)',
-		],
-	},
-	{
-		version: 6,
-		statements: [
-			'ALTER TABLE squad_members ADD COLUMN persona TEXT',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (6)',
-		],
-	},
-	{
-		version: 7,
-		statements: [
-			// Make squad_id nullable on inbox_entries
-			`CREATE TABLE IF NOT EXISTS inbox_entries_new (
+			`CREATE TABLE IF NOT EXISTS token_usage (
 				id TEXT PRIMARY KEY,
-				squad_id TEXT REFERENCES squads(id),
-				instance_id TEXT REFERENCES squad_instances(id),
-				kind TEXT NOT NULL,
-				title TEXT NOT NULL,
-				content TEXT NOT NULL,
-				status TEXT DEFAULT 'unread',
-				response TEXT,
-				created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-				resolved_at DATETIME
+				squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+				agent_id TEXT,
+				model TEXT NOT NULL,
+				input_tokens INTEGER NOT NULL,
+				output_tokens INTEGER NOT NULL,
+				cost REAL NOT NULL,
+				created_at TEXT NOT NULL
 			)`,
-			`INSERT OR IGNORE INTO inbox_entries_new SELECT * FROM inbox_entries`,
-			'DROP TABLE IF EXISTS inbox_entries',
-			'ALTER TABLE inbox_entries_new RENAME TO inbox_entries',
-			'CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_entries(status)',
-			'CREATE INDEX IF NOT EXISTS idx_inbox_squad ON inbox_entries(squad_id)',
-			'INSERT OR REPLACE INTO schema_version (version) VALUES (7)',
+			`CREATE TABLE IF NOT EXISTS activity (
+				id TEXT PRIMARY KEY,
+				squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+				objective_id TEXT REFERENCES objectives(id) ON DELETE SET NULL,
+				event TEXT NOT NULL,
+				description TEXT NOT NULL,
+				metadata TEXT,
+				created_at TEXT NOT NULL
+			)`,
+			`CREATE TABLE IF NOT EXISTS agent_history (
+				id TEXT PRIMARY KEY,
+				agent_id TEXT NOT NULL,
+				squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
+				content TEXT NOT NULL,
+				created_at TEXT NOT NULL
+			)`,
+			`CREATE TABLE IF NOT EXISTS settings (
+				key TEXT PRIMARY KEY,
+				value TEXT
+			)`,
+			"CREATE INDEX IF NOT EXISTS idx_squad_members_squad_id ON squad_members(squad_id)",
+			"CREATE INDEX IF NOT EXISTS idx_objectives_squad_id ON objectives(squad_id)",
+			"CREATE INDEX IF NOT EXISTS idx_objectives_status ON objectives(status)",
+			"CREATE INDEX IF NOT EXISTS idx_tasks_objective_id ON tasks(objective_id)",
+			"CREATE INDEX IF NOT EXISTS idx_tasks_assignee_id ON tasks(assignee_id)",
+			"CREATE INDEX IF NOT EXISTS idx_messages_conversation_id_created_at ON messages(conversation_id, created_at)",
+			"CREATE INDEX IF NOT EXISTS idx_inbox_status_created_at ON inbox(status, created_at)",
+			"CREATE INDEX IF NOT EXISTS idx_inbox_squad_id ON inbox(squad_id)",
+			"CREATE INDEX IF NOT EXISTS idx_inbox_objective_id ON inbox(objective_id)",
+			"CREATE INDEX IF NOT EXISTS idx_schedules_enabled_next_run_at ON schedules(enabled, next_run_at)",
+			"CREATE INDEX IF NOT EXISTS idx_token_usage_created_at ON token_usage(created_at)",
+			"CREATE INDEX IF NOT EXISTS idx_token_usage_squad_id ON token_usage(squad_id)",
+			"CREATE INDEX IF NOT EXISTS idx_token_usage_agent_id ON token_usage(agent_id)",
+			"CREATE INDEX IF NOT EXISTS idx_token_usage_model ON token_usage(model)",
+			"CREATE INDEX IF NOT EXISTS idx_activity_created_at ON activity(created_at)",
+			"CREATE INDEX IF NOT EXISTS idx_activity_squad_id ON activity(squad_id)",
+			"CREATE INDEX IF NOT EXISTS idx_activity_objective_id ON activity(objective_id)",
+			"CREATE INDEX IF NOT EXISTS idx_agent_history_agent_id_created_at ON agent_history(agent_id, created_at)",
 		],
-	},
-	{
-			version: 8,
-			statements: [
-				'ALTER TABLE squad_instances ADD COLUMN objective TEXT',
-				'INSERT OR REPLACE INTO schema_version (version) VALUES (8)',
-			],
-	},
-	{
-			version: 9,
-			statements: [
-				"ALTER TABLE squads ADD COLUMN color TEXT NOT NULL DEFAULT '#38bdf8'",
-				// Backfill existing squads with unique colors from the palette
-				`UPDATE squads SET color = CASE
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 0 THEN '#38bdf8'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 1 THEN '#a78bfa'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 2 THEN '#34d399'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 3 THEN '#f59e0b'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 4 THEN '#f87171'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 5 THEN '#06b6d4'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 6 THEN '#fb923c'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 7 THEN '#4ade80'
-					WHEN (SELECT COUNT(*) FROM squads s2 WHERE s2.rowid < squads.rowid) % 10 = 8 THEN '#c084fc'
-					ELSE '#facc15'
-				END`,
-				'INSERT OR REPLACE INTO schema_version (version) VALUES (9)',
-			],
-	},
-	{
-			version: 10,
-			statements: [
-				// Add type column to squad_instances (instance vs delegation)
-				"ALTER TABLE squad_instances ADD COLUMN type TEXT NOT NULL DEFAULT 'instance'",
-				// Add label column to agent_activity (tool name, event label)
-				'ALTER TABLE agent_activity ADD COLUMN label TEXT',
-				// Add status column to agent_activity (ok/error for tool results)
-				'ALTER TABLE agent_activity ADD COLUMN status TEXT',
-				// Index for history queries
-				'CREATE INDEX IF NOT EXISTS idx_instances_status ON squad_instances(squad_id, status)',
-				'CREATE INDEX IF NOT EXISTS idx_activity_instance ON agent_activity(instance_id, timestamp)',
-				'INSERT OR REPLACE INTO schema_version (version) VALUES (10)',
-			],
 	},
 ];
 
-export async function initDatabase(dataDir: string): Promise<Client> {
-	logger = createChildLogger('store');
-	mkdirSync(dataDir, { recursive: true });
-	const dbPath = join(dataDir, 'io.db');
+let client: DatabaseClient | null = null;
+let initPromise: Promise<DatabaseClient> | null = null;
+let defaultConnectionOptions: DatabaseConnectionOptions = {};
 
-	db = createClient({
-		url: `file:${dbPath}`,
-	});
+export const generateId = (): string => crypto.randomUUID();
+export const nowIso = (): string => new Date().toISOString();
 
-	await db.execute('PRAGMA journal_mode = WAL');
-	await db.execute('PRAGMA foreign_keys = ON');
+export function asString(value: unknown): string {
+	if (typeof value === "string") {
+		return value;
+	}
 
-	await runMigrations();
+	if (value === null || value === undefined) {
+		throw new Error("Expected string value but received null or undefined");
+	}
 
-	logger.info({ path: dbPath }, 'Database initialized');
-	return db;
+	return String(value);
 }
 
-async function runMigrations(): Promise<void> {
-	const currentVersion = await getCurrentVersion();
+export function asNullableString(value: unknown): string | null {
+	if (value === null || value === undefined) {
+		return null;
+	}
+
+	return typeof value === "string" ? value : String(value);
+}
+
+export function asNumber(value: unknown): number {
+	if (typeof value === "number") {
+		return value;
+	}
+
+	if (typeof value === "bigint") {
+		return Number(value);
+	}
+
+	if (typeof value === "string") {
+		return Number(value);
+	}
+
+	throw new Error(`Expected numeric value but received ${typeof value}`);
+}
+
+export function asNullableNumber(value: unknown): number | null {
+	if (value === null || value === undefined) {
+		return null;
+	}
+
+	return asNumber(value);
+}
+
+export function asBoolean(value: unknown): boolean {
+	return asNumber(value) === 1;
+}
+
+export function toSqliteBoolean(value: boolean): number {
+	return value ? 1 : 0;
+}
+
+export function parseJson<T>(value: unknown): T {
+	if (typeof value !== "string") {
+		return value as T;
+	}
+
+	return JSON.parse(value) as T;
+}
+
+export function serializeJson(value: unknown): string {
+	return JSON.stringify(value);
+}
+
+export async function initDatabase(): Promise<DatabaseClient> {
+	if (client && !client.closed) {
+		return client;
+	}
+
+	if (initPromise) {
+		return initPromise;
+	}
+
+	initPromise = initializeDatabase(defaultConnectionOptions);
+
+	try {
+		client = await initPromise;
+		return client;
+	} finally {
+		initPromise = null;
+	}
+}
+
+export async function getDatabase(): Promise<DatabaseClient> {
+	return initDatabase();
+}
+
+export async function createDatabaseClient(
+	options: DatabaseConnectionOptions = {},
+): Promise<DatabaseClient> {
+	return initializeDatabase(options);
+}
+
+export async function closeDatabase(databaseClient: DatabaseClient | null = client): Promise<void> {
+	if (!databaseClient || databaseClient.closed) {
+		if (databaseClient === client) {
+			client = null;
+			initPromise = null;
+		}
+		return;
+	}
+
+	await databaseClient.close();
+	if (databaseClient === client) {
+		client = null;
+		initPromise = null;
+	}
+}
+
+export async function resetDatabase(
+	options: DatabaseConnectionOptions = {},
+): Promise<DatabaseClient> {
+	defaultConnectionOptions = options;
+	await closeDatabase();
+	client = await initializeDatabase(defaultConnectionOptions);
+	return client;
+}
+
+async function initializeDatabase(
+	options: DatabaseConnectionOptions = {},
+): Promise<DatabaseClient> {
+	const url = await resolveDatabaseUrl(options);
+	const databaseClient = createClient({ url });
+
+	await databaseClient.execute("PRAGMA foreign_keys = ON");
+	await databaseClient.execute("PRAGMA journal_mode = WAL");
+	await ensureMigrationTable(databaseClient);
+	await applyMigrations(databaseClient);
+
+	return databaseClient;
+}
+
+async function resolveDatabaseUrl(options: DatabaseConnectionOptions): Promise<string> {
+	if (options.url) {
+		return options.url;
+	}
+
+	const databasePath = options.path ?? DB_PATH;
+	await mkdir(dirname(databasePath), { recursive: true });
+	return pathToFileURL(databasePath).href;
+}
+
+async function ensureMigrationTable(databaseClient: DatabaseClient): Promise<void> {
+	await databaseClient.executeMultiple(`
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version INTEGER PRIMARY KEY,
+			name TEXT NOT NULL,
+			applied_at TEXT NOT NULL
+		);
+	`);
+}
+
+async function applyMigrations(databaseClient: DatabaseClient): Promise<void> {
+	const appliedVersions = await getAppliedVersions(databaseClient);
 
 	for (const migration of MIGRATIONS) {
-		if (migration.version > currentVersion) {
-			logger.info({ version: migration.version }, 'Running migration');
+		if (appliedVersions.has(migration.version)) {
+			continue;
+		}
+
+		const transaction = await databaseClient.transaction("write");
+
+		try {
 			for (const statement of migration.statements) {
-				await db.execute(statement);
+				await transaction.execute(statement);
+			}
+
+			await transaction.execute({
+				sql: "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
+				args: [migration.version, migration.name, nowIso()],
+			});
+			await transaction.commit();
+		} catch (error) {
+			if (!transaction.closed) {
+				await transaction.rollback();
+			}
+			throw error;
+		} finally {
+			if (!transaction.closed) {
+				transaction.close();
 			}
 		}
 	}
 }
 
-async function getCurrentVersion(): Promise<number> {
-	try {
-		const result = await db.execute(
-			'SELECT version FROM schema_version ORDER BY version DESC LIMIT 1',
-		);
-		if (result.rows.length > 0) {
-			return result.rows[0].version as number;
-		}
-		return 0;
-	} catch {
-		return 0;
-	}
-}
+async function getAppliedVersions(databaseClient: DatabaseClient): Promise<Set<number>> {
+	const result = await databaseClient.execute(
+		"SELECT version FROM schema_migrations ORDER BY version ASC",
+	);
 
-export function getDatabase(): Client {
-	if (!db) {
-		throw new Error('Database not initialized. Call initDatabase() first.');
-	}
-	return db;
-}
-
-export function closeDatabase(): void {
-	if (db) {
-		db.close();
-	}
+	return new Set(result.rows.map((row) => asNumber(row.version)));
 }

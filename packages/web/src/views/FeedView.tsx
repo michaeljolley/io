@@ -1,3 +1,4 @@
+import type { InboxItem } from '@io/shared';
 import { MarkdownRenderer } from '@/components/ui/markdown';
 import { Chip } from '@/components/ui/shared';
 import { useTimezone } from '@/hooks/use-config';
@@ -30,17 +31,15 @@ function SourceChip({ name, color: colorProp }: { name: string; color?: string }
 	);
 }
 
-interface FeedItem {
-	id: string;
-	kind: string;
-	title: string;
-	content: string;
-	squadId: string | null;
+type FeedItem = InboxItem & {
 	squadName?: string;
 	squadColor?: string;
-	status: string;
-	response: string | null;
-	createdAt: string;
+	kind?: string;
+	response?: string | null;
+};
+
+function isUnread(item: FeedItem) {
+	return item.status === 'pending';
 }
 
 export function FeedView() {
@@ -52,21 +51,21 @@ export function FeedView() {
 
 	useEffect(() => {
 		api
-			.get<{ entries: FeedItem[] }>('/inbox')
-			.then((d) => setItems(d.entries))
+			.get<{ entries?: FeedItem[] }>('/inbox')
+			.then((d) => setItems(d.entries ?? []))
 			.catch(() => {});
 	}, []);
 
-	const unreadCount = items.filter((i) => i.status === 'unread').length;
-	const filtered = filter === 'unread' ? items.filter((i) => i.status === 'unread') : items;
+	const unreadCount = items.filter(isUnread).length;
+	const filtered = filter === 'unread' ? items.filter(isUnread) : items;
 	const allChecked = filtered.length > 0 && filtered.every((i) => checked.has(i.id));
 	const anyChecked = checked.size > 0;
 
 	function openItem(item: FeedItem) {
 		if (anyChecked) return;
 		setReading(item);
-		if (item.status === 'unread') {
-			api.post(`/inbox/${item.id}/read`).catch(() => {});
+		if (isUnread(item)) {
+			api.put(`/inbox/${item.id}/read`, {}).catch(() => {});
 			setItems((p) => p.map((i) => (i.id === item.id ? { ...i, status: 'read' } : i)));
 		}
 	}
@@ -88,14 +87,14 @@ export function FeedView() {
 
 	function markReadBulk() {
 		const ids = Array.from(checked);
-		api.post('/inbox/bulk/read', { ids }).catch(() => {});
+		void Promise.allSettled(ids.map((id) => api.put(`/inbox/${id}/read`, {})));
 		setItems((p) => p.map((i) => (checked.has(i.id) ? { ...i, status: 'read' } : i)));
 		setChecked(new Set());
 	}
 
 	function deleteBulk() {
 		const ids = Array.from(checked);
-		api.post('/inbox/bulk/delete', { ids }).catch(() => {});
+		void Promise.allSettled(ids.map((id) => api.delete(`/inbox/${id}`)));
 		setItems((p) => p.filter((i) => !checked.has(i.id)));
 		if (reading && checked.has(reading.id)) setReading(null);
 		setChecked(new Set());
@@ -200,10 +199,10 @@ export function FeedView() {
 								{/* Content */}
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-1.5 mb-0.5">
-										{item.status === 'unread' && <div className="w-1 h-1 rounded-full bg-[#E43A9C] flex-shrink-0" />}
+										{isUnread(item) && <div className="w-1 h-1 rounded-full bg-[#E43A9C] flex-shrink-0" />}
 											<SourceChip name={item.squadName ?? (item.squadId ? item.squadId.slice(0, 8) : 'Orchestrator')} color={item.squadColor} />
 									</div>
-									<p className={`text-[11px] truncate ${item.status === 'unread' ? 'text-zinc-200' : 'text-zinc-500'}`}>{item.title}</p>
+									<p className={`text-[11px] truncate ${isUnread(item) ? 'text-zinc-200' : 'text-zinc-500'}`}>{item.title}</p>
 									<p className="text-[10px] text-zinc-700 font-mono mt-1">{formatDateTime(item.createdAt, timezone)}</p>
 								</div>
 							</div>

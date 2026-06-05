@@ -1,3 +1,4 @@
+import { EVENT_NAMES } from '@io/shared';
 import { pushNotification } from '@/components/NotificationPanel';
 import { api, getCurrentToken } from '@/lib/api';
 import {
@@ -5,7 +6,6 @@ import {
 	createContext,
 	useCallback,
 	useContext,
-	useEffect,
 	useRef,
 	useState,
 } from 'react';
@@ -31,7 +31,7 @@ interface ChatContextValue {
 	isStreaming: boolean;
 	isThinking: boolean;
 	connected: boolean;
-	sendChatMessage: (content: string) => void;
+	sendChatMessage: (content: string) => Promise<void>;
 	stopStreaming: () => void;
 	addUserMessage: (msg: ChatMessage) => void;
 	uploadAttachment: (file: File, messageId: string) => Promise<void>;
@@ -44,42 +44,36 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 	const [streaming, setStreaming] = useState('');
 	const [isStreaming, setIsStreaming] = useState(false);
 	const [isThinking, setIsThinking] = useState(false);
-	const loadedRef = useRef(false);
+	const conversationIdRef = useRef<string | null>(null);
 
-	// Load conversation history once
-	useEffect(() => {
-		if (loadedRef.current) return;
-		loadedRef.current = true;
-		api
-			.get<{ messages: ChatMessage[] }>('/conversations?limit=50')
-			.then((data) => {
-				setMessages(data.messages.map((m) => ({ ...m, timestamp: m.timestamp })));
-			})
-			.catch(() => {});
-	}, []);
-
-	const handleDelta = useCallback((accumulated: string) => {
+	const handleDelta = useCallback((chunk: string) => {
 		setIsThinking(false);
 		setIsStreaming(true);
-		setStreaming(accumulated);
-	}, []);
-
-	const handleMessage = useCallback((content: string) => {
-		setIsThinking(false);
-		setIsStreaming(false);
-		setStreaming('');
-		setMessages((prev) => [
-			...prev,
-			{
-				id: crypto.randomUUID(),
-				role: 'assistant',
-				content,
-				timestamp: new Date().toISOString(),
-			},
-		]);
+		setStreaming((previous) => previous + chunk);
 	}, []);
 
 	const handleEvent = useCallback((msg: WsMessage) => {
+		if (msg.type === EVENT_NAMES.CHAT_STREAM_END) {
+			setIsThinking(false);
+			setIsStreaming(false);
+			setMessages((prev) => {
+				if (!streaming) {
+					return prev;
+				}
+				return [
+					...prev,
+					{
+						id: crypto.randomUUID(),
+						role: 'assistant',
+						content: streaming,
+						timestamp: new Date().toISOString(),
+					},
+				];
+			});
+			setStreaming('');
+			return;
+		}
+
 		if (msg.notification) {
 			pushNotification({
 				id: msg.event?.id ?? crypto.randomUUID(),
@@ -88,7 +82,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 				eventType: msg.event?.type ?? 'unknown',
 			});
 		}
-	}, []);
+	}, [streaming]);
 
 	const handleError = useCallback(() => {
 		setIsThinking(false);
@@ -96,20 +90,28 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 		setStreaming('');
 	}, []);
 
-	const { connected, sendMessage } = useWebSocket({
+	const { connected } = useWebSocket({
 		onDelta: handleDelta,
-		onMessage: handleMessage,
 		onEvent: handleEvent,
 		onError: handleError,
 	});
 
-	const sendChatMessage = useCallback(
-		(content: string) => {
-			setIsThinking(true);
-			sendMessage(content);
-		},
-		[sendMessage],
-	);
+	const sendChatMessage = useCallback(async (content: string) => {
+		setIsThinking(true);
+		setIsStreaming(false);
+		setStreaming('');
+		try {
+			const response = await api.post<{ conversationId: string; messageId: string }>('/chat', {
+				message: content,
+				conversationId: conversationIdRef.current ?? undefined,
+				source: 'web',
+			});
+			conversationIdRef.current = response.conversationId;
+		} catch (error) {
+			setIsThinking(false);
+			throw error;
+		}
+	}, []);
 
 	const stopStreaming = useCallback(() => {
 		if (streaming) {

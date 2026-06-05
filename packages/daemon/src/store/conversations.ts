@@ -1,121 +1,183 @@
-import { getDatabase } from './db.js';
+import type { Conversation, Message, MessageRole } from "@io/shared";
+import {
+	type DatabaseClient,
+	asNullableNumber,
+	asNullableString,
+	asString,
+	generateId,
+	getDatabase,
+	nowIso,
+} from "./db.js";
 
-export type ConversationRole = 'user' | 'assistant';
-
-export interface ConversationMessage {
-	id: string;
-	role: ConversationRole;
-	content: string;
-	source: string | null;
-	attachments: unknown[] | null;
-	timestamp: string;
+export interface ConversationRecord extends Conversation {
+	messages: Message[];
 }
 
-export interface ConversationPage {
-	messages: ConversationMessage[];
-	cursor: string | null;
-	hasMore: boolean;
+export interface MessageTokenUsage {
+	inputTokens?: number | null;
+	outputTokens?: number | null;
 }
 
-export async function appendConversationMessage(params: {
-	role: ConversationRole;
-	content: string;
-	source?: string;
-	createdAt?: string;
-}): Promise<ConversationMessage> {
-	const db = getDatabase();
-	const message: ConversationMessage = {
-		id: crypto.randomUUID(),
-		role: params.role,
-		content: params.content,
-		source: params.source ?? null,
-		attachments: null,
-		timestamp: params.createdAt ?? new Date().toISOString(),
+export async function createConversation(
+	source: Conversation["source"],
+	title?: string | null,
+	db?: DatabaseClient,
+): Promise<Conversation> {
+	const database = db ?? (await getDatabase());
+	const createdAt = nowIso();
+	const conversation: Conversation = {
+		id: generateId(),
+		title: title ?? null,
+		source,
+		createdAt,
+		updatedAt: createdAt,
 	};
 
-	await db.execute({
-		sql: 'INSERT INTO conversations (id, role, content, source, created_at) VALUES (?, ?, ?, ?, ?)',
-		args: [message.id, message.role, message.content, message.source, message.timestamp],
+	await database.execute({
+		sql: `INSERT INTO conversations (id, title, source, created_at, updated_at)
+		      VALUES (?, ?, ?, ?, ?)`,
+		args: [
+			conversation.id,
+			conversation.title,
+			conversation.source,
+			conversation.createdAt,
+			conversation.updatedAt,
+		],
+	});
+
+	return conversation;
+}
+
+export async function getConversation(
+	id: string,
+	db?: DatabaseClient,
+): Promise<ConversationRecord | null> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "SELECT * FROM conversations WHERE id = ? LIMIT 1",
+		args: [id],
+	});
+	const row = result.rows[0];
+
+	if (!row) {
+		return null;
+	}
+
+	const conversation = mapConversation(row);
+	const messages = await getMessages(id, database);
+	return { ...conversation, messages };
+}
+
+export async function listConversations(
+	limit = 50,
+	offset = 0,
+	db?: DatabaseClient,
+): Promise<Conversation[]> {
+	const database = db ?? (await getDatabase());
+	const safeLimit = Math.max(1, limit);
+	const safeOffset = Math.max(0, offset);
+	const result = await database.execute({
+		sql: "SELECT * FROM conversations ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT ? OFFSET ?",
+		args: [safeLimit, safeOffset],
+	});
+
+	return result.rows.map((row) => mapConversation(row));
+}
+
+export async function appendMessage(
+	conversationId: string,
+	role: MessageRole,
+	content: string,
+	model?: string | null,
+	tokens?: MessageTokenUsage,
+	db?: DatabaseClient,
+): Promise<Message> {
+	const database = db ?? (await getDatabase());
+	const message: Message = {
+		id: generateId(),
+		conversationId,
+		role,
+		content,
+		model: model ?? null,
+		inputTokens: tokens?.inputTokens ?? null,
+		outputTokens: tokens?.outputTokens ?? null,
+		createdAt: nowIso(),
+	};
+
+	await database.execute({
+		sql: `INSERT INTO messages (id, conversation_id, role, content, model, input_tokens, output_tokens, created_at)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		args: [
+			message.id,
+			message.conversationId,
+			message.role,
+			message.content,
+			message.model,
+			message.inputTokens,
+			message.outputTokens,
+			message.createdAt,
+		],
+	});
+	await database.execute({
+		sql: "UPDATE conversations SET updated_at = ? WHERE id = ?",
+		args: [message.createdAt, conversationId],
 	});
 
 	return message;
 }
 
-type ConversationRow = {
-	id: string;
-	role: ConversationRole;
-	content: string;
-	source: string | null;
-	attachments: string | null;
-	created_at: string;
-};
+export async function getMessages(conversationId: string, db?: DatabaseClient): Promise<Message[]> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC, id ASC",
+		args: [conversationId],
+	});
 
-function toConversationRow(row: Record<string, unknown>): ConversationRow {
+	return result.rows.map((row) => mapMessage(row));
+}
+
+export async function deleteConversation(id: string, db?: DatabaseClient): Promise<boolean> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "DELETE FROM conversations WHERE id = ?",
+		args: [id],
+	});
+
+	return result.rowsAffected > 0;
+}
+
+export async function getConversationMessageCount(
+	id: string,
+	db?: DatabaseClient,
+): Promise<number> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "SELECT COUNT(*) AS count FROM messages WHERE conversation_id = ?",
+		args: [id],
+	});
+
+	return result.rows[0] ? Number(result.rows[0].count) : 0;
+}
+
+function mapConversation(row: Record<string, unknown>): Conversation {
 	return {
-		id: row.id as string,
-		role: row.role as ConversationRole,
-		content: row.content as string,
-		source: row.source as string | null,
-		attachments: row.attachments as string | null,
-		created_at: row.created_at as string,
+		id: asString(row.id),
+		title: asNullableString(row.title),
+		source: asString(row.source) as Conversation["source"],
+		createdAt: asString(row.created_at),
+		updatedAt: asString(row.updated_at),
 	};
 }
 
-export async function listConversationMessages(params?: {
-	limit?: number;
-	before?: string;
-}): Promise<ConversationPage> {
-	const db = getDatabase();
-	const limit = Math.min(params?.limit ?? 50, 200);
-	const before = params?.before;
-
-	let rows: ConversationRow[];
-
-	if (before) {
-		const cursorResult = await db.execute({
-			sql: 'SELECT created_at FROM conversations WHERE id = ?',
-			args: [before],
-		});
-
-		if (cursorResult.rows.length === 0) {
-			throw new Error('Invalid cursor: message not found');
-		}
-
-		const cursorTime = cursorResult.rows[0].created_at as string;
-		const result = await db.execute({
-			sql: `SELECT id, role, content, source, attachments, created_at
-				FROM conversations
-				WHERE created_at < ? OR (created_at = ? AND id < ?)
-				ORDER BY created_at DESC, id DESC
-				LIMIT ?`,
-			args: [cursorTime, cursorTime, before, limit],
-		});
-
-		rows = result.rows.map((row) => toConversationRow(row as unknown as Record<string, unknown>));
-	} else {
-		const result = await db.execute({
-			sql: `SELECT id, role, content, source, attachments, created_at
-				FROM conversations
-				ORDER BY created_at DESC, id DESC
-				LIMIT ?`,
-			args: [limit],
-		});
-
-		rows = result.rows.map((row) => toConversationRow(row as unknown as Record<string, unknown>));
-	}
-
-	const messages = rows.reverse().map((row) => ({
-		id: row.id,
-		role: row.role,
-		content: row.content,
-		source: row.source,
-		attachments: row.attachments ? (JSON.parse(row.attachments) as unknown[]) : null,
-		timestamp: row.created_at,
-	}));
-
+function mapMessage(row: Record<string, unknown>): Message {
 	return {
-		messages,
-		cursor: rows.length > 0 ? rows[0].id : null,
-		hasMore: rows.length === limit,
+		id: asString(row.id),
+		conversationId: asString(row.conversation_id),
+		role: asString(row.role) as MessageRole,
+		content: asString(row.content),
+		model: asNullableString(row.model),
+		inputTokens: asNullableNumber(row.input_tokens),
+		outputTokens: asNullableNumber(row.output_tokens),
+		createdAt: asString(row.created_at),
 	};
 }

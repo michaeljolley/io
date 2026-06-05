@@ -1,86 +1,35 @@
-export type SquadEventType =
-	| 'squad:created'
-	| 'squad:disbanded'
-	| 'squad:member_added'
-	| 'squad:member_retired';
+import type { EVENT_NAMES } from "../constants.js";
+import type { StreamChunk } from "./conversation.js";
+import type { Objective, Squad, Task } from "./squad.js";
+import type { InboxItem } from "./store.js";
 
-export type AgentEventType =
-	| 'agent:task_started'
-	| 'agent:task_completed'
-	| 'agent:tool_call'
-	| 'agent:tool_result'
-	| 'agent:thought'
-	| 'agent:decision'
-	| 'agent:error'
-	| 'agent:permission_denied';
+export type EventName = (typeof EVENT_NAMES)[keyof typeof EVENT_NAMES];
 
-export type InstanceEventType =
-	| 'instance:created'
-	| 'instance:meeting_started'
-	| 'instance:meeting_complete'
-	| 'instance:planning_complete'
-	| 'instance:review_cycle'
-	| 'instance:work_started'
-	| 'instance:pr_created'
-	| 'instance:complete'
-	| 'instance:failed';
-
-export type MeetingEventType =
-	| 'meeting:contribution'
-	| 'meeting:consensus_reached'
-	| 'meeting:veto';
-
-export type InboxEventType = 'inbox:new' | 'inbox:resolved';
-
-export type ScheduleEventType = 'schedule:fired' | 'schedule:completed' | 'schedule:failed';
-
-export interface BaseEvent {
-	id: string;
-	timestamp: Date;
-	squadId?: string;
-	instanceId?: string;
+export interface EventPayloads {
+	[EVENT_NAMES.SQUAD_CREATED]: { squad: Squad };
+	[EVENT_NAMES.SQUAD_DELETED]: { squadId: string };
+	[EVENT_NAMES.SQUAD_UPDATED]: { squad: Squad };
+	[EVENT_NAMES.OBJECTIVE_STARTED]: { objective: Objective };
+	[EVENT_NAMES.OBJECTIVE_COMPLETED]: { objective: Objective };
+	[EVENT_NAMES.OBJECTIVE_FAILED]: { objective: Objective; reason: string };
+	[EVENT_NAMES.TASK_STARTED]: { task: Task; agentName: string };
+	[EVENT_NAMES.TASK_COMPLETED]: { task: Task; agentName: string };
+	[EVENT_NAMES.TASK_FAILED]: { task: Task; agentName: string; reason: string };
+	[EVENT_NAMES.AGENT_EXECUTING]: { squadId: string; agentId: string; taskId: string };
+	[EVENT_NAMES.AGENT_COMPLETED]: { squadId: string; agentId: string; taskId: string };
+	[EVENT_NAMES.REVIEW_STARTED]: { objectiveId: string };
+	[EVENT_NAMES.REVIEW_COMPLETED]: { objectiveId: string; summary: string };
+	[EVENT_NAMES.QA_APPROVED]: { objectiveId: string };
+	[EVENT_NAMES.QA_REJECTED]: { objectiveId: string; reason: string; revisionCount: number };
+	[EVENT_NAMES.QA_ESCALATED]: { objectiveId: string; reason: string };
+	[EVENT_NAMES.PR_CREATED]: { objectiveId: string; prUrl: string };
+	[EVENT_NAMES.PR_MERGED]: { objectiveId: string; prUrl: string };
+	[EVENT_NAMES.INBOX_NEW_ITEM]: { item: InboxItem };
+	[EVENT_NAMES.INBOX_REPLIED]: { itemId: string; reply: string };
+	[EVENT_NAMES.CHAT_MESSAGE]: { conversationId: string; content: string };
+	[EVENT_NAMES.CHAT_STREAM_CHUNK]: StreamChunk;
+	[EVENT_NAMES.CHAT_STREAM_END]: { conversationId: string; messageId: string };
+	[EVENT_NAMES.NOTIFICATION]: { title: string; body: string; channel: string };
 }
 
-export interface SquadEvent extends BaseEvent {
-	type: SquadEventType;
-	squadName: string;
-	data?: Record<string, unknown>;
-}
-
-export interface AgentEvent extends BaseEvent {
-	type: AgentEventType;
-	agentRole: string;
-	model?: string;
-	data?: Record<string, unknown>;
-}
-
-export interface InstanceEvent extends BaseEvent {
-	type: InstanceEventType;
-	data?: Record<string, unknown>;
-}
-
-export interface MeetingEvent extends BaseEvent {
-	type: MeetingEventType;
-	agentRole: string;
-	content: string;
-}
-
-export interface InboxEvent extends BaseEvent {
-	type: InboxEventType;
-	kind: 'deliverable' | 'question' | 'note';
-	title: string;
-	entryId: string;
-}
-
-export interface ScheduleEvent extends BaseEvent {
-	type: ScheduleEventType;
-	data?: Record<string, unknown>;
-}
-
-export type IOEvent =
-	| SquadEvent
-	| AgentEvent
-	| InstanceEvent
-	| MeetingEvent
-	| InboxEvent
-	| ScheduleEvent;
+export type EventHandler<E extends EventName> = (payload: EventPayloads[E]) => void;

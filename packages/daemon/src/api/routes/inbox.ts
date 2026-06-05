@@ -1,152 +1,100 @@
-import { Router } from 'express';
-import {
-	type InboxKind,
-	type InboxStatus,
-	deleteInboxEntries,
-	deleteInboxEntry,
-	getInboxEntry,
-	getUnreadCount,
-	listInboxEntries,
-	markInboxRead,
-	markInboxReadBulk,
-	resolveInboxEntry,
-} from '../../store/inbox.js';
+import { EVENT_NAMES, type InboxItemStatus, type InboxReplyRequest } from "@io/shared";
+import { Router } from "express";
 
-export function inboxRouter(): Router {
-	const router = Router();
+import { eventBus } from "../../event-bus.js";
+import { getInboxItem, listInboxItems, markRead, replyToItem } from "../../store/index.js";
 
-	/**
-	 * GET /api/inbox
-	 * List inbox entries with optional filters.
-	 * Query params: status, squad, kind, limit
-	 */
-	router.get('/inbox', async (req, res) => {
-		try {
-			const entries = await listInboxEntries({
-				status: req.query.status as InboxStatus | undefined,
-				squadId: req.query.squad as string | undefined,
-				kind: req.query.kind as InboxKind | undefined,
-				limit: req.query.limit ? Number.parseInt(req.query.limit as string, 10) : undefined,
-			});
-			res.json({ entries });
-		} catch {
-			res.status(500).json({ error: 'Failed to list inbox entries' });
+const router = Router();
+const VALID_STATUSES = new Set<InboxItemStatus>(["pending", "read", "replied", "resolved"]);
+
+router.get("/api/inbox", async (req, res) => {
+	try {
+		const rawStatus = typeof req.query.status === "string" ? req.query.status : undefined;
+		if (rawStatus && !VALID_STATUSES.has(rawStatus as InboxItemStatus)) {
+			res.status(400).json({ error: "Invalid inbox status" });
+			return;
 		}
-	});
 
-	/**
-	 * GET /api/inbox/unread-count
-	 * Get the number of unread inbox entries.
-	 */
-	router.get('/inbox/unread-count', async (_req, res) => {
-		try {
-			const count = await getUnreadCount();
-			res.json({ count });
-		} catch {
-			res.status(500).json({ error: 'Failed to get unread count' });
+		const limit = parsePositiveInteger(req.query.limit, 50);
+		const offset = parseNonNegativeInteger(req.query.offset, 0);
+		const items = await listInboxItems(rawStatus as InboxItemStatus | undefined, limit, offset);
+		res.status(200).json({ data: items, limit, offset });
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to list inbox items",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.get("/api/inbox/:id", async (req, res) => {
+	try {
+		const item = await getInboxItem(req.params.id);
+		if (!item) {
+			res.status(404).json({ error: "Inbox item not found" });
+			return;
 		}
-	});
 
-	/**
-	 * GET /api/inbox/:id
-	 * Get a single inbox entry.
-	 */
-	router.get('/inbox/:id', async (req, res) => {
-		try {
-			const entry = await getInboxEntry(req.params.id);
-			if (!entry) {
-				res.status(404).json({ error: 'Entry not found' });
-				return;
-			}
-			res.json({ entry });
-		} catch {
-			res.status(500).json({ error: 'Failed to get inbox entry' });
+		res.status(200).json(item);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to fetch inbox item",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.post("/api/inbox/:id/reply", async (req, res) => {
+	try {
+		const body = req.body as InboxReplyRequest | undefined;
+		const reply = body?.reply?.trim();
+
+		if (!reply) {
+			res.status(400).json({ error: "reply is required" });
+			return;
 		}
-	});
 
-	/**
-	 * POST /api/inbox/:id/read
-	 * Mark an entry as read.
-	 */
-	router.post('/inbox/:id/read', async (req, res) => {
-		try {
-			await markInboxRead(req.params.id);
-			res.json({ status: 'ok' });
-		} catch {
-			res.status(500).json({ error: 'Failed to mark entry as read' });
+		const item = await replyToItem(req.params.id, reply);
+		if (!item) {
+			res.status(404).json({ error: "Inbox item not found" });
+			return;
 		}
-	});
 
-	/**
-	 * POST /api/inbox/bulk/read
-	 * Mark multiple entries as read.
-	 * Body: { ids: string[] }
-	 */
-	router.post('/inbox/bulk/read', async (req, res) => {
-		try {
-			const { ids } = req.body as { ids?: string[] };
-			if (!ids || !Array.isArray(ids)) {
-				res.status(400).json({ error: 'ids array is required' });
-				return;
-			}
-			await markInboxReadBulk(ids);
-			res.json({ status: 'ok' });
-		} catch {
-			res.status(500).json({ error: 'Failed to mark entries as read' });
+		eventBus.emit(EVENT_NAMES.INBOX_REPLIED, { itemId: item.id, reply: item.reply ?? reply });
+		res.status(200).json(item);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to reply to inbox item",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.put("/api/inbox/:id/read", async (req, res) => {
+	try {
+		const item = await markRead(req.params.id);
+		if (!item) {
+			res.status(404).json({ error: "Inbox item not found" });
+			return;
 		}
-	});
 
-	/**
-	 * POST /api/inbox/bulk/delete
-	 * Delete multiple entries.
-	 * Body: { ids: string[] }
-	 */
-	router.post('/inbox/bulk/delete', async (req, res) => {
-		try {
-			const { ids } = req.body as { ids?: string[] };
-			if (!ids || !Array.isArray(ids)) {
-				res.status(400).json({ error: 'ids array is required' });
-				return;
-			}
-			await deleteInboxEntries(ids);
-			res.json({ status: 'ok' });
-		} catch {
-			res.status(500).json({ error: 'Failed to delete entries' });
-		}
-	});
+		res.status(200).json(item);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to mark inbox item as read",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-	/**
-	 * DELETE /api/inbox/:id
-	 * Delete a single entry.
-	 */
-	router.delete('/inbox/:id', async (req, res) => {
-		try {
-			await deleteInboxEntry(req.params.id);
-			res.json({ status: 'ok' });
-		} catch {
-			res.status(500).json({ error: 'Failed to delete entry' });
-		}
-	});
-
-	/**
-	 * POST /api/inbox/:id/respond
-	 * Respond to an inbox question. Resolves any blocking squad.
-	 * Body: { response: string }
-	 */
-	router.post('/inbox/:id/respond', async (req, res) => {
-		try {
-			const { response } = req.body as { response?: string };
-			if (!response) {
-				res.status(400).json({ error: 'response is required' });
-				return;
-			}
-
-			const unblocked = await resolveInboxEntry(req.params.id, response);
-			res.json({ status: 'ok', squadUnblocked: unblocked });
-		} catch {
-			res.status(500).json({ error: 'Failed to respond to entry' });
-		}
-	});
-
-	return router;
+function parsePositiveInteger(value: unknown, fallback: number): number {
+	const parsed = Number(value);
+	return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
+
+function parseNonNegativeInteger(value: unknown, fallback: number): number {
+	const parsed = Number(value);
+	return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+export { router as inboxRouter };

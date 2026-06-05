@@ -1,3 +1,4 @@
+import { APP_VERSION, type InboxItem } from '@io/shared';
 import { cn } from '@/lib/utils';
 import { IoMark } from '@/components/ui/io-mark';
 import { StatusDot } from '@/components/ui/shared';
@@ -8,7 +9,7 @@ import {
 	Calendar,
 	ChevronLeft,
 	ChevronRight,
-	Github,
+	ExternalLink,
 	Inbox,
 	LogOut,
 	MessageSquare,
@@ -71,43 +72,28 @@ function NavBtn({
 
 export function Layout() {
 	const [collapsed, setCollapsed] = useState(false);
-	const [version, setVersion] = useState('...');
+	const [version] = useState(APP_VERSION);
 	const [unreadCount, setUnreadCount] = useState(0);
 	const { supabase } = useAuth();
 
 	useEffect(() => {
 		let active = true;
 
-		api
-			.get<{ version: string }>('/version')
-			.then(({ version }) => {
-				if (active) {
-					setVersion(version);
-				}
-			})
-			.catch(() => {
-				if (active) {
-					setVersion('unknown');
-				}
-			});
-
-		// Fetch unread inbox count
-		api
-			.get<{ count: number }>('/inbox/unread-count')
-			.then(({ count }) => {
-				if (active) setUnreadCount(count);
-			})
-			.catch(() => {});
-
-		// Poll every 30 seconds
-		const interval = setInterval(() => {
+		const loadUnreadCount = () => {
 			api
-				.get<{ count: number }>('/inbox/unread-count')
-				.then(({ count }) => {
-					if (active) setUnreadCount(count);
+				.get<{ entries?: InboxItem[] }>('/inbox?limit=200')
+				.then((response) => {
+					if (!active) {
+						return;
+					}
+					const entries = response.entries ?? [];
+					setUnreadCount(entries.filter((item) => item.status === 'pending').length);
 				})
 				.catch(() => {});
-		}, 30000);
+		};
+
+		loadUnreadCount();
+		const interval = setInterval(loadUnreadCount, 30000);
 
 		return () => {
 			active = false;
@@ -176,7 +162,7 @@ export function Layout() {
 								collapsed && 'justify-center',
 							)}
 						>
-							<Github className="w-3.5 h-3.5 flex-shrink-0" />
+							<ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
 							{!collapsed && <span className="text-zinc-700">v{version}</span>}
 						</a>
 						<button

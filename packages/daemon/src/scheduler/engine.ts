@@ -1,147 +1,101 @@
-import { sendMessage } from '../copilot/orchestrator.js';
-import { createChildLogger } from '../logging/logger.js';
-import { getEventBus } from '../squad/event-bus.js';
-import { runInstance } from '../squad/execution/runner.js';
-import { getSquadByName, listSquads } from '../squad/manager.js';
-import { addInboxEntry } from '../store/inbox.js';
-import { type Schedule, getDueSchedules, markScheduleFired } from '../store/schedules.js';
+import { SCHEDULER_INTERVAL_MS, type Schedule } from "@io/shared";
+import { CronExpressionParser } from "cron-parser";
 
-const logger = () => createChildLogger('scheduler');
+import { createLogger } from "../logging/logger.js";
+import type { Orchestrator } from "../orchestrator/orchestrator.js";
+import { getDatabase } from "../store/db.js";
+import { listSchedules, markScheduleRun } from "../store/index.js";
 
-let intervalHandle: ReturnType<typeof setInterval> | null = null;
-let running = false;
+export class Scheduler {
+	private readonly orchestrator: Orchestrator;
+	private readonly eventBus: any;
+	private readonly logger = createLogger("scheduler");
+	private timer: NodeJS.Timeout | null = null;
+	private running = false;
 
-const TICK_INTERVAL_MS = 60_000; // Check every minute
-
-/**
- * Start the schedule engine. Evaluates due schedules every 60 seconds.
- */
-export function startScheduler(): void {
-	const log = logger();
-	log.info('Scheduler started');
-
-	// Initial tick
-	tick();
-
-	intervalHandle = setInterval(() => {
-		tick();
-	}, TICK_INTERVAL_MS);
-}
-
-/**
- * Stop the schedule engine.
- */
-export function stopScheduler(): void {
-	if (intervalHandle) {
-		clearInterval(intervalHandle);
-		intervalHandle = null;
+	constructor(orchestrator: Orchestrator, eventBus: any) {
+		this.orchestrator = orchestrator;
+		this.eventBus = eventBus;
 	}
-}
 
-async function tick(): Promise<void> {
-	if (running) return; // Prevent overlapping ticks
-	running = true;
-
-	try {
-		const due = await getDueSchedules();
-		if (due.length === 0) {
-			running = false;
+	start(): void {
+		if (this.timer) {
 			return;
 		}
+		this.timer = setInterval(() => {
+			void this.tick().catch((error: unknown) => {
+				this.logger.error({ err: error }, "Scheduler tick failed");
+			});
+		}, SCHEDULER_INTERVAL_MS);
+		void this.tick().catch((error: unknown) => {
+			this.logger.error({ err: error }, "Initial scheduler tick failed");
+		});
+	}
 
-		const log = logger();
-		log.info({ count: due.length }, 'Firing due schedules');
-
-		for (const schedule of due) {
-			await fireSchedule(schedule);
+	stop(): void {
+		if (this.timer) {
+			clearInterval(this.timer);
+			this.timer = null;
 		}
-	} catch (err) {
-		logger().error({ err }, 'Scheduler tick error');
-	} finally {
-		running = false;
+	}
+
+	async tick(): Promise<void> {
+		if (this.running) {
+			return;
+		}
+		this.running = true;
+		try {
+			const now = new Date();
+			const schedules = await this.getDueSchedules(now);
+			for (const schedule of schedules) {
+				try {
+					await this.orchestrator.processMessage(schedule.prompt, undefined, "scheduler");
+					await markScheduleRun(schedule.id, now);
+				} catch (error) {
+					this.logger.error(
+						{ err: error, scheduleId: schedule.id },
+						"Scheduled prompt execution failed",
+					);
+				}
+			}
+		} finally {
+			this.running = false;
+		}
+	}
+
+	private async getDueSchedules(now: Date): Promise<Schedule[]> {
+		const database = await getDatabase();
+		const allSchedules = await listSchedules(database);
+		const nowIso = now.toISOString();
+		return allSchedules.filter((schedule) => this.isScheduleDue(schedule, nowIso));
+	}
+
+	private isScheduleDue(schedule: Schedule, nowIso: string): boolean {
+		if (!schedule.enabled) {
+			return false;
+		}
+		if (schedule.lastRunAt === null) {
+			return schedule.createdAt <= nowIso;
+		}
+		if (schedule.nextRunAt && schedule.nextRunAt <= nowIso) {
+			return true;
+		}
+		try {
+			const interval = CronExpressionParser.parse(schedule.cronExpression, {
+				currentDate: schedule.lastRunAt,
+			});
+			const nextRun = interval.next().toISOString() ?? "";
+			return nextRun.length > 0 && nextRun <= nowIso;
+		} catch (error) {
+			this.logger.warn(
+				{ err: error, scheduleId: schedule.id },
+				"Invalid cron while evaluating schedule",
+			);
+			return false;
+		}
 	}
 }
 
-/** Manually trigger a schedule to run immediately. */
-export async function fireSchedule(schedule: Schedule): Promise<void> {
-	const log = logger();
-	const bus = getEventBus();
-
-	// Emit fired event
-	bus.emit({
-		type: 'schedule:fired',
-		id: crypto.randomUUID(),
-		timestamp: new Date(),
-		data: { scheduleId: schedule.id, name: schedule.name },
-	});
-
-	log.info({ scheduleId: schedule.id, name: schedule.name }, 'Firing schedule');
-
-	// Mark as fired immediately (update next_run)
-	await markScheduleFired(schedule.id, schedule.cron);
-
-	try {
-		let result: string;
-
-		if (schedule.targetType === 'orchestrator') {
-			// Send as if user typed it
-			result = await sendMessage(schedule.prompt, 'web', () => {});
-		} else {
-			// Squad target — run instance
-			const squads = await listSquads();
-			const squad = squads.find((s) => s.id === schedule.targetId || s.name === schedule.targetId);
-
-			if (!squad) {
-				throw new Error(`Target squad not found: ${schedule.targetId}`);
-			}
-
-			const runResult = await runInstance({
-				squad,
-				objective: schedule.prompt,
-			});
-
-			if (runResult.success) {
-				result = runResult.pr
-					? `Completed successfully. PR: ${runResult.pr.url}`
-					: 'Completed successfully (no PR created).';
-			} else {
-				result = `Failed: ${runResult.error ?? 'unknown error'}`;
-			}
-		}
-
-		// Post result to inbox as deliverable
-		const squadId =
-			schedule.targetType === 'squad' && schedule.targetId ? schedule.targetId : 'orchestrator';
-
-		// Only post to inbox if we have a real squad target
-		if (schedule.targetType === 'squad' && schedule.targetId) {
-			await addInboxEntry({
-				squadId: schedule.targetId,
-				kind: 'deliverable',
-				title: `Schedule: ${schedule.name}`,
-				content: result,
-			});
-		}
-
-		// Emit completed event
-		bus.emit({
-			type: 'schedule:completed',
-			id: crypto.randomUUID(),
-			timestamp: new Date(),
-			data: { scheduleId: schedule.id, name: schedule.name, result: result.slice(0, 200) },
-		});
-
-		log.info({ scheduleId: schedule.id }, 'Schedule completed');
-	} catch (err) {
-		const errorMsg = err instanceof Error ? err.message : String(err);
-		log.error({ err, scheduleId: schedule.id }, 'Schedule execution failed');
-
-		// Emit failed event
-		bus.emit({
-			type: 'schedule:failed',
-			id: crypto.randomUUID(),
-			timestamp: new Date(),
-			data: { scheduleId: schedule.id, name: schedule.name, error: errorMsg },
-		});
-	}
+export function createScheduler(orchestrator: Orchestrator, eventBus: any): Scheduler {
+	return new Scheduler(orchestrator, eventBus);
 }

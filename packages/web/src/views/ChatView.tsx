@@ -52,7 +52,7 @@ export function ChatView() {
 			if (selectedFile) {
 				await uploadAttachment(selectedFile, messageId);
 			}
-			sendChatMessage(outboundContent);
+			await sendChatMessage(outboundContent);
 		} catch {
 			// handled by context
 		}

@@ -1,155 +1,200 @@
-import { Router } from 'express';
-import {
-	activateSkill,
-	deactivateSkill,
-	discoverSkills,
-	getActiveSkills,
-	getSkill,
-	installDiscoveredSkill,
-	installSkill,
-	installSkillFromUrl,
-	listInstalledSkills,
-	removeSkill,
-	updateSkill,
-} from '../../skills/index.js';
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { basename, extname, join } from "node:path";
 
-export const skillsRouter = Router();
+import { type InstallSkillRequest, SKILLS_DIR, SKILLS_LOCK_PATH } from "@io/shared";
+import { Router } from "express";
 
-function summarizeSkill(content: string): string {
-	const summary = content
-		.split(/\r?\n/)
-		.map((line) => line.trim())
-		.filter((line) => line && !line.startsWith('#'))
-		.join(' ')
-		.slice(0, 220)
-		.trim();
+const router = Router();
 
-	return summary || 'No preview available.';
+interface InstalledSkill {
+	id: string;
+	slug: string;
+	source: string;
+	url: string | null;
+	installedAt: string;
+	directory: string;
+	entryFile: string | null;
 }
 
-// List installed skills
-skillsRouter.get('/skills', async (_req, res) => {
-	const skills = listInstalledSkills();
-	const orchestratorActivations = await getActiveSkills('orchestrator');
-
-	const result = skills.map((s) => ({
-		name: s.name,
-		activatedForOrchestrator: orchestratorActivations.some((a) => a.skillName === s.name),
-		preview: s.content.slice(0, 600),
-		description: summarizeSkill(s.content),
-		filePath: s.filePath,
-	}));
-
-	res.json({ skills: result });
-});
-
-// Discover remote skills
-skillsRouter.get('/skills/discover', async (req, res) => {
-	const source = req.query.source as 'awesome-copilot' | 'skillssh' | undefined;
-	const q = (req.query.q as string | undefined) ?? '';
-
-	if (!source || !['awesome-copilot', 'skillssh'].includes(source)) {
-		res.status(400).json({ error: 'source must be "awesome-copilot" or "skillssh"' });
-		return;
-	}
-
+router.get("/api/skills", async (_req, res) => {
 	try {
-		const skills = await discoverSkills(source, q);
-		res.json({ skills });
-	} catch (err) {
-		res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+		res.status(200).json(await readInstalledSkills());
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to list skills",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
 	}
 });
 
-// Get a specific skill
-skillsRouter.get('/skills/:name', (req, res) => {
-	const skill = getSkill(req.params.name);
-	if (!skill) {
-		res.status(404).json({ error: `Skill '${req.params.name}' not found` });
-		return;
-	}
-	res.json(skill);
-});
-
-// Install a skill (from URL, content, or discovery source)
-skillsRouter.post('/skills/install', async (req, res) => {
-	const { name, url, content, source, registrySource, skillId } = req.body;
-
-	if (!name) {
-		res.status(400).json({ error: 'name is required' });
-		return;
-	}
-
+router.post("/api/skills/install", async (req, res) => {
 	try {
-		if (source && ['awesome-copilot', 'skillssh'].includes(source)) {
-			const skill = await installDiscoveredSkill({ name, source, url, registrySource, skillId });
-			res.status(201).json({ installed: true, name: skill.name });
-		} else if (url) {
-			const skill = await installSkillFromUrl(name, url);
-			res.status(201).json({ installed: true, name: skill.name });
-		} else if (content) {
-			const skill = installSkill(name, content);
-			res.status(201).json({ installed: true, name: skill.name });
-		} else {
-			res.status(400).json({ error: 'Either a discovery source, "url", or "content" is required' });
+		const body = req.body as InstallSkillRequest | undefined;
+		if (!body?.url && !(body?.source && body?.slug)) {
+			res.status(400).json({ error: "Provide url or source+slug to install a skill" });
+			return;
 		}
-	} catch (err) {
-		res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+
+		const result = await installSkill(body);
+		res.status(result.created ? 201 : 200).json(result.skill);
+	} catch (error) {
+		const statusCode =
+			error instanceof Error && /Invalid skill|fetch/i.test(error.message) ? 400 : 500;
+		res.status(statusCode).json({
+			error: "Failed to install skill",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
 	}
 });
 
-// Activate a skill
-skillsRouter.post('/skills/:name/activate', async (req, res) => {
-	const { targetType, targetId } = req.body;
-	if (!targetType || !['orchestrator', 'squad'].includes(targetType)) {
-		res.status(400).json({ error: 'targetType must be "orchestrator" or "squad"' });
-		return;
+router.delete("/api/skills/:id", async (req, res) => {
+	try {
+		const removed = await removeSkill(req.params.id);
+		if (!removed) {
+			res.status(404).json({ error: "Skill not found" });
+			return;
+		}
+
+		res.status(200).json({ deleted: true });
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to remove skill",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.get("/api/skills/discover", async (_req, res) => {
+	res.status(200).json([]);
+});
+
+async function installSkill(
+	request: InstallSkillRequest,
+): Promise<{ created: boolean; skill: InstalledSkill }> {
+	await mkdir(SKILLS_DIR, { recursive: true });
+	const installedSkills = await readInstalledSkills();
+	const source = request.source?.trim() || (request.url ? "url" : "unknown");
+	const slug = normalizeSlug(request.slug?.trim() || deriveSlugFromRequest(request));
+	const id = `${source}:${slug}`;
+	const directoryName = `${source.replace(/[^a-z0-9-]/gi, "-")}-${slug}`;
+	const directory = join(SKILLS_DIR, directoryName);
+	const existing = installedSkills.find((skill) => skill.id === id);
+	let entryFile: string | null = existing?.entryFile ?? null;
+
+	if (request.url) {
+		const response = await fetch(request.url);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch skill from ${request.url}`);
+		}
+
+		const body = await response.text();
+		entryFile = chooseEntryFileName(request.url, response.headers.get("content-type"));
+		await mkdir(directory, { recursive: true });
+		await writeFile(join(directory, entryFile), body, "utf8");
+	} else {
+		await mkdir(directory, { recursive: true });
 	}
 
-	const skill = getSkill(req.params.name);
+	const installedAt = existing?.installedAt ?? new Date().toISOString();
+	const skill: InstalledSkill = {
+		id,
+		slug,
+		source,
+		url: request.url ?? null,
+		installedAt,
+		directory,
+		entryFile,
+	};
+
+	await writeFile(join(directory, "manifest.json"), `${JSON.stringify(skill, null, 2)}\n`, "utf8");
+	const nextSkills = [...installedSkills.filter((entry) => entry.id !== id), skill].sort(
+		(left, right) => left.id.localeCompare(right.id),
+	);
+	await writeSkillsLock(nextSkills);
+	return { created: !existing, skill };
+}
+
+async function removeSkill(skillId: string): Promise<boolean> {
+	const installedSkills = await readInstalledSkills();
+	const skill = installedSkills.find((entry) => entry.id === skillId);
 	if (!skill) {
-		res.status(404).json({ error: `Skill '${req.params.name}' not found` });
-		return;
+		return false;
 	}
 
-	await activateSkill(req.params.name, targetType, targetId);
-	res.json({ activated: true, skillName: req.params.name, targetType, targetId });
-});
+	await rm(skill.directory, { recursive: true, force: true });
+	await writeSkillsLock(installedSkills.filter((entry) => entry.id !== skillId));
+	return true;
+}
 
-// Deactivate a skill
-skillsRouter.post('/skills/:name/deactivate', async (req, res) => {
-	const { targetType, targetId } = req.body;
-	if (!targetType || !['orchestrator', 'squad'].includes(targetType)) {
-		res.status(400).json({ error: 'targetType must be "orchestrator" or "squad"' });
-		return;
+async function readInstalledSkills(): Promise<InstalledSkill[]> {
+	try {
+		const raw = await readFile(SKILLS_LOCK_PATH, "utf8");
+		const parsed = JSON.parse(raw) as InstalledSkill[];
+		return Array.isArray(parsed) ? parsed : [];
+	} catch (error) {
+		if (isMissingFileError(error)) {
+			return [];
+		}
+
+		throw error;
+	}
+}
+
+async function writeSkillsLock(skills: InstalledSkill[]): Promise<void> {
+	await mkdir(SKILLS_DIR, { recursive: true });
+	await writeFile(SKILLS_LOCK_PATH, `${JSON.stringify(skills, null, 2)}\n`, "utf8");
+}
+
+function deriveSlugFromRequest(request: InstallSkillRequest): string {
+	if (request.url) {
+		const url = new URL(request.url);
+		const rawName = basename(url.pathname) || url.hostname;
+		const strippedExtension = extname(rawName)
+			? rawName.slice(0, -extname(rawName).length)
+			: rawName;
+		return strippedExtension || url.hostname;
 	}
 
-	await deactivateSkill(req.params.name, targetType, targetId);
-	res.json({ deactivated: true, skillName: req.params.name });
-});
-
-// Update a skill
-skillsRouter.put('/skills/:name', (req, res) => {
-	const { content } = req.body;
-	if (typeof content !== 'string') {
-		res.status(400).json({ error: 'content is required' });
-		return;
+	if (request.slug) {
+		return request.slug;
 	}
 
-	const skill = updateSkill(req.params.name, content);
-	res.json({ updated: true, skill });
-});
+	throw new Error("Invalid skill install request");
+}
 
-// Remove a skill
-skillsRouter.delete('/skills/:name', (req, res) => {
-	removeSkill(req.params.name);
-	res.json({ removed: true, name: req.params.name });
-});
+function normalizeSlug(value: string): string {
+	const normalized = value
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9-]+/g, "-")
+		.replace(/^-+|-+$/g, "");
+	if (!normalized) {
+		throw new Error("Invalid skill slug");
+	}
 
-// Get activations for a target
-skillsRouter.get('/skills-activations', async (req, res) => {
-	const targetType = (req.query.targetType as string) ?? 'orchestrator';
-	const targetId = req.query.targetId as string | undefined;
-	const activations = await getActiveSkills(targetType as 'orchestrator' | 'squad', targetId);
-	res.json({ activations });
-});
+	return normalized;
+}
+
+function chooseEntryFileName(url: string, contentType: string | null): string {
+	if (contentType?.includes("json")) {
+		return "skill.json";
+	}
+
+	if (contentType?.includes("markdown")) {
+		return "README.md";
+	}
+
+	const pathname = new URL(url).pathname;
+	const fileName = basename(pathname);
+	if (fileName && fileName !== "/") {
+		return fileName;
+	}
+
+	return "skill.txt";
+}
+
+function isMissingFileError(error: unknown): boolean {
+	return !!error && typeof error === "object" && "code" in error && error.code === "ENOENT";
+}
+
+export { router as skillsRouter };

@@ -1,142 +1,112 @@
-import { Router } from 'express';
-import { fireSchedule } from '../../scheduler/engine.js';
+import type { CreateScheduleRequest, UpdateScheduleRequest } from "@io/shared";
+import { Router } from "express";
+
 import {
-	type ScheduleTargetType,
 	createSchedule,
 	deleteSchedule,
 	getSchedule,
 	listSchedules,
 	updateSchedule,
-} from '../../store/schedules.js';
+} from "../../store/index.js";
 
-export function schedulesRouter(): Router {
-	const router = Router();
+const router = Router();
 
-	/**
-	 * GET /api/schedules
-	 * List all schedules. Query param: enabled=true to filter.
-	 */
-	router.get('/schedules', async (req, res) => {
-		try {
-			const enabledOnly = req.query.enabled === 'true';
-			const schedules = await listSchedules(enabledOnly || undefined);
-			res.json({ schedules });
-		} catch {
-			res.status(500).json({ error: 'Failed to list schedules' });
+router.get("/api/schedules", async (_req, res) => {
+	try {
+		const schedules = await listSchedules();
+		res.status(200).json(schedules);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to list schedules",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.get("/api/schedules/:id", async (req, res) => {
+	try {
+		const schedule = await getSchedule(req.params.id);
+		if (!schedule) {
+			res.status(404).json({ error: "Schedule not found" });
+			return;
 		}
-	});
 
-	/**
-	 * GET /api/schedules/:id
-	 * Get a single schedule.
-	 */
-	router.get('/schedules/:id', async (req, res) => {
-		try {
-			const schedule = await getSchedule(req.params.id);
-			if (!schedule) {
-				res.status(404).json({ error: 'Schedule not found' });
-				return;
-			}
-			res.json({ schedule });
-		} catch {
-			res.status(500).json({ error: 'Failed to get schedule' });
+		res.status(200).json(schedule);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to fetch schedule",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+router.post("/api/schedules", async (req, res) => {
+	try {
+		const body = req.body as CreateScheduleRequest | undefined;
+		if (!body?.name?.trim() || !body?.cronExpression?.trim() || !body?.prompt?.trim()) {
+			res.status(400).json({ error: "name, cronExpression, and prompt are required" });
+			return;
 		}
-	});
 
-	/**
-	 * POST /api/schedules
-	 * Create a new schedule.
-	 * Body: { name, targetType, targetId?, cron, prompt, enabled? }
-	 */
-	router.post('/schedules', async (req, res) => {
-		try {
-			const { name, targetType, targetId, cron, prompt, enabled } = req.body as {
-				name?: string;
-				targetType?: ScheduleTargetType;
-				targetId?: string;
-				cron?: string;
-				prompt?: string;
-				enabled?: boolean;
-			};
+		const schedule = await createSchedule({
+			name: body.name.trim(),
+			cronExpression: body.cronExpression.trim(),
+			prompt: body.prompt,
+			enabled: body.enabled,
+		});
+		res.status(201).json(schedule);
+	} catch (error) {
+		res.status(isValidationError(error) ? 400 : 500).json({
+			error: "Failed to create schedule",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-			if (!name || !targetType || !cron || !prompt) {
-				res.status(400).json({ error: 'name, targetType, cron, and prompt are required' });
-				return;
-			}
+router.put("/api/schedules/:id", async (req, res) => {
+	try {
+		const body = (req.body ?? {}) as UpdateScheduleRequest;
+		const schedule = await updateSchedule(req.params.id, {
+			name: typeof body.name === "string" ? body.name.trim() : undefined,
+			cronExpression:
+				typeof body.cronExpression === "string" ? body.cronExpression.trim() : undefined,
+			prompt: body.prompt,
+			enabled: body.enabled,
+		});
 
-			if (targetType !== 'squad' && targetType !== 'orchestrator') {
-				res.status(400).json({ error: 'targetType must be "squad" or "orchestrator"' });
-				return;
-			}
-
-			const schedule = await createSchedule({ name, targetType, targetId, cron, prompt, enabled });
-			res.status(201).json({ schedule });
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : 'Failed to create schedule';
-			res.status(400).json({ error: msg });
+		if (!schedule) {
+			res.status(404).json({ error: "Schedule not found" });
+			return;
 		}
-	});
 
-	/**
-	 * PATCH /api/schedules/:id
-	 * Update a schedule (partial). Body: { name?, cron?, prompt?, enabled? }
-	 */
-	router.patch('/schedules/:id', async (req, res) => {
-		try {
-			const existing = await getSchedule(req.params.id);
-			if (!existing) {
-				res.status(404).json({ error: 'Schedule not found' });
-				return;
-			}
+		res.status(200).json(schedule);
+	} catch (error) {
+		res.status(isValidationError(error) ? 400 : 500).json({
+			error: "Failed to update schedule",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-			const { name, cron, prompt, enabled } = req.body as {
-				name?: string;
-				cron?: string;
-				prompt?: string;
-				enabled?: boolean;
-			};
-
-			await updateSchedule(req.params.id, { name, cron, prompt, enabled });
-			const updated = await getSchedule(req.params.id);
-			res.json({ schedule: updated });
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : 'Failed to update schedule';
-			res.status(400).json({ error: msg });
+router.delete("/api/schedules/:id", async (req, res) => {
+	try {
+		const deleted = await deleteSchedule(req.params.id);
+		if (!deleted) {
+			res.status(404).json({ error: "Schedule not found" });
+			return;
 		}
-	});
 
-	/**
-	 * POST /api/schedules/:id/run
-	 * Manually trigger a schedule to run immediately.
-	 */
-	router.post('/schedules/:id/run', async (req, res) => {
-		try {
-			const schedule = await getSchedule(req.params.id);
-			if (!schedule) {
-				res.status(404).json({ error: 'Schedule not found' });
-				return;
-			}
+		res.status(200).json({ deleted: true });
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to delete schedule",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-			// Fire asynchronously — don't block the response
-			fireSchedule(schedule).catch(() => {});
-			res.json({ status: 'ok', message: `Schedule '${schedule.name}' triggered` });
-		} catch {
-			res.status(500).json({ error: 'Failed to trigger schedule' });
-		}
-	});
-
-	/**
-	 * DELETE /api/schedules/:id
-	 * Delete a schedule.
-	 */
-	router.delete('/schedules/:id', async (req, res) => {
-		try {
-			await deleteSchedule(req.params.id);
-			res.json({ status: 'ok' });
-		} catch {
-			res.status(500).json({ error: 'Failed to delete schedule' });
-		}
-	});
-
-	return router;
+function isValidationError(error: unknown): boolean {
+	return error instanceof Error && /cron/i.test(error.message);
 }
+
+export { router as schedulesRouter };

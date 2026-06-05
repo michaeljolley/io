@@ -1,30 +1,42 @@
 {
-	"name": "io",
-	"version": "3.1.0",
-	"private": true,
+	"name": "heyio",
+	"version": "4.0.0",
+	"description": "AI orchestrator daemon with squad-based team delegation",
 	"type": "module",
-	"workspaces": [
-		"packages/shared",
-		"packages/daemon",
-		"packages/tui",
-		"packages/telegram",
-		"packages/web"
-	],
+	"license": "MIT",
+	"author": "Michael Jolley",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/michaeljolley/io.git"
+	},
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"bin": {
+		"io": "./dist/daemon/cli.js"
+	},
+	"files": ["dist/"],
+	"keywords": ["ai", "copilot", "orchestrator", "agent", "squad", "daemon"],
+	"workspaces": ["packages/shared", "packages/daemon", "packages/web"],
 	"scripts": {
-		"build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/daemon --workspace=packages/tui --workspace=packages/telegram --workspace=packages/web",
-		"build:docs": "cd docs && npm run build",
-		"dev": "npm run dev --workspace=packages/daemon",
-		"dev:tui": "npm run dev --workspace=packages/tui",
-		"dev:docs": "cd docs && npm run dev",
+		"build": "npm run build:shared && npm run build:daemon && npm run build:web",
+		"build:shared": "tsc --project packages/shared/tsconfig.json",
+		"build:daemon": "node scripts/build-daemon.js",
+		"build:web": "npm run build --workspace=packages/web",
+		"dev": "npx tsx --watch packages/daemon/src/index.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"clean": "rm -rf dist packages/*/dist coverage"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.0",
-		"typescript": "^5.7.0",
-		"vitest": "^3.1.0"
+		"esbuild": "^0.24.0",
+		"tsx": "^4.19.0",
+		"typescript": "^5.6.0",
+		"vitest": "^2.1.0"
 	}
 }

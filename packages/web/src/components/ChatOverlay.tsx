@@ -56,7 +56,7 @@ export function ChatOverlay() {
 			if (selectedFile) {
 				await uploadAttachment(selectedFile, messageId);
 			}
-			sendChatMessage(outboundContent);
+			await sendChatMessage(outboundContent);
 			setOpen(true);
 		} catch {
 			// handled by context

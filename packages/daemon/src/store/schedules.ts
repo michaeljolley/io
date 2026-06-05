@@ -1,199 +1,215 @@
-import { CronExpressionParser } from 'cron-parser';
-import { createChildLogger } from '../logging/logger.js';
-import { getDatabase } from './db.js';
+import type { Schedule } from "@io/shared";
+import { CronExpressionParser } from "cron-parser";
+import {
+	type DatabaseClient,
+	asBoolean,
+	asNullableString,
+	asString,
+	generateId,
+	getDatabase,
+	nowIso,
+	toSqliteBoolean,
+} from "./db.js";
 
-const logger = () => createChildLogger('schedules-store');
+const parseExpression = CronExpressionParser.parse;
 
-export type ScheduleTargetType = 'squad' | 'orchestrator';
-
-export interface Schedule {
-	id: string;
+export interface CreateScheduleInput {
 	name: string;
-	targetType: ScheduleTargetType;
-	targetId: string | null;
-	cron: string;
-	prompt: string;
-	enabled: boolean;
-	lastRun: string | null;
-	nextRun: string | null;
-	createdAt: string;
-}
-
-/**
- * Calculate the next run time from a cron expression.
- */
-export function calculateNextRun(cron: string, from?: Date): Date {
-	const interval = CronExpressionParser.parse(cron, { currentDate: from ?? new Date() });
-	return interval.next().toDate();
-}
-
-/**
- * Create a new schedule.
- */
-export async function createSchedule(params: {
-	name: string;
-	targetType: ScheduleTargetType;
-	targetId?: string;
-	cron: string;
+	cronExpression: string;
 	prompt: string;
 	enabled?: boolean;
-}): Promise<Schedule> {
-	const db = getDatabase();
-	const id = crypto.randomUUID();
-	const enabled = params.enabled ?? true;
-	const nextRun = enabled ? calculateNextRun(params.cron).toISOString() : null;
+}
 
-	await db.execute({
-		sql: `INSERT INTO schedules (id, name, target_type, target_id, cron, prompt, enabled, next_run)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+export interface UpdateScheduleInput {
+	name?: string;
+	cronExpression?: string;
+	prompt?: string;
+	enabled?: boolean;
+}
+
+export async function createSchedule(
+	data: CreateScheduleInput,
+	db?: DatabaseClient,
+): Promise<Schedule> {
+	const database = db ?? (await getDatabase());
+	const timestamp = nowIso();
+	const enabled = data.enabled ?? true;
+	const nextRunAt = enabled ? computeNextRunAt(data.cronExpression, timestamp) : null;
+	const schedule: Schedule = {
+		id: generateId(),
+		name: data.name,
+		cronExpression: data.cronExpression,
+		prompt: data.prompt,
+		enabled,
+		lastRunAt: null,
+		nextRunAt,
+		createdAt: timestamp,
+		updatedAt: timestamp,
+	};
+
+	await database.execute({
+		sql: `INSERT INTO schedules (id, name, cron_expression, prompt, enabled, last_run_at, next_run_at, created_at, updated_at)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		args: [
-			id,
-			params.name,
-			params.targetType,
-			params.targetId ?? null,
-			params.cron,
-			params.prompt,
-			enabled ? 1 : 0,
-			nextRun,
+			schedule.id,
+			schedule.name,
+			schedule.cronExpression,
+			schedule.prompt,
+			toSqliteBoolean(schedule.enabled),
+			schedule.lastRunAt,
+			schedule.nextRunAt,
+			schedule.createdAt,
+			schedule.updatedAt,
 		],
 	});
 
-	logger().info({ id, name: params.name, cron: params.cron }, 'Schedule created');
+	return schedule;
+}
+
+export async function getSchedule(id: string, db?: DatabaseClient): Promise<Schedule | null> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "SELECT * FROM schedules WHERE id = ? LIMIT 1",
+		args: [id],
+	});
+	const row = result.rows[0];
+
+	return row ? mapSchedule(row) : null;
+}
+
+export async function listSchedules(db?: DatabaseClient): Promise<Schedule[]> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute(
+		"SELECT * FROM schedules ORDER BY created_at DESC, id DESC",
+	);
+
+	return result.rows.map((row) => mapSchedule(row));
+}
+
+export async function updateSchedule(
+	id: string,
+	data: UpdateScheduleInput,
+	db?: DatabaseClient,
+): Promise<Schedule | null> {
+	const database = db ?? (await getDatabase());
+	const existing = await getSchedule(id, database);
+
+	if (!existing) {
+		return null;
+	}
+
+	const enabled = data.enabled ?? existing.enabled;
+	const cronExpression = data.cronExpression ?? existing.cronExpression;
+	const lastRunAt = existing.lastRunAt;
+	const updatedAt = nowIso();
+	const schedule: Schedule = {
+		...existing,
+		name: data.name ?? existing.name,
+		cronExpression,
+		prompt: data.prompt ?? existing.prompt,
+		enabled,
+		lastRunAt,
+		nextRunAt: enabled ? computeNextRunAt(cronExpression, lastRunAt ?? updatedAt) : null,
+		updatedAt,
+	};
+
+	await database.execute({
+		sql: `UPDATE schedules
+		      SET name = ?, cron_expression = ?, prompt = ?, enabled = ?, last_run_at = ?, next_run_at = ?, updated_at = ?
+		      WHERE id = ?`,
+		args: [
+			schedule.name,
+			schedule.cronExpression,
+			schedule.prompt,
+			toSqliteBoolean(schedule.enabled),
+			schedule.lastRunAt,
+			schedule.nextRunAt,
+			schedule.updatedAt,
+			id,
+		],
+	});
+
+	return schedule;
+}
+
+export async function deleteSchedule(id: string, db?: DatabaseClient): Promise<boolean> {
+	const database = db ?? (await getDatabase());
+	const result = await database.execute({
+		sql: "DELETE FROM schedules WHERE id = ?",
+		args: [id],
+	});
+
+	return result.rowsAffected > 0;
+}
+
+export async function getDueSchedules(
+	now: string | Date,
+	db?: DatabaseClient,
+): Promise<Schedule[]> {
+	const database = db ?? (await getDatabase());
+	const nowValue = typeof now === "string" ? now : now.toISOString();
+	const result = await database.execute({
+		sql: `SELECT * FROM schedules
+		      WHERE enabled = 1
+		        AND next_run_at IS NOT NULL
+		        AND next_run_at <= ?
+		      ORDER BY next_run_at ASC, id ASC`,
+		args: [nowValue],
+	});
+
+	return result.rows.map((row) => mapSchedule(row));
+}
+
+export async function markScheduleRun(
+	id: string,
+	now: string | Date,
+	db?: DatabaseClient,
+): Promise<Schedule | null> {
+	const database = db ?? (await getDatabase());
+	const existing = await getSchedule(id, database);
+
+	if (!existing) {
+		return null;
+	}
+
+	const lastRunAt = typeof now === "string" ? now : now.toISOString();
+	const nextRunAt = existing.enabled ? computeNextRunAt(existing.cronExpression, lastRunAt) : null;
+	const updatedAt = nowIso();
+
+	await database.execute({
+		sql: "UPDATE schedules SET last_run_at = ?, next_run_at = ?, updated_at = ? WHERE id = ?",
+		args: [lastRunAt, nextRunAt, updatedAt, id],
+	});
 
 	return {
-		id,
-		name: params.name,
-		targetType: params.targetType,
-		targetId: params.targetId ?? null,
-		cron: params.cron,
-		prompt: params.prompt,
-		enabled,
-		lastRun: null,
-		nextRun,
-		createdAt: new Date().toISOString(),
+		...existing,
+		lastRunAt,
+		nextRunAt,
+		updatedAt,
 	};
 }
 
-/**
- * List all schedules with optional enabled filter.
- */
-export async function listSchedules(enabledOnly?: boolean): Promise<Schedule[]> {
-	const db = getDatabase();
-	const sql = enabledOnly
-		? 'SELECT * FROM schedules WHERE enabled = 1 ORDER BY next_run ASC'
-		: 'SELECT * FROM schedules ORDER BY created_at DESC';
-	const result = await db.execute(sql);
-	return result.rows.map(rowToSchedule);
-}
+function computeNextRunAt(cronExpression: string, currentDate: string): string {
+	const interval = parseExpression(cronExpression, { currentDate });
+	const next = interval.next().toISOString();
 
-/**
- * Get a single schedule by ID.
- */
-export async function getSchedule(id: string): Promise<Schedule | null> {
-	const db = getDatabase();
-	const result = await db.execute({ sql: 'SELECT * FROM schedules WHERE id = ?', args: [id] });
-	if (result.rows.length === 0) return null;
-	return rowToSchedule(result.rows[0]);
-}
-
-/**
- * Update a schedule (partial update).
- */
-export async function updateSchedule(
-	id: string,
-	updates: Partial<Pick<Schedule, 'name' | 'cron' | 'prompt' | 'enabled'>>,
-): Promise<void> {
-	const db = getDatabase();
-	const sets: string[] = [];
-	const args: (string | number | null)[] = [];
-
-	if (updates.name !== undefined) {
-		sets.push('name = ?');
-		args.push(updates.name);
-	}
-	if (updates.cron !== undefined) {
-		sets.push('cron = ?');
-		args.push(updates.cron);
-		// Recalculate next_run
-		sets.push('next_run = ?');
-		args.push(calculateNextRun(updates.cron).toISOString());
-	}
-	if (updates.prompt !== undefined) {
-		sets.push('prompt = ?');
-		args.push(updates.prompt);
-	}
-	if (updates.enabled !== undefined) {
-		sets.push('enabled = ?');
-		args.push(updates.enabled ? 1 : 0);
-		if (updates.enabled && !updates.cron) {
-			// Need to recalculate next_run from existing cron
-			const existing = await getSchedule(id);
-			if (existing) {
-				sets.push('next_run = ?');
-				args.push(calculateNextRun(existing.cron).toISOString());
-			}
-		}
-		if (!updates.enabled) {
-			sets.push('next_run = ?');
-			args.push(null);
-		}
+	if (!next) {
+		throw new Error(`Unable to compute next run for cron expression: ${cronExpression}`);
 	}
 
-	if (sets.length === 0) return;
-	args.push(id);
-
-	await db.execute({
-		sql: `UPDATE schedules SET ${sets.join(', ')} WHERE id = ?`,
-		args,
-	});
+	return next;
 }
 
-/**
- * Delete a schedule.
- */
-export async function deleteSchedule(id: string): Promise<void> {
-	const db = getDatabase();
-	await db.execute({ sql: 'DELETE FROM schedules WHERE id = ?', args: [id] });
-}
-
-/**
- * Mark a schedule as fired (update last_run and next_run).
- */
-export async function markScheduleFired(id: string, cron: string): Promise<void> {
-	const db = getDatabase();
-	const now = new Date().toISOString();
-	const nextRun = calculateNextRun(cron).toISOString();
-
-	await db.execute({
-		sql: 'UPDATE schedules SET last_run = ?, next_run = ? WHERE id = ?',
-		args: [now, nextRun, id],
-	});
-}
-
-/**
- * Get all schedules that are due to fire (next_run <= now and enabled).
- */
-export async function getDueSchedules(): Promise<Schedule[]> {
-	const db = getDatabase();
-	const now = new Date().toISOString();
-	const result = await db.execute({
-		sql: 'SELECT * FROM schedules WHERE enabled = 1 AND next_run IS NOT NULL AND next_run <= ?',
-		args: [now],
-	});
-	return result.rows.map(rowToSchedule);
-}
-
-function rowToSchedule(row: Record<string, unknown>): Schedule {
+function mapSchedule(row: Record<string, unknown>): Schedule {
 	return {
-		id: row.id as string,
-		name: row.name as string,
-		targetType: row.target_type as ScheduleTargetType,
-		targetId: row.target_id as string | null,
-		cron: row.cron as string,
-		prompt: row.prompt as string,
-		enabled: (row.enabled as number) === 1,
-		lastRun: row.last_run as string | null,
-		nextRun: row.next_run as string | null,
-		createdAt: row.created_at as string,
+		id: asString(row.id),
+		name: asString(row.name),
+		cronExpression: asString(row.cron_expression),
+		prompt: asString(row.prompt),
+		enabled: asBoolean(row.enabled),
+		lastRunAt: asNullableString(row.last_run_at),
+		nextRunAt: asNullableString(row.next_run_at),
+		createdAt: asString(row.created_at),
+		updatedAt: asString(row.updated_at),
 	};
 }

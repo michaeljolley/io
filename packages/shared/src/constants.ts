@@ -1,54 +1,56 @@
-import type { AutonomyConfig } from './types/squads.js';
+import { homedir } from "node:os";
+import { join } from "node:path";
 
-/**
- * Squad color palette — complementary to the dark UI with pink (#E43A9C) accent.
- * Each squad gets a unique color from this list at creation time.
- */
-export const SQUAD_COLORS = [
-	'#38bdf8', // sky blue
-	'#a78bfa', // violet
-	'#34d399', // emerald
-	'#f59e0b', // amber
-	'#f87171', // red
-	'#06b6d4', // cyan
-	'#fb923c', // orange
-	'#4ade80', // green
-	'#c084fc', // purple
-	'#facc15', // yellow
-] as const;
+export const APP_NAME = "io";
+export const APP_VERSION = "4.0.0";
 
-export const AUTONOMY_TIERS: Record<string, AutonomyConfig> = {
-	low: {
-		canMergePrs: false,
-		canCreateReleases: false,
-		canCloseIssues: false,
-		canSelfReview: false,
-		requiresUserApprovalFor: ['merge', 'release', 'close', 'review'],
-	},
-	medium: {
-		canMergePrs: false,
-		canCreateReleases: false,
-		canCloseIssues: true,
-		canSelfReview: true,
-		requiresUserApprovalFor: ['merge', 'release'],
-	},
-	high: {
-		canMergePrs: true,
-		canCreateReleases: true,
-		canCloseIssues: true,
-		canSelfReview: true,
-		requiresUserApprovalFor: [],
-	},
-};
+export const DATA_DIR = join(homedir(), ".io");
+export const WIKI_DIR = join(DATA_DIR, "wiki");
+export const SKILLS_DIR = join(DATA_DIR, "skills");
+export const LOGS_DIR = join(DATA_DIR, "logs");
+export const CONFIG_PATH = join(DATA_DIR, "config.json");
+export const DB_PATH = join(DATA_DIR, "io.db");
+export const SKILLS_LOCK_PATH = join(DATA_DIR, "skills-lock.json");
 
-export const DEFAULT_CONFIG = {
-	apiPort: 7777,
-	logLevel: 'info' as const,
-	defaultModel: 'claude-opus-4.6',
-	maxInstancesPerSquad: 3,
-	dataDir: '~/.io',
-	timezone: 'UTC',
-	pricing: {
-		refreshIntervalHours: 24,
-	},
-};
+export const API_PORT = 7777;
+export const API_HOST = "0.0.0.0";
+
+export const DEFAULT_MODEL = "gpt-4.1";
+export const FAST_MODEL = "gpt-4.1-mini";
+export const STANDARD_MODEL = "claude-sonnet-4.6";
+export const PREMIUM_MODEL = "claude-sonnet-4.6";
+
+export const SESSION_RESET_THRESHOLD = 50;
+export const SCHEDULER_INTERVAL_MS = 60_000;
+export const QA_MAX_REVISIONS = 3;
+
+export const MANDATORY_ROLES = ["team-lead", "qa"] as const;
+
+export const PR_MODES = ["branch-only", "draft-pr", "ready-pr", "auto-merge"] as const;
+
+export const EVENT_NAMES = {
+	SQUAD_CREATED: "squad.created",
+	SQUAD_DELETED: "squad.deleted",
+	SQUAD_UPDATED: "squad.updated",
+	OBJECTIVE_STARTED: "objective.started",
+	OBJECTIVE_COMPLETED: "objective.completed",
+	OBJECTIVE_FAILED: "objective.failed",
+	TASK_STARTED: "task.started",
+	TASK_COMPLETED: "task.completed",
+	TASK_FAILED: "task.failed",
+	AGENT_EXECUTING: "agent.executing",
+	AGENT_COMPLETED: "agent.completed",
+	REVIEW_STARTED: "review.started",
+	REVIEW_COMPLETED: "review.completed",
+	QA_APPROVED: "qa.approved",
+	QA_REJECTED: "qa.rejected",
+	QA_ESCALATED: "qa.escalated",
+	PR_CREATED: "pr.created",
+	PR_MERGED: "pr.merged",
+	INBOX_NEW_ITEM: "inbox.new_item",
+	INBOX_REPLIED: "inbox.replied",
+	CHAT_MESSAGE: "chat.message",
+	CHAT_STREAM_CHUNK: "chat.stream_chunk",
+	CHAT_STREAM_END: "chat.stream_end",
+	NOTIFICATION: "notification",
+} as const;

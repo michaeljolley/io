@@ -1,57 +1,48 @@
-import { Router } from 'express';
-import { getAllPricing, queryUsage, refreshPricing } from '../../models/index.js';
+import type { UsageQueryParams } from "@io/shared";
+import { Router } from "express";
 
-export function usageRouter(): Router {
-	const router = Router();
+import { getDailyUsage, getUsageSummary } from "../../store/index.js";
 
-	/**
-	 * GET /api/usage
-	 * Query token usage with optional filters.
-	 * Query params: squadId, agentRole, model, since, until
-	 */
-	router.get('/usage', async (req, res) => {
-		try {
-			const filters = {
-				squadId: req.query.squadId as string | undefined,
-				agentRole: req.query.agentRole as string | undefined,
-				model: req.query.model as string | undefined,
-				since: req.query.since as string | undefined,
-				until: req.query.until as string | undefined,
-			};
+const router = Router();
 
-			const result = await queryUsage(filters);
-			res.json(result);
-		} catch (err) {
-			res.status(500).json({ error: 'Failed to query usage' });
-		}
-	});
+router.get("/api/usage", async (req, res) => {
+	try {
+		const params = getUsageParams(req.query);
+		const summary = await getUsageSummary(params);
+		res.status(200).json(summary);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to fetch usage summary",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-	/**
-	 * GET /api/usage/pricing
-	 * Get current model pricing.
-	 */
-	router.get('/usage/pricing', async (_req, res) => {
-		try {
-			const pricing = await getAllPricing();
-			res.json({ pricing });
-		} catch (err) {
-			res.status(500).json({ error: 'Failed to get pricing' });
-		}
-	});
+router.get("/api/usage/daily", async (req, res) => {
+	try {
+		const params = getUsageParams(req.query);
+		const daily = await getDailyUsage(params.startDate ?? null, params.endDate ?? null, {
+			squadId: params.squadId,
+			agentId: params.agentId,
+			model: params.model,
+		});
+		res.status(200).json(daily);
+	} catch (error) {
+		res.status(500).json({
+			error: "Failed to fetch daily usage",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 
-	/**
-	 * POST /api/usage/pricing/refresh
-	 * Trigger a pricing refresh.
-	 */
-	router.post('/usage/pricing/refresh', async (_req, res) => {
-		try {
-			await refreshPricing();
-			const pricing = await getAllPricing();
-			res.json({ message: 'Pricing refreshed', pricing });
-		} catch (err) {
-			res.status(500).json({ error: 'Failed to refresh pricing' });
-		}
-	});
-
-	return router;
+function getUsageParams(query: Record<string, unknown>): UsageQueryParams {
+	return {
+		startDate: typeof query.startDate === "string" ? query.startDate : undefined,
+		endDate: typeof query.endDate === "string" ? query.endDate : undefined,
+		squadId: typeof query.squadId === "string" ? query.squadId : undefined,
+		agentId: typeof query.agentId === "string" ? query.agentId : undefined,
+		model: typeof query.model === "string" ? query.model : undefined,
+	};
 }
+
+export { router as usageRouter };

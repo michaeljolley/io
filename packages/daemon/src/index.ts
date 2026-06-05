@@ -1,123 +1,74 @@
-#!/usr/bin/env node
+import type { Logger } from "pino";
 
-import { mkdirSync } from 'node:fs';
-import { initNotifications } from './api/notifications.js';
-import { createApiServer } from './api/server.js';
-import { loadConfig } from './config.js';
-import { stopClient } from './copilot/client.js';
-import { startHealthMonitor, stopHealthMonitor } from './copilot/health-monitor.js';
-import { destroyOrchestrator, initOrchestrator } from './copilot/orchestrator.js';
-import { getLogger, initLogger } from './logging/logger.js';
-import { seedPricing } from './models/index.js';
-import { startScheduler, stopScheduler } from './scheduler/engine.js';
-import { initSkills } from './skills/index.js';
-import { getEventBus } from './squad/event-bus.js';
-import { initActivityLogger } from './store/activity.js';
-import { closeDatabase, initDatabase } from './store/db.js';
-import { initWiki } from './wiki/index.js';
+import { APP_VERSION } from "@io/shared";
 
-const config = loadConfig();
+import { createApiServer, setChatOrchestrator } from "./api/index.js";
+import { loadConfig } from "./config.js";
+import { ensureDataDirectories } from "./data-dir.js";
+import { eventBus } from "./event-bus.js";
+import { initLogger } from "./logging/logger.js";
+import { createOrchestrator } from "./orchestrator/index.js";
+import { createScheduler } from "./scheduler/index.js";
+import { scanSkills } from "./skills/index.js";
+import { initDatabase } from "./store/db.js";
+import { createTelegramBot, createTelegramNotifier } from "./telegram/index.js";
 
-// Ensure data directory exists
-mkdirSync(config.dataDir, { recursive: true });
+function registerShutdownHandlers(logger: Logger, onShutdown: () => Promise<void>): void {
+	const handleShutdown = (signal: NodeJS.Signals) => {
+		logger.info({ signal }, "Shutting down...");
+		void onShutdown().finally(() => process.exit(0));
+	};
 
-// Initialize logger first — other modules depend on it
-const logger = initLogger(config);
-
-// Initialize wiki directory structure
-initWiki(config.dataDir);
-
-// Initialize skills directory
-initSkills(config.dataDir);
-logger.info(
-	{
-		config: {
-			apiPort: config.apiPort,
-			logLevel: config.logLevel,
-			defaultModel: config.defaultModel,
-			dataDir: config.dataDir,
-		},
-	},
-	'IO daemon starting',
-);
-
-// Create API server
-const apiServer = createApiServer(config);
-
-async function start(): Promise<void> {
-	// Initialize database
-	await initDatabase(config.dataDir);
-
-	// Seed model pricing defaults
-	await seedPricing();
-
-	// Initialize notification system (event bus → WebSocket broadcast)
-	initNotifications();
-
-	// Initialize activity logger (event bus → SQLite)
-	initActivityLogger(getEventBus());
-
-	// Initialize Copilot orchestrator
-	await initOrchestrator(config);
-
-	// Start health monitoring
-	startHealthMonitor();
-
-	// Start schedule engine (evaluates cron schedules every 60s)
-	startScheduler();
-
-	await apiServer.start();
-	logger.info('IO daemon ready');
+	process.once("SIGINT", handleShutdown);
+	process.once("SIGTERM", handleShutdown);
 }
 
-// Graceful shutdown
-let shuttingDown = false;
-async function shutdown(signal: string): Promise<void> {
-	if (shuttingDown) return;
-	shuttingDown = true;
+async function main(): Promise<void> {
+	let logger: Logger | undefined;
 
-	const log = getLogger();
-	log.info({ signal }, 'Shutting down...');
+	try {
+		ensureDataDirectories();
+		const config = loadConfig();
+		logger = initLogger(config);
 
-	// Stop accepting new requests
-	stopHealthMonitor();
-	stopScheduler();
+		logger.info(`IO Daemon v${APP_VERSION} starting...`);
+		await initDatabase();
+		logger.info("Database initialized");
 
-	// Stop API server (closes WebSocket connections)
-	await apiServer.stop();
+		await scanSkills();
+		logger.info("Skills scanned");
 
-	// Destroy orchestrator session (drains queue)
-	await destroyOrchestrator();
+		const orchestrator = createOrchestrator(config, eventBus);
+		await orchestrator.init();
+		logger.info("Orchestrator initialized");
 
-	// Stop Copilot SDK client
-	await stopClient();
+		const scheduler = createScheduler(orchestrator, eventBus);
+		scheduler.start();
+		logger.info("Scheduler started");
 
-	// Clear event bus
-	getEventBus().clear();
+		setChatOrchestrator(orchestrator);
+		const apiServer = createApiServer(config);
+		const telegramBot = createTelegramBot(config, orchestrator);
+		telegramBot?.start();
+		createTelegramNotifier(telegramBot, config, eventBus);
 
-	// Close database
-	closeDatabase();
+		registerShutdownHandlers(logger, async () => {
+			scheduler.stop();
+			telegramBot?.stop();
+			apiServer.server.close();
+		});
 
-	log.info('Shutdown complete');
-	process.exit(0);
+		await apiServer.start();
+		logger.info({ port: config.port }, "IO Daemon ready");
+	} catch (error) {
+		if (logger !== undefined) {
+			logger.fatal({ err: error }, "Fatal error during daemon startup");
+		} else {
+			console.error("Fatal error during daemon startup", error);
+		}
+
+		process.exit(1);
+	}
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
-
-// Handle uncaught errors gracefully
-process.on('uncaughtException', (err) => {
-	const log = getLogger();
-	log.fatal({ err }, 'Uncaught exception');
-	shutdown('uncaughtException');
-});
-
-process.on('unhandledRejection', (reason) => {
-	const log = getLogger();
-	log.error({ err: reason }, 'Unhandled rejection');
-});
-
-start().catch((err) => {
-	logger.fatal({ err }, 'Failed to start IO daemon');
-	process.exit(1);
-});
+await main();

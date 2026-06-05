@@ -1,17 +1,18 @@
+import { EVENT_NAMES, type StreamChunk } from '@io/shared';
 import { getCurrentToken } from '@/lib/api';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const MAX_RETRIES = 10;
 const BASE_RETRY_DELAY_MS = 1000;
 const MAX_RETRY_DELAY_MS = 30000;
+const DEFAULT_CHANNELS = ['chat', 'inbox', 'activity'];
 
 type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
-export type WsMessageType = 'connected' | 'delta' | 'message' | 'event' | 'error';
-
 export interface WsMessage {
-	type: WsMessageType;
-	connectionId?: string;
+	type: string;
+	channel?: string;
+	payload?: unknown;
 	content?: string;
 	notification?: string;
 	event?: {
@@ -27,10 +28,63 @@ export interface WsMessage {
 }
 
 interface UseWebSocketOptions {
-	onDelta?: (accumulated: string) => void;
-	onMessage?: (content: string) => void;
+	onDelta?: (chunk: string) => void;
 	onEvent?: (msg: WsMessage) => void;
 	onError?: (content: string) => void;
+}
+
+function toRecord(value: unknown): Record<string, unknown> | null {
+	return value && typeof value === 'object' && !Array.isArray(value)
+		? (value as Record<string, unknown>)
+		: null;
+}
+
+function normalizeIncomingMessage(raw: string): WsMessage | null {
+	const parsed = JSON.parse(raw) as { type?: string; channel?: string; payload?: unknown };
+	if (typeof parsed.type !== 'string') {
+		return null;
+	}
+
+	const message: WsMessage = {
+		type: parsed.type,
+		channel: parsed.channel,
+		payload: parsed.payload,
+	};
+	const payload = toRecord(parsed.payload);
+
+	if (parsed.type === EVENT_NAMES.CHAT_STREAM_CHUNK) {
+		const chunk = parsed.payload as StreamChunk;
+		message.content = chunk.content;
+	}
+
+	if (parsed.type === EVENT_NAMES.NOTIFICATION && payload) {
+		message.notification = [payload.title, payload.body]
+			.filter((value): value is string => typeof value === 'string' && value.length > 0)
+			.join(' — ');
+	}
+
+	if (payload && parsed.type !== 'connected') {
+		message.event = {
+			id:
+				typeof payload.id === 'string'
+					? payload.id
+					: crypto.randomUUID(),
+			type: parsed.type,
+			timestamp:
+				typeof payload.timestamp === 'string'
+					? payload.timestamp
+					: typeof payload.createdAt === 'string'
+						? payload.createdAt
+						: new Date().toISOString(),
+			squadId: typeof payload.squadId === 'string' ? payload.squadId : undefined,
+			instanceId: typeof payload.instanceId === 'string' ? payload.instanceId : undefined,
+			agentRole: typeof payload.agentRole === 'string' ? payload.agentRole : undefined,
+			model: typeof payload.model === 'string' ? payload.model : undefined,
+			data: parsed.payload,
+		};
+	}
+
+	return message;
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
@@ -48,8 +102,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 	useEffect(() => {
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		let wsUrl = `${protocol}//${window.location.host}/ws`;
-
-		// Attach token as query param for server-side verification
 		const token = getCurrentToken();
 		if (token) {
 			wsUrl += `?token=${encodeURIComponent(token)}`;
@@ -70,6 +122,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 				disconnectLoggedRef.current = false;
 				setConnected(true);
 				setConnectionState('connected');
+				ws.send(JSON.stringify({ type: 'subscribe', channels: DEFAULT_CHANNELS }));
 				if (didReconnect) {
 					console.info('WebSocket reconnected');
 				}
@@ -77,24 +130,30 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
 			ws.onmessage = (event) => {
 				try {
-					const msg = JSON.parse(event.data) as WsMessage;
-					switch (msg.type) {
-						case 'connected':
-							setConnectionId(msg.connectionId ?? null);
-							break;
-						case 'delta':
-							optionsRef.current.onDelta?.(msg.content ?? '');
-							break;
-						case 'message':
-							optionsRef.current.onMessage?.(msg.content ?? '');
-							break;
-						case 'event':
-							optionsRef.current.onEvent?.(msg);
-							break;
-						case 'error':
-							optionsRef.current.onError?.(msg.content ?? 'Unknown error');
-							break;
+					const message = normalizeIncomingMessage(event.data);
+					if (!message) {
+						return;
 					}
+
+					if (message.type === 'connected') {
+						setConnectionId(null);
+						optionsRef.current.onEvent?.(message);
+						return;
+					}
+
+					if (message.type === EVENT_NAMES.CHAT_STREAM_CHUNK) {
+						optionsRef.current.onDelta?.(message.content ?? '');
+					}
+
+					if (message.type === 'error') {
+						const payload = toRecord(message.payload);
+						optionsRef.current.onError?.(
+							typeof payload?.message === 'string' ? payload.message : 'Unknown error',
+						);
+						return;
+					}
+
+					optionsRef.current.onEvent?.(message);
 				} catch {
 					// ignore parse errors
 				}
@@ -144,11 +203,5 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 		};
 	}, []);
 
-	const sendMessage = useCallback((content: string, source = 'web') => {
-		if (wsRef.current?.readyState === WebSocket.OPEN) {
-			wsRef.current.send(JSON.stringify({ type: 'message', content, source }));
-		}
-	}, []);
-
-	return { connected, connectionId, connectionState, sendMessage };
+	return { connected, connectionId, connectionState };
 }

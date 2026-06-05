@@ -1,3 +1,4 @@
+import type { Squad as SharedSquad, SquadMember as SharedSquadMember } from '@io/shared';
 import { Chip, statusToVariant } from '@/components/ui/shared';
 import { MarkdownRenderer } from '@/components/ui/markdown';
 import { useTimezone } from '@/hooks/use-config';
@@ -41,17 +42,11 @@ interface ActivityItem {
 	timestamp: string;
 }
 
-interface SquadSummary {
-	id: string;
-	name: string;
-	universe: string;
-	color: string;
-	repoUrl: string;
-	status: string;
+interface SquadSummary extends SharedSquad {
+	color?: string;
 	memberCount: number;
 	activeInstances: number;
 	totalInstances: number;
-	createdAt: string;
 	recentActivity: ActivityItem[];
 }
 
@@ -59,15 +54,13 @@ interface AppConfig {
 	maxInstancesPerSquad: number;
 }
 
-interface SquadMember {
-	id: string;
+interface SquadMember extends Pick<SharedSquadMember, 'id' | 'name' | 'role'> {
 	displayName: string;
-	role: string;
 	roleName?: string;
-	persona: string | null;
 	veto: boolean;
 	status: string;
 	currentTask: string | null;
+	tools?: string[];
 }
 
 interface InstanceSummary {
@@ -80,15 +73,9 @@ interface InstanceSummary {
 }
 
 interface SquadDetail {
-	squad: {
-		id: string;
-		name: string;
-		universe: string;
-		color: string;
-		repoUrl: string;
-		status: string;
-		autonomyTier: string;
-		createdAt: string;
+	squad: SharedSquad & {
+		color?: string;
+		autonomyTier?: string;
 	};
 	members: SquadMember[];
 	instances: InstanceSummary[];
@@ -266,7 +253,7 @@ function SquadListView() {
 								<Chip variant={statusToVariant(squad.status)}>{squad.status}</Chip>
 							</div>
 							<div className="flex items-center justify-between mb-3">
-								<p className="text-[11px] text-zinc-600 font-mono">{squad.universe}</p>
+								<p className="text-[11px] text-zinc-600 font-mono">{squad.config?.prMode ?? 'draft-pr'}</p>
 								<span className="text-[11px] text-zinc-600 font-mono flex items-center gap-1">
 									<Cpu className="w-3 h-3" />
 									{squad.activeInstances}/{maxInstancesPerSquad ?? (squad.totalInstances || squad.memberCount)}
@@ -433,7 +420,7 @@ function SquadDetailView({ name }: { name: string }) {
 						{detail.squad.name}
 					</h2>
 					<p className="text-[11px] text-zinc-600 font-mono">
-						{detail.squad.universe} · {detail.squad.autonomyTier || 'standard'} autonomy
+						{detail.squad.config?.prMode ?? 'draft-pr'} · {detail.squad.autonomyTier || 'standard'} autonomy
 					</p>
 					{detail.squad.repoUrl && (
 						<a
@@ -1003,15 +990,22 @@ function InstanceDetailView({
 
 			// Instance status updates
 			if (
-				(ev.type === 'instance:completed' || ev.type === 'instance:failed') &&
+				(ev.type === 'instance:completed' ||
+					ev.type === 'instance:failed' ||
+					ev.type === 'instance.completed' ||
+					ev.type === 'instance.failed') &&
 				ev.instanceId === instanceId
 			) {
-				setInstanceStatus(ev.type === 'instance:completed' ? 'completed' : 'failed');
+				setInstanceStatus(
+					ev.type === 'instance:completed' || ev.type === 'instance.completed'
+						? 'completed'
+						: 'failed',
+				);
 				return;
 			}
 
 			// Agent activity events
-			if (ev.type.startsWith('agent:') && ev.instanceId === instanceId) {
+			if ((ev.type.startsWith('agent:') || ev.type.startsWith('agent.')) && ev.instanceId === instanceId) {
 				const data = ev.data as Record<string, unknown> | undefined;
 					const toolName = (data?.tool as string) || null;
 					const success = typeof data?.success === 'boolean' ? data.success : null;
@@ -1052,7 +1046,7 @@ function InstanceDetailView({
 					const newEvent: AgentActivityEvent = {
 						id: ev.id,
 						agent: (ev.agentRole as string) || (data?.agentRole as string) || 'unknown',
-						type: ev.type.replace('agent:', ''),
+						type: ev.type.replace(/^agent[:.]/, ''),
 						content,
 						toolName,
 						success,
@@ -1337,7 +1331,6 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 		displayName: string;
 		role: string;
 		roleName: string;
-		persona?: string;
 		veto: boolean;
 		tools: string[];
 		status: string;
@@ -1354,7 +1347,6 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 			displayName: string;
 			role: string;
 			roleName: string;
-			persona?: string;
 			veto: boolean;
 			tools: string[];
 			status: string;
@@ -1424,11 +1416,6 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 						</div>
 					</div>
 				</div>
-				{member.persona && (
-					<p className="text-[12px] text-zinc-400 font-mono leading-relaxed mt-2">
-						{member.persona}
-					</p>
-				)}
 				{member.tools.length > 0 && (
 					<div className="flex flex-wrap gap-1.5 mt-3">
 						{member.tools.map((tool) => (
