@@ -322,8 +322,7 @@ export class Orchestrator {
 		}
 		const model = usage.model || this.activeModel || this.config.defaultModel;
 		const pricing = await getModelPricing(model);
-		const premiumRequestCost = pricing?.premiumMultiplier ?? 0;
-		const tokenUnitCost = pricing
+		const cost = pricing
 			? calculateTokenUnitCost(
 					usage.inputTokens,
 					usage.outputTokens,
@@ -335,9 +334,7 @@ export class Orchestrator {
 			model,
 			inputTokens: usage.inputTokens,
 			outputTokens: usage.outputTokens,
-			cost: tokenUnitCost,
-			premiumRequestCost,
-			tokenUnitCost,
+			cost,
 		});
 	}
 }

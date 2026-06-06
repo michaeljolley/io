@@ -80,8 +80,7 @@ async function persistUsage(
 	for (const usage of usageEvents) {
 		const model = usage.model;
 		const pricing = await getModelPricing(model);
-		const premiumRequestCost = pricing?.premiumMultiplier ?? 0;
-		const tokenUnitCost = pricing
+		const cost = pricing
 			? calculateTokenUnitCost(
 					usage.inputTokens ?? 0,
 					usage.outputTokens ?? 0,
@@ -97,9 +96,7 @@ async function persistUsage(
 			model,
 			inputTokens: usage.inputTokens ?? 0,
 			outputTokens: usage.outputTokens ?? 0,
-			cost: tokenUnitCost,
-			premiumRequestCost,
-			tokenUnitCost,
+			cost,
 		});
 	}
 }

@@ -24,8 +24,6 @@ export interface RecordUsageInput {
 	inputTokens: number;
 	outputTokens: number;
 	cost: number;
-	premiumRequestCost?: number;
-	tokenUnitCost?: number;
 	createdAt?: string;
 }
 
@@ -77,8 +75,8 @@ export async function recordUsage(
 	};
 
 	await database.execute({
-		sql: `INSERT INTO token_usage (id, squad_id, agent_id, model, input_tokens, output_tokens, cost, premium_request_cost, token_unit_cost, squad_name, agent_name, created_at)
-		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		sql: `INSERT INTO token_usage (id, squad_id, agent_id, model, input_tokens, output_tokens, cost, squad_name, agent_name, created_at)
+		      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		args: [
 			usage.id,
 			usage.squadId,
@@ -87,8 +85,6 @@ export async function recordUsage(
 			usage.inputTokens,
 			usage.outputTokens,
 			usage.cost,
-			data.premiumRequestCost ?? null,
-			data.tokenUnitCost ?? null,
 			data.squadName ?? null,
 			data.agentName ?? null,
 			usage.createdAt,
