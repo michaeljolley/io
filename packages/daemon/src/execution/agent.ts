@@ -97,7 +97,7 @@ async function persistUsage(
 			model,
 			inputTokens: usage.inputTokens ?? 0,
 			outputTokens: usage.outputTokens ?? 0,
-			cost: 0,
+			cost: tokenUnitCost,
 			premiumRequestCost,
 			tokenUnitCost,
 		});

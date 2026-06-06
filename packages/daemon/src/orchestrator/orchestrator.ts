@@ -335,7 +335,7 @@ export class Orchestrator {
 			model,
 			inputTokens: usage.inputTokens,
 			outputTokens: usage.outputTokens,
-			cost: 0,
+			cost: tokenUnitCost,
 			premiumRequestCost,
 			tokenUnitCost,
 		});
