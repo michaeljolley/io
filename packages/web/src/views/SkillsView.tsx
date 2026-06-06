@@ -70,7 +70,9 @@ function getRegistryUrl(skill: RemoteSkill): string | null {
 		return `https://skills.sh/skills/${skill.skillId}`;
 	}
 	if (skill.source === "awesome-copilot") {
-		const match = skill.url?.match(/github\.com\/([^/]+\/[^/]+)\/(?:main|HEAD)\/(.+)\/SKILL\.md/);
+		const match = skill.url?.match(
+			/raw\.githubusercontent\.com\/([^/]+\/[^/]+)\/(?:main|HEAD)\/(.+)\/SKILL\.md/,
+		);
 		if (match) {
 			return `https://github.com/${match[1]}/tree/main/${match[2]}`;
 		}
