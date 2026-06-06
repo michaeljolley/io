@@ -1390,9 +1390,7 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 				{!editing && (
 					<div className="mt-3 flex items-center gap-2">
 						<span className="text-[10px] font-mono text-zinc-600">MODEL:</span>
-						<span className="text-[11px] font-mono text-zinc-400">
-							{member.model || "default"}
-						</span>
+						<span className="text-[11px] font-mono text-zinc-400">{member.model || "default"}</span>
 					</div>
 				)}
 			</div>
@@ -1438,10 +1436,14 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 					<>
 						{/* Model field */}
 						<div className="mb-4">
-							<label className="block text-[10px] font-mono text-zinc-600 mb-1.5">
+							<label
+								htmlFor="model-override-input"
+								className="block text-[10px] font-mono text-zinc-600 mb-1.5"
+							>
 								MODEL OVERRIDE (leave empty for default)
 							</label>
 							<input
+								id="model-override-input"
 								type="text"
 								value={modelBuffer}
 								onChange={(e) => setModelBuffer(e.target.value)}
@@ -1458,7 +1460,10 @@ function AgentDetailView({ squadName, role }: { squadName: string; role: string 
 						/>
 					</>
 				) : member.systemPrompt ? (
-					<MarkdownRenderer content={member.systemPrompt} className="text-[12px] [&_pre]:text-[11px]" />
+					<MarkdownRenderer
+						content={member.systemPrompt}
+						className="text-[12px] [&_pre]:text-[11px]"
+					/>
 				) : (
 					<p className="text-zinc-700 text-[12px] font-mono py-8 text-center">
 						No system prompt configured for this agent
