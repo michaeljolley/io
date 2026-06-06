@@ -42,7 +42,7 @@ marked.use({
 				3: "1.35em",
 				4: "1.15em",
 			};
-			return `<${tag} style="background:linear-gradient(135deg, #D83333 0%, #E43A9C 50%, #F041FF 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:${sizes[depth] ?? "1em"};font-weight:600;margin:1.1em 0 0.4em;line-height:1.4;text-transform:none;">${text}</${tag}>`;
+			return `<${tag} style="color:#D83333;font-size:${sizes[depth] ?? "1em"};font-weight:600;margin:1.1em 0 0.4em;line-height:1.4;text-transform:none;">${text}</${tag}>`;
 		},
 		code({ text, lang }: { text: string; lang?: string }) {
 			let highlighted: string;
