@@ -35,13 +35,19 @@ async function getSkillContent(skill: InstalledSkill): Promise<string> {
 	}
 }
 
+function stripFrontmatter(content: string): string {
+	const match = content.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/);
+	return match ? match[1] : content;
+}
+
 function extractDescription(content: string): string {
-	const lines = content.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+	const body = stripFrontmatter(content);
+	const lines = body.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
 	return lines[0]?.trim().slice(0, 200) ?? "";
 }
 
 function extractPreview(content: string): string {
-	return content.slice(0, 300);
+	return stripFrontmatter(content).slice(0, 300);
 }
 
 async function buildSkillSummaries(skills: InstalledSkill[]): Promise<SkillSummary[]> {
