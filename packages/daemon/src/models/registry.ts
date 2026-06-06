@@ -199,11 +199,23 @@ export async function getModelPricing(modelId: string): Promise<ModelPricing | n
 		args: [modelId],
 	});
 
-	if (result.rows.length === 0) {
-		return null;
+	if (result.rows.length > 0) {
+		return rowToModelPricing(result.rows[0]);
 	}
 
-	return rowToModelPricing(result.rows[0]);
+	// Fuzzy fallback: model IDs from the SDK may include version suffixes
+	// (e.g. "gpt-4o-2024-11-20") that don't match stored IDs ("gpt-4o")
+	const allModels = await db.execute(
+		"SELECT * FROM model_pricing WHERE token_input_multiplier IS NOT NULL ORDER BY length(id) DESC",
+	);
+	for (const row of allModels.rows) {
+		const storedId = asString(row.id);
+		if (modelId.startsWith(storedId) || storedId.startsWith(modelId)) {
+			return rowToModelPricing(row);
+		}
+	}
+
+	return null;
 }
 
 /** Get any available model in the cheapest tier (for classification calls) */
