@@ -15,7 +15,6 @@ import {
 	getConversationMessageCount,
 	getDueSchedules,
 	getInboxItem,
-	getMember,
 	getMembers,
 	getPendingBlockingQuestions,
 	getRecentActivity,

@@ -184,9 +184,7 @@ export async function proposeSquadComposition(
 ): Promise<ProposedComposition> {
 	const mandatory = buildMandatoryRoles();
 	const fallbackAdditional = dedupeRoles(detectRolesFromAnalysis(repoAnalysis));
-	const contextSection = context
-		? `\n\nAdditional context from user:\n${context}`
-		: "";
+	const contextSection = context ? `\n\nAdditional context from user:\n${context}` : "";
 	const prompt = `Repository URL: ${repoUrl}\n\nRepository analysis:\n${repoAnalysis}${contextSection}\n\n${ROLE_GENERATION_PROMPT}`;
 
 	let client: CopilotClient | null = null;

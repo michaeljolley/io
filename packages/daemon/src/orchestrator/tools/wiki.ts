@@ -71,6 +71,34 @@ function buildMemoryPath(timestamp: Date): string {
 	return `memory/${date}/${time}.md`;
 }
 
+async function handleWikiWrite(rawArgs: Record<string, unknown>) {
+	const { path, title, content, tags } = wikiWriteSchema.parse(rawArgs);
+	const existing = await getPage(path);
+	const page = existing
+		? await updatePage(path, { title, content, tags: tags ?? [] })
+		: await createPage(path, title, content, tags ?? []);
+	return {
+		message: `${existing ? "Updated" : "Created"} wiki page ${path}.`,
+		page,
+	};
+}
+
+async function handleRecall(rawArgs: Record<string, unknown>) {
+	const { query } = recallSchema.parse(rawArgs);
+	const [matches, recents] = await Promise.all([searchPages(query, 1), getRecentPages(1)]);
+	const page = matches[0] ?? recents[0] ?? null;
+	if (!page) {
+		return { message: "No wiki content is available yet." };
+	}
+	return {
+		message: `Best match: ${page.title}`,
+		path: page.path,
+		title: page.title,
+		content: page.content,
+		tags: page.tags,
+	};
+}
+
 export const executeWikiToolCall: OrchestratorToolExecutor = async (toolName, rawArgs) => {
 	switch (toolName) {
 		case "wiki_read": {
@@ -81,17 +109,8 @@ export const executeWikiToolCall: OrchestratorToolExecutor = async (toolName, ra
 			}
 			return { page };
 		}
-		case "wiki_write": {
-			const { path, title, content, tags } = wikiWriteSchema.parse(rawArgs);
-			const existing = await getPage(path);
-			const page = existing
-				? await updatePage(path, { title, content, tags: tags ?? [] })
-				: await createPage(path, title, content, tags ?? []);
-			return {
-				message: `${existing ? "Updated" : "Created"} wiki page ${path}.`,
-				page,
-			};
-		}
+		case "wiki_write":
+			return handleWikiWrite(rawArgs);
 		case "wiki_search": {
 			const { query, limit } = wikiSearchSchema.parse(rawArgs);
 			const pages = await searchPages(query, limit ?? 5);
@@ -114,21 +133,8 @@ export const executeWikiToolCall: OrchestratorToolExecutor = async (toolName, ra
 				page,
 			};
 		}
-		case "recall": {
-			const { query } = recallSchema.parse(rawArgs);
-			const [matches, recents] = await Promise.all([searchPages(query, 1), getRecentPages(1)]);
-			const page = matches[0] ?? recents[0] ?? null;
-			if (!page) {
-				return { message: "No wiki content is available yet." };
-			}
-			return {
-				message: `Best match: ${page.title}`,
-				path: page.path,
-				title: page.title,
-				content: page.content,
-				tags: page.tags,
-			};
-		}
+		case "recall":
+			return handleRecall(rawArgs);
 		default:
 			throw new Error(`Unsupported wiki tool: ${toolName}`);
 	}
