@@ -66,8 +66,8 @@ function formatInstalls(installs?: number) {
 }
 
 function getRegistryUrl(skill: RemoteSkill): string | null {
-	if (skill.source === "skillssh" && skill.skillId) {
-		return `https://skills.sh/skills/${skill.skillId}`;
+	if (skill.source === "skillssh" && skill.registrySource && skill.skillId) {
+		return `https://www.skills.sh/${skill.registrySource}/${skill.skillId}`;
 	}
 	if (skill.source === "awesome-copilot") {
 		const match = skill.url?.match(
