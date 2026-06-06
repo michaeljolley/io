@@ -26,8 +26,7 @@ let rootLogger: Logger | null = null;
 function createConsoleStream(): DestinationStream {
 	return pretty({
 		colorize: process.stdout.isTTY ?? false,
-		translateTime: "SYS:standard",
-		ignore: "pid,hostname",
+		ignore: "pid,hostname,name,time",
 		singleLine: true,
 	}) as unknown as DestinationStream;
 }
