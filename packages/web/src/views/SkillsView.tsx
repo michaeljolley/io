@@ -1,7 +1,16 @@
 import { MarkdownRenderer } from "@/components/ui/markdown";
 import { Chip, DangerBtn, PrimaryBtn, SecondaryBtn } from "@/components/ui/shared";
 import { api } from "@/lib/api";
-import { Download, LoaderCircle, Pencil, Search, Sparkles, Trash2, Zap } from "lucide-react";
+import {
+	Download,
+	ExternalLink,
+	LoaderCircle,
+	Pencil,
+	Search,
+	Sparkles,
+	Trash2,
+	Zap,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -54,6 +63,19 @@ function formatInstalls(installs?: number) {
 		return `${(installs / 1_000_000).toFixed(1).replace(/\.0$/, "")}M installs`;
 	if (installs >= 1_000) return `${(installs / 1_000).toFixed(1).replace(/\.0$/, "")}K installs`;
 	return `${installs} installs`;
+}
+
+function getRegistryUrl(skill: RemoteSkill): string | null {
+	if (skill.source === "skillssh" && skill.skillId) {
+		return `https://skills.sh/skills/${skill.skillId}`;
+	}
+	if (skill.source === "awesome-copilot") {
+		const match = skill.url?.match(/github\.com\/([^/]+\/[^/]+)\/(?:main|HEAD)\/(.+)\/SKILL\.md/);
+		if (match) {
+			return `https://github.com/${match[1]}/tree/main/${match[2]}`;
+		}
+	}
+	return null;
 }
 
 interface ParsedSkill {
@@ -551,7 +573,17 @@ export function SkillsView() {
 										{selectedRemoteSkill.registrySource ? (
 											<p>source: {selectedRemoteSkill.registrySource}</p>
 										) : null}
-										{selectedRemoteSkill.url ? <p>url: {selectedRemoteSkill.url}</p> : null}
+										{getRegistryUrl(selectedRemoteSkill) ? (
+											<a
+												href={getRegistryUrl(selectedRemoteSkill)!}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="inline-flex items-center gap-1 text-[#E43A9C] hover:text-[#f041ff] transition-colors"
+											>
+												<ExternalLink className="h-3 w-3" />
+												View on {formatSourceLabel(selectedRemoteSkill.source)}
+											</a>
+										) : null}
 									</div>
 								</div>
 							</div>
