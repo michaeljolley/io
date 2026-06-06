@@ -1,3 +1,4 @@
+import type { EventEmitter } from "node:events";
 import { SCHEDULER_INTERVAL_MS, type Schedule } from "@io/shared";
 import { CronExpressionParser } from "cron-parser";
 
@@ -8,12 +9,12 @@ import { listSchedules, markScheduleRun } from "../store/index.js";
 
 export class Scheduler {
 	private readonly orchestrator: Orchestrator;
-	private readonly eventBus: any;
+	private readonly eventBus: EventEmitter;
 	private readonly logger = createLogger("scheduler");
 	private timer: NodeJS.Timeout | null = null;
 	private running = false;
 
-	constructor(orchestrator: Orchestrator, eventBus: any) {
+	constructor(orchestrator: Orchestrator, eventBus: EventEmitter) {
 		this.orchestrator = orchestrator;
 		this.eventBus = eventBus;
 	}
@@ -96,6 +97,6 @@ export class Scheduler {
 	}
 }
 
-export function createScheduler(orchestrator: Orchestrator, eventBus: any): Scheduler {
+export function createScheduler(orchestrator: Orchestrator, eventBus: EventEmitter): Scheduler {
 	return new Scheduler(orchestrator, eventBus);
 }
