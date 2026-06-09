@@ -21,7 +21,7 @@ test("MarkdownRenderer renders core markdown features", () => {
   assert.match(html, /<table[^>]*>/i);
   assert.match(html, /<th[^>]*>A<\/th>/i);
   assert.match(html, /<code class="language-js"/i);
-  assert.match(html, /<a href="https:\/\/example\.com">Example<\/a>/i);
+  assert.match(html, /<a href="https:\/\/example\.com"[^>]*>Example<\/a>/i);
 });
 
 test("MarkdownRenderer sanitizes XSS payloads", () => {
@@ -30,4 +30,21 @@ test("MarkdownRenderer sanitizes XSS payloads", () => {
   assert.doesNotMatch(html, /onerror=/i);
   assert.doesNotMatch(html, /javascript:/i);
   assert.match(html, /<img[^>]*src="x"/i);
+});
+
+test("MarkdownRenderer adds target=_blank and rel=noopener noreferrer to external links", () => {
+  const html = renderMarkdown("[External](https://example.com) and [Internal](/page)");
+
+  // External link (https) should have target="_blank" and rel="noopener noreferrer"
+  assert.match(html, /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">External<\/a>/);
+
+  // Internal link should NOT have target or rel attributes
+  assert.match(html, /<a href="\/page">Internal<\/a>/);
+  assert.doesNotMatch(html, /<a href="\/page"[^>]*target/);
+});
+
+test("MarkdownRenderer handles http links as external", () => {
+  const html = renderMarkdown("[HTTP Link](http://example.com)");
+
+  assert.match(html, /<a href="http:\/\/example\.com" target="_blank" rel="noopener noreferrer">HTTP Link<\/a>/);
 });
