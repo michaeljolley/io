@@ -1,26 +1,22 @@
+import DOMPurify from "isomorphic-dompurify";
 import { marked } from "marked";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 
-const GRADIENT_STYLE = "linear-gradient(135deg, #45A29E 0%, #F75F57 100%)";
+function sanitizeHtml(markdown: string) {
+  const html = marked.parse(markdown) as string;
+  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+}
 
-marked.use({
-  renderer: {
-    heading({ tokens, depth }: { tokens: { raw: string }[]; depth: number }) {
-      const text = tokens.map((t: { raw: string }) => t.raw).join("");
-      const tag = `h${depth}`;
-      const sizes: Record<number, string> = { 1: "1.35em", 2: "1.15em", 3: "1em", 4: "0.9em" };
-      return `<${tag} style="background:${GRADIENT_STYLE};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:${sizes[depth] ?? "1em"};font-weight:600;margin:1.1em 0 0.4em;">${text}</${tag}>`;
-    },
-  },
-});
+export interface MarkdownRendererProps {
+  content: string;
+  className?: string;
+}
 
-export function MarkdownRenderer({ content, className = "" }: { content: string; className?: string }) {
-  const html = useMemo(() => marked.parse(content) as string, [content]);
-  return (
-    <div
-      className={`prose-io ${className}`}
-      style={{ color: "#d4d4d8", fontSize: "0.875rem", lineHeight: "1.7" }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
+export function MarkdownRenderer({ content, className = "" }: MarkdownRendererProps) {
+  const html = useMemo(() => sanitizeHtml(content), [content]);
+
+  return React.createElement("article", {
+    className: `prose prose-invert max-w-none prose-io text-sm leading-7 text-zinc-200 ${className}`.trim(),
+    dangerouslySetInnerHTML: { __html: html },
+  });
 }
