@@ -26,11 +26,6 @@ function sanitizeHtml(markdown: string) {
   });
 }
 
-function sanitizeHtml(markdown: string) {
-  const html = marked.parse(markdown) as string;
-  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-}
-
 export interface MarkdownRendererProps {
   content: string;
   className?: string;
