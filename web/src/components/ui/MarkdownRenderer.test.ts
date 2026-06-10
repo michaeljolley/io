@@ -20,8 +20,9 @@ test("MarkdownRenderer renders core markdown features", () => {
   assert.match(html, /quoted/i);
   assert.match(html, /<table[^>]*>/i);
   assert.match(html, /<th[^>]*>A<\/th>/i);
-  assert.match(html, /<code class="language-js"/i);
+  assert.match(html, /<code class="hljs language-js"/i);
   assert.match(html, /<a href="https:\/\/example\.com"[^>]*>Example<\/a>/i);
+  assert.match(html, /color:\s*var\(--base-pink\)/i);
 });
 
 test("MarkdownRenderer sanitizes XSS payloads", () => {
