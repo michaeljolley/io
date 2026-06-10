@@ -39,7 +39,7 @@ export function App() {
           </div>
         </main>
       </div>
-      {showChrome && !location.pathname.startsWith("/chat") && <ChatOverlay />}
+      {showChrome && location.pathname !== "/" && !location.pathname.startsWith("/chat") && <ChatOverlay />}
       <Toaster position="bottom-right" theme="dark" richColors />
     </div>
   );

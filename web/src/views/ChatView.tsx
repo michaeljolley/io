@@ -112,7 +112,7 @@ export default function ChatView() {
                 <span className="text-[9px] font-mono text-zinc-600">{formatAttachmentSize(att.size)}</span>
                 <button
                   onClick={() => setPendingAttachments((p) => p.filter((_, idx) => idx !== i))}
-                  className="text-zinc-600 hover:text-zinc-300"
+                  className="text-zinc-600 hover:text-zinc-300 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -145,7 +145,7 @@ export default function ChatView() {
                 };
                 input.click();
               }}
-              className="p-1.5 rounded-lg hover:bg-white/[0.05] text-zinc-700 hover:text-zinc-400 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/[0.05] text-zinc-700 hover:text-zinc-400 transition-colors cursor-pointer"
             >
               <Paperclip className="w-4 h-4" />
             </button>

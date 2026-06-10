@@ -394,7 +394,7 @@ export default function SchedulesView() {
   };
 
   return (
-    <div className="p-6 mx-auto space-y-4">
+    <div className="p-6 w-full space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl leading-none text-zinc-100" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>

@@ -122,7 +122,7 @@ export function ChatOverlay() {
                 </div>
                 <button
                   onClick={() => setPendingAttachments([])}
-                  className="p-0.5 rounded text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0"
+                  className="p-0.5 rounded text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -132,7 +132,7 @@ export function ChatOverlay() {
               <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-1 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.06] transition-colors flex-shrink-0"
+                className="p-1 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.06] transition-colors flex-shrink-0 cursor-pointer"
                 title="Attach file"
               >
                 <Paperclip className="w-3.5 h-3.5" />
