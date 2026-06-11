@@ -1,16 +1,22 @@
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   Bot,
   Bug,
   CheckCircle,
+  ChevronLeft,
+  Clock,
   Crown,
   ExternalLink,
   Eye,
   GitBranch,
+  Hash,
   Loader,
+  MessageSquare,
   ScrollText,
   Square,
+  Terminal,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -18,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Chip, DangerBtn, SecondaryBtn, type StatusKind, statusToVariant, Toggle } from "@/components/ui";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { useAuthStore } from "@/stores/auth";
 
 interface SquadDetail {
@@ -93,6 +100,7 @@ interface AuditEntry {
 interface AgentEvent {
   id: string;
   task_id: string;
+  agent_name?: string;
   type: string;
   summary: string;
   payload: string;
@@ -194,6 +202,32 @@ function activityStatus(status: StatusKind) {
   return <CheckCircle className="h-4 w-4 text-green-400" />;
 }
 
+function agentColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = ((hash % 360) + 360) % 360;
+  return `hsl(${hue}, 70%, 65%)`;
+}
+
+const KIND_META: Record<string, { label: string; icon: React.ElementType }> = {
+  thought: { label: "Thinking", icon: MessageSquare },
+  tool_call: { label: "Tool Call", icon: Terminal },
+  tool_result: { label: "Tool Result", icon: Hash },
+  message: { label: "Message", icon: Bot },
+  decision: { label: "Decision", icon: Crown },
+};
+
+function mapEventTypeToKind(type: string): string {
+  const lower = type.toLowerCase();
+  if (lower.includes("tool_call") || lower.includes("toolcall")) return "tool_call";
+  if (lower.includes("tool_result") || lower.includes("toolresult")) return "tool_result";
+  if (lower.includes("think") || lower.includes("thought")) return "thought";
+  if (lower.includes("decision") || lower.includes("assign")) return "decision";
+  return "message";
+}
+
 export default function SquadDetailView() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -210,6 +244,7 @@ export default function SquadDetailView() {
   const [activityTaskId, setActivityTaskId] = useState<string | null>(null);
   const [activityEvents, setActivityEvents] = useState<AgentEvent[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [selectedAgents, setSelectedAgents] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!id) return;
@@ -285,9 +320,29 @@ export default function SquadDetailView() {
     }));
   }, [auditEntries, tasks]);
 
+  const timelineAgentColors = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const event of activityEvents) {
+      const name = event.agent_name || "Agent";
+      if (!map[name]) map[name] = agentColor(name);
+    }
+    return map;
+  }, [activityEvents]);
+
+  const timelineAgentNames = useMemo(
+    () => [...new Set(activityEvents.map((e) => e.agent_name || "Agent"))],
+    [activityEvents],
+  );
+
+  const filteredTimelineEvents = useMemo(() => {
+    if (selectedAgents.size === 0) return activityEvents;
+    return activityEvents.filter((e) => selectedAgents.has(e.agent_name || "Agent"));
+  }, [activityEvents, selectedAgents]);
+
   const loadActivity = async (taskId: string) => {
     setActivityTaskId(taskId);
     setActivityLoading(true);
+    setSelectedAgents(new Set());
     try {
       setActivityEvents(await fetchJson<AgentEvent[]>(`/api/tasks/${taskId}/events`));
     } finally {
@@ -340,41 +395,162 @@ export default function SquadDetailView() {
 
   const tabs: TabKey[] = ["agents", "instances", "schedules", "history"];
 
-  return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-5">
-      {activityTaskId && (
-        <div className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card border border-white/[0.07] rounded-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">Task Activity</p>
-                <h2 className="text-xl text-zinc-100">{activityTaskId}</h2>
+  // If viewing activity detail, show the timeline view instead of the main view
+  if (activityTaskId) {
+    const selectedHistoryItem = historyItems.find((item) => item.id === activityTaskId);
+
+    const toggleAgent = (name: string) => {
+      setSelectedAgents((prev) => {
+        const next = new Set(prev);
+        if (next.has(name)) next.delete(name);
+        else next.add(name);
+        return next;
+      });
+    };
+
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto p-5">
+        <div className="max-w-5xl mx-auto space-y-5">
+          <button
+            onClick={() => {
+              setActivityTaskId(null);
+              setActivityEvents([]);
+              setSelectedAgents(new Set());
+            }}
+            className="flex items-center gap-1.5 text-[11px] text-zinc-600 hover:text-zinc-300 font-mono transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" /> Back to {squad.name}
+          </button>
+
+          <div className="flex items-start justify-between">
+            <div>
+              <h2
+                className="text-2xl tracking-wide"
+                style={{ fontFamily: "'Bebas Neue', sans-serif", color: squad.color || "#66FCF1" }}
+              >
+                {selectedHistoryItem?.title || "Task Activity"}
+              </h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[11px] text-zinc-600 font-mono">
+                  {formatTimestamp(selectedHistoryItem?.timestamp)}
+                </span>
+                {selectedHistoryItem?.duration && (
+                  <span className="text-[11px] text-zinc-700 font-mono flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {selectedHistoryItem.duration}
+                  </span>
+                )}
               </div>
-              <SecondaryBtn onClick={() => setActivityTaskId(null)} className="px-3 py-2">
-                Close
-              </SecondaryBtn>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-              {activityLoading ? (
-                <p className="text-[11px] font-mono text-zinc-500">Loading activity…</p>
-              ) : activityEvents.length === 0 ? (
-                <p className="text-[11px] font-mono text-zinc-500">No events recorded for this task yet.</p>
-              ) : (
-                activityEvents.map((event) => (
-                  <div key={event.id} className="rounded-xl border border-white/[0.06] bg-black/10 px-4 py-3">
-                    <div className="flex items-center justify-between gap-3 text-[11px] font-mono text-zinc-500">
-                      <span>{event.type}</span>
-                      <span>{formatTimestamp(event.created_at)}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-zinc-200">{event.summary}</p>
-                  </div>
-                ))
+            {selectedHistoryItem && (
+              <Chip variant={statusToVariant(selectedHistoryItem.status)}>{selectedHistoryItem.status}</Chip>
+            )}
+          </div>
+
+          {/* Agent legend */}
+          {timelineAgentNames.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {timelineAgentNames.map((name) => {
+                const color = timelineAgentColors[name];
+                const isFiltering = selectedAgents.size > 0;
+                const isActive = !isFiltering || selectedAgents.has(name);
+                return (
+                  <button
+                    key={name}
+                    onClick={() => toggleAgent(name)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer"
+                    style={{
+                      borderColor: isActive ? `${color}30` : "rgba(255,255,255,0.05)",
+                      background: isActive ? `${color}10` : "transparent",
+                      opacity: isActive ? 1 : 0.4,
+                    }}
+                  >
+                    <Bot className="w-3 h-3" style={{ color: isActive ? color : "#71717a" }} />
+                    <span className="text-[11px] font-mono" style={{ color: isActive ? color : "#71717a" }}>
+                      {name}
+                    </span>
+                  </button>
+                );
+              })}
+              {selectedAgents.size > 0 && (
+                <button
+                  onClick={() => setSelectedAgents(new Set())}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/[0.1] text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                >
+                  Show all
+                </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
+          {/* Unified timeline */}
+          {activityLoading ? (
+            <p className="text-[11px] font-mono text-zinc-500 py-10 text-center">Loading activity…</p>
+          ) : filteredTimelineEvents.length === 0 ? (
+            <p className="text-[11px] font-mono text-zinc-500 py-10 text-center">No events recorded for this task.</p>
+          ) : (
+            <div className="relative pl-10">
+              <div className="absolute left-[15px] top-0 bottom-0 w-px bg-white/[0.06]" />
+              <div className="space-y-3">
+                {filteredTimelineEvents.map((event) => {
+                  const name = event.agent_name || "Agent";
+                  const color = timelineAgentColors[name] || "#66FCF1";
+                  const kind = mapEventTypeToKind(event.type);
+                  const meta = KIND_META[kind] || KIND_META.message;
+                  const KindIcon = meta.icon;
+                  const isCode = kind === "tool_call" || kind === "tool_result";
+
+                  return (
+                    <div key={event.id} className="relative">
+                      <div
+                        className="absolute -left-10 top-3 w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                        style={{ background: `${color}15`, border: `1px solid ${color}35` }}
+                      >
+                        <KindIcon className="w-3.5 h-3.5" style={{ color }} />
+                      </div>
+
+                      <div className="glass-card border border-white/[0.07] rounded-2xl px-4 py-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <Bot className="w-3 h-3" style={{ color }} />
+                              <span className="text-[10px] font-mono" style={{ color }}>
+                                {name}
+                              </span>
+                            </div>
+                            <span className="text-zinc-700 text-[10px]">·</span>
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                              {meta.label}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-zinc-700 flex-shrink-0 ml-2">
+                            {formatTimestamp(event.created_at)}
+                          </span>
+                        </div>
+                        {isCode ? (
+                          <pre className="text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 mt-1 bg-black/20">
+                            {event.summary || event.payload}
+                          </pre>
+                        ) : (
+                          <MarkdownRenderer
+                            content={event.summary || event.payload || ""}
+                            className="text-[12px] [&_pre]:text-[10px]"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto p-5">
       <div className="max-w-7xl mx-auto space-y-5">
         <SecondaryBtn onClick={() => navigate("/squads")} className="px-3 py-2">
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -643,25 +819,28 @@ export default function SquadDetailView() {
               </div>
             ) : (
               historyItems.map((item) => (
-                <div
+                <button
                   key={item.id}
-                  className="glass-card border border-white/[0.07] rounded-2xl px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                  onClick={() => void loadActivity(item.id)}
+                  className="w-full glass-card border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:bg-white/[0.03] transition-colors cursor-pointer text-left"
                 >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="mt-0.5">{activityStatus(item.status)}</div>
-                    <div className="min-w-0">
-                      <p className="text-zinc-100 truncate">{item.title}</p>
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-zinc-500">
-                        <span>{formatTimestamp(item.timestamp)}</span>
-                        <span>Duration {item.duration}</span>
-                        <span>
-                          {item.agentCount} agent{item.agentCount === 1 ? "" : "s"}
-                        </span>
-                      </div>
+                  <div className="flex-shrink-0">{activityStatus(item.status)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] text-zinc-200 font-mono truncate">{item.title}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-[10px] text-zinc-700 font-mono">{formatTimestamp(item.timestamp)}</span>
+                      <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
+                        <Activity className="w-2.5 h-2.5" />
+                        {item.duration}
+                      </span>
+                      <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
+                        <Bot className="w-2.5 h-2.5" />
+                        {item.agentCount} agent{item.agentCount !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   </div>
                   <Chip variant={statusToVariant(item.status)}>{item.status}</Chip>
-                </div>
+                </button>
               ))
             )}
           </div>
