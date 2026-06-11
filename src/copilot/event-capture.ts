@@ -9,6 +9,8 @@ interface CaptureOptions {
 	taskId: string;
 	agentName: string;
 	agentRole: string;
+	/** Called once with the first assistant.intent text (used to set task title). */
+	onFirstIntent?: (intent: string) => void;
 }
 
 /**
@@ -21,11 +23,12 @@ export function captureSessionEvents(
 	session: CopilotSession,
 	options: CaptureOptions,
 ): () => void {
-	const { taskId, agentName, agentRole } = options;
+	const { taskId, agentName, agentRole, onFirstIntent } = options;
 	const basePayload = { agent: agentName, role: agentRole };
 
 	// Track tool names by callId so we can label tool_result events
 	const toolCallNames = new Map<string, string>();
+	let intentFired = false;
 
 	const unsubReasoning = session.on("assistant.reasoning", (event: any) => {
 		const content: string = event.data?.content ?? "";
@@ -39,6 +42,10 @@ export function captureSessionEvents(
 	const unsubIntent = session.on("assistant.intent", (event: any) => {
 		const intent: string = event.data?.intent ?? "";
 		if (!intent.trim()) return;
+		if (!intentFired && onFirstIntent) {
+			intentFired = true;
+			onFirstIntent(intent);
+		}
 		addAgentEvent(taskId, "decision", intent, {
 			...basePayload,
 			intent,

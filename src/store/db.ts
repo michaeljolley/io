@@ -1,37 +1,37 @@
-import Database from "better-sqlite3";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import Database from "better-sqlite3";
 import { PATHS } from "../paths.js";
 import { pickSquadColor } from "./squad-colors.js";
 
 let db: Database.Database | undefined;
 
 export function getDb(): Database.Database {
-  if (db) return db;
+	if (db) return db;
 
-  const dir = dirname(PATHS.db);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+	const dir = dirname(PATHS.db);
+	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
-  db = new Database(PATHS.db);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
+	db = new Database(PATHS.db);
+	db.pragma("journal_mode = WAL");
+	db.pragma("foreign_keys = ON");
 
-  runMigrations(db);
-  return db;
+	runMigrations(db);
+	return db;
 }
 
 function runMigrations(db: Database.Database): void {
-  db.exec(`
+	db.exec(`
     CREATE TABLE IF NOT EXISTS meta (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
   `);
 
-  const version = getSchemaVersion(db);
+	const version = getSchemaVersion(db);
 
-  if (version < 1) {
-    db.exec(`
+	if (version < 1) {
+		db.exec(`
       CREATE TABLE IF NOT EXISTS squads (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -120,25 +120,30 @@ function runMigrations(db: Database.Database): void {
         enabled INTEGER NOT NULL DEFAULT 1
       );
     `);
-    setSchemaVersion(db, 1);
-  }
+		setSchemaVersion(db, 1);
+	}
 
-  if (version < 2) {
-    db.exec(`
+	if (version < 2) {
+		db.exec(`
       ALTER TABLE squads ADD COLUMN slug TEXT;
     `);
-    // Backfill slugs for existing squads
-    const squads = db.prepare("SELECT id, name FROM squads WHERE slug IS NULL").all() as { id: string; name: string }[];
-    const update = db.prepare("UPDATE squads SET slug = ? WHERE id = ?");
-    for (const s of squads) {
-      const slug = s.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      update.run(slug || s.id, s.id);
-    }
-    setSchemaVersion(db, 2);
-  }
+		// Backfill slugs for existing squads
+		const squads = db
+			.prepare("SELECT id, name FROM squads WHERE slug IS NULL")
+			.all() as { id: string; name: string }[];
+		const update = db.prepare("UPDATE squads SET slug = ? WHERE id = ?");
+		for (const s of squads) {
+			const slug = s.name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-|-$/g, "");
+			update.run(slug || s.id, s.id);
+		}
+		setSchemaVersion(db, 2);
+	}
 
-  if (version < 3) {
-    db.exec(`
+	if (version < 3) {
+		db.exec(`
       CREATE TABLE IF NOT EXISTS agent_events (
         id TEXT PRIMARY KEY,
         task_id TEXT NOT NULL,
@@ -150,28 +155,28 @@ function runMigrations(db: Database.Database): void {
 
       CREATE INDEX IF NOT EXISTS idx_agent_events_task_id ON agent_events (task_id);
     `);
-    setSchemaVersion(db, 3);
-  }
+		setSchemaVersion(db, 3);
+	}
 
-  if (version < 4) {
-    db.exec(`
+	if (version < 4) {
+		db.exec(`
       ALTER TABLE squads ADD COLUMN color TEXT;
     `);
-    const squads = db
-      .prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
-      .all() as { id: string }[];
-    const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
-    const usedColors: string[] = [];
-    for (let i = 0; i < squads.length; i++) {
-      const color = pickSquadColor(usedColors);
-      usedColors.push(color);
-      update.run(color, squads[i].id);
-    }
-    setSchemaVersion(db, 4);
-  }
+		const squads = db
+			.prepare("SELECT id FROM squads WHERE color IS NULL ORDER BY created_at")
+			.all() as { id: string }[];
+		const update = db.prepare("UPDATE squads SET color = ? WHERE id = ?");
+		const usedColors: string[] = [];
+		for (let i = 0; i < squads.length; i++) {
+			const color = pickSquadColor(usedColors);
+			usedColors.push(color);
+			update.run(color, squads[i].id);
+		}
+		setSchemaVersion(db, 4);
+	}
 
-  if (version < 5) {
-    db.exec(`
+	if (version < 5) {
+		db.exec(`
       CREATE TABLE IF NOT EXISTS conversation_messages (
         id TEXT PRIMARY KEY,
         conversation_id TEXT NOT NULL,
@@ -206,11 +211,11 @@ function runMigrations(db: Database.Database): void {
           INSERT INTO conversation_messages_fts(conversation_messages_fts, rowid, content) VALUES ('delete', old.rowid, old.content);
         END;
     `);
-    setSchemaVersion(db, 5);
-  }
+		setSchemaVersion(db, 5);
+	}
 
-  if (version < 6) {
-    db.exec(`
+	if (version < 6) {
+		db.exec(`
       CREATE TABLE IF NOT EXISTS audit_log (
         id TEXT PRIMARY KEY,
         squad_id TEXT REFERENCES squads(id) ON DELETE SET NULL,
@@ -227,11 +232,11 @@ function runMigrations(db: Database.Database): void {
       CREATE INDEX IF NOT EXISTS idx_audit_log_action_type ON audit_log (action_type);
       CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log (created_at);
     `);
-    setSchemaVersion(db, 6);
-  }
+		setSchemaVersion(db, 6);
+	}
 
-  if (version < 7) {
-    db.exec(`
+	if (version < 7) {
+		db.exec(`
       CREATE TABLE IF NOT EXISTS token_usage (
         id TEXT PRIMARY KEY,
         squad_id TEXT REFERENCES squads(id) ON DELETE CASCADE,
@@ -248,34 +253,41 @@ function runMigrations(db: Database.Database): void {
       CREATE INDEX IF NOT EXISTS idx_token_usage_task ON token_usage(task_id);
       CREATE INDEX IF NOT EXISTS idx_token_usage_created ON token_usage(created_at);
     `);
-    setSchemaVersion(db, 7);
-  }
+		setSchemaVersion(db, 7);
+	}
 
-  if (version < 8) {
-    db.exec(`
+	if (version < 8) {
+		db.exec(`
       ALTER TABLE conversation_messages
         ADD COLUMN attachments TEXT NOT NULL DEFAULT '[]';
     `);
-    setSchemaVersion(db, 8);
-  }
+		setSchemaVersion(db, 8);
+	}
+
+	if (version < 9) {
+		db.exec(`
+      ALTER TABLE tasks ADD COLUMN title TEXT;
+    `);
+		setSchemaVersion(db, 9);
+	}
 }
 
 function getSchemaVersion(db: Database.Database): number {
-  const row = db.prepare("SELECT value FROM meta WHERE key = 'schema_version'").get() as
-    | { value: string }
-    | undefined;
-  return row ? parseInt(row.value, 10) : 0;
+	const row = db
+		.prepare("SELECT value FROM meta WHERE key = 'schema_version'")
+		.get() as { value: string } | undefined;
+	return row ? parseInt(row.value, 10) : 0;
 }
 
 function setSchemaVersion(db: Database.Database, version: number): void {
-  db.prepare(
-    "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', ?)"
-  ).run(String(version));
+	db.prepare(
+		"INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', ?)",
+	).run(String(version));
 }
 
 export function closeDb(): void {
-  if (db) {
-    db.close();
-    db = undefined;
-  }
+	if (db) {
+		db.close();
+		db = undefined;
+	}
 }

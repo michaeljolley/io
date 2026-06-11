@@ -67,6 +67,7 @@ interface Task {
   squad_id: string;
   instance_id: string | null;
   agent_id: string | null;
+  title: string | null;
   description: string;
   status: string;
   result: string | null;
@@ -306,7 +307,7 @@ export default function SquadDetailView() {
 
       return {
         id: task.id,
-        title: task.description,
+        title: task.title ?? task.description.slice(0, 100),
         timestamp: task.updated_at,
         duration: formatDuration(task.created_at, task.updated_at),
         agentCount,

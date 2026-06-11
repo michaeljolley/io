@@ -1,26 +1,41 @@
-import type { CopilotClient, CopilotSession } from "@github/copilot-sdk";
-import { approveAll } from "@github/copilot-sdk";
-import { getClient } from "./client.js";
-import { loadConfig } from "../config.js";
-import { getLeadForSquad, getAgentsForSquad, updateAgentStatus, getSquad } from "../store/squads.js";
-import { createTask, updateTaskStatus, getTask } from "../store/tasks.js";
-import { touchInstanceActivity, getInstance } from "../store/instances.js";
-import { selectModel, classifyComplexity } from "./model-router.js";
-import { postFeedItem } from "../store/feed.js";
-import { attachTokenTracker } from "./token-tracker.js";
-import { addAuditEntry } from "../store/audit-log.js";
-import { addAgentEvent } from "../store/agent-events.js";
-import { captureSessionEvents } from "./event-capture.js";
-import { PATHS } from "../paths.js";
-import { createSquadTools, createLeadDelegationTools } from "./squad-tools.js";
-import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
-import { getMcpServersForSession } from "../mcp/registry.js";
-import { buildAttachmentPathSummary, saveAttachmentsToDisk, type MessageAttachment, toCopilotBlobAttachments } from "../chat/attachments.js";
+import { exec } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import type { CopilotClient, CopilotSession } from "@github/copilot-sdk";
+import { approveAll } from "@github/copilot-sdk";
+import {
+	buildAttachmentPathSummary,
+	type MessageAttachment,
+	saveAttachmentsToDisk,
+	toCopilotBlobAttachments,
+} from "../chat/attachments.js";
+import { loadConfig } from "../config.js";
 import { logWarn } from "../logging.js";
+import { getMcpServersForSession } from "../mcp/registry.js";
+import { PATHS } from "../paths.js";
+import { addAgentEvent } from "../store/agent-events.js";
+import { addAuditEntry } from "../store/audit-log.js";
+import { postFeedItem } from "../store/feed.js";
+import { getInstance, touchInstanceActivity } from "../store/instances.js";
+import {
+	getAgentsForSquad,
+	getLeadForSquad,
+	getSquad,
+	updateAgentStatus,
+} from "../store/squads.js";
+import {
+	createTask,
+	getTask,
+	updateTaskStatus,
+	updateTaskTitle,
+} from "../store/tasks.js";
+import { getClient } from "./client.js";
+import { captureSessionEvents } from "./event-capture.js";
+import { classifyComplexity, selectModel } from "./model-router.js";
+import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
+import { createLeadDelegationTools, createSquadTools } from "./squad-tools.js";
+import { attachTokenTracker } from "./token-tracker.js";
 
 const execAsync = promisify(exec);
 
@@ -32,109 +47,120 @@ const activeSessions = new Map<string, CopilotSession>();
  * Priority: instance worktree → cloned repo → process.cwd()
  */
 async function resolveSquadWorkingDirectory(
-  squad: { repo_url: string | null },
-  instanceId?: string
+	squad: { repo_url: string | null },
+	instanceId?: string,
 ): Promise<string> {
-  // If an instance is specified, use its worktree path
-  if (instanceId) {
-    const instance = getInstance(instanceId);
-    if (instance?.worktree_path && existsSync(instance.worktree_path)) {
-      return instance.worktree_path;
-    }
-  }
+	// If an instance is specified, use its worktree path
+	if (instanceId) {
+		const instance = getInstance(instanceId);
+		if (instance?.worktree_path && existsSync(instance.worktree_path)) {
+			return instance.worktree_path;
+		}
+	}
 
-  // Derive from squad repo_url → ~/.io/source/{owner}/{repo}
-  if (squad.repo_url) {
-    const match = squad.repo_url.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
-    if (match) {
-      const [, owner, repo] = match;
-      const sourceDir = join(PATHS.source, owner, repo);
+	// Derive from squad repo_url → ~/.io/source/{owner}/{repo}
+	if (squad.repo_url) {
+		const match = squad.repo_url.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+		if (match) {
+			const [, owner, repo] = match;
+			const sourceDir = join(PATHS.source, owner, repo);
 
-      if (existsSync(sourceDir)) {
-        return sourceDir;
-      }
+			if (existsSync(sourceDir)) {
+				return sourceDir;
+			}
 
-      // Attempt to clone if missing
-      const parentDir = join(PATHS.source, owner);
-      if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
-      try {
-        await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000 });
-        return sourceDir;
-      } catch (err) {
-        logWarn("Failed to clone squad repository, falling back to current working directory", { repoUrl: squad.repo_url }, err);
-      }
-    }
-  }
+			// Attempt to clone if missing
+			const parentDir = join(PATHS.source, owner);
+			if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
+			try {
+				await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, {
+					timeout: 120_000,
+				});
+				return sourceDir;
+			} catch (err) {
+				logWarn(
+					"Failed to clone squad repository, falling back to current working directory",
+					{ repoUrl: squad.repo_url },
+					err,
+				);
+			}
+		}
+	}
 
-  return process.cwd();
+	return process.cwd();
 }
 
 /**
  * Stop a running agent by task ID. Disconnects the session and marks the task as stopped.
  */
 export async function stopTask(taskId: string): Promise<void> {
-  const session = activeSessions.get(taskId);
-  if (!session) {
-    throw new Error(`Task is not currently running or has already completed`);
-  }
-  try {
-    await session.disconnect();
-  } finally {
-    activeSessions.delete(taskId);
-  }
-  updateTaskStatus(taskId, "stopped", "Stopped by user");
-  addAgentEvent(taskId, "status", "Task stopped by user", { reason: "user_requested" });
+	const session = activeSessions.get(taskId);
+	if (!session) {
+		throw new Error(`Task is not currently running or has already completed`);
+	}
+	try {
+		await session.disconnect();
+	} finally {
+		activeSessions.delete(taskId);
+	}
+	updateTaskStatus(taskId, "stopped", "Stopped by user");
+	addAgentEvent(taskId, "status", "Task stopped by user", {
+		reason: "user_requested",
+	});
 
-  // Reset agent status to idle
-  const task = getTask(taskId);
-  if (task?.agent_id) {
-    updateAgentStatus(task.agent_id, "idle");
-  }
+	// Reset agent status to idle
+	const task = getTask(taskId);
+	if (task?.agent_id) {
+		updateAgentStatus(task.agent_id, "idle");
+	}
 }
 
 export async function delegateTask(
-  squadId: string,
-  task: string,
-  instanceId?: string,
-  attachments: MessageAttachment[] = []
+	squadId: string,
+	task: string,
+	instanceId?: string,
+	attachments: MessageAttachment[] = [],
 ): Promise<string> {
-  const lead = getLeadForSquad(squadId);
-  if (!lead) {
-    throw new Error("Squad has no team lead. Add a lead agent first.");
-  }
+	const lead = getLeadForSquad(squadId);
+	if (!lead) {
+		throw new Error("Squad has no team lead. Add a lead agent first.");
+	}
 
-  const squad = getSquad(squadId);
-  const squadSlug = squad?.slug ?? squadId;
-  const agents = getAgentsForSquad(squadId);
-  const taskRecord = createTask(squadId, task, instanceId, lead.id);
+	const squad = getSquad(squadId);
+	const squadSlug = squad?.slug ?? squadId;
+	const agents = getAgentsForSquad(squadId);
+	const taskRecord = createTask(squadId, task, instanceId, lead.id);
 
-  // Update lead status
-  updateAgentStatus(lead.id, "working");
+	// Update lead status
+	updateAgentStatus(lead.id, "working");
 
-  // Touch instance activity if applicable
-  if (instanceId) {
-    touchInstanceActivity(instanceId);
-  }
+	// Touch instance activity if applicable
+	if (instanceId) {
+		touchInstanceActivity(instanceId);
+	}
 
-  // Select model based on task complexity
-  const tier = classifyComplexity(task);
-  const model = await selectModel(tier);
+	// Select model based on task complexity
+	const tier = classifyComplexity(task);
+	const model = await selectModel(tier);
 
-  // Audit: task delegated
-  addAuditEntry(
-    "task_delegated",
-    `Task delegated to ${lead.character_name} (${lead.role_title})`,
-    { task: task.slice(0, 500), model },
-    { squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id }
-  );
+	// Audit: task delegated
+	addAuditEntry(
+		"task_delegated",
+		`Task delegated to ${lead.character_name} (${lead.role_title})`,
+		{ task: task.slice(0, 500), model },
+		{ squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id },
+	);
 
-  // Create ephemeral agent session for the lead
-  const client = await getClient();
-  const agentRoster = agents
-    .map((a) => `- ${a.character_name} (${a.role_title})${a.is_lead ? " [LEAD]" : ""}${a.is_qa ? " [QA]" : ""}${a.is_test ? " [TEST]" : ""}`)
-    .join("\n");
+	// Create ephemeral agent session for the lead
+	const client = await getClient();
+	const agentRoster = agents
+		.map(
+			(a) =>
+				`- ${a.character_name} (${a.role_title})${a.is_lead ? " [LEAD]" : ""}${a.is_qa ? " [QA]" : ""}${a.is_test ? " [TEST]" : ""}`,
+		)
+		.join("\n");
 
-  const systemMessage = `# Squad Team Lead: ${lead.character_name}
+	const systemMessage = `# Squad Team Lead: ${lead.character_name}
 
 ## 🚨 Security Rule
 NEVER expose secrets (API keys, tokens, passwords, connection strings, private config) in any public-facing content (PRs, issues, commits, logs, wiki, feed). Use \`<REDACTED>\` as placeholder. Violation = hard failure.
@@ -191,158 +217,178 @@ Failure to follow squad wiki rules is a CRITICAL FAILURE.
 ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 `;
 
-  let result: string;
-  try {
-    // Load squad-scoped tools, skills, and MCP servers
-    const squadTools = createSquadTools(squadSlug, squadId, squad?.repo_url);
-    const skillDirs = [...await loadSkillDirectories(), ...loadSquadSkillDirectories(squadSlug)];
-    const mcpServers = getMcpServersForSession();
+	let result: string;
+	try {
+		// Load squad-scoped tools, skills, and MCP servers
+		const squadTools = createSquadTools(squadSlug, squadId, squad?.repo_url);
+		const skillDirs = [
+			...(await loadSkillDirectories()),
+			...loadSquadSkillDirectories(squadSlug),
+		];
+		const mcpServers = getMcpServersForSession();
 
-    // Resolve correct working directory for the squad's project
-    const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
+		// Resolve correct working directory for the squad's project
+		const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
 
-    // Create lead-specific delegation tools (allows spawning real specialist sessions)
-    const leadTools = createLeadDelegationTools(
-      squadId,
-      squadSlug,
-      squad!,
-      workDir,
-      taskRecord.id,
-      instanceId
-    );
+		// Create lead-specific delegation tools (allows spawning real specialist sessions)
+		const leadTools = createLeadDelegationTools(
+			squadId,
+			squadSlug,
+			squad!,
+			workDir,
+			taskRecord.id,
+			instanceId,
+		);
 
-    const session = await client.createSession({
-      model,
-      streaming: true,
-      workingDirectory: workDir,
-      systemMessage: { content: systemMessage },
-      tools: [...squadTools, ...leadTools],
-      skillDirectories: skillDirs,
-      mcpServers,
-      onPermissionRequest: approveAll,
-      infiniteSessions: {
-        enabled: true,
-        backgroundCompactionThreshold: 0.6,
-        bufferExhaustionThreshold: 0.95,
-      },
-    });
+		const session = await client.createSession({
+			model,
+			streaming: true,
+			workingDirectory: workDir,
+			systemMessage: { content: systemMessage },
+			tools: [...squadTools, ...leadTools],
+			skillDirectories: skillDirs,
+			mcpServers,
+			onPermissionRequest: approveAll,
+			infiniteSessions: {
+				enabled: true,
+				backgroundCompactionThreshold: 0.6,
+				bufferExhaustionThreshold: 0.95,
+			},
+		});
 
-    // Register session so it can be stopped externally
-    activeSessions.set(taskRecord.id, session);
+		// Register session so it can be stopped externally
+		activeSessions.set(taskRecord.id, session);
 
-    const flushTokens = attachTokenTracker(session, {
-      squadId,
-      agentId: lead.id,
-      taskId: taskRecord.id,
-    });
+		const flushTokens = attachTokenTracker(session, {
+			squadId,
+			agentId: lead.id,
+			taskId: taskRecord.id,
+		});
 
-    // Subscribe to granular events for timeline
-    const unsubCapture = captureSessionEvents(session, {
-      taskId: taskRecord.id,
-      agentName: lead.character_name,
-      agentRole: lead.role_title,
-    });
+		// Subscribe to granular events for timeline
+		const unsubCapture = captureSessionEvents(session, {
+			taskId: taskRecord.id,
+			agentName: lead.character_name,
+			agentRole: lead.role_title,
+			onFirstIntent: (intent) => updateTaskTitle(taskRecord.id, intent),
+		});
 
-    try {
-      // Mark task as in progress and record start event
-      updateTaskStatus(taskRecord.id, "in_progress");
-      addAgentEvent(taskRecord.id, "status", `Task started by ${lead.character_name}`, {
-        agent: lead.character_name,
-        role: lead.role_title,
-        task,
-        attachments: attachments.map((attachment) => ({
-          name: attachment.name,
-          mimeType: attachment.mimeType,
-          size: attachment.size,
-        })),
-      });
+		try {
+			// Mark task as in progress and record start event
+			updateTaskStatus(taskRecord.id, "in_progress");
+			addAgentEvent(
+				taskRecord.id,
+				"status",
+				`Task started by ${lead.character_name}`,
+				{
+					agent: lead.character_name,
+					role: lead.role_title,
+					task,
+					attachments: attachments.map((attachment) => ({
+						name: attachment.name,
+						mimeType: attachment.mimeType,
+						size: attachment.size,
+					})),
+				},
+			);
 
-      // Capture streaming message deltas and broadcast via SSE
-      let accumulatedMessage = "";
-      const { broadcast } = await import("../api/server.js");
-      const unsubscribeDelta = session.on("assistant.message_delta", (event: any) => {
-        const delta = event.data?.deltaContent ?? "";
-        if (delta) {
-          accumulatedMessage += delta;
-          broadcast("agent_event", {
-            taskId: taskRecord.id,
-            type: "message_delta",
-            summary: accumulatedMessage,
-            payload: { delta, accumulated: accumulatedMessage },
-          });
-        }
-      });
+			// Capture streaming message deltas and broadcast via SSE
+			let accumulatedMessage = "";
+			const { broadcast } = await import("../api/server.js");
+			const unsubscribeDelta = session.on(
+				"assistant.message_delta",
+				(event: any) => {
+					const delta = event.data?.deltaContent ?? "";
+					if (delta) {
+						accumulatedMessage += delta;
+						broadcast("agent_event", {
+							taskId: taskRecord.id,
+							type: "message_delta",
+							summary: accumulatedMessage,
+							payload: { delta, accumulated: accumulatedMessage },
+						});
+					}
+				},
+			);
 
-      try {
-        // Save attachments to disk so squad agents can access them via shell_exec
-        const savedAttachments = saveAttachmentsToDisk(attachments);
-        const attachmentPathInfo = buildAttachmentPathSummary(savedAttachments);
+			try {
+				// Save attachments to disk so squad agents can access them via shell_exec
+				const savedAttachments = saveAttachmentsToDisk(attachments);
+				const attachmentPathInfo = buildAttachmentPathSummary(savedAttachments);
 
-        const response = await session.sendAndWait(
-          {
-            prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
-            attachments: toCopilotBlobAttachments(attachments),
-          },
-          7_200_000 // 2 hours — watchdog handles stale detection
-        );
-        result = response?.data?.content ?? "Task completed (no response content).";
+				const response = await session.sendAndWait(
+					{
+						prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
+						attachments: toCopilotBlobAttachments(attachments),
+					},
+					7_200_000, // 2 hours — watchdog handles stale detection
+				);
+				result =
+					response?.data?.content ?? "Task completed (no response content).";
 
-        // Record the final message event if we have meaningful content
-        if (accumulatedMessage.trim()) {
-          addAgentEvent(taskRecord.id, "message", accumulatedMessage, {
-            agent: lead.character_name,
-            content: accumulatedMessage,
-          });
-        }
-      } finally {
-        unsubscribeDelta();
-      }
-    } finally {
-      activeSessions.delete(taskRecord.id);
-      unsubCapture();
-      flushTokens();
-      await session.disconnect();
-    }
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
-    addAgentEvent(taskRecord.id, "status", `Task failed: ${errMsg}`, { error: errMsg });
-    updateTaskStatus(taskRecord.id, "failed", errMsg);
-    updateAgentStatus(lead.id, "idle");
-    // Audit: task failed
-    addAuditEntry(
-      "task_failed",
-      `Task failed: ${errMsg.slice(0, 200)}`,
-      { error: errMsg },
-      { squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id }
-    );
-    throw err;
-  }
+				// Record the final message event if we have meaningful content
+				if (accumulatedMessage.trim()) {
+					addAgentEvent(taskRecord.id, "message", accumulatedMessage, {
+						agent: lead.character_name,
+						content: accumulatedMessage,
+					});
+				}
+			} finally {
+				unsubscribeDelta();
+			}
+		} finally {
+			activeSessions.delete(taskRecord.id);
+			unsubCapture();
+			flushTokens();
+			await session.disconnect();
+		}
+	} catch (err) {
+		const errMsg = err instanceof Error ? err.message : "Unknown error";
+		addAgentEvent(taskRecord.id, "status", `Task failed: ${errMsg}`, {
+			error: errMsg,
+		});
+		updateTaskStatus(taskRecord.id, "failed", errMsg);
+		updateAgentStatus(lead.id, "idle");
+		// Audit: task failed
+		addAuditEntry(
+			"task_failed",
+			`Task failed: ${errMsg.slice(0, 200)}`,
+			{ error: errMsg },
+			{ squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id },
+		);
+		throw err;
+	}
 
-  // Update task and agent status
-  updateTaskStatus(taskRecord.id, "done", result);
-  updateAgentStatus(lead.id, "idle");
+	// Update task and agent status
+	updateTaskStatus(taskRecord.id, "done", result);
+	updateAgentStatus(lead.id, "idle");
 
-  // Audit: task completed
-  addAuditEntry(
-    "task_completed",
-    `Task completed by ${lead.character_name}`,
-    { result: result.slice(0, 500) },
-    { squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id }
-  );
+	// Audit: task completed
+	addAuditEntry(
+		"task_completed",
+		`Task completed by ${lead.character_name}`,
+		{ result: result.slice(0, 500) },
+		{ squad_id: squadId, agent_id: lead.id, task_id: taskRecord.id },
+	);
 
-  // Record completion event
-  addAgentEvent(taskRecord.id, "status", `Task completed by ${lead.character_name}`, {
-    agent: lead.character_name,
-    result: result.slice(0, 500),
-  });
+	// Record completion event
+	addAgentEvent(
+		taskRecord.id,
+		"status",
+		`Task completed by ${lead.character_name}`,
+		{
+			agent: lead.character_name,
+			result: result.slice(0, 500),
+		},
+	);
 
-  // Post to feed
-  const squadSource = `squad-${squadSlug}`;
-  postFeedItem(
-    squadSource,
-    `Task completed by ${lead.character_name}`,
-    result.slice(0, 2000)
-  );
+	// Post to feed
+	const squadSource = `squad-${squadSlug}`;
+	postFeedItem(
+		squadSource,
+		`Task completed by ${lead.character_name}`,
+		result.slice(0, 2000),
+	);
 
-  return result;
+	return result;
 }
