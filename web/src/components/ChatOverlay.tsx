@@ -69,13 +69,13 @@ export function ChatOverlay() {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
       {open && (
         <div
-          className="w-[340px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-white/[0.09] backdrop-blur-xl"
+          className="w-[340px] flex flex-col rounded-2xl overflow-hidden shadow-xl border border-white/[0.09] backdrop-blur-xs"
           style={{ height: "460px", background: "rgba(20, 20, 20, 0.95)" }}
         >
           {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] flex-shrink-0"
-            style={{ background: "var(--base-dark-gradient)" }}
+            style={{ background: "var(--base-dark-gradient)"}}
           >
             <div className="flex items-center gap-2.5">
               <IoMark height={20} />
@@ -128,7 +128,7 @@ export function ChatOverlay() {
                 </button>
               </div>
             )}
-            <div className="bg-[#252525] border border-white/[0.08] rounded-xl flex items-end gap-1.5 px-2.5 py-2 focus-within:border-[#66FCF1]/30 transition-colors">
+            <div className="bg-[var(--base-dark-gray)] border border-white/[0.08] rounded-xl flex items-end gap-1.5 px-2.5 py-2 focus-within:border-[var(--base-teal)]/30 transition-colors">
               <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -164,7 +164,7 @@ export function ChatOverlay() {
       <button
         onClick={() => setOpen((o) => !o)}
         title={open ? "Close chat" : "Quick chat"}
-        className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
+        className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer"
         style={
           open ? { background: "#252525", border: "1px solid var(--base-black)" } : { background: "var(--base-teal)" }
         }

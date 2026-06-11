@@ -25,11 +25,11 @@ export function App() {
   }, [token, refreshToken, initAuthListener]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#1a1a1a]">
+    <div className="flex h-screen overflow-hidden ">
       {showChrome && <AppSidebar />}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {showChrome && <AppHeader />}
-        <main className="flex-1 overflow-hidden flex flex-col min-h-0 bg-[#1a1a1a] relative">
+        <main className="flex-1 overflow-hidden flex flex-col min-h-0 ] relative bg-[var(--base-darker-gray)]">
           <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
             <div className="orb orb-pink" />
             <div className="orb orb-gray" />

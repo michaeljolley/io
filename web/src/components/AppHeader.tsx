@@ -13,7 +13,7 @@ export function AppHeader() {
   const feedCount = 0;
 
   return (
-    <div className="h-[52px] flex-shrink-0 flex items-center justify-end px-4 border-b border-white/[0.06] bg-[#181818]">
+    <div className="h-[52px] flex-shrink-0 flex items-center justify-end px-4 border-b border-white/[0.06] bg-[var(--base-black)]">
       {/* <div className="flex items-center gap-2">
         <StatusDot status="connected" />
         <span className="text-[11px] font-mono text-green-400">connected</span>

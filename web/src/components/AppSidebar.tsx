@@ -46,7 +46,7 @@ function NavBtn({
     <button
       onClick={onClick}
       title={collapsed ? item.label : undefined}
-      className={`w-full flex items-center cursor-pointer gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono transition-colors ${active ? "text-[#66FCF1]" : "text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.04]"} ${collapsed ? "justify-center" : ""}`}
+      className={`w-full flex items-center cursor-pointer gap-2.5 px-2 py-2 rounded-xl text-[11px] font-mono transition-colors ${active ? "text-[#66FCF1]" : "text-zinc-600 "} ${collapsed ? "justify-center" : ""} hover:text-zinc-200 hover:bg-white/[0.04]`}
       style={active ? { background: "rgba(102,252,241,0.1)" } : undefined}
     >
       <Icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -68,7 +68,7 @@ export function AppSidebar() {
 
   return (
     <div
-      className={`flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[#181818] transition-all duration-200 ${collapsed ? "w-[52px]" : "w-[210px]"}`}
+      className={`flex-shrink-0 flex flex-col border-r border-white/[0.06] bg-[var(--base-black)] transition-all duration-200 ${collapsed ? "w-[52px]" : "w-[210px]"}`}
     >
       {/* Logo header */}
       <div

@@ -35,9 +35,6 @@ interface SelectedSkill {
   slug: string;
 }
 
-const GLASS_CARD = "glass-card border border-white/[0.07] rounded-2xl";
-const INPUT_CLASS =
-  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
 const SECTION_HEADER = "text-[10px] font-mono text-zinc-700 uppercase tracking-wider";
 
 function skillKey(source: SkillSource, slug: string): string {
@@ -340,17 +337,17 @@ export default function SkillsView() {
   };
 
   return (
-    <div className="h-full p-6">
-      <div className="grid h-full min-h-0 grid-cols-[16rem_minmax(0,1fr)] gap-4">
-        <aside className={`${GLASS_CARD} min-h-0 overflow-hidden flex flex-col`}>
-          <div className="border-b border-white/[0.06] p-4 space-y-4">
-            <div className="relative">
+    <div className="h-full">
+      <div className="grid h-full min-h-0 grid-cols-[16rem_minmax(0,1fr)]">
+        <aside className={`min-h-0 overflow-hidden flex flex-col border-r border-white/[0.06]`}>
+          <div className="border-b border-white/[0.06] p-3">
+            <div className="relative mb-3">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-700" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={source === "installed" ? "Filter installed skills" : "Search remote skills"}
-                className={`w-full pl-9 ${INPUT_CLASS}`}
+                placeholder="Search skills..."
+                className={`w-full pl-9 bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30`}
               />
             </div>
 
@@ -429,12 +426,12 @@ export default function SkillsView() {
           </div>
         </aside>
 
-        <section className={`${GLASS_CARD} min-h-0 overflow-hidden flex flex-col`}>
+        <section className={`min-h-0 overflow-hidden flex flex-col`}>
           {!selectedSkill ? (
-            <div className="flex h-full items-center justify-center px-6 text-center">
+            <div className="flex h-full items-center justify-center align-center px-6 text-center">
               <div>
                 <div
-                  className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[#66FCF1]/20"
+                  className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#66FCF1]/20"
                   style={{ background: "rgba(102,252,241,0.10)" }}
                 >
                   <Zap className="h-6 w-6 text-[#66FCF1]" />
@@ -445,17 +442,17 @@ export default function SkillsView() {
               </div>
             </div>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col ">
               <div className="border-b border-white/[0.06] p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-start gap-4 items-center">
                     <div
-                      className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#66FCF1]/20"
+                      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#66FCF1]/20"
                       style={{ background: "rgba(102,252,241,0.10)" }}
                     >
                       <Zap className="h-5 w-5 text-[#66FCF1]" />
                     </div>
-                    <div>
+                    <div className="flex justify-center">
                       <div className="flex flex-wrap items-center gap-2">
                         <h1
                           className="text-3xl leading-none text-white"
@@ -470,11 +467,6 @@ export default function SkillsView() {
                         )}
                         <Chip variant={isInstalled ? "success" : "muted"}>{isInstalled ? "installed" : "remote"}</Chip>
                       </div>
-                      <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-                        {typeof selectedFrontmatter.description === "string"
-                          ? selectedFrontmatter.description
-                          : selectedSkill.description || "No description available."}
-                      </p>
                     </div>
                   </div>
 
@@ -514,7 +506,7 @@ export default function SkillsView() {
                     {selectedDetail.error}
                   </div>
                 ) : editMode ? (
-                  <div className={`${GLASS_CARD} p-5 space-y-4`}>
+                  <div className={`p-5 space-y-4`}>
                     <div className={SECTION_HEADER}>Editing skill markdown</div>
                     <textarea
                       value={editContent}
@@ -532,7 +524,7 @@ export default function SkillsView() {
                   </div>
                 ) : (
                   <>
-                    <div className={`${GLASS_CARD} p-5`}>
+                    <div className={`p-2`}>
                       <div className={SECTION_HEADER}>Front Matter</div>
                       {Object.keys(selectedFrontmatter).filter((k) => k !== "name" && k !== "description").length ===
                       0 ? (
@@ -540,16 +532,16 @@ export default function SkillsView() {
                       ) : (
                         <div className="mt-4 space-y-0">
                           {Object.entries(selectedFrontmatter)
-                            .filter(([key]) => key !== "name" && key !== "description")
+                            .filter(([key]) => key !== "name")
                             .map(([key, value]) => (
                               <div
                                 key={key}
-                                className="flex items-start justify-between gap-4 border-b border-white/[0.04] py-3 first:pt-0 last:border-b-0 last:pb-0"
+                                className="grid grid-cols-[200px_1fr] gap-2 border-b border-white/[0.04] py-3 first:pt-0 last:border-b-0 last:pb-0"
                               >
-                                <span className="text-[11px] font-mono text-zinc-500 shrink-0">
+                                <span className="text-[11px] font-mono text-zinc-500">
                                   {frontmatterLabel(key)}
                                 </span>
-                                <span className="text-[11px] font-mono text-zinc-300 text-right break-words min-w-0">
+                                <span className="text-[11px] font-mono text-zinc-300 break-words min-w-0 text-left">
                                   {frontmatterValue(value)}
                                 </span>
                               </div>
@@ -558,7 +550,7 @@ export default function SkillsView() {
                       )}
                     </div>
 
-                    <div className={`${GLASS_CARD} p-5`}>
+                    <div className={`p-5`}>
                       <div className={SECTION_HEADER}>Body</div>
                       {selectedBody ? (
                         <MarkdownRenderer content={selectedBody} className="mt-4" />

@@ -20,8 +20,6 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-const inputClass =
-  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
 const treeItemClass = "px-3 py-1.5 text-[11px] font-mono hover:bg-white/[0.04] rounded-lg cursor-pointer";
 
 function encodePath(path: string) {
@@ -425,31 +423,27 @@ export default function WikiView() {
   }
 
   return (
-    <div className="flex h-full min-h-0 bg-[#161616] text-zinc-200">
-      <aside className="w-64 border-r border-white/[0.06] bg-[#141414]/90 p-3 flex flex-col gap-3">
+    <div className="flex h-full min-h-0  text-zinc-200">
+      <aside className="w-64 border-r border-white/[0.06]  p-3 flex flex-col gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-700" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search wiki"
-            className={`${inputClass} w-full pl-9`}
+            className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9`}
           />
         </div>
 
-        <div className="glass-card border border-white/[0.07] rounded-2xl flex-1 min-h-0 overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-3 py-2">
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Pages</p>
-              <p className="text-[11px] font-mono text-zinc-500">{visiblePaths.length} items</p>
-            </div>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-white/[0.06] ">
             <button
               type="button"
               onClick={() => setNewPageOpen((current) => !current)}
-              className="rounded-lg p-1 text-zinc-500 transition-colors hover:bg-white/[0.04] hover:text-[#66FCF1]"
+              className="rounded-lg p-1 text-zinc-500 cursor-pointer border border-white/[0.06] justify-center rounded-xl p-2 w-full text-xs flex gap-1 transition-colors hover:bg-white/[0.04] hover:text-[#66FCF1]"
               title="New Page"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5" /> Add Page
             </button>
           </div>
 
@@ -459,7 +453,7 @@ export default function WikiView() {
                 value={newPagePath}
                 onChange={(event) => setNewPagePath(event.target.value)}
                 placeholder="notes/roadmap.md"
-                className={`${inputClass} w-full`}
+                className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9 w-full`}
               />
               <div className="flex items-center gap-2">
                 <PrimaryBtn
@@ -496,7 +490,7 @@ export default function WikiView() {
       </aside>
 
       <section className="flex-1 min-w-0 p-6 overflow-hidden flex flex-col gap-4">
-        <div className="glass-card border border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-3 justify-between">
+        <div className="p-2 flex items-center gap-3 justify-between">
           <div className="min-w-0 flex-1">
             {selectedPath ? (
               <Breadcrumbs path={selectedPath} />
