@@ -164,6 +164,8 @@ async function fetchJson<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 function normalizeStatus(status?: string | null): StatusKind {
   const value = (status ?? "").toLowerCase();
+  if (value.includes("done") || value.includes("complete")) return "done";
+  if (value.includes("stop") || value.includes("cancel")) return "stopped";
   if (value.includes("fail") || value.includes("error")) return "error";
   if (value.includes("review")) return "reviewing";
   if (value.includes("work") || value.includes("progress") || value.includes("run")) return "working";
@@ -199,7 +201,7 @@ function formatDuration(start: string, end: string): string {
 function activityStatus(status: StatusKind) {
   if (status === "error") return <XCircle className="h-4 w-4 text-red-400" />;
   if (status === "working" || status === "reviewing") return <Loader className="h-4 w-4 text-[#66FCF1] animate-spin" />;
-  if (status === "disconnected") return <AlertTriangle className="h-4 w-4 text-amber-400" />;
+  if (status === "disconnected" || status === "stopped") return <AlertTriangle className="h-4 w-4 text-amber-400" />;
   return <CheckCircle className="h-4 w-4 text-green-400" />;
 }
 

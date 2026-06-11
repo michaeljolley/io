@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 
-export type StatusKind = "connected" | "disconnected" | "error" | "idle" | "working" | "reviewing";
+export type StatusKind = "connected" | "disconnected" | "done" | "error" | "idle" | "stopped" | "working" | "reviewing";
 export type BadgeVariant = "default" | "success" | "warning" | "error" | "info" | "muted";
 
 export function StatusDot({ status }: { status: StatusKind }) {
   const color = {
     connected: "bg-green-500",
     idle: "bg-green-500",
+    done: "bg-green-500",
+    stopped: "bg-zinc-600",
     disconnected: "bg-zinc-600",
     error: "bg-red-500",
     working: "bg-amber-400",
@@ -38,10 +40,11 @@ export function Chip({ children, variant = "muted" }: { children: ReactNode; var
 }
 
 export function statusToVariant(s: string): BadgeVariant {
-  if (s === "connected" || s === "idle") return "success";
+  if (s === "connected" || s === "idle" || s === "done") return "success";
   if (s === "working") return "warning";
   if (s === "reviewing") return "info";
   if (s === "error") return "error";
+  if (s === "stopped") return "muted";
   return "muted";
 }
 
