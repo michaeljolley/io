@@ -75,7 +75,7 @@ export function ChatOverlay() {
           {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] flex-shrink-0"
-            style={{ background: "var(--base-dark-gradient)"}}
+            style={{ background: "var(--base-dark-gradient)" }}
           >
             <div className="flex items-center gap-2.5">
               <IoMark height={20} />

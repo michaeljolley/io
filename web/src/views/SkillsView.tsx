@@ -538,9 +538,7 @@ export default function SkillsView() {
                                 key={key}
                                 className="grid grid-cols-[200px_1fr] gap-2 border-b border-white/[0.04] py-3 first:pt-0 last:border-b-0 last:pb-0"
                               >
-                                <span className="text-[11px] font-mono text-zinc-500">
-                                  {frontmatterLabel(key)}
-                                </span>
+                                <span className="text-[11px] font-mono text-zinc-500">{frontmatterLabel(key)}</span>
                                 <span className="text-[11px] font-mono text-zinc-300 break-words min-w-0 text-left">
                                   {frontmatterValue(value)}
                                 </span>
