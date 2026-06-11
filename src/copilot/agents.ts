@@ -10,6 +10,7 @@ import { postFeedItem } from "../store/feed.js";
 import { attachTokenTracker } from "./token-tracker.js";
 import { addAuditEntry } from "../store/audit-log.js";
 import { addAgentEvent } from "../store/agent-events.js";
+import { captureSessionEvents } from "./event-capture.js";
 import { PATHS } from "../paths.js";
 import { createSquadTools, createLeadDelegationTools } from "./squad-tools.js";
 import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
@@ -235,6 +236,13 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
       taskId: taskRecord.id,
     });
 
+    // Subscribe to granular events for timeline
+    const unsubCapture = captureSessionEvents(session, {
+      taskId: taskRecord.id,
+      agentName: lead.character_name,
+      agentRole: lead.role_title,
+    });
+
     try {
       // Mark task as in progress and record start event
       updateTaskStatus(taskRecord.id, "in_progress");
@@ -291,6 +299,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
       }
     } finally {
       activeSessions.delete(taskRecord.id);
+      unsubCapture();
       flushTokens();
       await session.disconnect();
     }

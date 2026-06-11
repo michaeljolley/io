@@ -6,6 +6,7 @@ import { createSquadTools } from "./squad-tools.js";
 import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { addAgentEvent } from "../store/agent-events.js";
+import { captureSessionEvents } from "./event-capture.js";
 import { addAuditEntry } from "../store/audit-log.js";
 import { updateAgentStatus, type Agent } from "../store/squads.js";
 import { touchInstanceActivity } from "../store/instances.js";
@@ -123,6 +124,13 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
       taskId: parentTaskId,
     });
 
+    // Subscribe to granular events for timeline
+    const unsubCapture = captureSessionEvents(session, {
+      taskId: parentTaskId,
+      agentName: agent.character_name,
+      agentRole: agent.role_title,
+    });
+
     // Stream deltas and broadcast via SSE
     let accumulatedMessage = "";
     const { broadcast } = await import("../api/server.js");
@@ -148,6 +156,7 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
       );
       result = response?.data?.content ?? "Task completed (no response content).";
     } finally {
+      unsubCapture();
       unsubscribeDelta();
       flushTokens();
       await session.disconnect();
