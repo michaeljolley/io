@@ -4,6 +4,7 @@ web-dist/
 *.swp
 *.swo
 .env
+.local/
 
 # Docs
 docs/node_modules
