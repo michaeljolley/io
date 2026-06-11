@@ -212,6 +212,7 @@ function agentColor(name: string): string {
 }
 
 const KIND_META: Record<string, { label: string; icon: React.ElementType }> = {
+  status: { label: "Status", icon: Activity },
   thought: { label: "Thinking", icon: MessageSquare },
   tool_call: { label: "Tool Call", icon: Terminal },
   tool_result: { label: "Tool Result", icon: Hash },
@@ -221,10 +222,11 @@ const KIND_META: Record<string, { label: string; icon: React.ElementType }> = {
 
 function mapEventTypeToKind(type: string): string {
   const lower = type.toLowerCase();
+  if (lower === "status") return "status";
   if (lower.includes("tool_call") || lower.includes("toolcall")) return "tool_call";
   if (lower.includes("tool_result") || lower.includes("toolresult")) return "tool_result";
   if (lower.includes("think") || lower.includes("thought")) return "thought";
-  if (lower.includes("decision") || lower.includes("assign")) return "decision";
+  if (lower.includes("decision") || lower.includes("assign") || lower.includes("delegat")) return "decision";
   return "message";
 }
 
@@ -295,29 +297,22 @@ export default function SquadDetailView() {
   }, [agents, instances.length]);
 
   const historyItems = useMemo(() => {
-    if (auditEntries.length > 0) {
-      return auditEntries.map((entry) => {
-        const task = tasks.find((candidate) => candidate.id === entry.task_id);
-        const status = normalizeStatus(task?.status ?? entry.action_type);
-        return {
-          id: entry.id,
-          title: entry.summary,
-          timestamp: entry.created_at,
-          duration: task ? formatDuration(task.created_at, task.updated_at) : "—",
-          agentCount: entry.agent_id || task?.agent_id ? 1 : 0,
-          status,
-        };
-      });
-    }
+    // Show tasks as objectives — each task is a top-level delegated objective
+    return tasks.slice(0, 20).map((task) => {
+      // Count unique agents from audit entries for this task
+      const relatedAudit = auditEntries.filter((e) => e.task_id === task.id);
+      const uniqueAgents = new Set(relatedAudit.map((e) => e.agent_id).filter(Boolean));
+      const agentCount = Math.max(uniqueAgents.size, task.agent_id ? 1 : 0);
 
-    return tasks.slice(0, 20).map((task) => ({
-      id: task.id,
-      title: task.description,
-      timestamp: task.updated_at,
-      duration: formatDuration(task.created_at, task.updated_at),
-      agentCount: task.agent_id ? 1 : 0,
-      status: normalizeStatus(task.status),
-    }));
+      return {
+        id: task.id,
+        title: task.description,
+        timestamp: task.updated_at,
+        duration: formatDuration(task.created_at, task.updated_at),
+        agentCount,
+        status: normalizeStatus(task.status),
+      };
+    });
   }, [auditEntries, tasks]);
 
   const timelineAgentColors = useMemo(() => {
@@ -344,7 +339,18 @@ export default function SquadDetailView() {
     setActivityLoading(true);
     setSelectedAgents(new Set());
     try {
-      setActivityEvents(await fetchJson<AgentEvent[]>(`/api/tasks/${taskId}/events`));
+      const raw = await fetchJson<AgentEvent[]>(`/api/tasks/${taskId}/events`);
+      // Parse agent name from payload JSON
+      const enriched = raw.map((event) => {
+        if (event.agent_name) return event;
+        try {
+          const parsed = JSON.parse(event.payload);
+          return { ...event, agent_name: parsed.agent || undefined };
+        } catch {
+          return event;
+        }
+      });
+      setActivityEvents(enriched);
     } finally {
       setActivityLoading(false);
     }
@@ -428,7 +434,7 @@ export default function SquadDetailView() {
                 className="text-2xl tracking-wide"
                 style={{ fontFamily: "'Bebas Neue', sans-serif", color: squad.color || "#66FCF1" }}
               >
-                {selectedHistoryItem?.title || "Task Activity"}
+                {selectedHistoryItem?.title || "Objective"}
               </h2>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-[11px] text-zinc-600 font-mono">
@@ -812,9 +818,9 @@ export default function SquadDetailView() {
           <div className="space-y-3">
             {historyItems.length === 0 ? (
               <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center col-span-full">
-                <p className="text-zinc-100 mt-4">No history yet</p>
+                <p className="text-zinc-100 mt-4">No objectives yet</p>
                 <p className="text-[11px] font-mono text-zinc-500 mt-2">
-                  Task updates and audit events will be listed here.
+                  Delegated work and completed objectives will appear here.
                 </p>
               </div>
             ) : (
@@ -826,11 +832,11 @@ export default function SquadDetailView() {
                 >
                   <div className="flex-shrink-0">{activityStatus(item.status)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-zinc-200 font-mono truncate">{item.title}</p>
-                    <div className="flex items-center gap-3 mt-0.5">
+                    <p className="text-[12px] text-zinc-200 truncate">{item.title}</p>
+                    <div className="flex items-center gap-3 mt-1">
                       <span className="text-[10px] text-zinc-700 font-mono">{formatTimestamp(item.timestamp)}</span>
                       <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
-                        <Activity className="w-2.5 h-2.5" />
+                        <Clock className="w-2.5 h-2.5" />
                         {item.duration}
                       </span>
                       <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
