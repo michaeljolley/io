@@ -256,7 +256,7 @@ export default function SquadsView() {
                     </p>
                     <div className="space-y-2">
                       {recentActivity.length > 0 ? (
-                        recentActivity.map((task) => {
+                        recentActivity.slice(0, 3).map((task) => {
                           const taskStatus = taskStatusKind(task.status);
                           return (
                             <div key={task.id} className="flex items-center gap-2.5 text-sm text-zinc-200">

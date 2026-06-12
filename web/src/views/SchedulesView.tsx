@@ -21,6 +21,7 @@ interface Schedule {
 interface Squad {
   id: string;
   name: string;
+  color?: string;
 }
 
 interface SquadsResponse {
@@ -473,7 +474,7 @@ export default function SchedulesView() {
                       <div className="mt-1 text-zinc-600">{schedule.cron}</div>
                       <div className="mt-2 flex items-center gap-2">
                         {schedule.type === "squad" && squad ? (
-                          <SquadChip name={squad.name} />
+                          <SquadChip name={squad.name} color={squad.color} />
                         ) : (
                           <Chip variant="info">io</Chip>
                         )}
@@ -585,7 +586,7 @@ export default function SchedulesView() {
                 <div>
                   <div className={SECTION_HEADER}>Squad</div>
                   <div className="mt-2">
-                    <SquadChip name={squadLookup.get(draft.squadId)!.name} />
+                    <SquadChip name={squadLookup.get(draft.squadId)!.name} color={squadLookup.get(draft.squadId)!.color} />
                   </div>
                 </div>
               )}

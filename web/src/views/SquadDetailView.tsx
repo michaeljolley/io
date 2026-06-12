@@ -17,7 +17,6 @@ import {
   ScrollText,
   Square,
   Terminal,
-  Trash2,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -751,7 +750,7 @@ export default function SquadDetailView() {
                         </div>
                       </div>
                       <div className="min-w-0 flex">
-                        <p className="mt-1 text-[11px] text-zinc-400">
+                        <p className="mt-1 text-[11px] text-zinc-400 line-clamp-2">
                           {currentTask?.description ?? "No active task assigned."}
                         </p>
                       </div>
@@ -828,8 +827,8 @@ export default function SquadDetailView() {
                         onClick={() => void destroyInstance(instance.id)}
                         className={`px-3 py-2 ${destroyingId === instance.id ? "pointer-events-none opacity-50" : ""}`}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Destroy
+                        <Square className="h-3.5 w-3.5" />
+                        Stop
                       </DangerBtn>
                     </div>
                   </div>

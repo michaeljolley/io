@@ -58,8 +58,8 @@ export function squadColor(name: string): string | undefined {
   return SQUAD_COLORS[name];
 }
 
-export function SquadChip({ name }: { name: string }) {
-  const color = squadColor(name);
+export function SquadChip({ name, color: colorProp }: { name: string; color?: string }) {
+  const color = colorProp || squadColor(name);
   if (color) {
     return (
       <span

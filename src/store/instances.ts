@@ -1,8 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import { existsSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { getDb } from "./db.js";
 import { logWarn } from "../logging.js";
+import { PATHS } from "../paths.js";
 
 const execAsync = promisify(exec);
 
@@ -52,13 +55,49 @@ export async function createInstance(
   const worktreePath = `/tmp/io-worktrees/${squadId}/${branch}`;
 
   // Create git worktree
-  const repoCwd = squad.repo_url.startsWith("/") ? squad.repo_url : process.cwd();
+  // Resolve the working directory for git worktree creation
+  let repoCwd: string;
+  if (squad.repo_url.startsWith("/")) {
+    repoCwd = squad.repo_url;
+  } else {
+    // Parse owner/repo from URL (e.g., https://github.com/owner/repo or git@github.com:owner/repo.git)
+    const match = squad.repo_url.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
+    if (match) {
+      const [, owner, repo] = match;
+      const sourceDir = join(PATHS.source, owner, repo);
+      if (existsSync(sourceDir)) {
+        repoCwd = sourceDir;
+      } else {
+        // Clone if missing
+        const parentDir = join(PATHS.source, owner);
+        if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
+        try {
+          await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000 });
+          repoCwd = sourceDir;
+        } catch (err) {
+          throw new Error(
+            `Failed to clone repository "${squad.repo_url}" for worktree creation: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      }
+    } else {
+      throw new Error(
+        `Cannot parse owner/repo from squad repo_url "${squad.repo_url}". Expected a GitHub URL or local path.`
+      );
+    }
+  }
   try {
     await execAsync(`git worktree add ${worktreePath} -b ${branch}`, { cwd: repoCwd });
   } catch (err) {
     logWarn("Failed to create new git worktree branch, retrying existing branch", { squadId, branch, worktreePath }, err);
-    // Branch may already exist
-    await execAsync(`git worktree add ${worktreePath} ${branch}`, { cwd: repoCwd });
+    // Branch may already exist — try attaching to existing branch
+    try {
+      await execAsync(`git worktree add ${worktreePath} ${branch}`, { cwd: repoCwd });
+    } catch (retryErr) {
+      throw new Error(
+        `Failed to create git worktree at "${worktreePath}" from "${repoCwd}": ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`
+      );
+    }
   }
 
   db.prepare(
