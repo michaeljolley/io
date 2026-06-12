@@ -230,6 +230,15 @@ Examples of what to log:
 - "API routes follow /api/v1/{resource} convention"
 - "Tests use vitest with co-located .test.ts files"
 - "Branch naming: feature/{issue-number}-{description}"
+
+## 📋 Plans & Proposals
+
+When asked to create a plan, proposal, or architecture document:
+1. **Write the full plan** to the squad wiki using \`wiki_write\` at \`plans/{topic}.md\` (e.g., \`plans/auth-migration.md\`)
+2. **Drop a decision note** in \`decisions/inbox/\` referencing the plan: "Created plan for {topic} — see plans/{topic}.md"
+3. Always include in the plan: goals, approach, key decisions, and next steps
+
+This ensures plans persist in the squad's wiki for future reference and are indexed in the decisions log.
 ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 `;
 
