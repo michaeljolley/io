@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { approveAll } from "@github/copilot-sdk";
 import { getClient } from "./client.js";
 import { selectModel } from "./model-router.js";
@@ -6,6 +8,7 @@ import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { logWarn } from "../logging.js";
 import { addAuditEntry } from "../store/audit-log.js";
+import { PATHS } from "../paths.js";
 
 /**
  * Run the Scribe — a background agent that merges decisions from the inbox
@@ -22,6 +25,9 @@ export async function runScribe(options: {
 	taskId: string;
 }): Promise<void> {
 	const { squadId, squadSlug, workDir, taskSummary, agentName, taskId } = options;
+
+	// Ensure decisions structure exists (supports pre-existing squads)
+	ensureDecisionsStructure(squadSlug);
 
 	try {
 		const model = await selectModel("low");
@@ -124,4 +130,23 @@ You maintain the squad's shared memory by:
   \`\`\`
 - Archive old entries by moving them to \`decisions-archive.md\` (only if decisions.md > 50 entries)
 `;
+}
+
+function ensureDecisionsStructure(squadSlug: string): void {
+	const destDir = join(PATHS.wikiPages, "squads", squadSlug);
+	if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
+
+	const decisionsFile = join(destDir, "decisions.md");
+	if (!existsSync(decisionsFile)) {
+		writeFileSync(
+			decisionsFile,
+			`# Decisions\n\nShared team decisions and learnings. Updated by Scribe after each task.\n`,
+		);
+	}
+
+	const inboxDir = join(destDir, "decisions", "inbox");
+	if (!existsSync(inboxDir)) mkdirSync(inboxDir, { recursive: true });
+
+	const logDir = join(destDir, "log");
+	if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 }
