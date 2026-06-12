@@ -218,7 +218,7 @@ function agentColor(name: string): string {
 /**
  * Parse tool call/result event payload to extract heading and body for display
  */
-function parseToolEventPayload(event: AgentEvent): { heading: string; body: string } {
+function parseToolEventPayload(event: AgentEvent): { toolName: string; success?: boolean; body: string } {
   const kind = mapEventTypeToKind(event.type);
   try {
     const parsed = JSON.parse(event.payload);
@@ -226,23 +226,23 @@ function parseToolEventPayload(event: AgentEvent): { heading: string; body: stri
       const toolName = parsed.toolName || event.summary || "Tool";
       const args = parsed.arguments || "";
       return {
-        heading: toolName,
+        toolName,
         body: typeof args === "string" ? args : JSON.stringify(args, null, 2),
       };
     }
     if (kind === "tool_result") {
       const toolName = parsed.toolName || "Tool";
-      const status = parsed.success ? "✓" : "✗";
       const result = parsed.result || "";
       return {
-        heading: `${toolName} ${status}`,
+        toolName,
+        success: parsed.success,
         body: result,
       };
     }
   } catch {
     // Fall through to default
   }
-  return { heading: event.summary || event.type, body: "" };
+  return { toolName: event.summary || event.type, body: "" };
 }
 
 const KIND_META: Record<string, { label: string; icon: React.ElementType }> = {
@@ -578,12 +578,27 @@ export default function SquadDetailView() {
                         </div>
                         {isCode ? (
                           (() => {
-                            const { heading, body } = parseToolEventPayload(event);
+                            const { toolName, success, body } = parseToolEventPayload(event);
                             return (
                               <div className="mt-1">
-                                <h4 className="text-xs font-semibold text-zinc-200 mb-1">{heading}</h4>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
+                                    {toolName}
+                                  </span>
+                                  {success !== undefined && (
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                                        success
+                                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                          : "bg-red-500/10 text-red-400 border border-red-500/20"
+                                      }`}
+                                    >
+                                      {success ? "success" : "error"}
+                                    </span>
+                                  )}
+                                </div>
                                 {body && (
-                                  <pre className="text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
+                                  <pre className="mt-2 text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
                                     {body}
                                   </pre>
                                 )}

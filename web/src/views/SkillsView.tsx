@@ -526,13 +526,13 @@ export default function SkillsView() {
                   <>
                     <div className={`p-2`}>
                       <div className={SECTION_HEADER}>Front Matter</div>
-                      {Object.keys(selectedFrontmatter).filter((k) => k !== "name" && k !== "description").length ===
+                      {Object.entries(selectedFrontmatter).filter(([k, v]) => k !== "name" && k !== "description" && v != null && v !== "" && !(Array.isArray(v) && v.length === 0)).length ===
                       0 ? (
                         <div className="mt-4 text-[11px] font-mono text-zinc-700">No front matter metadata found.</div>
                       ) : (
                         <div className="mt-4 space-y-0">
                           {Object.entries(selectedFrontmatter)
-                            .filter(([key]) => key !== "name")
+                            .filter(([key, value]) => key !== "name" && value != null && value !== "" && !(Array.isArray(value) && value.length === 0))
                             .map(([key, value]) => (
                               <div
                                 key={key}
