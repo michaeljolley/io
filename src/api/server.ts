@@ -9,7 +9,7 @@ import { createAuthMiddleware } from "./auth.js";
 import { sendToOrchestrator } from "../copilot/orchestrator.js";
 import { listSquads, getSquad, getAgentsForSquad } from "../store/squads.js";
 import { getTasksForSquad, getSquadTaskMetrics } from "../store/tasks.js";
-import { getInstancesForSquad, destroyInstance } from "../store/instances.js";
+import { getInstancesForSquad, destroyInstance, MAX_INSTANCES_PER_SQUAD } from "../store/instances.js";
 import { getAgentEvents } from "../store/agent-events.js";
 import { getAuditLog, countAuditLog } from "../store/audit-log.js";
 import {
@@ -205,7 +205,7 @@ export async function startApiServer(config: Config): Promise<void> {
         .slice(0, 5)
         .map((t) => ({ id: t.id, description: t.description, status: t.status, created_at: t.created_at }));
     }
-    res.json({ ...data, instanceCounts, recentTasks });
+    res.json({ ...data, instanceCounts, recentTasks, maxInstancesPerSquad: MAX_INSTANCES_PER_SQUAD });
   });
 
   // --- Squad Health Dashboard ---

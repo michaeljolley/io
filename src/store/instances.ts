@@ -16,7 +16,7 @@ export interface Instance {
   created_at: string;
 }
 
-const MAX_INSTANCES_PER_SQUAD = 3;
+export const MAX_INSTANCES_PER_SQUAD = 3;
 
 export function getInstance(instanceId: string): Instance | undefined {
   const db = getDb();

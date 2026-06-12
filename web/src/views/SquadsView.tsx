@@ -38,6 +38,7 @@ interface SquadsResponse {
   agents: Agent[];
   instanceCounts: Record<string, number>;
   recentTasks: Record<string, SquadTask[]>;
+  maxInstancesPerSquad: number;
 }
 
 function isTokenExpired(token: string): boolean {
@@ -123,7 +124,7 @@ function snippetDescription(description: string, maxLen = 60): string {
 
 export default function SquadsView() {
   const navigate = useNavigate();
-  const [data, setData] = useState<SquadsResponse>({ squads: [], agents: [], instanceCounts: {}, recentTasks: {} });
+  const [data, setData] = useState<SquadsResponse>({ squads: [], agents: [], instanceCounts: {}, recentTasks: {}, maxInstancesPerSquad: 3 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -227,7 +228,7 @@ export default function SquadsView() {
                       <Users className="h-3.5 w-3.5" style={{ color }} /> {squadAgents.length} agents
                     </div>
                     <div className="flex items-center gap-2 text-zinc-200">
-                      <Bot className="h-3.5 w-3.5" style={{ color }} /> {instanceCount}/{squadAgents.length || 0} active
+                      <Bot className="h-3.5 w-3.5" style={{ color }} /> {instanceCount}/{data.maxInstancesPerSquad} instances
                     </div>
                   </div>
 
