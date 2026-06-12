@@ -6,6 +6,7 @@ import { postFeedItem } from "../store/feed.js";
 import { attachTokenTracker } from "./token-tracker.js";
 import { createSquadTools, createLeadDelegationTools } from "./squad-tools.js";
 import { resolveSquadWorkingDirectory } from "./agents.js";
+import { runScribe } from "./scribe.js";
 import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { addAuditEntry } from "../store/audit-log.js";
@@ -234,6 +235,17 @@ export async function squadMeeting(
           phase: "planning",
           result: plan.slice(0, 500),
         });
+
+        // Fire-and-forget: run Scribe to merge decisions and log the session
+        runScribe({
+          squadId,
+          squadSlug,
+          workDir: workingDirectory,
+          taskSummary: plan.slice(0, 2000),
+          agentName: lead.character_name,
+          taskId: taskRecord.id,
+        }).catch(() => {});
+
         return result;
       }
 
@@ -261,6 +273,16 @@ export async function squadMeeting(
         phase: "execution",
         result: executionResult.slice(0, 500),
       });
+
+      // Fire-and-forget: run Scribe to merge decisions and log the session
+      runScribe({
+        squadId,
+        squadSlug,
+        workDir: workingDirectory,
+        taskSummary: combinedResult.slice(0, 2000),
+        agentName: lead.character_name,
+        taskId: taskRecord.id,
+      }).catch(() => {});
 
       return combinedResult;
     } finally {

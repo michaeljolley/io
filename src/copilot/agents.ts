@@ -35,6 +35,7 @@ import { captureSessionEvents } from "./event-capture.js";
 import { classifyComplexity, selectModel } from "./model-router.js";
 import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { createLeadDelegationTools, createSquadTools } from "./squad-tools.js";
+import { runScribe } from "./scribe.js";
 import { attachTokenTracker } from "./token-tracker.js";
 
 const execAsync = promisify(exec);
@@ -214,14 +215,27 @@ Failure to follow squad wiki rules is a CRITICAL FAILURE.
 - Always use the gh CLI for GitHub interactions
 - Use \`--comment\` for review approvals (not \`--approve\` — GitHub blocks self-approval)
 - When work is complete, ALWAYS notify the user via feed_post with a summary
+
+## 📝 Decision Logging (Team Memory)
+
+Your squad has a shared decision log at \`decisions.md\`. **Before starting work**, read it with \`wiki_read\` to see what the team already knows — prior architectural decisions, conventions discovered, patterns established.
+
+**During work**, when you or your specialists make significant decisions (architectural choices, discovered conventions, tool/library selections, patterns to follow), log them by writing a brief note to the decisions inbox:
+- Use \`wiki_write\` to create \`decisions/inbox/{topic}.md\`
+- Keep entries concise: what was decided, why, and by whom
+- A background Scribe process will merge these into the canonical decisions.md after your task completes
+
+Examples of what to log:
+- "This repo uses pnpm, not npm"
+- "API routes follow /api/v1/{resource} convention"
+- "Tests use vitest with co-located .test.ts files"
+- "Branch naming: feature/{issue-number}-{description}"
 ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 `;
 
 	let result: string;
+	const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
 	try {
-		// Resolve correct working directory for the squad's project
-		const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
-
 		// Load squad-scoped tools, skills, and MCP servers
 		const squadTools = createSquadTools(squadSlug, squadId, workDir);
 		const skillDirs = [
@@ -389,6 +403,16 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 		`Task completed by ${lead.character_name}`,
 		result.slice(0, 2000),
 	);
+
+	// Fire-and-forget: run Scribe to merge decisions and log the session
+	runScribe({
+		squadId,
+		squadSlug,
+		workDir,
+		taskSummary: result.slice(0, 2000),
+		agentName: lead.character_name,
+		taskId: taskRecord.id,
+	}).catch(() => {});
 
 	return result;
 }

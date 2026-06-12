@@ -104,10 +104,23 @@ export async function deleteTemplate(path: string): Promise<void> {
 
 export async function copySquadTemplates(slug: string): Promise<void> {
   const templateDir = PATHS.wikiSquadTemplates;
-  if (!existsSync(templateDir)) return;
-
   const destDir = join(PATHS.wikiPages, "squads", slug);
   if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
 
-  cpSync(templateDir, destDir, { recursive: true, force: false, errorOnExist: false });
+  // Copy user-defined templates if they exist
+  if (existsSync(templateDir)) {
+    cpSync(templateDir, destDir, { recursive: true, force: false, errorOnExist: false });
+  }
+
+  // Ensure decisions structure exists
+  const decisionsFile = join(destDir, "decisions.md");
+  if (!existsSync(decisionsFile)) {
+    writeFileSync(decisionsFile, `# Decisions\n\nShared team decisions and learnings. Updated by Scribe after each task.\n`);
+  }
+
+  const inboxDir = join(destDir, "decisions", "inbox");
+  if (!existsSync(inboxDir)) mkdirSync(inboxDir, { recursive: true });
+
+  const logDir = join(destDir, "log");
+  if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 }

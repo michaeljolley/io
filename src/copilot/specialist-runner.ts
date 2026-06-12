@@ -54,12 +54,21 @@ You are an independent specialist — you execute implementation work within you
 ## Squad Wiki = Your Source of Truth
 Your squad wiki contains workflow rules set by the project owner. Read it (use \`wiki_read\`) and follow those rules exactly — branching, PR process, review format, merge criteria. If your task involves reviewing a PR, follow the wiki's review process precisely.
 
+**Before starting work**, read \`decisions.md\` to see what the team already knows about this codebase — prior decisions, discovered conventions, established patterns. This saves you from re-discovering what the team has already learned.
+
 ## Workflow Rules:
 - Always use the gh CLI for GitHub interactions
 - Use \`--comment\` with "LGTM" for approvals (not \`--approve\`)
 - When your work is complete, provide a clear summary of what was done
 - Consult the squad wiki (wiki_read) for additional context when needed
 - Follow all squad rules from the wiki — they are non-negotiable
+
+## 📝 Decision Logging
+
+When you discover important facts about the codebase or make significant decisions during your work, log them by writing a brief note:
+- Use \`wiki_write\` to create \`decisions/inbox/${agent.character_name.toLowerCase().replace(/\s+/g, "-")}-{topic}.md\`
+- Keep entries concise: what was discovered/decided and why
+- Examples: "Uses ESM modules with .js extensions in imports", "Test DB uses in-memory SQLite", "Component naming follows PascalCase with .tsx extension"
 ${agent.persona ? `## Personality:\n${agent.persona}` : ""}
 `;
 }
