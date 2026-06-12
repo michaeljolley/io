@@ -214,6 +214,36 @@ function agentColor(name: string): string {
   return `hsl(${hue}, 70%, 65%)`;
 }
 
+/**
+ * Parse tool call/result event payload to extract heading and body for display
+ */
+function parseToolEventPayload(event: AgentEvent): { heading: string; body: string } {
+  const kind = mapEventTypeToKind(event.type);
+  try {
+    const parsed = JSON.parse(event.payload);
+    if (kind === "tool_call") {
+      const toolName = parsed.toolName || event.summary || "Tool";
+      const args = parsed.arguments || "";
+      return {
+        heading: toolName,
+        body: typeof args === "string" ? args : JSON.stringify(args, null, 2),
+      };
+    }
+    if (kind === "tool_result") {
+      const toolName = parsed.toolName || "Tool";
+      const status = parsed.success ? "✓" : "✗";
+      const result = parsed.result || "";
+      return {
+        heading: `${toolName} ${status}`,
+        body: result,
+      };
+    }
+  } catch {
+    // Fall through to default
+  }
+  return { heading: event.summary || event.type, body: "" };
+}
+
 const KIND_META: Record<string, { label: string; icon: React.ElementType }> = {
   status: { label: "Status", icon: Activity },
   thought: { label: "Thinking", icon: MessageSquare },
@@ -537,9 +567,19 @@ export default function SquadDetailView() {
                           </span>
                         </div>
                         {isCode ? (
-                          <pre className="text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 mt-1 bg-black/20">
-                            {event.summary || event.payload}
-                          </pre>
+                          (() => {
+                            const { heading, body } = parseToolEventPayload(event);
+                            return (
+                              <div className="mt-1">
+                                <h4 className="text-xs font-semibold text-zinc-200 mb-1">{heading}</h4>
+                                {body && (
+                                  <pre className="text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
+                                    {body}
+                                  </pre>
+                                )}
+                              </div>
+                            );
+                          })()
                         ) : (
                           <MarkdownRenderer
                             content={event.summary || event.payload || ""}
