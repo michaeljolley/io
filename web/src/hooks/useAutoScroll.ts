@@ -6,10 +6,7 @@ const BOTTOM_THRESHOLD = 40;
  * Auto-scrolls a container to the bottom when content changes,
  * unless the user has manually scrolled away.
  */
-export function useAutoScroll(
-  containerRef: RefObject<HTMLElement | null>,
-  deps: unknown[],
-) {
+export function useAutoScroll(containerRef: RefObject<HTMLElement | null>, deps: unknown[]) {
   const pinnedRef = useRef(true);
 
   const scrollToBottom = useCallback(

@@ -2,13 +2,13 @@ import { Paperclip, Send, Square, X } from "lucide-react";
 import { type DragEvent, type KeyboardEvent, useRef, useState } from "react";
 import { IoMark } from "@/components/IoMark";
 import { MessageBubble } from "@/components/ui/MessageBubble";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   fileToMessageAttachment,
   formatAttachmentSize,
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
-import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useChatStore } from "@/stores/chat";
 
 export default function ChatView() {

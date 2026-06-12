@@ -586,7 +586,10 @@ export default function SchedulesView() {
                 <div>
                   <div className={SECTION_HEADER}>Squad</div>
                   <div className="mt-2">
-                    <SquadChip name={squadLookup.get(draft.squadId)!.name} color={squadLookup.get(draft.squadId)!.color} />
+                    <SquadChip
+                      name={squadLookup.get(draft.squadId)!.name}
+                      color={squadLookup.get(draft.squadId)!.color}
+                    />
                   </div>
                 </div>
               )}

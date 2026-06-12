@@ -1,12 +1,12 @@
 import { FileText, MessageSquare, Paperclip, Send, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   fileToMessageAttachment,
   formatAttachmentSize,
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
-import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useChatStore } from "@/stores/chat";
 import { IoMark } from "./IoMark";
 import { MessageBubble } from "./ui/MessageBubble";
