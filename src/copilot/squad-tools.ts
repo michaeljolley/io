@@ -122,6 +122,100 @@ export function createSquadTools(squadSlug: string, squadId: string, workDir: st
       },
     }),
 
+    // --- File Tools (reliable fallback for SDK built-in tools) ---
+    defineTool("file_read", {
+      description:
+        "Read the contents of a file by path. Use this when the built-in view tool returns empty or fails. Supports line ranges.",
+      parameters: z.object({
+        path: z.string().describe("File path relative to project root (e.g., 'src/main.ts')"),
+        start_line: z.number().optional().describe("First line to read (1-based, optional)"),
+        end_line: z.number().optional().describe("Last line to read (inclusive, optional)"),
+      }),
+      handler: async ({ path, start_line, end_line }) => {
+        const fullPath = join(workDir, path);
+        if (!fullPath.startsWith(workDir)) {
+          return "Error: path must be within project directory";
+        }
+        try {
+          let cmd: string;
+          if (start_line && end_line) {
+            cmd = `sed -n '${start_line},${end_line}p' "${fullPath}"`;
+          } else if (start_line) {
+            cmd = `tail -n +${start_line} "${fullPath}"`;
+          } else {
+            cmd = `cat "${fullPath}"`;
+          }
+          const { stdout } = await execAsync(cmd, { cwd: workDir, timeout: 30_000, maxBuffer: 2 * 1024 * 1024 });
+          return stdout || "(empty file)";
+        } catch (err: any) {
+          const msg = err.stderr?.toString().trim() || err.message;
+          return `Error reading file "${path}": ${msg}`;
+        }
+      },
+    }),
+
+    defineTool("file_search", {
+      description:
+        "Search file contents using grep. Returns matching lines with file paths and line numbers. Use this when the built-in grep tool returns empty or fails.",
+      parameters: z.object({
+        pattern: z.string().describe("Search pattern (regular expression)"),
+        glob: z.string().optional().describe("File glob to filter (e.g., '*.cs', '*.ts'). Searches all files if omitted."),
+        path: z.string().optional().describe("Subdirectory to search in, relative to project root (optional)"),
+        max_results: z.number().optional().describe("Maximum number of results (default: 50)"),
+      }),
+      handler: async ({ pattern, glob: fileGlob, path: subPath, max_results }) => {
+        const searchDir = subPath ? join(workDir, subPath) : workDir;
+        if (!searchDir.startsWith(workDir)) {
+          return "Error: path must be within project directory";
+        }
+        const limit = max_results ?? 50;
+        const includeArg = fileGlob ? `--include="${fileGlob}"` : "";
+        const cmd = `grep -rn ${includeArg} -m ${limit} -E "${pattern.replace(/"/g, '\\"')}" "${searchDir}" 2>&1 | head -n ${limit}`;
+        try {
+          const { stdout } = await execAsync(cmd, { cwd: workDir, timeout: 60_000, maxBuffer: 2 * 1024 * 1024 });
+          return stdout.trim() || `No matches found for pattern "${pattern}"`;
+        } catch (err: any) {
+          const stdout = err.stdout?.toString().trim() ?? "";
+          if (err.code === 1 && !stdout) {
+            return `No matches found for pattern "${pattern}"`;
+          }
+          return stdout || `Error searching: ${err.message}`;
+        }
+      },
+    }),
+
+    defineTool("file_find", {
+      description:
+        "Find files by name pattern. Returns matching file paths. Use this when the built-in glob tool returns empty or fails.",
+      parameters: z.object({
+        pattern: z.string().describe("File name pattern (e.g., 'DockWindow.xaml.cs', '*.test.ts', 'package.json')"),
+        path: z.string().optional().describe("Subdirectory to search in, relative to project root (optional)"),
+        max_results: z.number().optional().describe("Maximum number of results (default: 50)"),
+      }),
+      handler: async ({ pattern, path: subPath, max_results }) => {
+        const searchDir = subPath ? join(workDir, subPath) : workDir;
+        if (!searchDir.startsWith(workDir)) {
+          return "Error: path must be within project directory";
+        }
+        const limit = max_results ?? 50;
+        const cmd = `find "${searchDir}" -name "${pattern.replace(/"/g, '\\"')}" -type f 2>/dev/null | head -n ${limit}`;
+        try {
+          const { stdout } = await execAsync(cmd, { cwd: workDir, timeout: 60_000, maxBuffer: 2 * 1024 * 1024 });
+          if (!stdout.trim()) {
+            return `No files found matching "${pattern}"`;
+          }
+          // Return paths relative to workDir for readability
+          return stdout
+            .trim()
+            .split("\n")
+            .map((p) => p.replace(workDir + "/", ""))
+            .join("\n");
+        } catch (err: any) {
+          return `Error finding files: ${err.message}`;
+        }
+      },
+    }),
+
     // --- Shell Tool (scoped to project directory) ---
     defineTool("shell_exec", {
       description:
