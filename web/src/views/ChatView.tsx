@@ -1,5 +1,5 @@
 import { Paperclip, Send, Square, X } from "lucide-react";
-import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type DragEvent, type KeyboardEvent, useRef, useState } from "react";
 import { IoMark } from "@/components/IoMark";
 import { MessageBubble } from "@/components/ui/MessageBubble";
 import {
@@ -8,6 +8,7 @@ import {
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useChatStore } from "@/stores/chat";
 
 export default function ChatView() {
@@ -20,19 +21,10 @@ export default function ChatView() {
   const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
   const [composerError, setComposerError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
-    }
-  }, []);
+  useAutoScroll(messagesContainerRef, [messages]);
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -82,7 +74,7 @@ export default function ChatView() {
       onDrop={handleDrop}
     >
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
             <IoMark height={48} />
@@ -94,7 +86,6 @@ export default function ChatView() {
             <MessageBubble msg={msg} />
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}

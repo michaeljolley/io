@@ -1,11 +1,12 @@
 import { FileText, MessageSquare, Paperclip, Send, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   fileToMessageAttachment,
   formatAttachmentSize,
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
 import { useChatStore } from "@/stores/chat";
 import { IoMark } from "./IoMark";
 import { MessageBubble } from "./ui/MessageBubble";
@@ -17,13 +18,11 @@ export function ChatOverlay() {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const sendMessage = useChatStore((s) => s.sendMessage);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  useAutoScroll(messagesContainerRef, [messages]);
 
   const handleSend = async () => {
     if ((!input.trim() && pendingAttachments.length === 0) || isStreaming) return;
@@ -95,14 +94,12 @@ export function ChatOverlay() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                 <MessageBubble msg={msg} />
               </div>
             ))}
-
-            <div ref={bottomRef} />
           </div>
 
           {/* Input */}
