@@ -9,6 +9,7 @@ interface CaptureOptions {
 	taskId: string;
 	agentName: string;
 	agentRole: string;
+	model?: string;
 	/** Called once with the first assistant.intent text (used to set task title). */
 	onFirstIntent?: (intent: string) => void;
 }
@@ -23,8 +24,8 @@ export function captureSessionEvents(
 	session: CopilotSession,
 	options: CaptureOptions,
 ): () => void {
-	const { taskId, agentName, agentRole, onFirstIntent } = options;
-	const basePayload = { agent: agentName, role: agentRole };
+	const { taskId, agentName, agentRole, model, onFirstIntent } = options;
+	const basePayload = { agent: agentName, role: agentRole, model };
 
 	// Track tool names by callId so we can label tool_result events
 	const toolCallNames = new Map<string, string>();

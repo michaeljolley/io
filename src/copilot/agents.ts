@@ -284,6 +284,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 			taskId: taskRecord.id,
 			agentName: lead.character_name,
 			agentRole: lead.role_title,
+			model,
 			onFirstIntent: (intent) => updateTaskTitle(taskRecord.id, intent),
 		});
 

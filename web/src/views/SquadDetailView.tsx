@@ -102,6 +102,7 @@ interface AgentEvent {
   id: string;
   task_id: string;
   agent_name?: string;
+  model?: string;
   type: string;
   summary: string;
   payload: string;
@@ -375,10 +376,14 @@ export default function SquadDetailView() {
       const raw = await fetchJson<AgentEvent[]>(`/api/tasks/${taskId}/events`);
       // Parse agent name from payload JSON
       const enriched = raw.map((event) => {
-        if (event.agent_name) return event;
+        if (event.agent_name && event.model) return event;
         try {
           const parsed = JSON.parse(event.payload);
-          return { ...event, agent_name: parsed.agent || undefined };
+          return {
+            ...event,
+            agent_name: event.agent_name || parsed.agent || undefined,
+            model: event.model || parsed.model || undefined,
+          };
         } catch {
           return event;
         }
@@ -556,6 +561,11 @@ export default function SquadDetailView() {
                               <span className="text-[10px] font-mono" style={{ color }}>
                                 {name}
                               </span>
+                              {event.model && (
+                                <span className="text-[9px] font-mono text-zinc-600 bg-white/[0.04] px-1.5 py-0.5 rounded">
+                                  {event.model}
+                                </span>
+                              )}
                             </div>
                             <span className="text-zinc-700 text-[10px]">·</span>
                             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">

@@ -138,6 +138,7 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
       taskId: parentTaskId,
       agentName: agent.character_name,
       agentRole: agent.role_title,
+      model,
     });
 
     // Stream deltas and broadcast via SSE
