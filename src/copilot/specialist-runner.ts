@@ -103,7 +103,7 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
 
   try {
     // Load squad-scoped tools, skills, and MCP servers
-    const squadTools = createSquadTools(squadSlug, squadId, squad.repo_url);
+    const squadTools = createSquadTools(squadSlug, squadId, workDir);
     const skillDirs = [...await loadSkillDirectories(), ...loadSquadSkillDirectories(squadSlug)];
     const mcpServers = getMcpServersForSession();
 

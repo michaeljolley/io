@@ -4,32 +4,18 @@ import type { Tool } from "@github/copilot-sdk";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { join } from "node:path";
-import { PATHS } from "../paths.js";
 import { getGhToken } from "./gh-token.js";
 import type { Squad } from "../store/squads.js";
 
 const execAsync = promisify(exec);
 
 /**
- * Resolve the project root directory for a squad from its repo_url.
- * Returns the path under ~/.io/source/{owner}/{repo} or null if unknown.
- */
-function resolveSquadProjectDir(repoUrl: string | null): string | null {
-  if (!repoUrl) return null;
-  const match = repoUrl.match(/[/:]([^/]+)\/([^/.]+?)(?:\.git)?$/);
-  if (!match) return null;
-  const [, owner, repo] = match;
-  return join(PATHS.source, owner, repo);
-}
-
-/**
  * Creates a scoped set of tools for squad agent sessions.
  * Wiki tools are sandboxed to the squad's own wiki subfolder.
  * Feed posts are locked to the squad's source identifier.
  */
-export function createSquadTools(squadSlug: string, squadId: string, repoUrl?: string | null): Tool<any>[] {
+export function createSquadTools(squadSlug: string, squadId: string, workDir: string): Tool<any>[] {
   const wikiPrefix = `squads/${squadSlug}`;
-  const projectDir = resolveSquadProjectDir(repoUrl ?? null);
 
   return [
     // --- Wiki Tools (scoped to squads/{slug}/) ---
@@ -150,12 +136,12 @@ export function createSquadTools(squadSlug: string, squadId: string, repoUrl?: s
           ),
       }),
       handler: async ({ command, cwd }) => {
-        const baseDir = projectDir ?? process.cwd();
-        // If cwd is provided, resolve it relative to the project dir
-        const workDir = cwd ? join(baseDir, cwd) : baseDir;
+        const baseDir = workDir;
+        // If cwd is provided, resolve it relative to the working dir
+        const shellWorkDir = cwd ? join(baseDir, cwd) : baseDir;
 
-        // Safety: ensure workDir is under baseDir
-        const resolved = join(workDir);
+        // Safety: ensure shellWorkDir is under baseDir
+        const resolved = join(shellWorkDir);
         if (!resolved.startsWith(baseDir)) {
           return `Error: cannot execute commands outside the project directory`;
         }
@@ -169,7 +155,7 @@ export function createSquadTools(squadSlug: string, squadId: string, repoUrl?: s
           }
 
           const { stdout } = await execAsync(command, {
-            cwd: workDir,
+            cwd: shellWorkDir,
             timeout: 120_000,
             maxBuffer: 2 * 1024 * 1024,
             env: shellEnv,

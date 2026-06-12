@@ -5,6 +5,7 @@ import { selectModel, classifyComplexity } from "./model-router.js";
 import { postFeedItem } from "../store/feed.js";
 import { attachTokenTracker } from "./token-tracker.js";
 import { createSquadTools, createLeadDelegationTools } from "./squad-tools.js";
+import { resolveSquadWorkingDirectory } from "./agents.js";
 import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { getMcpServersForSession } from "../mcp/registry.js";
 import { addAuditEntry } from "../store/audit-log.js";
@@ -168,8 +169,8 @@ export async function squadMeeting(
     const client = await getClient();
     const skillDirectories = [...await loadSkillDirectories(), ...loadSquadSkillDirectories(squadSlug)];
     const mcpServers = getMcpServersForSession();
-    const workingDirectory = process.cwd();
-    const squadTools = createSquadTools(squadSlug, squadId, squad.repo_url);
+    const workingDirectory = await resolveSquadWorkingDirectory(squad);
+    const squadTools = createSquadTools(squadSlug, squadId, workingDirectory);
     const leadTools = createLeadDelegationTools(
       squadId,
       squadSlug,

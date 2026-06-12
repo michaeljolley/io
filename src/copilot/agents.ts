@@ -46,7 +46,7 @@ const activeSessions = new Map<string, CopilotSession>();
  * Resolve the working directory for a squad agent session.
  * Priority: instance worktree → cloned repo → process.cwd()
  */
-async function resolveSquadWorkingDirectory(
+export async function resolveSquadWorkingDirectory(
 	squad: { repo_url: string | null },
 	instanceId?: string,
 ): Promise<string> {
@@ -219,16 +219,16 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 
 	let result: string;
 	try {
+		// Resolve correct working directory for the squad's project
+		const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
+
 		// Load squad-scoped tools, skills, and MCP servers
-		const squadTools = createSquadTools(squadSlug, squadId, squad?.repo_url);
+		const squadTools = createSquadTools(squadSlug, squadId, workDir);
 		const skillDirs = [
 			...(await loadSkillDirectories()),
 			...loadSquadSkillDirectories(squadSlug),
 		];
 		const mcpServers = getMcpServersForSession();
-
-		// Resolve correct working directory for the squad's project
-		const workDir = await resolveSquadWorkingDirectory(squad!, instanceId);
 
 		// Create lead-specific delegation tools (allows spawning real specialist sessions)
 		const leadTools = createLeadDelegationTools(
