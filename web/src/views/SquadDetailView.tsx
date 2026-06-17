@@ -571,27 +571,28 @@ export default function SquadDetailView() {
                               <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 whitespace-nowrap">
                                 {meta.label}
                               </span>
-                              {isCode && (() => {
-                                const { toolName, success } = parseToolEventPayload(event);
-                                return (
-                                  <>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08] whitespace-nowrap">
-                                      {toolName}
-                                    </span>
-                                    {success !== undefined && (
-                                      <span
-                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono whitespace-nowrap ${
-                                          success
-                                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                            : "bg-red-500/10 text-red-400 border border-red-500/20"
-                                        }`}
-                                      >
-                                        {success ? "success" : "error"}
+                              {isCode &&
+                                (() => {
+                                  const { toolName, success } = parseToolEventPayload(event);
+                                  return (
+                                    <>
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08] whitespace-nowrap">
+                                        {toolName}
                                       </span>
-                                    )}
-                                  </>
-                                );
-                              })()}
+                                      {success !== undefined && (
+                                        <span
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono whitespace-nowrap ${
+                                            success
+                                              ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                              : "bg-red-500/10 text-red-400 border border-red-500/20"
+                                          }`}
+                                        >
+                                          {success ? "success" : "error"}
+                                        </span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                             </div>
                           </div>
                           <span className="text-[10px] font-mono text-zinc-700 flex-shrink-0 ml-2">
