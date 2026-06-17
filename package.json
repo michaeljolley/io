@@ -1,7 +1,7 @@
 {
   "name": "@michaeljolley/heyio",
   "version": "0.0.1",
-  "description": "IO \u2014 a personal AI assistant daemon built on the GitHub Copilot SDK",
+  "description": "IO — a personal AI assistant daemon built on the GitHub Copilot SDK",
   "bin": {
     "io": "dist/index.js"
   },
@@ -48,6 +48,7 @@
     "commander": "^14.0.0",
     "express": "^5.2.1",
     "grammy": "^1.40.0",
+    "yaml": "^2.9.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
