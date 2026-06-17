@@ -3,6 +3,7 @@ import { join, basename, resolve, sep, dirname } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import YAML from "yaml";
 import { PATHS } from "../paths.js";
 
 const execFileAsync = promisify(execFile);
@@ -29,27 +30,12 @@ export async function listSkills(): Promise<SkillInfo[]> {
     if (!existsSync(skillMd)) continue;
 
     const content = readFileSync(skillMd, "utf-8");
+    const { body } = parseSkillFrontmatter(content);
 
-    // Strip YAML frontmatter before extracting name/description
-    let body = content;
-    let fmDescription = "";
-    const trimmed = content.trimStart();
-    if (trimmed.startsWith("---")) {
-      const endIndex = trimmed.indexOf("---", 3);
-      if (endIndex !== -1) {
-        const fmBlock = trimmed.slice(3, endIndex);
-        body = trimmed.slice(endIndex + 3);
-        // Extract description from frontmatter
-        const descMatch = fmBlock.match(/^description:\s*(.+)$/m);
-        if (descMatch) fmDescription = descMatch[1].trim();
-      }
-    }
-
-    const lines = body.split("\n");
+    const lines = body.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
     const firstLine = lines.find((l) => l.startsWith("# "));
     const name = firstLine?.replace(/^#\s+/, "") ?? entry.name;
-    const descLine = lines.find((l) => l.trim() && !l.startsWith("#"));
-    const description = fmDescription || descLine?.trim() || "";
+    const description = extractSkillDescription(content);
 
     skills.push({
       name,
@@ -206,6 +192,38 @@ function validateSlug(slug: string): string {
   return slug;
 }
 
+function parseSkillFrontmatter(content: string) {
+  const trimmed = content.trimStart();
+  if (!trimmed.startsWith("---")) {
+    return { body: content, frontmatter: null };
+  }
+
+  const match = trimmed.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)([\s\S]*)$/);
+  if (!match) {
+    return { body: content, frontmatter: null };
+  }
+
+  const frontmatter = YAML.parseDocument(match[1], { prettyErrors: true });
+  return {
+    body: match[2],
+    frontmatter: frontmatter.toJS() as Record<string, unknown> | null,
+  };
+}
+
+function extractSkillDescription(content: string): string {
+  const { body, frontmatter } = parseSkillFrontmatter(content);
+  const frontmatterDescription =
+    typeof frontmatter?.description === "string"
+      ? frontmatter.description.trim()
+      : "";
+  if (frontmatterDescription) {
+    return frontmatterDescription;
+  }
+
+  const lines = body.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  return lines.find((line) => line.trim() && !line.startsWith("#"))?.trim() || "";
+}
+
 function parseAwesomeCopilotTable(markdown: string): DiscoveredSkill[] {
   const skills: DiscoveredSkill[] = [];
   for (const line of markdown.split("\n")) {
@@ -256,6 +274,22 @@ interface SkillsShSearchResponse {
   count: number;
 }
 
+async function fetchRemoteSkillDescription(
+  sourceRepo: string,
+  skillId: string,
+): Promise<string> {
+  try {
+    const safeSlug = validateSlug(skillId);
+    const skillPath = await findSkillPathInRepo(sourceRepo, safeSlug);
+    const rawUrl = `https://raw.githubusercontent.com/${sourceRepo}/main/${skillPath}`;
+    const res = await fetch(rawUrl, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return "";
+    return extractSkillDescription(await res.text());
+  } catch {
+    return "";
+  }
+}
+
 async function fetchSkillsShSkills(query?: string): Promise<DiscoveredSkill[]> {
   try {
     const searchQuery = query?.trim() || "";
@@ -266,7 +300,7 @@ async function fetchSkillsShSkills(query?: string): Promise<DiscoveredSkill[]> {
     });
     if (!res.ok) return [];
     const data = (await res.json()) as SkillsShSearchResponse;
-    return data.skills
+    const filtered = data.skills
       .map((item) => ({
         slug: item.skillId || item.name || "",
         name: item.name || item.skillId || "",
@@ -276,6 +310,15 @@ async function fetchSkillsShSkills(query?: string): Promise<DiscoveredSkill[]> {
         installs: item.installs,
       }))
       .filter((item) => item.sourceRepo ? isGitHubRepoPath(item.sourceRepo) : false);
+
+    return await Promise.all(
+      filtered.map(async (item) => {
+        const description = item.sourceRepo
+          ? await fetchRemoteSkillDescription(item.sourceRepo, item.slug)
+          : "";
+        return { ...item, description };
+      }),
+    );
   } catch {
     return [];
   }
