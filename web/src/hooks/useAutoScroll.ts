@@ -37,6 +37,5 @@ export function useAutoScroll(containerRef: RefObject<HTMLElement | null>, deps:
     if (pinnedRef.current) {
       scrollToBottom("auto");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [scrollToBottom, ...deps]);
 }
