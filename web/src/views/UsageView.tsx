@@ -277,7 +277,6 @@ export default function UsageView() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
       </div>
 
       <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden">
