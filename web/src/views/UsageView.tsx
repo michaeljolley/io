@@ -1,6 +1,6 @@
 import { CalendarDays, ChevronDown, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { SquadChip } from "@/components/ui";
 import { uuid } from "@/lib/uuid";
@@ -206,20 +206,19 @@ export default function UsageView() {
   }, [daily, squads, summary]);
 
   const formatNumber = (value: number) => value.toLocaleString();
-  const formatCost = (value: number) => `$${value.toFixed(2)}`;
 
   if (loading) {
     return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading usage…</div>;
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 p-6 text-zinc-200">
+    <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 overflow-y-auto p-6 text-zinc-200">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-4xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             Usage
           </h1>
-          <p className="mt-2 text-[11px] font-mono text-zinc-600">Track tokens, cost, and activity by squad.</p>
+          <p className="mt-2 text-[11px] font-mono text-zinc-600">Track tokens and activity by squad.</p>
         </div>
         <div className="glass-card border border-white/[0.07] rounded-2xl px-4 py-3 flex items-center gap-3">
           <CalendarDays className="h-4 w-4 text-[#66FCF1]" />
@@ -241,7 +240,7 @@ export default function UsageView() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5">
           <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total tokens</p>
           <p className="mt-3 text-3xl text-white">{formatNumber(totals.totalTokens)}</p>
@@ -249,11 +248,7 @@ export default function UsageView() {
             In {formatNumber(totals.totalInputTokens)} / Out {formatNumber(totals.totalOutputTokens)}
           </p>
         </div>
-        <div className="glass-card border border-white/[0.07] rounded-2xl p-5">
-          <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total cost</p>
-          <p className="mt-3 text-3xl text-white">{formatCost(totals.totalCost)}</p>
-          <p className="mt-2 text-[11px] font-mono text-zinc-500">Coral trend line tracks cost over time</p>
-        </div>
+
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5">
           <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total calls</p>
           <p className="mt-3 text-3xl text-white">{formatNumber(totals.totalCalls)}</p>
@@ -261,7 +256,7 @@ export default function UsageView() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4">
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5 h-[320px]">
           <div className="mb-4">
             <h2 className="text-sm text-white">Daily usage</h2>
@@ -283,25 +278,6 @@ export default function UsageView() {
           </ResponsiveContainer>
         </div>
 
-        <div className="glass-card border border-white/[0.07] rounded-2xl p-5 h-[320px]">
-          <div className="mb-4">
-            <h2 className="text-sm text-white">Cost over time</h2>
-            <p className="text-[11px] font-mono text-zinc-600">Estimated spend across the selected range</p>
-          </div>
-          <ResponsiveContainer width="100%" height="82%">
-            <LineChart data={daily}>
-              <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="date" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} tickFormatter={formatCost} />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                labelStyle={{ color: "#e4e4e7" }}
-                formatter={(value: number) => formatCost(value)}
-              />
-              <Line type="monotone" dataKey="cost" name="Cost" stroke="#F75F57" strokeWidth={2.5} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
       </div>
 
       <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden">
@@ -318,7 +294,6 @@ export default function UsageView() {
                 <th className="px-5 py-3 text-right font-medium">Input Tokens</th>
                 <th className="px-5 py-3 text-right font-medium">Output Tokens</th>
                 <th className="px-5 py-3 text-right font-medium">Calls</th>
-                <th className="px-5 py-3 text-right font-medium">Cost</th>
               </tr>
             </thead>
             {squads.map((squad) => {
@@ -344,7 +319,6 @@ export default function UsageView() {
                     <td className="px-5 py-3 text-right text-zinc-300">{formatNumber(squad.inputTokens)}</td>
                     <td className="px-5 py-3 text-right text-zinc-300">{formatNumber(squad.outputTokens)}</td>
                     <td className="px-5 py-3 text-right text-zinc-300">{formatNumber(squad.calls)}</td>
-                    <td className="px-5 py-3 text-right text-zinc-300">{formatCost(squad.cost)}</td>
                   </tr>
                   {open
                     ? agents.map((agent) => (
@@ -353,7 +327,6 @@ export default function UsageView() {
                           <td className="px-5 py-3 text-right text-zinc-400">{formatNumber(agent.inputTokens)}</td>
                           <td className="px-5 py-3 text-right text-zinc-400">{formatNumber(agent.outputTokens)}</td>
                           <td className="px-5 py-3 text-right text-zinc-400">{formatNumber(agent.calls)}</td>
-                          <td className="px-5 py-3 text-right text-zinc-400">{formatCost(agent.cost)}</td>
                         </tr>
                       ))
                     : null}
