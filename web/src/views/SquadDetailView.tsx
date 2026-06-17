@@ -570,17 +570,10 @@ export default function SquadDetailView() {
                             <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
                               {meta.label}
                             </span>
-                          </div>
-                          <span className="text-[10px] font-mono text-zinc-700 flex-shrink-0 ml-2">
-                            {formatTimestamp(event.created_at)}
-                          </span>
-                        </div>
-                        {isCode ? (
-                          (() => {
-                            const { toolName, success, body } = parseToolEventPayload(event);
-                            return (
-                              <div className="mt-1">
-                                <div className="flex items-center gap-2 flex-wrap">
+                            {isCode && (() => {
+                              const { toolName, success } = parseToolEventPayload(event);
+                              return (
+                                <>
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
                                     {toolName}
                                   </span>
@@ -595,7 +588,19 @@ export default function SquadDetailView() {
                                       {success ? "success" : "error"}
                                     </span>
                                   )}
-                                </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <span className="text-[10px] font-mono text-zinc-700 flex-shrink-0 ml-2">
+                            {formatTimestamp(event.created_at)}
+                          </span>
+                        </div>
+                        {isCode ? (
+                          (() => {
+                            const { body } = parseToolEventPayload(event);
+                            return (
+                              <div className="mt-1">
                                 {body && (
                                   <pre className="mt-2 text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
                                     {body}
