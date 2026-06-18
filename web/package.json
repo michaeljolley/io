@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "format:check": "biome check --formatter-enabled=true --linter-enabled=false src/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
@@ -38,6 +39,18 @@
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^1.2.1",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "jsdom": "^21.1.0"
+  },
+  "vitest": {
+    "test": {
+      "environment": "jsdom",
+      "globals": true,
+      "setupFiles": ["./test/setupTests.ts"],
+      "exclude": ["src/components/ui/MarkdownRenderer.test.ts"]
+    }
   }
 }

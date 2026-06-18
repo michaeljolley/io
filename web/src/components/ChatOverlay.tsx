@@ -1,5 +1,6 @@
 import { FileText, MessageSquare, Paperclip, Send, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   fileToMessageAttachment,
@@ -21,6 +22,15 @@ export function ChatOverlay() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    // Attach focus handling that listens for animation/transition end and has a rAF+timeout fallback
+    // Uses a shared util to make unit testing easier
+    const cleanup = attachFocusOnOpen(overlayRef.current, textareaRef.current);
+    return cleanup;
+  }, [open]);
 
   useAutoScroll(messagesContainerRef, [messages]);
 
@@ -68,6 +78,7 @@ export function ChatOverlay() {
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2.5">
       {open && (
         <div
+          ref={overlayRef}
           className="w-[340px] flex flex-col rounded-2xl overflow-hidden shadow-xl border border-white/[0.09] backdrop-blur-xs"
           style={{ height: "460px", background: "rgba(20, 20, 20, 0.95)" }}
         >
