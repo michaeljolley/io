@@ -120,7 +120,7 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
       model,
       streaming: true,
       workingDirectory: workDir,
-      systemMessage: { content: systemMessage },
+      systemMessage: { mode: "replace", content: systemMessage },
       tools: squadTools,
       skillDirectories: skillDirs,
       mcpServers,
