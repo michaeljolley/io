@@ -82,6 +82,7 @@ export async function resolveSquadWorkingDirectory(
 			try {
 				await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, {
 					timeout: 120_000,
+					env: { ...process.env, HOME: process.env.HOME ?? PATHS.home },
 				});
 				return sourceDir;
 			} catch (err) {

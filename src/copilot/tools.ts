@@ -122,6 +122,7 @@ export function createTools(): Tool<any>[] {
 							try {
 								await execAsync(`git clone ${repo_url} ${sourceDir}`, {
 									timeout: 120_000,
+									env: { ...process.env, HOME: process.env.HOME ?? PATHS.home },
 								});
 								cloneMsg = ` Repo cloned to ~/.io/source/${owner}/${repo}.`;
 							} catch (err: any) {
