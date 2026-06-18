@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { SquadChip } from "@/components/ui";
+import { formatNumber } from "@/lib/formatNumber";
 import { uuid } from "@/lib/uuid";
 import { useAuthStore } from "@/stores/auth";
-import { formatNumber } from "@/lib/formatNumber";
 
 interface UsageSummary {
   totalTokens: number;
