@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/michaeljolley/io#readme",
   "dependencies": {
-    "@github/copilot-sdk": "^0.2.2",
+    "@github/copilot-sdk": "^1.0.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.6.2",
     "commander": "^14.0.0",

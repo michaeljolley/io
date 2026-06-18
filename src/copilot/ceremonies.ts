@@ -184,7 +184,7 @@ export async function squadMeeting(
       model,
       streaming: true,
       workingDirectory,
-      systemMessage: { content: buildFacilitatorPrompt(lead, agents) },
+      systemMessage: { mode: "replace" as const, content: buildFacilitatorPrompt(lead, agents) },
       tools: [...squadTools, ...leadTools],
       skillDirectories,
       mcpServers,
