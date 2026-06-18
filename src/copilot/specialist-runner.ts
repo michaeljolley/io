@@ -54,8 +54,6 @@ You are an independent specialist — you execute implementation work within you
 ## Squad Wiki = Your Source of Truth
 Your squad wiki contains workflow rules set by the project owner. Read it (use \`wiki_read\`) and follow those rules exactly — branching, PR process, review format, merge criteria. If your task involves reviewing a PR, follow the wiki's review process precisely.
 
-**Before starting work**, read \`decisions.md\` to see what the team already knows about this codebase — prior decisions, discovered conventions, established patterns. This saves you from re-discovering what the team has already learned.
-
 ## Workflow Rules:
 - Always use the gh CLI for GitHub interactions
 - Use \`--comment\` with "LGTM" for approvals (not \`--approve\`)
@@ -120,7 +118,7 @@ export async function runSpecialistSession(request: SpecialistTaskRequest): Prom
       model,
       streaming: true,
       workingDirectory: workDir,
-      systemMessage: { content: systemMessage },
+      systemMessage: { mode: "replace" as const, content: systemMessage },
       tools: squadTools,
       skillDirectories: skillDirs,
       mcpServers,

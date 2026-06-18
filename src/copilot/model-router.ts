@@ -51,7 +51,7 @@ export async function discoverModels(): Promise<ScoredModel[]> {
         id: m.id,
         // Use billing multiplier as capability proxy (higher cost = more capable)
         // Fall back to built-in hints, then default of 50
-        score: m.billing
+        score: m.billing?.multiplier
           ? Math.min(m.billing.multiplier * 10, 100)
           : (MODEL_CAPABILITY_HINTS[m.id] ?? 50),
       }))

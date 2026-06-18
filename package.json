@@ -18,7 +18,7 @@
     "daemon": "tsx src/daemon.ts",
     "dev": "tsx --watch src/index.ts",
     "prepublishOnly": "npm run build:all",
-    "test": "node --import tsx --test 'src/**/*.test.ts' 'web/src/**/*.test.ts'",
+    "test": "node --import tsx --test 'src/**/*.test.ts' && (if [ -d web/node_modules ]; then node --import tsx --test 'web/src/**/*.test.ts'; else echo 'Skipping web tests (install web deps with: cd web && npm install)'; fi)",
     "test:coverage": "c8 node --import tsx --test 'src/**/*.test.ts' 'web/src/**/*.test.ts'",
     "coverage:check": "c8 report --reporter=text --reporter=text-summary --check-coverage --lines 40 --functions 35 --branches 60 --statements 40"
   },
@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/michaeljolley/io#readme",
   "dependencies": {
-    "@github/copilot-sdk": "^0.2.2",
+    "@github/copilot-sdk": "^1.0.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3": "^12.6.2",
     "commander": "^14.0.0",

@@ -47,8 +47,11 @@ echo "password=$GH_TOKEN"
  * Used by shell_exec tools to enable non-interactive git push and gh CLI operations.
  */
 export function buildShellEnv(): Record<string, string | undefined> {
+	// Ensure HOME is present for subprocesses (some environments may unset it for spawned agents)
+	const home = process.env.HOME ?? PATHS.home;
 	const env: Record<string, string | undefined> = {
 		...process.env,
+		HOME: home,
 		GH_PROMPT_DISABLED: "1",
 		GIT_TERMINAL_PROMPT: "0",
 	};

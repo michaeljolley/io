@@ -72,7 +72,7 @@ export async function createInstance(
         const parentDir = join(PATHS.source, owner);
         if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
         try {
-          await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000 });
+          await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, { timeout: 120_000, env: { ...process.env, HOME: process.env.HOME ?? PATHS.home } });
           repoCwd = sourceDir;
         } catch (err) {
           throw new Error(
@@ -87,12 +87,12 @@ export async function createInstance(
     }
   }
   try {
-    await execAsync(`git worktree add ${worktreePath} -b ${branch}`, { cwd: repoCwd });
+    await execAsync(`git worktree add ${worktreePath} -b ${branch}`, { cwd: repoCwd, env: { ...process.env, HOME: process.env.HOME ?? PATHS.home } });
   } catch (err) {
     logWarn("Failed to create new git worktree branch, retrying existing branch", { squadId, branch, worktreePath }, err);
     // Branch may already exist — try attaching to existing branch
     try {
-      await execAsync(`git worktree add ${worktreePath} ${branch}`, { cwd: repoCwd });
+      await execAsync(`git worktree add ${worktreePath} ${branch}`, { cwd: repoCwd, env: { ...process.env, HOME: process.env.HOME ?? PATHS.home } });
     } catch (retryErr) {
       throw new Error(
         `Failed to create git worktree at "${worktreePath}" from "${repoCwd}": ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`
@@ -118,7 +118,7 @@ export async function destroyInstance(instanceId: string): Promise<void> {
 
   // Remove worktree
   try {
-    await execAsync(`git worktree remove ${instance.worktree_path} --force`);
+    await execAsync(`git worktree remove ${instance.worktree_path} --force`, { env: { ...process.env, HOME: process.env.HOME ?? PATHS.home } });
   } catch (err) {
     logWarn("Failed to remove git worktree, it may already be gone", { instanceId: instance.id, worktreePath: instance.worktree_path }, err);
   }

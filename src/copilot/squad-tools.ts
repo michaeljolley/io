@@ -178,6 +178,7 @@ export function createSquadTools(
 						cwd: workDir,
 						timeout: 30_000,
 						maxBuffer: 2 * 1024 * 1024,
+						env: buildShellEnv(),
 					});
 					return stdout || "(empty file)";
 				} catch (err: any) {
@@ -227,6 +228,7 @@ export function createSquadTools(
 						cwd: workDir,
 						timeout: 60_000,
 						maxBuffer: 2 * 1024 * 1024,
+						env: buildShellEnv(),
 					});
 					return stdout.trim() || `No matches found for pattern "${pattern}"`;
 				} catch (err: any) {
@@ -271,6 +273,7 @@ export function createSquadTools(
 						cwd: workDir,
 						timeout: 60_000,
 						maxBuffer: 2 * 1024 * 1024,
+						env: buildShellEnv(),
 					});
 					if (!stdout.trim()) {
 						return `No files found matching "${pattern}"`;

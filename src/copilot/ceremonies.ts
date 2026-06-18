@@ -184,16 +184,11 @@ export async function squadMeeting(
       model,
       streaming: true,
       workingDirectory,
-      systemMessage: { content: buildFacilitatorPrompt(lead, agents) },
+      systemMessage: { mode: "replace" as const, content: buildFacilitatorPrompt(lead, agents) },
       tools: [...squadTools, ...leadTools],
       skillDirectories,
       mcpServers,
       onPermissionRequest: approveAll,
-      infiniteSessions: {
-        enabled: true,
-        backgroundCompactionThreshold: 0.6,
-        bufferExhaustionThreshold: 0.95,
-      },
     });
 
     const flushTokens = attachTokenTracker(session, {

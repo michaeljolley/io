@@ -5,7 +5,7 @@ let client: CopilotClient | undefined;
 
 export function getCopilotClientOptions(): ConstructorParameters<typeof CopilotClient>[0] {
   const githubToken = getGhToken();
-  return githubToken ? { githubToken } : {};
+  return githubToken ? { gitHubToken: githubToken } : {};
 }
 
 export async function getClient(): Promise<CopilotClient> {

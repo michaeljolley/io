@@ -43,6 +43,12 @@ const execAsync = promisify(exec);
 // Registry of active agent sessions keyed by task ID
 const activeSessions = new Map<string, CopilotSession>();
 
+/** Detect the "Duplicate item found" API error that indicates corrupted session history. */
+function isDuplicateItemError(err: unknown): boolean {
+	if (!(err instanceof Error)) return false;
+	return err.message.includes("Duplicate item found with id");
+}
+
 /**
  * Resolve the working directory for a squad agent session.
  * Priority: instance worktree → cloned repo → process.cwd()
@@ -76,6 +82,7 @@ export async function resolveSquadWorkingDirectory(
 			try {
 				await execAsync(`git clone ${squad.repo_url} ${sourceDir}`, {
 					timeout: 120_000,
+					env: { ...process.env, HOME: process.env.HOME ?? PATHS.home },
 				});
 				return sourceDir;
 			} catch (err) {
@@ -218,8 +225,6 @@ Failure to follow squad wiki rules is a CRITICAL FAILURE.
 
 ## 📝 Decision Logging (Team Memory)
 
-Your squad has a shared decision log at \`decisions.md\`. **Before starting work**, read it with \`wiki_read\` to see what the team already knows — prior architectural decisions, conventions discovered, patterns established.
-
 **During work**, when you or your specialists make significant decisions (architectural choices, discovered conventions, tool/library selections, patterns to follow), log them by writing a brief note to the decisions inbox:
 - Use \`wiki_write\` to create \`decisions/inbox/{topic}.md\`
 - Keep entries concise: what was decided, why, and by whom
@@ -267,16 +272,11 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 			model,
 			streaming: true,
 			workingDirectory: workDir,
-			systemMessage: { content: systemMessage },
+			systemMessage: { mode: "replace" as const, content: systemMessage },
 			tools: [...squadTools, ...leadTools],
 			skillDirectories: skillDirs,
 			mcpServers,
 			onPermissionRequest: approveAll,
-			infiniteSessions: {
-				enabled: true,
-				backgroundCompactionThreshold: 0.6,
-				bufferExhaustionThreshold: 0.95,
-			},
 		});
 
 		// Register session so it can be stopped externally
@@ -340,13 +340,50 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 				const savedAttachments = saveAttachmentsToDisk(attachments);
 				const attachmentPathInfo = buildAttachmentPathSummary(savedAttachments);
 
-				const response = await session.sendAndWait(
-					{
-						prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
-						attachments: toCopilotBlobAttachments(attachments),
-					},
-					7_200_000, // 2 hours — watchdog handles stale detection
-				);
+				let response: any;
+				try {
+					response = await session.sendAndWait(
+						{
+							prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
+							attachments: toCopilotBlobAttachments(attachments),
+						},
+						7_200_000, // 2 hours — watchdog handles stale detection
+					);
+				} catch (sendErr) {
+					if (!isDuplicateItemError(sendErr)) throw sendErr;
+
+					// Session history is corrupted — disconnect and retry with a fresh session
+					logWarn("Duplicate item error detected, retrying with fresh session", {
+						taskId: taskRecord.id,
+					});
+					await session.disconnect();
+					activeSessions.delete(taskRecord.id);
+					unsubCapture();
+					flushTokens();
+
+					const retrySession = await client.createSession({
+						model,
+						streaming: true,
+						workingDirectory: workDir,
+						systemMessage: { mode: "replace" as const, content: systemMessage },
+						tools: [...squadTools, ...leadTools],
+						skillDirectories: skillDirs,
+						mcpServers,
+						onPermissionRequest: approveAll,
+					});
+					activeSessions.set(taskRecord.id, retrySession);
+
+					response = await retrySession.sendAndWait(
+						{
+							prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
+							attachments: toCopilotBlobAttachments(attachments),
+						},
+						7_200_000,
+					);
+					await retrySession.disconnect();
+					activeSessions.delete(taskRecord.id);
+				}
+
 				result =
 					response?.data?.content ?? "Task completed (no response content).";
 
@@ -364,7 +401,7 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 			activeSessions.delete(taskRecord.id);
 			unsubCapture();
 			flushTokens();
-			await session.disconnect();
+				try { await session.disconnect(); } catch { /* may already be disconnected after retry */ }
 		}
 	} catch (err) {
 		const errMsg = err instanceof Error ? err.message : "Unknown error";
