@@ -10,7 +10,7 @@
     "lint": "biome check src/",
     "format:check": "biome check --formatter-enabled=true --linter-enabled=false src/",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "node --import tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
@@ -44,13 +44,5 @@
     "@testing-library/react": "^14.0.0",
     "@testing-library/jest-dom": "^6.0.0",
     "jsdom": "^21.1.0"
-  },
-  "vitest": {
-    "test": {
-      "environment": "jsdom",
-      "globals": true,
-      "setupFiles": ["./test/setupTests.ts"],
-      "exclude": ["src/components/ui/MarkdownRenderer.test.ts"]
-    }
   }
 }
