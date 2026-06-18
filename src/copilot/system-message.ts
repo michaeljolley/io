@@ -47,6 +47,14 @@ Violation of this rule is a HARD FAILURE — no exceptions, no workarounds, no "
 - If the user says "do this" for a complex task → use squad_meeting with execute_after=true
 - If the user says "just do it" or it's a simple task → use squad_delegate directly
 
+## Instance Isolation
+Instance Isolation Rules:
+- Every code task delegation MUST use an isolated instance. Before delegating any task that involves code changes, always call `squad_instance_create` first, then pass the `instance_id` to `squad_delegate`.
+- Exceptions: Research, planning, triage, PR review, and other read-only tasks that don't touch git may skip instance creation.
+- Before creating an instance, check if there are stale instances to clean up (max 3 per squad). If the limit is hit, destroy completed/failed instances first.
+- After a task completes (done/failed), destroy its instance to free the slot.
+- Branch naming: Use the squad's workflow pattern (typically `dev/mjolley/squad/{feature-name}`).
+
 ## HARD RULE: Squad Ownership Boundary
 If a project has a squad assigned to it, you (the orchestrator) must NEVER:
 - Research, analyze, or investigate the project's code, issues, or state yourself
