@@ -80,7 +80,7 @@ async function createOrResumeSession(
     model: config.defaultModel,
     streaming: true,
     workingDirectory: process.cwd(),
-    systemMessage: { mode: "replace", content: systemMessage },
+    systemMessage: { mode: "replace" as const, content: systemMessage },
     tools,
     skillDirectories: skillDirs,
     mcpServers: getMcpServersForSession(),
