@@ -163,14 +163,14 @@ export default function SquadsView() {
             <h1 className="text-3xl text-zinc-100 leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
               Squads
             </h1>
-            <p className="mt-2 text-[11px] font-mono text-zinc-500">
+            <p className="mt-2 text-[14px] font-mono text-zinc-500">
               {data.squads.length} squad{data.squads.length === 1 ? "" : "s"} loaded.
             </p>
           </div>
         </header>
 
         {loading ? (
-          <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center text-[11px] font-mono text-zinc-500">
+          <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center text-[14px] font-mono text-zinc-500">
             Loading squads…
           </div>
         ) : data.squads.length === 0 ? (
@@ -179,7 +179,7 @@ export default function SquadsView() {
               <IoMark height={28} />
             </div>
             <p className="text-zinc-100 text-lg">No existing squads</p>
-            <p className="text-[11px] font-mono text-zinc-500 mt-2">
+            <p className="text-[14px] font-mono text-zinc-500 mt-2">
               Ask IO to create a squad to see them listed here.
             </p>
           </div>
@@ -222,14 +222,14 @@ export default function SquadsView() {
                       >
                         {squad.name}
                       </h2>
-                      <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+                      <p className="text-[14px] font-mono uppercase tracking-[0.18em] text-zinc-500">
                         {squad.universe}
                       </p>
                     </div>
                     <Chip variant={statusToVariant(status)}>{status}</Chip>
                   </div>
 
-                  <div className="mt-1 flex justify-between text-[11px] font-mono text-zinc-400">
+                  <div className="mt-1 flex justify-between text-[14px] font-mono text-zinc-400">
                     <div className="flex items-center gap-2 text-zinc-200">
                       <Users className="h-3.5 w-3.5" style={{ color }} /> {squadAgents.length} agents
                     </div>
@@ -239,7 +239,7 @@ export default function SquadsView() {
                     </div>
                   </div>
 
-                  <div className="text-[11px] font-mono">
+                  <div className="text-[14px] font-mono">
                     {squad.repo_url ? (
                       <a
                         href={squad.repo_url}
@@ -258,7 +258,7 @@ export default function SquadsView() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-white/[0.06]">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500 mb-3">
+                    <p className="text-[14px] font-mono uppercase tracking-[0.18em] text-zinc-500 mb-3">
                       Recent Objectives
                     </p>
                     <div className="space-y-2">
@@ -268,10 +268,10 @@ export default function SquadsView() {
                           return (
                             <div key={task.id} className="flex items-center gap-2.5 text-sm text-zinc-200">
                               <ActivityIcon status={taskStatus} />
-                              <span className="truncate flex-1 text-[11px] font-mono">
+                              <span className="truncate flex-1 text-[14px] font-mono">
                                 {snippetDescription(task.description)}
                               </span>
-                              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-500 shrink-0">
+                              <span className="inline-flex items-center gap-1 text-[13px] font-mono text-zinc-500 shrink-0">
                                 <StatusDot status={taskStatus} />
                                 {task.status}
                               </span>
@@ -279,7 +279,7 @@ export default function SquadsView() {
                           );
                         })
                       ) : (
-                        <p className="text-[11px] font-mono text-zinc-600">No objectives yet.</p>
+                        <p className="text-[14px] font-mono text-zinc-600">No objectives yet.</p>
                       )}
                     </div>
                   </div>

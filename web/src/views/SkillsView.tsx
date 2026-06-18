@@ -35,7 +35,7 @@ interface SelectedSkill {
   slug: string;
 }
 
-const SECTION_HEADER = "text-[10px] font-mono text-zinc-700 uppercase tracking-wider";
+const SECTION_HEADER = "text-[13px] font-mono text-zinc-700 uppercase tracking-wider";
 
 function skillKey(source: SkillSource, slug: string): string {
   return `${source}:${slug}`;
@@ -347,7 +347,7 @@ export default function SkillsView() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search skills..."
-                className={`w-full pl-9 bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30`}
+                className={`w-full pl-9 bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30`}
               />
             </div>
 
@@ -364,7 +364,7 @@ export default function SkillsView() {
                   <button
                     key={tabKey}
                     onClick={() => setSource(tabKey)}
-                    className={`w-full text-left cursor-pointer px-2.5 py-1.5 rounded-lg text-[11px] font-mono transition-colors ${
+                    className={`w-full text-left cursor-pointer px-2.5 py-1.5 rounded-lg text-[14px] font-mono transition-colors ${
                       active ? "text-[#66FCF1]" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
                     }`}
                     style={active ? { background: "rgba(102,252,241,0.10)" } : undefined}
@@ -378,15 +378,15 @@ export default function SkillsView() {
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {pageError && (
-              <div className="border-b border-red-500/15 bg-red-500/6 px-3 py-2 text-[11px] font-mono text-red-300">
+              <div className="border-b border-red-500/15 bg-red-500/6 px-3 py-2 text-[14px] font-mono text-red-300">
                 {pageError}
               </div>
             )}
 
             {(loadingInstalled || loadingRemote) && visibleSkills.length === 0 ? (
-              <div className="px-4 py-5 text-[11px] font-mono text-zinc-600">Loading skills…</div>
+              <div className="px-4 py-5 text-[14px] font-mono text-zinc-600">Loading skills…</div>
             ) : visibleSkills.length === 0 ? (
-              <div className="px-4 py-5 text-[11px] font-mono text-zinc-700">No skills found.</div>
+              <div className="px-4 py-5 text-[14px] font-mono text-zinc-700">No skills found.</div>
             ) : (
               visibleSkills.map((skill) => {
                 const active = selected?.source === source && selected.slug === skill.slug;
@@ -402,9 +402,9 @@ export default function SkillsView() {
                     }`}
                     style={active ? { background: "var(--base-dark-teal)" } : undefined}
                   >
-                    <div className="truncate text-[11px] font-mono text-zinc-200">{skill.name || skill.slug}</div>
+                    <div className="truncate text-[14px] font-mono text-zinc-200">{skill.name || skill.slug}</div>
                     <div
-                      className="mt-1 text-[10px] leading-relaxed text-zinc-600 line-clamp-2"
+                      className="mt-1 text-[13px] leading-relaxed text-zinc-600 line-clamp-2"
                       style={active ? { color: "var(--base-gray)" } : undefined}
                     >
                       {skill.description
@@ -414,7 +414,7 @@ export default function SkillsView() {
                         : "No description"}
                     </div>
                     <div
-                      className="mt-2 truncate text-[9px] font-mono text-zinc-700"
+                      className="mt-2 truncate text-[11px] font-mono text-zinc-700"
                       style={active ? { color: "var(--base-gray)" } : undefined}
                     >
                       {getListMeta(skill)}
@@ -500,9 +500,9 @@ export default function SkillsView() {
 
               <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-6">
                 {selectedDetail?.loading ? (
-                  <div className="text-[11px] font-mono text-zinc-600">Loading skill detail…</div>
+                  <div className="text-[14px] font-mono text-zinc-600">Loading skill detail…</div>
                 ) : selectedDetail?.error ? (
-                  <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[11px] font-mono text-red-300">
+                  <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[14px] font-mono text-red-300">
                     {selectedDetail.error}
                   </div>
                 ) : editMode ? (
@@ -511,7 +511,7 @@ export default function SkillsView() {
                     <textarea
                       value={editContent}
                       onChange={(event) => setEditContent(event.target.value)}
-                      className="min-h-[440px] w-full resize-y rounded-2xl border border-white/[0.06] bg-[#181818] px-4 py-3 font-mono text-[11px] text-zinc-300 placeholder:text-zinc-700 focus:border-[#66FCF1]/30 focus:outline-none"
+                      className="min-h-[440px] w-full resize-y rounded-2xl border border-white/[0.06] bg-[#181818] px-4 py-3 font-mono text-[14px] text-zinc-300 placeholder:text-zinc-700 focus:border-[#66FCF1]/30 focus:outline-none"
                     />
                     <div className="flex flex-wrap gap-2">
                       <PrimaryBtn onClick={() => void saveEditedContent()} className="px-3 py-1.5">
@@ -534,7 +534,7 @@ export default function SkillsView() {
                           v !== "" &&
                           !(Array.isArray(v) && v.length === 0),
                       ).length === 0 ? (
-                        <div className="mt-4 text-[11px] font-mono text-zinc-700">No front matter metadata found.</div>
+                        <div className="mt-4 text-[14px] font-mono text-zinc-700">No front matter metadata found.</div>
                       ) : (
                         <div className="mt-4 space-y-0">
                           {Object.entries(selectedFrontmatter)
@@ -550,8 +550,8 @@ export default function SkillsView() {
                                 key={key}
                                 className="grid grid-cols-[200px_1fr] gap-2 border-b border-white/[0.04] py-3 first:pt-0 last:border-b-0 last:pb-0"
                               >
-                                <span className="text-[11px] font-mono text-zinc-500">{frontmatterLabel(key)}</span>
-                                <span className="text-[11px] font-mono text-zinc-300 break-words min-w-0 text-left">
+                                <span className="text-[14px] font-mono text-zinc-500">{frontmatterLabel(key)}</span>
+                                <span className="text-[14px] font-mono text-zinc-300 break-words min-w-0 text-left">
                                   {frontmatterValue(value)}
                                 </span>
                               </div>
@@ -565,7 +565,7 @@ export default function SkillsView() {
                       {selectedBody ? (
                         <MarkdownRenderer content={selectedBody} className="mt-4" />
                       ) : (
-                        <div className="mt-4 text-[11px] font-mono text-zinc-700">This skill has no markdown body.</div>
+                        <div className="mt-4 text-[14px] font-mono text-zinc-700">This skill has no markdown body.</div>
                       )}
                     </div>
                   </>

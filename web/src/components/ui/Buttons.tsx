@@ -12,7 +12,7 @@ export function PrimaryBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 font-mono text-[11px] rounded-lg active:opacity-80 cursor-pointer primary-btn ${className}`}
+      className={`flex items-center gap-1.5 font-mono text-[14px] rounded-lg active:opacity-80 cursor-pointer primary-btn ${className}`}
     >
       {children}
     </button>
@@ -31,7 +31,7 @@ export function SecondaryBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[11px] text-zinc-400 bg-[#252525] hover:bg-[#2e2e2e] hover:text-zinc-100 transition-colors ${className}`}
+      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[14px] text-zinc-400 bg-[#252525] hover:bg-[#2e2e2e] hover:text-zinc-100 transition-colors ${className}`}
     >
       {children}
     </button>
@@ -50,7 +50,7 @@ export function DangerBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[11px] text-zinc-400 bg-[#252525] hover:bg-red-500/10 hover:text-red-400 transition-colors ${className}`}
+      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[14px] text-zinc-400 bg-[#252525] hover:bg-red-500/10 hover:text-red-400 transition-colors ${className}`}
     >
       {children}
     </button>
@@ -69,7 +69,7 @@ export function WarnBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[11px] text-zinc-400 bg-[#252525] hover:bg-amber-500/10 hover:text-amber-400 transition-colors ${className}`}
+      className={`flex items-center cursor-pointer gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[14px] text-zinc-400 bg-[#252525] hover:bg-amber-500/10 hover:text-amber-400 transition-colors ${className}`}
     >
       {children}
     </button>

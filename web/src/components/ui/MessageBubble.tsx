@@ -25,7 +25,7 @@ export function MessageBubble({ msg }: { msg: ChatMessage }) {
         className={`rounded-xl px-3 py-2 text-xs leading-relaxed border ${msg.role === "user" ? "text-[#1F2833]  border-[#66FCF1]/30  rounded-tr-sm" : "bg-[#282828] border-white/[0.06] text-zinc-200 rounded-tl-sm"}`}
         style={msg.role === "user" ? { background: "var(--base-dark-teal)", color: "var(--base-teal)" } : undefined}
       >
-        <MarkdownRenderer content={msg.content} className="max-w-none text-[11px] leading-relaxed text-inherit" />
+        <MarkdownRenderer content={msg.content} className="max-w-none text-[14px] leading-relaxed text-inherit" />
       </div>
     </div>
   );

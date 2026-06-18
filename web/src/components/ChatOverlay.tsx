@@ -110,10 +110,10 @@ export function ChatOverlay() {
                   <FileText className="w-3 h-3 text-zinc-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-mono text-zinc-300 truncate leading-tight">
+                  <p className="text-[13px] font-mono text-zinc-300 truncate leading-tight">
                     {pendingAttachments[0].name}
                   </p>
-                  <p className="text-[9px] font-mono text-zinc-600 leading-tight">
+                  <p className="text-[11px] font-mono text-zinc-600 leading-tight">
                     {formatAttachmentSize(pendingAttachments[0].size)}
                   </p>
                 </div>

@@ -43,7 +43,7 @@ export default function LoginView() {
         <div className="flex flex-col items-center mb-8 gap-3">
           <IoMark height={52} />
           <div className="text-center">
-            <p className="text-[11px] font-mono text-zinc-600 tracking-widest uppercase mt-1">
+            <p className="text-[14px] font-mono text-zinc-600 tracking-widest uppercase mt-1">
               personal ai orchestrator
             </p>
           </div>
@@ -51,12 +51,12 @@ export default function LoginView() {
 
         <form onSubmit={handleSubmit} className="glass-card border border-white/[0.07] rounded-2xl p-6 space-y-4">
           {error && (
-            <div className="text-[11px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+            <div className="text-[14px] font-mono text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
               {error}
             </div>
           )}
           <div className="space-y-1">
-            <label className="text-[11px] font-mono text-zinc-500 block">Email</label>
+            <label className="text-[14px] font-mono text-zinc-500 block">Email</label>
             <input
               type="email"
               value={email}
@@ -66,7 +66,7 @@ export default function LoginView() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-mono text-zinc-500 block">Password</label>
+            <label className="text-[14px] font-mono text-zinc-500 block">Password</label>
             <input
               type="password"
               value={password}

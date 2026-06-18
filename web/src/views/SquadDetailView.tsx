@@ -429,11 +429,11 @@ export default function SquadDetailView() {
   };
 
   if (loading) {
-    return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading squad…</div>;
+    return <div className="p-6 text-[14px] font-mono text-zinc-500">Loading squad…</div>;
   }
 
   if (!squad) {
-    return <div className="p-6 text-[11px] font-mono text-zinc-500">Squad not found.</div>;
+    return <div className="p-6 text-[14px] font-mono text-zinc-500">Squad not found.</div>;
   }
 
   const tabs: TabKey[] = ["agents", "instances", "schedules", "history"];
@@ -460,7 +460,7 @@ export default function SquadDetailView() {
               setActivityEvents([]);
               setSelectedAgents(new Set());
             }}
-            className="flex items-center gap-1.5 text-[11px] text-zinc-600 hover:text-zinc-300 font-mono transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-[14px] text-zinc-600 hover:text-zinc-300 font-mono transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-3.5 h-3.5" /> Back to {squad.name}
           </button>
@@ -474,11 +474,11 @@ export default function SquadDetailView() {
                 {selectedHistoryItem?.title || "Objective"}
               </h2>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-[11px] text-zinc-600 font-mono">
+                <span className="text-[14px] text-zinc-600 font-mono">
                   {formatTimestamp(selectedHistoryItem?.timestamp)}
                 </span>
                 {selectedHistoryItem?.duration && (
-                  <span className="text-[11px] text-zinc-700 font-mono flex items-center gap-1">
+                  <span className="text-[14px] text-zinc-700 font-mono flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {selectedHistoryItem.duration}
                   </span>
@@ -509,7 +509,7 @@ export default function SquadDetailView() {
                     }}
                   >
                     <Bot className="w-3 h-3" style={{ color: isActive ? color : "#71717a" }} />
-                    <span className="text-[11px] font-mono" style={{ color: isActive ? color : "#71717a" }}>
+                    <span className="text-[14px] font-mono" style={{ color: isActive ? color : "#71717a" }}>
                       {name}
                     </span>
                   </button>
@@ -518,7 +518,7 @@ export default function SquadDetailView() {
               {selectedAgents.size > 0 && (
                 <button
                   onClick={() => setSelectedAgents(new Set())}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/[0.1] text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/[0.1] text-[14px] font-mono text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
                 >
                   Show all
                 </button>
@@ -528,9 +528,9 @@ export default function SquadDetailView() {
 
           {/* Unified timeline */}
           {activityLoading ? (
-            <p className="text-[11px] font-mono text-zinc-500 py-10 text-center">Loading activity…</p>
+            <p className="text-[14px] font-mono text-zinc-500 py-10 text-center">Loading activity…</p>
           ) : filteredTimelineEvents.length === 0 ? (
-            <p className="text-[11px] font-mono text-zinc-500 py-10 text-center">No events recorded for this task.</p>
+            <p className="text-[14px] font-mono text-zinc-500 py-10 text-center">No events recorded for this task.</p>
           ) : (
             <div className="relative pl-10">
               <div className="absolute left-[15px] top-0 bottom-0 w-px bg-white/[0.06]" />
@@ -557,18 +557,18 @@ export default function SquadDetailView() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <div className="flex items-center gap-1">
                               <Bot className="w-3 h-3" style={{ color }} />
-                              <span className="text-[10px] font-mono" style={{ color }}>
+                              <span className="text-[13px] font-mono" style={{ color }}>
                                 {name}
                               </span>
                               {event.model && (
-                                <span className="text-[9px] font-mono text-zinc-600 bg-white/[0.04] px-1.5 py-0.5 rounded">
+                                <span className="text-[11px] font-mono text-zinc-600 bg-white/[0.04] px-1.5 py-0.5 rounded">
                                   {event.model}
                                 </span>
                               )}
                             </div>
-                            <span className="text-zinc-700 text-[10px]">·</span>
+                            <span className="text-zinc-700 text-[13px]">·</span>
                             <div className="flex min-w-0 max-w-full items-center gap-1.5 overflow-x-auto whitespace-nowrap">
-                              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 whitespace-nowrap">
+                              <span className="text-[13px] font-mono uppercase tracking-wider text-zinc-500 whitespace-nowrap">
                                 {meta.label}
                               </span>
                               {isCode &&
@@ -576,12 +576,12 @@ export default function SquadDetailView() {
                                   const { toolName, success } = parseToolEventPayload(event);
                                   return (
                                     <>
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08] whitespace-nowrap">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-mono bg-white/[0.06] text-zinc-300 border border-white/[0.08] whitespace-nowrap">
                                         {toolName}
                                       </span>
                                       {success !== undefined && (
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono whitespace-nowrap ${
+                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[13px] font-mono whitespace-nowrap ${
                                             success
                                               ? "bg-green-500/10 text-green-400 border border-green-500/20"
                                               : "bg-red-500/10 text-red-400 border border-red-500/20"
@@ -595,7 +595,7 @@ export default function SquadDetailView() {
                                 })()}
                             </div>
                           </div>
-                          <span className="text-[10px] font-mono text-zinc-700 flex-shrink-0 ml-2">
+                          <span className="text-[13px] font-mono text-zinc-700 flex-shrink-0 ml-2">
                             {formatTimestamp(event.created_at)}
                           </span>
                         </div>
@@ -605,7 +605,7 @@ export default function SquadDetailView() {
                             return (
                               <div className="mt-1">
                                 {body && (
-                                  <pre className="mt-2 text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
+                                  <pre className="mt-2 text-[14px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed overflow-x-auto rounded-lg p-2 bg-black/20">
                                     {body}
                                   </pre>
                                 )}
@@ -615,7 +615,7 @@ export default function SquadDetailView() {
                         ) : (
                           <MarkdownRenderer
                             content={event.summary || event.payload || ""}
-                            className="text-[12px] [&_pre]:text-[10px]"
+                            className="text-[15px] [&_pre]:text-[13px]"
                           />
                         )}
                       </div>
@@ -647,7 +647,7 @@ export default function SquadDetailView() {
               >
                 {squad.name} <Chip variant={statusToVariant(overallStatus)}>{overallStatus}</Chip>
               </h1>
-              <div className="flex flex-col flex-wrap items-start gap-2 text-[11px] font-mono">
+              <div className="flex flex-col flex-wrap items-start gap-2 text-[14px] font-mono">
                 <p className="muted">{squad.universe}</p>
                 <p>
                   {squad.repo_url && (
@@ -669,7 +669,7 @@ export default function SquadDetailView() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0 xl:min-w-[360px]">
               <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-3">
                 <p
-                  className="text-[11px] font-mono uppercase tracking-wide text-zinc-500"
+                  className="text-[14px] font-mono uppercase tracking-wide text-zinc-500"
                   style={{ color: squad.color || "#66FCF1" }}
                 >
                   Agents
@@ -678,7 +678,7 @@ export default function SquadDetailView() {
               </div>
               <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-3">
                 <p
-                  className="text-[11px] font-mono uppercase tracking-wide text-zinc-500"
+                  className="text-[14px] font-mono uppercase tracking-wide text-zinc-500"
                   style={{ color: squad.color || "#66FCF1" }}
                 >
                   Instances
@@ -687,7 +687,7 @@ export default function SquadDetailView() {
               </div>
               <div className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-3">
                 <p
-                  className="text-[11px] font-mono uppercase tracking-wide text-zinc-500"
+                  className="text-[14px] font-mono uppercase tracking-wide text-zinc-500"
                   style={{ color: squad.color || "#66FCF1" }}
                 >
                   Tasks
@@ -703,7 +703,7 @@ export default function SquadDetailView() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`cursor-pointer px-2 pb-2 text-[11px] border-b font-mono uppercase tracking-[0.18em] transition-color ${activeTab !== tab ? "hover:text-zinc-300" : ""}`}
+              className={`cursor-pointer px-2 pb-2 text-[14px] border-b font-mono uppercase tracking-[0.18em] transition-color ${activeTab !== tab ? "hover:text-zinc-300" : ""}`}
               style={{
                 borderColor: activeTab === tab ? squad.color : "transparent",
                 color: activeTab === tab ? squad.color : "var(--base-gray)",
@@ -747,18 +747,18 @@ export default function SquadDetailView() {
                             <div className="flex items-center gap-1 flex-wrap">
                               <h3 className="text-sm truncate">{agent.character_name}</h3>
                             </div>
-                            <p className="text-[9px] font-mono uppercase tracking-[0.18em] text-zinc-500">
+                            <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-zinc-500">
                               {agent.role_title?.trim() || "Agent"}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 text-[10px] font-mono text-zinc-500 flex-shrink-0">
+                        <div className="flex items-center gap-1 text-[13px] font-mono text-zinc-500 flex-shrink-0">
                           <Chip variant={statusToVariant(status)}>{agent.status || "idle"}</Chip>
                         </div>
                       </div>
                       <div className="min-w-0 flex">
-                        <p className="mt-1 text-[11px] text-zinc-400 line-clamp-2">
+                        <p className="mt-1 text-[14px] text-zinc-400 line-clamp-2">
                           {currentTask?.description ?? "No active task assigned."}
                         </p>
                       </div>
@@ -793,7 +793,7 @@ export default function SquadDetailView() {
             {instances.length === 0 ? (
               <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center col-span-full">
                 <p className="text-zinc-100 mt-4">No active instances</p>
-                <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                <p className="text-[14px] font-mono text-zinc-500 mt-2">
                   Ask IO to spin up an instance to see it here.
                 </p>
               </div>
@@ -802,7 +802,7 @@ export default function SquadDetailView() {
                 const task = currentTaskByInstance[instance.id];
                 return (
                   <div key={instance.id} className="glass-card border border-white/[0.07] rounded-2xl p-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-3 text-[11px] font-mono">
+                    <div className="grid grid-cols-2 gap-3 text-[14px] font-mono">
                       <div>
                         <p className="text-zinc-500 uppercase tracking-wide">ID</p>
                         <p className="text-zinc-200 mt-1 break-all">{instance.id}</p>
@@ -851,7 +851,7 @@ export default function SquadDetailView() {
             {schedules.length === 0 ? (
               <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center col-span-full">
                 <p className="text-zinc-100 mt-4">No schedules configured</p>
-                <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                <p className="text-[14px] font-mono text-zinc-500 mt-2">
                   Scheduled automations for this squad will appear here.
                 </p>
               </div>
@@ -866,20 +866,20 @@ export default function SquadDetailView() {
                       <Chip variant={schedule.enabled ? "success" : "muted"}>
                         {schedule.enabled ? "enabled" : "paused"}
                       </Chip>
-                      <span className="text-[11px] font-mono text-zinc-500">{schedule.cron}</span>
+                      <span className="text-[14px] font-mono text-zinc-500">{schedule.cron}</span>
                     </div>
                     <div>
-                      <p className="text-[11px] font-mono uppercase tracking-wide text-zinc-500">Agenda</p>
+                      <p className="text-[14px] font-mono uppercase tracking-wide text-zinc-500">Agenda</p>
                       <p className="text-zinc-200 mt-1">{schedule.agenda || "No agenda supplied."}</p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-mono uppercase tracking-wide text-zinc-500">Prompt</p>
+                      <p className="text-[14px] font-mono uppercase tracking-wide text-zinc-500">Prompt</p>
                       <p className="text-zinc-400 mt-1 whitespace-pre-wrap">
                         {schedule.prompt || "No prompt configured."}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-500">
+                  <div className="flex items-center gap-3 text-[14px] font-mono text-zinc-500">
                     <span>Last run {formatTimestamp(schedule.last_run)}</span>
                     <Toggle checked={Boolean(schedule.enabled)} onChange={() => void toggleSchedule(schedule)} />
                   </div>
@@ -894,7 +894,7 @@ export default function SquadDetailView() {
             {historyItems.length === 0 ? (
               <div className="glass-card border border-white/[0.07] rounded-2xl p-10 text-center col-span-full">
                 <p className="text-zinc-100 mt-4">No objectives yet</p>
-                <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                <p className="text-[14px] font-mono text-zinc-500 mt-2">
                   Delegated work and completed objectives will appear here.
                 </p>
               </div>
@@ -907,14 +907,14 @@ export default function SquadDetailView() {
                 >
                   <div className="flex-shrink-0">{activityStatus(item.status)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-zinc-200 truncate">{item.title}</p>
+                    <p className="text-[15px] text-zinc-200 truncate">{item.title}</p>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] text-zinc-700 font-mono">{formatTimestamp(item.timestamp)}</span>
-                      <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
+                      <span className="text-[13px] text-zinc-700 font-mono">{formatTimestamp(item.timestamp)}</span>
+                      <span className="text-[13px] text-zinc-700 font-mono flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" />
                         {item.duration}
                       </span>
-                      <span className="text-[10px] text-zinc-700 font-mono flex items-center gap-1">
+                      <span className="text-[13px] text-zinc-700 font-mono flex items-center gap-1">
                         <Bot className="w-2.5 h-2.5" />
                         {item.agentCount} agent{item.agentCount !== 1 ? "s" : ""}
                       </span>

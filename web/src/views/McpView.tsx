@@ -34,8 +34,8 @@ interface ServerDraft {
 
 const GLASS_CARD = "glass-card border border-white/[0.07] rounded-2xl";
 const INPUT_CLASS =
-  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
-const SECTION_HEADER = "text-[10px] font-mono text-zinc-700 uppercase tracking-wider";
+  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
+const SECTION_HEADER = "text-[13px] font-mono text-zinc-700 uppercase tracking-wider";
 const MODAL_BACKDROP = {
   background: "rgba(0,0,0,0.55)",
   backdropFilter: "blur(4px)",
@@ -301,7 +301,7 @@ export default function McpView() {
           <h1 className="text-4xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             MCP Servers
           </h1>
-          <p className="mt-2 text-[11px] font-mono text-zinc-600">{servers.length} configured servers</p>
+          <p className="mt-2 text-[14px] font-mono text-zinc-600">{servers.length} configured servers</p>
         </div>
         <PrimaryBtn onClick={() => setShowModal(true)} className="px-3 py-1.5">
           <Plus className="h-3.5 w-3.5" />
@@ -310,16 +310,16 @@ export default function McpView() {
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[11px] font-mono text-red-300">
+        <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[14px] font-mono text-red-300">
           {error}
         </div>
       )}
 
       <div className="space-y-2">
         {loading ? (
-          <div className={`${GLASS_CARD} px-4 py-5 text-[11px] font-mono text-zinc-600`}>Loading MCP servers…</div>
+          <div className={`${GLASS_CARD} px-4 py-5 text-[14px] font-mono text-zinc-600`}>Loading MCP servers…</div>
         ) : servers.length === 0 ? (
-          <div className={`${GLASS_CARD} px-4 py-5 text-[11px] font-mono text-zinc-700`}>
+          <div className={`${GLASS_CARD} px-4 py-5 text-[14px] font-mono text-zinc-700`}>
             No MCP servers configured.
           </div>
         ) : (
@@ -343,12 +343,12 @@ export default function McpView() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-sm text-zinc-100">{server.name}</span>
                         <Chip variant={server.type === "http" ? "info" : "muted"}>{server.type}</Chip>
-                        <span className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-500">
+                        <span className="flex items-center gap-1.5 text-[14px] font-mono text-zinc-500">
                           <StatusDot status={server.enabled ? "connected" : "disconnected"} />
                           {statusText}
                         </span>
                       </div>
-                      <div className="mt-1 truncate text-[11px] font-mono text-zinc-600">
+                      <div className="mt-1 truncate text-[14px] font-mono text-zinc-600">
                         {server.type === "stdio"
                           ? [server.command, ...(server.args ?? [])].filter(Boolean).join(" ") ||
                             "No command configured"
@@ -376,7 +376,7 @@ export default function McpView() {
                     <div className={SECTION_HEADER}>Tools</div>
                     <div className="mt-3 space-y-2">
                       {server.tools.length === 0 ? (
-                        <div className="rounded-xl border border-white/[0.05] bg-black/10 px-3 py-3 text-[11px] font-mono text-zinc-700">
+                        <div className="rounded-xl border border-white/[0.05] bg-black/10 px-3 py-3 text-[14px] font-mono text-zinc-700">
                           No tools reported by this server yet.
                         </div>
                       ) : (
@@ -386,8 +386,8 @@ export default function McpView() {
                             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.05] bg-black/10 px-3 py-3"
                           >
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-[11px] font-mono text-zinc-200">{tool.name}</div>
-                              <div className="mt-1 text-[10px] text-zinc-600">
+                              <div className="truncate text-[14px] font-mono text-zinc-200">{tool.name}</div>
+                              <div className="mt-1 text-[13px] text-zinc-600">
                                 {tool.description || "No description provided."}
                               </div>
                             </div>
@@ -417,7 +417,7 @@ export default function McpView() {
                 <h2 className="text-3xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                   Add Server
                 </h2>
-                <p className="mt-2 text-[11px] font-mono text-zinc-600">Connect a new MCP stdio or HTTP endpoint.</p>
+                <p className="mt-2 text-[14px] font-mono text-zinc-600">Connect a new MCP stdio or HTTP endpoint.</p>
               </div>
               <SecondaryBtn onClick={closeModal} className="px-3 py-1.5">
                 Close
@@ -444,7 +444,7 @@ export default function McpView() {
                       <button
                         key={type}
                         onClick={() => setDraft((current) => ({ ...current, type }))}
-                        className={`rounded-xl border px-3 py-2 text-left text-[11px] font-mono transition-colors ${
+                        className={`rounded-xl border px-3 py-2 text-left text-[14px] font-mono transition-colors ${
                           active
                             ? "border-[#66FCF1]/30 text-[#66FCF1]"
                             : "border-white/[0.06] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
