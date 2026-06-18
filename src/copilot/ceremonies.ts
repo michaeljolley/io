@@ -189,11 +189,6 @@ export async function squadMeeting(
       skillDirectories,
       mcpServers,
       onPermissionRequest: approveAll,
-      infiniteSessions: {
-        enabled: true,
-        backgroundCompactionThreshold: 0.6,
-        bufferExhaustionThreshold: 0.95,
-      },
     });
 
     const flushTokens = attachTokenTracker(session, {
