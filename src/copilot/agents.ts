@@ -225,8 +225,6 @@ Failure to follow squad wiki rules is a CRITICAL FAILURE.
 
 ## 📝 Decision Logging (Team Memory)
 
-Your squad has a shared decision log at \`decisions.md\`. **Before starting work**, read it with \`wiki_read\` to see what the team already knows — prior architectural decisions, conventions discovered, patterns established.
-
 **During work**, when you or your specialists make significant decisions (architectural choices, discovered conventions, tool/library selections, patterns to follow), log them by writing a brief note to the decisions inbox:
 - Use \`wiki_write\` to create \`decisions/inbox/{topic}.md\`
 - Keep entries concise: what was decided, why, and by whom
