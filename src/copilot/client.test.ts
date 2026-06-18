@@ -31,7 +31,7 @@ test("getCopilotClientOptions forwards configured github token from config", () 
 
   try {
     const options = getCopilotClientOptions();
-    assert.deepEqual(options, { githubToken: "test-github-token" });
+    assert.deepEqual(options, { gitHubToken: "test-github-token" });
   } finally {
     resetGhTokenCache();
     resetConfigCache();
