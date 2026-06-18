@@ -278,11 +278,6 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 			skillDirectories: skillDirs,
 			mcpServers,
 			onPermissionRequest: approveAll,
-			infiniteSessions: {
-				enabled: true,
-				backgroundCompactionThreshold: 0.6,
-				bufferExhaustionThreshold: 0.95,
-			},
 		});
 
 		// Register session so it can be stopped externally
