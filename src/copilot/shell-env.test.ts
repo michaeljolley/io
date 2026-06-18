@@ -1,3 +1,4 @@
+import { describe, it } from "node:test";
 import { buildShellEnv } from "./shell-env.js";
 import { PATHS } from "../paths.js";
 import { tmpdir } from "node:os";
