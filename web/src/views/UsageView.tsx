@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SquadChip } from "@/components/ui";
 import { uuid } from "@/lib/uuid";
 import { useAuthStore } from "@/stores/auth";
+import { formatNumber } from "@/lib/formatNumber";
 
 interface UsageSummary {
   totalTokens: number;
@@ -204,8 +205,6 @@ export default function UsageView() {
       totalOutputTokens: summary?.totalOutputTokens ?? 0,
     };
   }, [daily, squads, summary]);
-
-  const formatNumber = (value: number) => value.toLocaleString();
 
   if (loading) {
     return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading usage…</div>;
