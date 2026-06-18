@@ -11,30 +11,31 @@ import { addAuditEntry } from "../store/audit-log.js";
 import { updateAgentStatus, type Agent } from "../store/squads.js";
 import { touchInstanceActivity } from "../store/instances.js";
 import type { Squad } from "../store/squads.js";
+import { sendAndWaitWithoutDuplicateToolCallIds } from "./tool-call-id-guard.js";
 
 export interface SpecialistTaskRequest {
-  agent: Agent;
-  squad: Squad;
-  squadSlug: string;
-  squadId: string;
-  task: string;
-  workDir: string;
-  instanceId?: string;
-  parentTaskId: string;
+	agent: Agent;
+	squad: Squad;
+	squadSlug: string;
+	squadId: string;
+	task: string;
+	workDir: string;
+	instanceId?: string;
+	parentTaskId: string;
 }
 
 export interface SpecialistTaskResult {
-  agentName: string;
-  role: string;
-  success: boolean;
-  result: string;
+	agentName: string;
+	role: string;
+	success: boolean;
+	result: string;
 }
 
 /**
  * Build the system message for a specialist agent session.
  */
 function buildSpecialistSystemMessage(agent: Agent, squad: Squad): string {
-  return `# Squad Specialist: ${agent.character_name}
+	return `# Squad Specialist: ${agent.character_name}
 
 ## 🚨 Security Rule
 NEVER expose secrets (API keys, tokens, passwords, connection strings, private config) in any public-facing content (PRs, issues, commits, logs, wiki, feed). Use \`<REDACTED>\` as placeholder. Violation = hard failure.
@@ -77,165 +78,207 @@ ${agent.persona ? `## Personality:\n${agent.persona}` : ""}
  * Run a specialist agent session independently.
  * Creates a full Copilot SDK session with tools, executes the task, returns the result.
  */
-export async function runSpecialistSession(request: SpecialistTaskRequest): Promise<SpecialistTaskResult> {
-  const { agent, squad, squadSlug, squadId, task, workDir, instanceId, parentTaskId } = request;
+export async function runSpecialistSession(
+	request: SpecialistTaskRequest,
+): Promise<SpecialistTaskResult> {
+	const {
+		agent,
+		squad,
+		squadSlug,
+		squadId,
+		task,
+		workDir,
+		instanceId,
+		parentTaskId,
+	} = request;
 
-  // Select model based on task complexity
-  const tier = classifyComplexity(task);
-  const model = await selectModel(tier);
+	// Select model based on task complexity
+	const tier = classifyComplexity(task);
+	const model = await selectModel(tier);
 
-  const systemMessage = buildSpecialistSystemMessage(agent, squad);
+	const systemMessage = buildSpecialistSystemMessage(agent, squad);
 
-  // Update agent status
-  updateAgentStatus(agent.id, "working");
+	// Update agent status
+	updateAgentStatus(agent.id, "working");
 
-  // Touch instance activity
-  if (instanceId) {
-    touchInstanceActivity(instanceId);
-  }
+	// Touch instance activity
+	if (instanceId) {
+		touchInstanceActivity(instanceId);
+	}
 
-  // Audit: specialist task started
-  addAuditEntry(
-    "specialist_task_started",
-    `Specialist task delegated to ${agent.character_name} (${agent.role_title})`,
-    { task: task.slice(0, 500), model, parentTaskId },
-    { squad_id: squadId, agent_id: agent.id }
-  );
+	// Audit: specialist task started
+	addAuditEntry(
+		"specialist_task_started",
+		`Specialist task delegated to ${agent.character_name} (${agent.role_title})`,
+		{ task: task.slice(0, 500), model, parentTaskId },
+		{ squad_id: squadId, agent_id: agent.id },
+	);
 
-  addAgentEvent(parentTaskId, "status", `Sub-task delegated to specialist ${agent.character_name} (${agent.role_title})`, {
-    agent: agent.character_name,
-    role: agent.role_title,
-    task: task.slice(0, 300),
-  });
+	addAgentEvent(
+		parentTaskId,
+		"status",
+		`Sub-task delegated to specialist ${agent.character_name} (${agent.role_title})`,
+		{
+			agent: agent.character_name,
+			role: agent.role_title,
+			task: task.slice(0, 300),
+		},
+	);
 
-  const client = await getClient();
+	const client = await getClient();
 
-  try {
-    // Load squad-scoped tools, skills, and MCP servers
-    const squadTools = createSquadTools(squadSlug, squadId, workDir);
-    const skillDirs = [...await loadSkillDirectories(), ...loadSquadSkillDirectories(squadSlug)];
-    const mcpServers = getMcpServersForSession();
+	try {
+		// Load squad-scoped tools, skills, and MCP servers
+		const squadTools = createSquadTools(squadSlug, squadId, workDir);
+		const skillDirs = [
+			...(await loadSkillDirectories()),
+			...loadSquadSkillDirectories(squadSlug),
+		];
+		const mcpServers = getMcpServersForSession();
 
-    const session = await client.createSession({
-      model,
-      streaming: true,
-      workingDirectory: workDir,
-      systemMessage: { content: systemMessage },
-      tools: squadTools,
-      skillDirectories: skillDirs,
-      mcpServers,
-      onPermissionRequest: approveAll,
-    });
+		const session = await client.createSession({
+			model,
+			streaming: true,
+			workingDirectory: workDir,
+			systemMessage: { content: systemMessage },
+			tools: squadTools,
+			skillDirectories: skillDirs,
+			mcpServers,
+			onPermissionRequest: approveAll,
+		});
 
-    const flushTokens = attachTokenTracker(session, {
-      squadId,
-      agentId: agent.id,
-      taskId: parentTaskId,
-    });
+		const flushTokens = attachTokenTracker(session, {
+			squadId,
+			agentId: agent.id,
+			taskId: parentTaskId,
+		});
 
-    // Subscribe to granular events for timeline
-    const unsubCapture = captureSessionEvents(session, {
-      taskId: parentTaskId,
-      agentName: agent.character_name,
-      agentRole: agent.role_title,
-      model,
-    });
+		// Subscribe to granular events for timeline
+		const unsubCapture = captureSessionEvents(session, {
+			taskId: parentTaskId,
+			agentName: agent.character_name,
+			agentRole: agent.role_title,
+			model,
+		});
 
-    // Stream deltas and broadcast via SSE
-    let accumulatedMessage = "";
-    const { broadcast } = await import("../api/server.js");
-    const unsubscribeDelta = session.on("assistant.message_delta", (event: any) => {
-      const delta = event.data?.deltaContent ?? "";
-      if (delta) {
-        accumulatedMessage += delta;
-        broadcast("agent_event", {
-          taskId: parentTaskId,
-          agentName: agent.character_name,
-          type: "specialist_delta",
-          summary: accumulatedMessage,
-          payload: { delta, accumulated: accumulatedMessage },
-        });
-      }
-    });
+		// Stream deltas and broadcast via SSE
+		let accumulatedMessage = "";
+		const { broadcast } = await import("../api/server.js");
+		const unsubscribeDelta = session.on(
+			"assistant.message_delta",
+			(event: any) => {
+				const delta = event.data?.deltaContent ?? "";
+				if (delta) {
+					accumulatedMessage += delta;
+					broadcast("agent_event", {
+						taskId: parentTaskId,
+						agentName: agent.character_name,
+						type: "specialist_delta",
+						summary: accumulatedMessage,
+						payload: { delta, accumulated: accumulatedMessage },
+					});
+				}
+			},
+		);
 
-    let result: string;
-    try {
-      const response = await session.sendAndWait(
-        { prompt: `You have been assigned the following sub-task by your team lead:\n\n${task}\n\nExecute this task fully. When done, provide a clear summary of what was accomplished.` },
-        7_200_000 // 2 hours — watchdog handles stale detection
-      );
-      result = response?.data?.content ?? "Task completed (no response content).";
-    } finally {
-      unsubCapture();
-      unsubscribeDelta();
-      flushTokens();
-      await session.disconnect();
-    }
+		let result: string;
+		try {
+			const response = await sendAndWaitWithoutDuplicateToolCallIds(
+				session,
+				{
+					prompt: `You have been assigned the following sub-task by your team lead:\n\n${task}\n\nExecute this task fully. When done, provide a clear summary of what was accomplished.`,
+				},
+				7_200_000, // 2 hours — watchdog handles stale detection
+				"specialist-send",
+			);
+			result =
+				response?.data?.content ?? "Task completed (no response content).";
+		} finally {
+			unsubCapture();
+			unsubscribeDelta();
+			flushTokens();
+			await session.disconnect();
+		}
 
-    // Record completion
-    addAgentEvent(parentTaskId, "status", `Specialist ${agent.character_name} completed sub-task`, {
-      agent: agent.character_name,
-      role: agent.role_title,
-      result: result.slice(0, 500),
-    });
+		// Record completion
+		addAgentEvent(
+			parentTaskId,
+			"status",
+			`Specialist ${agent.character_name} completed sub-task`,
+			{
+				agent: agent.character_name,
+				role: agent.role_title,
+				result: result.slice(0, 500),
+			},
+		);
 
-    addAuditEntry(
-      "specialist_task_completed",
-      `Specialist ${agent.character_name} completed task`,
-      { result: result.slice(0, 500) },
-      { squad_id: squadId, agent_id: agent.id }
-    );
+		addAuditEntry(
+			"specialist_task_completed",
+			`Specialist ${agent.character_name} completed task`,
+			{ result: result.slice(0, 500) },
+			{ squad_id: squadId, agent_id: agent.id },
+		);
 
-    updateAgentStatus(agent.id, "idle");
+		updateAgentStatus(agent.id, "idle");
 
-    return {
-      agentName: agent.character_name,
-      role: agent.role_title,
-      success: true,
-      result: result.length > 1500 ? result.slice(0, 1500) + "\n\n[...truncated]" : result,
-    };
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : "Unknown error";
+		return {
+			agentName: agent.character_name,
+			role: agent.role_title,
+			success: true,
+			result:
+				result.length > 1500
+					? result.slice(0, 1500) + "\n\n[...truncated]"
+					: result,
+		};
+	} catch (err) {
+		const errMsg = err instanceof Error ? err.message : "Unknown error";
 
-    addAgentEvent(parentTaskId, "status", `Specialist ${agent.character_name} failed: ${errMsg}`, {
-      agent: agent.character_name,
-      error: errMsg,
-    });
+		addAgentEvent(
+			parentTaskId,
+			"status",
+			`Specialist ${agent.character_name} failed: ${errMsg}`,
+			{
+				agent: agent.character_name,
+				error: errMsg,
+			},
+		);
 
-    addAuditEntry(
-      "specialist_task_failed",
-      `Specialist ${agent.character_name} failed: ${errMsg.slice(0, 200)}`,
-      { error: errMsg },
-      { squad_id: squadId, agent_id: agent.id }
-    );
+		addAuditEntry(
+			"specialist_task_failed",
+			`Specialist ${agent.character_name} failed: ${errMsg.slice(0, 200)}`,
+			{ error: errMsg },
+			{ squad_id: squadId, agent_id: agent.id },
+		);
 
-    updateAgentStatus(agent.id, "idle");
+		updateAgentStatus(agent.id, "idle");
 
-    return {
-      agentName: agent.character_name,
-      role: agent.role_title,
-      success: false,
-      result: `Error: ${errMsg}`,
-    };
-  }
+		return {
+			agentName: agent.character_name,
+			role: agent.role_title,
+			success: false,
+			result: `Error: ${errMsg}`,
+		};
+	}
 }
 
 /**
  * Run multiple specialist sessions in parallel.
  * Returns results in the same order as the input requests.
  */
-export async function runSpecialistsParallel(requests: SpecialistTaskRequest[]): Promise<SpecialistTaskResult[]> {
-  const results = await Promise.allSettled(requests.map(runSpecialistSession));
+export async function runSpecialistsParallel(
+	requests: SpecialistTaskRequest[],
+): Promise<SpecialistTaskResult[]> {
+	const results = await Promise.allSettled(requests.map(runSpecialistSession));
 
-  return results.map((r, i) => {
-    if (r.status === "fulfilled") {
-      return r.value;
-    }
-    return {
-      agentName: requests[i].agent.character_name,
-      role: requests[i].agent.role_title,
-      success: false,
-      result: `Session error: ${r.reason instanceof Error ? r.reason.message : "Unknown error"}`,
-    };
-  });
+	return results.map((r, i) => {
+		if (r.status === "fulfilled") {
+			return r.value;
+		}
+		return {
+			agentName: requests[i].agent.character_name,
+			role: requests[i].agent.role_title,
+			success: false,
+			result: `Session error: ${r.reason instanceof Error ? r.reason.message : "Unknown error"}`,
+		};
+	});
 }

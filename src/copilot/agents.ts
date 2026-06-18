@@ -37,6 +37,7 @@ import { loadSkillDirectories, loadSquadSkillDirectories } from "./skills.js";
 import { createLeadDelegationTools, createSquadTools } from "./squad-tools.js";
 import { runScribe } from "./scribe.js";
 import { attachTokenTracker } from "./token-tracker.js";
+import { sendAndWaitWithoutDuplicateToolCallIds } from "./tool-call-id-guard.js";
 
 const execAsync = promisify(exec);
 
@@ -340,12 +341,14 @@ ${lead.persona ? `## Personality:\n${lead.persona}` : ""}
 				const savedAttachments = saveAttachmentsToDisk(attachments);
 				const attachmentPathInfo = buildAttachmentPathSummary(savedAttachments);
 
-				const response = await session.sendAndWait(
+				const response = await sendAndWaitWithoutDuplicateToolCallIds(
+					session,
 					{
 						prompt: `Task delegated to you:\n\n${task}${attachmentPathInfo}`,
 						attachments: toCopilotBlobAttachments(attachments),
 					},
 					7_200_000, // 2 hours — watchdog handles stale detection
+					"lead-task-send",
 				);
 				result =
 					response?.data?.content ?? "Task completed (no response content).";

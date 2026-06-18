@@ -9,6 +9,7 @@ import { getMcpServersForSession } from "../mcp/registry.js";
 import { logWarn } from "../logging.js";
 import { addAuditEntry } from "../store/audit-log.js";
 import { PATHS } from "../paths.js";
+import { sendAndWaitWithoutDuplicateToolCallIds } from "./tool-call-id-guard.js";
 
 /**
  * Run the Scribe — a background agent that merges decisions from the inbox
@@ -24,7 +25,8 @@ export async function runScribe(options: {
 	agentName: string;
 	taskId: string;
 }): Promise<void> {
-	const { squadId, squadSlug, workDir, taskSummary, agentName, taskId } = options;
+	const { squadId, squadSlug, workDir, taskSummary, agentName, taskId } =
+		options;
 
 	// Ensure decisions structure exists (supports pre-existing squads)
 	ensureDecisionsStructure(squadSlug);
@@ -80,7 +82,12 @@ export async function runScribe(options: {
 
 If the inbox is empty and there's nothing to log, you may skip steps 1-3 and just write the session log.`;
 
-			await session.sendAndWait({ prompt }, 120_000);
+			await sendAndWaitWithoutDuplicateToolCallIds(
+				session,
+				{ prompt },
+				120_000,
+				"scribe-run",
+			);
 		} finally {
 			await session.disconnect();
 		}
