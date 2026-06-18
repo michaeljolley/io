@@ -1,6 +1,5 @@
 import { FileText, MessageSquare, Paperclip, Send, X } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
-import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
+import { useEffect, useRef, useState } from "react";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   fileToMessageAttachment,
@@ -8,6 +7,7 @@ import {
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
+import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
 import { useChatStore } from "@/stores/chat";
 import { IoMark } from "./IoMark";
 import { MessageBubble } from "./ui/MessageBubble";

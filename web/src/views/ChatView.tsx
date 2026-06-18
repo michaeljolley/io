@@ -1,6 +1,5 @@
 import { Paperclip, Send, Square, X } from "lucide-react";
-import { type DragEvent, type KeyboardEvent, useRef, useState, useEffect } from "react";
-import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
+import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { IoMark } from "@/components/IoMark";
 import { MessageBubble } from "@/components/ui/MessageBubble";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
@@ -10,6 +9,7 @@ import {
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
+import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
 import { useChatStore } from "@/stores/chat";
 
 export default function ChatView() {
