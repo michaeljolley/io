@@ -167,7 +167,7 @@ export default function FeedView() {
           <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-zinc-500">Feed</p>
+                <p className="text-[14px] font-mono uppercase tracking-[0.28em] text-zinc-500">Feed</p>
                 <h1 className="text-3xl text-zinc-100 leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                   Inbox
                 </h1>
@@ -175,7 +175,7 @@ export default function FeedView() {
               <Chip variant={unreadCount > 0 ? "default" : "muted"}>{unreadCount} unread</Chip>
             </div>
 
-            <div className="flex gap-2 rounded-xl border border-white/[0.06] bg-black/10 p-1 font-mono text-[11px]">
+            <div className="flex gap-2 rounded-xl border border-white/[0.06] bg-black/10 p-1 font-mono text-[14px]">
               {(["all", "unread"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -187,7 +187,7 @@ export default function FeedView() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/10 px-3 py-2 text-[11px] font-mono text-zinc-400">
+            <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/10 px-3 py-2 text-[14px] font-mono text-zinc-400">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -222,7 +222,7 @@ export default function FeedView() {
 
           <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2">
             {loading ? (
-              <div className="h-full flex items-center justify-center text-[11px] font-mono text-zinc-500">
+              <div className="h-full flex items-center justify-center text-[14px] font-mono text-zinc-500">
                 Loading inbox…
               </div>
             ) : items.length === 0 ? (
@@ -230,7 +230,7 @@ export default function FeedView() {
                 <IoMark height={26} />
                 <div>
                   <p className="text-zinc-200">No feed items</p>
-                  <p className="text-[11px] font-mono text-zinc-500">
+                  <p className="text-[14px] font-mono text-zinc-500">
                     {filter === "unread"
                       ? "Everything has been reviewed."
                       : "The daemon has not posted any updates yet."}
@@ -263,7 +263,7 @@ export default function FeedView() {
                             )}
                             <SquadChip name={item.source} />
                           </div>
-                          <span className="text-[11px] font-mono text-zinc-500 flex items-center gap-1 flex-shrink-0">
+                          <span className="text-[14px] font-mono text-zinc-500 flex items-center gap-1 flex-shrink-0">
                             <Clock3 className="h-3 w-3" />
                             {formatTimestamp(item.created_at)}
                           </span>
@@ -273,7 +273,7 @@ export default function FeedView() {
                         >
                           {item.title}
                         </p>
-                        <p className="mt-1 text-[11px] font-mono text-zinc-500 line-clamp-2">
+                        <p className="mt-1 text-[14px] font-mono text-zinc-500 line-clamp-2">
                           {previewText(item.content)}
                         </p>
                       </button>
@@ -294,7 +294,7 @@ export default function FeedView() {
                 </div>
                 <div>
                   <p className="text-zinc-100 text-lg">Bulk mode enabled</p>
-                  <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                  <p className="text-[14px] font-mono text-zinc-500 mt-2">
                     {checkedIds.length} feed item{checkedIds.length === 1 ? "" : "s"} selected. Use the bulk controls to
                     mark everything read or delete in one pass.
                   </p>
@@ -307,7 +307,7 @@ export default function FeedView() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-3">
                     <SquadChip name={selectedItem.source} />
-                    <span className="text-[11px] font-mono text-zinc-500">
+                    <span className="text-[14px] font-mono text-zinc-500">
                       {formatTimestamp(selectedItem.created_at)}
                     </span>
                   </div>
@@ -333,7 +333,7 @@ export default function FeedView() {
                 </div>
                 <div>
                   <p className="text-zinc-100 text-lg">Select a message to read</p>
-                  <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                  <p className="text-[14px] font-mono text-zinc-500 mt-2">
                     Choose any feed item from the left panel to open the full markdown update here.
                   </p>
                 </div>

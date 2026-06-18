@@ -33,7 +33,7 @@ export function Chip({ children, variant = "muted" }: { children: ReactNode; var
     muted: "bg-white/5 text-zinc-400 border-white/10",
   }[variant];
   return (
-    <span className={`inline-flex items-center px-2 py-px rounded-full text-[10px] font-mono border ${cls}`}>
+    <span className={`inline-flex items-center px-2 py-px rounded-full text-[13px] font-mono border ${cls}`}>
       {children}
     </span>
   );
@@ -63,7 +63,7 @@ export function SquadChip({ name, color: colorProp }: { name: string; color?: st
   if (color) {
     return (
       <span
-        className="inline-flex items-center px-1.5 py-px rounded text-[10px] font-mono border"
+        className="inline-flex items-center px-1.5 py-px rounded text-[13px] font-mono border"
         style={{ background: `${color}15`, color, borderColor: `${color}30` }}
       >
         {name}

@@ -20,7 +20,7 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-const treeItemClass = "px-3 py-1.5 text-[11px] font-mono hover:bg-white/[0.04] rounded-lg cursor-pointer";
+const treeItemClass = "px-3 py-1.5 text-[14px] font-mono hover:bg-white/[0.04] rounded-lg cursor-pointer";
 
 function encodePath(path: string) {
   return path
@@ -131,7 +131,7 @@ function Breadcrumbs({ path }: { path: string }) {
   const parts = path.split("/").filter(Boolean);
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[11px] font-mono text-zinc-500">
+    <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[14px] font-mono text-zinc-500">
       {parts.map((part, index) => (
         <div key={parts.slice(0, index + 1).join("/")} className="flex items-center gap-1.5">
           {index > 0 && <span className="text-zinc-700">/</span>}
@@ -419,7 +419,7 @@ export default function WikiView() {
   };
 
   if (loading) {
-    return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading wiki…</div>;
+    return <div className="p-6 text-[14px] font-mono text-zinc-500">Loading wiki…</div>;
   }
 
   return (
@@ -431,7 +431,7 @@ export default function WikiView() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search wiki"
-            className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9`}
+            className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9`}
           />
         </div>
 
@@ -453,7 +453,7 @@ export default function WikiView() {
                 value={newPagePath}
                 onChange={(event) => setNewPagePath(event.target.value)}
                 placeholder="notes/roadmap.md"
-                className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9 w-full`}
+                className={`bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30 w-full pl-9 w-full`}
               />
               <div className="flex items-center gap-2">
                 <PrimaryBtn
@@ -483,7 +483,7 @@ export default function WikiView() {
                 onDeleteFolder={(path) => void deleteFolder(path)}
               />
             ) : (
-              <div className="px-3 py-6 text-center text-[11px] font-mono text-zinc-600">No pages found</div>
+              <div className="px-3 py-6 text-center text-[14px] font-mono text-zinc-600">No pages found</div>
             )}
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function WikiView() {
             {selectedPath ? (
               <Breadcrumbs path={selectedPath} />
             ) : (
-              <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-zinc-600">Wiki</p>
+              <p className="text-[14px] font-mono uppercase tracking-[0.24em] text-zinc-600">Wiki</p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -554,14 +554,14 @@ export default function WikiView() {
                 <textarea
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  className="h-full w-full resize-none rounded-2xl border border-white/[0.06] bg-[#121212] px-4 py-3 text-[12px] leading-6 text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
+                  className="h-full w-full resize-none rounded-2xl border border-white/[0.06] bg-[#121212] px-4 py-3 text-[15px] leading-6 text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
                   spellCheck={false}
                 />
               </div>
             ) : (
               <div className="h-full overflow-y-auto px-6 py-5">
                 {busy ? (
-                  <div className="text-[11px] font-mono text-zinc-500">Loading page…</div>
+                  <div className="text-[14px] font-mono text-zinc-500">Loading page…</div>
                 ) : (
                   <MarkdownRenderer content={content} />
                 )}
@@ -575,7 +575,7 @@ export default function WikiView() {
               <h2 className="text-lg text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                 Select a page
               </h2>
-              <p className="mt-2 max-w-md text-[11px] font-mono text-zinc-600">
+              <p className="mt-2 max-w-md text-[14px] font-mono text-zinc-600">
                 Browse the file tree on the left, search for a page, or create a new markdown document.
               </p>
             </div>

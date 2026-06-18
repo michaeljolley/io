@@ -90,7 +90,7 @@ export default function ChatView() {
 
       {/* Input area */}
       <div className="border-t border-white/[0.06] p-4 flex-shrink-0">
-        {composerError && <div className="text-[11px] font-mono text-red-400 mb-2">{composerError}</div>}
+        {composerError && <div className="text-[14px] font-mono text-red-400 mb-2">{composerError}</div>}
 
         {pendingAttachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
@@ -99,8 +99,8 @@ export default function ChatView() {
                 key={`${att.name}:${att.size}:${att.mimeType}`}
                 className="flex items-center gap-2 bg-[#252525] border border-white/[0.08] rounded-xl px-3 py-1.5"
               >
-                <span className="text-[10px] font-mono text-zinc-400 truncate max-w-[120px]">{att.name}</span>
-                <span className="text-[9px] font-mono text-zinc-600">{formatAttachmentSize(att.size)}</span>
+                <span className="text-[13px] font-mono text-zinc-400 truncate max-w-[120px]">{att.name}</span>
+                <span className="text-[11px] font-mono text-zinc-600">{formatAttachmentSize(att.size)}</span>
                 <button
                   onClick={() => setPendingAttachments((p) => p.filter((_, idx) => idx !== i))}
                   className="text-zinc-600 hover:text-zinc-300 cursor-pointer"
@@ -144,7 +144,7 @@ export default function ChatView() {
               {isStreaming ? (
                 <button
                   onClick={stopStreaming}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[11px] font-mono text-zinc-300 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[14px] font-mono text-zinc-300 transition-colors"
                 >
                   <Square className="w-3 h-3" /> Stop
                 </button>
@@ -161,7 +161,7 @@ export default function ChatView() {
             </div>
           </div>
         </div>
-        <p className="text-center text-[11px] text-zinc-800 font-mono mt-2">
+        <p className="text-center text-[14px] text-zinc-800 font-mono mt-2">
           IO may make mistakes. Verify important outputs.
         </p>
       </div>

@@ -28,9 +28,9 @@ interface SettingsForm {
 const tabs: SettingsTab[] = ["General", "Telegram", "Auth", "Advanced"];
 const MASK = "••••••••";
 const inputClass =
-  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
+  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
 const tabClass =
-  "cursor-pointer px-2 pb-2 text-[11px] border-b font-mono uppercase tracking-[0.18em] transition-colors";
+  "cursor-pointer px-2 pb-2 text-[14px] border-b font-mono uppercase tracking-[0.18em] transition-colors";
 
 const emptySettings: SettingsForm = {
   defaultModel: "",
@@ -155,7 +155,7 @@ function buildPayload(settings: SettingsForm) {
 function FormRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2 border-b border-white/[0.04] py-4 first:pt-0 last:border-b-0 last:pb-0 md:flex-row md:items-center">
-      <div className="w-40 text-[11px] font-mono text-zinc-500">{label}</div>
+      <div className="w-40 text-[14px] font-mono text-zinc-500">{label}</div>
       <div className="flex-1 flex justify-end">{children}</div>
     </div>
   );
@@ -276,7 +276,7 @@ export default function SettingsView() {
   };
 
   if (loading) {
-    return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading settings…</div>;
+    return <div className="p-6 text-[14px] font-mono text-zinc-500">Loading settings…</div>;
   }
 
   return (
@@ -286,7 +286,7 @@ export default function SettingsView() {
           <h1 className="text-3xl leading-none text-zinc-100" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             Settings
           </h1>
-          <p className="mt-2 text-[11px] font-mono text-zinc-500">
+          <p className="mt-2 text-[14px] font-mono text-zinc-500">
             Control auth, notifications, models, and runtime behavior.
           </p>
         </div>
@@ -425,7 +425,7 @@ export default function SettingsView() {
         </div>
 
         <div className="border-t border-white/[0.06] px-5 py-4 flex items-center justify-between gap-3">
-          <p className="text-[11px] font-mono text-zinc-600">
+          <p className="text-[14px] font-mono text-zinc-600">
             {dirty ? "Unsaved changes" : `Secrets remain masked as ${MASK}`}
           </p>
           <div className="flex items-center gap-2">

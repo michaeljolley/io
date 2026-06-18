@@ -27,7 +27,7 @@
   --base-accent2: oklch(68.135% 0.18797 26.281);
 
 
-  --font-size: 16px;
+  --font-size: 20px;
   --background: var(--base-black);
   --foreground: var(--base-gray);
   --card: var(--base-blue);
@@ -218,7 +218,7 @@
 }
 .prose-io code {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.82em;
+  font-size: 1.025em;
   background: var(--base-blue);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
@@ -238,7 +238,7 @@
   border: none;
   padding: 0;
   color: var(--base-gray);
-  font-size: 0.85em;
+  font-size: 1.063em;
 }
 .prose-io blockquote {
   border-left: 2px solid var(--base-teal);
@@ -260,7 +260,7 @@
   width: 100%;
   border-collapse: collapse;
   margin: 0.8em 0;
-  font-size: 0.85em;
+  font-size: 1.063em;
 }
 .prose-io th {
   text-align: left;

@@ -39,8 +39,8 @@ interface ScheduleDraft {
 
 const GLASS_CARD = "glass-card border border-white/[0.07] rounded-2xl";
 const INPUT_CLASS =
-  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
-const SECTION_HEADER = "text-[10px] font-mono text-zinc-700 uppercase tracking-wider";
+  "bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono placeholder:text-zinc-700 focus:outline-none focus:border-[#66FCF1]/30";
+const SECTION_HEADER = "text-[13px] font-mono text-zinc-700 uppercase tracking-wider";
 const MODAL_BACKDROP = {
   background: "rgba(0,0,0,0.55)",
   backdropFilter: "blur(4px)",
@@ -420,7 +420,7 @@ export default function SchedulesView() {
             <button
               key={value}
               onClick={() => setTab(value)}
-              className={`cursor-pointer px-2 pb-2 text-[11px] border-b font-mono uppercase tracking-[0.18em] transition-colors ${!active ? "hover:text-zinc-300" : ""}`}
+              className={`cursor-pointer px-2 pb-2 text-[14px] border-b font-mono uppercase tracking-[0.18em] transition-colors ${!active ? "hover:text-zinc-300" : ""}`}
               style={{
                 borderColor: active ? "#66FCF1" : "transparent",
                 color: active ? "#66FCF1" : undefined,
@@ -433,13 +433,13 @@ export default function SchedulesView() {
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[11px] font-mono text-red-300">
+        <div className="rounded-2xl border border-red-500/15 bg-red-500/6 px-4 py-3 text-[14px] font-mono text-red-300">
           {error}
         </div>
       )}
 
       <div className={`${GLASS_CARD} overflow-hidden`}>
-        <table className="w-full text-[11px] font-mono">
+        <table className="w-full text-[14px] font-mono">
           <thead>
             <tr className="border-b border-white/[0.06]" style={{ background: "rgba(20,20,20,0.6)" }}>
               <th className="text-left px-4 py-2.5 text-white font-medium">Schedule</th>
@@ -525,7 +525,7 @@ export default function SchedulesView() {
                 <h2 className="text-3xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                   {editingId ? "Edit Schedule" : "New Schedule"}
                 </h2>
-                <p className="mt-2 text-[11px] font-mono text-zinc-600">
+                <p className="mt-2 text-[14px] font-mono text-zinc-600">
                   Configure cadence, label, and prompt payload.
                 </p>
               </div>
@@ -542,7 +542,7 @@ export default function SchedulesView() {
                         <button
                           key={value}
                           onClick={() => setDraft((current) => ({ ...current, type: value }))}
-                          className={`rounded-xl border px-3 py-2 text-left text-[11px] font-mono transition-colors cursor-pointer ${
+                          className={`rounded-xl border px-3 py-2 text-left text-[14px] font-mono transition-colors cursor-pointer ${
                             active
                               ? "border-[#66FCF1]/30 text-[#66FCF1]"
                               : "border-white/[0.06] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"

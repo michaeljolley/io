@@ -118,7 +118,7 @@ const tooltipStyle = {
   border: "1px solid rgba(255,255,255,0.08)",
   color: "rgb(228 228 231)",
   borderRadius: "12px",
-  fontSize: "11px",
+  fontSize: "14px",
 };
 
 export default function UsageView() {
@@ -208,7 +208,7 @@ export default function UsageView() {
   const formatNumber = (value: number) => value.toLocaleString();
 
   if (loading) {
-    return <div className="p-6 text-[11px] font-mono text-zinc-500">Loading usage…</div>;
+    return <div className="p-6 text-[14px] font-mono text-zinc-500">Loading usage…</div>;
   }
 
   return (
@@ -218,7 +218,7 @@ export default function UsageView() {
           <h1 className="text-4xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             Usage
           </h1>
-          <p className="mt-2 text-[11px] font-mono text-zinc-600">Track tokens and activity by squad.</p>
+          <p className="mt-2 text-[14px] font-mono text-zinc-600">Track tokens and activity by squad.</p>
         </div>
         <div className="glass-card border border-white/[0.07] rounded-2xl px-4 py-3 flex items-center gap-3">
           <CalendarDays className="h-4 w-4 text-[#66FCF1]" />
@@ -227,32 +227,32 @@ export default function UsageView() {
             value={range.from}
             max={range.to}
             onChange={(event) => setRange((current) => ({ ...current, from: event.target.value }))}
-            className="bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
+            className="bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
           />
-          <span className="text-[11px] font-mono text-zinc-600">to</span>
+          <span className="text-[14px] font-mono text-zinc-600">to</span>
           <input
             type="date"
             value={range.to}
             min={range.from}
             onChange={(event) => setRange((current) => ({ ...current, to: event.target.value }))}
-            className="bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[11px] text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
+            className="bg-[#181818] border border-white/[0.06] rounded-xl px-3 py-2 text-[14px] text-zinc-300 font-mono focus:outline-none focus:border-[#66FCF1]/30"
           />
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5">
-          <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total tokens</p>
+          <p className="text-[13px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total tokens</p>
           <p className="mt-3 text-3xl text-white">{formatNumber(totals.totalTokens)}</p>
-          <p className="mt-2 text-[11px] font-mono text-zinc-500">
+          <p className="mt-2 text-[14px] font-mono text-zinc-500">
             In {formatNumber(totals.totalInputTokens)} / Out {formatNumber(totals.totalOutputTokens)}
           </p>
         </div>
 
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5">
-          <p className="text-[10px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total calls</p>
+          <p className="text-[13px] font-mono uppercase tracking-[0.24em] text-zinc-600">Total calls</p>
           <p className="mt-3 text-3xl text-white">{formatNumber(totals.totalCalls)}</p>
-          <p className="mt-2 text-[11px] font-mono text-zinc-500">Counted API usage records</p>
+          <p className="mt-2 text-[14px] font-mono text-zinc-500">Counted API usage records</p>
         </div>
       </div>
 
@@ -260,13 +260,13 @@ export default function UsageView() {
         <div className="glass-card border border-white/[0.07] rounded-2xl p-5 h-[320px]">
           <div className="mb-4">
             <h2 className="text-sm text-white">Daily usage</h2>
-            <p className="text-[11px] font-mono text-zinc-600">Input vs output tokens</p>
+            <p className="text-[14px] font-mono text-zinc-600">Input vs output tokens</p>
           </div>
           <ResponsiveContainer width="100%" height="82%">
             <BarChart data={daily}>
               <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="date" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} tickFormatter={formatNumber} />
+              <XAxis dataKey="date" stroke="#71717a" fontSize={13} tickLine={false} axisLine={false} />
+              <YAxis stroke="#71717a" fontSize={13} tickLine={false} axisLine={false} tickFormatter={formatNumber} />
               <Tooltip
                 contentStyle={tooltipStyle}
                 labelStyle={{ color: "#e4e4e7" }}
@@ -282,11 +282,11 @@ export default function UsageView() {
       <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden">
         <div className="border-b border-white/[0.06] px-5 py-4">
           <h2 className="text-sm text-white">Squad breakdown</h2>
-          <p className="mt-1 text-[11px] font-mono text-zinc-600">Expand a squad to inspect individual agents.</p>
+          <p className="mt-1 text-[14px] font-mono text-zinc-600">Expand a squad to inspect individual agents.</p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-[11px] font-mono">
+          <table className="w-full text-[14px] font-mono">
             <thead className="bg-white/[0.02] text-zinc-500">
               <tr>
                 <th className="px-5 py-3 text-left font-medium">Name</th>
