@@ -1,5 +1,5 @@
 import { Paperclip, Send, Square, X } from "lucide-react";
-import { type DragEvent, type KeyboardEvent, useRef, useState } from "react";
+import { type DragEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { IoMark } from "@/components/IoMark";
 import { MessageBubble } from "@/components/ui/MessageBubble";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
@@ -9,6 +9,7 @@ import {
   type MessageAttachment,
   validateAttachmentSizes,
 } from "@/lib/attachments";
+import { attachFocusOnOpen } from "@/lib/focusOnAnimation";
 import { useChatStore } from "@/stores/chat";
 
 export default function ChatView() {
@@ -23,6 +24,12 @@ export default function ChatView() {
   const [isDragging, setIsDragging] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const viewRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const cleanup = attachFocusOnOpen(viewRef.current, textareaRef.current);
+    return cleanup;
+  }, []);
 
   useAutoScroll(messagesContainerRef, [messages]);
 
@@ -65,6 +72,7 @@ export default function ChatView() {
 
   return (
     <div
+      ref={viewRef}
       className="flex flex-col flex-1 min-h-0"
       onDragOver={(e) => {
         e.preventDefault();
