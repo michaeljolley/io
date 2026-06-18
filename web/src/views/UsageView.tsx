@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { SquadChip } from "@/components/ui";
+import { formatNumber } from "@/lib/formatNumber";
 import { uuid } from "@/lib/uuid";
 import { useAuthStore } from "@/stores/auth";
 
@@ -205,8 +206,6 @@ export default function UsageView() {
     };
   }, [daily, squads, summary]);
 
-  const formatNumber = (value: number) => value.toLocaleString();
-
   if (loading) {
     return <div className="p-6 text-[14px] font-mono text-zinc-500">Loading usage…</div>;
   }
@@ -271,6 +270,7 @@ export default function UsageView() {
                 contentStyle={tooltipStyle}
                 labelStyle={{ color: "#e4e4e7" }}
                 cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                formatter={(value) => formatNumber(value as number | string | null | undefined)}
               />
               <Bar dataKey="inputTokens" name="Input Tokens" fill="#66FCF1" radius={[6, 6, 0, 0]} />
               <Bar dataKey="outputTokens" name="Output Tokens" fill="#45A29E" radius={[6, 6, 0, 0]} />
