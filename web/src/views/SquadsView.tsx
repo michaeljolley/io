@@ -156,7 +156,7 @@ export default function SquadsView() {
   }, [data.agents]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-5">
+    <div className="p-5">
       <div className="max-w-7xl mx-auto space-y-5">
         <header className="p-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>

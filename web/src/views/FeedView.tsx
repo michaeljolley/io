@@ -161,7 +161,7 @@ export default function FeedView() {
   };
 
   return (
-    <div className="flex flex-1 min-h-0 p-5">
+    <div className="flex h-full min-h-0 p-5">
       <div className="flex flex-1 min-h-0 gap-5">
         <aside className="glass-card border border-white/[0.07] rounded-2xl w-72 min-h-0 flex flex-col overflow-hidden">
           <div className="px-5 pt-5 pb-4 border-b border-white/[0.06] space-y-4">

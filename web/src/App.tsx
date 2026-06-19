@@ -35,7 +35,7 @@ export function App() {
             <div className="orb orb-gray" />
           </div>
           {/* Allow inner route content to scroll vertically when content exceeds the viewport. */}
-          <div className="relative flex-1 overflow-hidden flex flex-col min-h-0" style={{ zIndex: 1 }}>
+          <div className="relative flex-1 overflow-y-auto min-h-0" style={{ zIndex: 1 }}>
             <AppRoutes />
           </div>
         </main>

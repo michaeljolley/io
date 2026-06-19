@@ -452,7 +452,7 @@ export default function SquadDetailView() {
     };
 
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto p-5">
+      <div className="p-5">
         <div className="max-w-5xl mx-auto space-y-5">
           <button
             onClick={() => {
@@ -631,7 +631,7 @@ export default function SquadDetailView() {
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-5">
+    <div className="p-5">
       <div className="max-w-7xl mx-auto space-y-5">
         <SecondaryBtn onClick={() => navigate("/squads")} className="px-3 py-2">
           <ArrowLeft className="h-3.5 w-3.5" />

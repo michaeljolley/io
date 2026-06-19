@@ -280,7 +280,7 @@ export default function SettingsView() {
   }
 
   return (
-    <div className="mx-auto flex flex-1 min-h-0 overflow-y-auto w-full max-w-5xl flex-col gap-6 p-6 text-zinc-200">
+    <div className="mx-auto w-full max-w-5xl flex flex-col gap-6 p-6 text-zinc-200">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl leading-none text-zinc-100" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
@@ -292,7 +292,7 @@ export default function SettingsView() {
         </div>
       </div>
 
-      <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col w-full lg:w-1/2">
+      <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden w-full lg:w-1/2">
         <div className="px-5 pt-4">
           <div className="flex flex-wrap gap-4 border-b border-white/[0.06]">
             {tabs.map((tab) => (
@@ -312,7 +312,7 @@ export default function SettingsView() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+        <div className="px-5 py-5">
           {activeTab === "General" ? (
             <div className="space-y-1">
               <FormRow label="Default model">

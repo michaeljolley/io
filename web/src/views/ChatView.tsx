@@ -73,7 +73,7 @@ export default function ChatView() {
   return (
     <div
       ref={viewRef}
-      className="flex flex-col flex-1 min-h-0"
+      className="flex flex-col h-full min-h-0"
       onDragOver={(e) => {
         e.preventDefault();
         setIsDragging(true);
