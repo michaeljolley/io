@@ -423,7 +423,7 @@ export default function WikiView() {
   }
 
   return (
-    <div className="flex h-full min-h-0  text-zinc-200">
+    <div className="flex flex-1 min-h-0  text-zinc-200">
       <aside className="w-64 border-r border-white/[0.06]  p-3 flex flex-col gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-700" />
