@@ -44,37 +44,19 @@ function getDefaultRange() {
   return { from: formatDateInput(from), to: formatDateInput(to) };
 }
 
-function daysBetween(from: string, to: string) {
-  const start = new Date(`${from}T00:00:00`);
-  const end = new Date(`${to}T00:00:00`);
-  const diff = Math.round((end.getTime() - start.getTime()) / 86400000);
-  return Math.max(diff + 1, 1);
-}
-
-async function authJson<T>(paths: string[]): Promise<T> {
+async function authJson<T>(path: string): Promise<T> {
   const token = useAuthStore.getState().token;
-
-  for (let index = 0; index < paths.length; index += 1) {
-    const res = await fetch(paths[index], {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-
-    if (res.ok) {
-      return (await res.json()) as T;
-    }
-
-    if (res.status === 404 && index < paths.length - 1) {
-      continue;
-    }
-
+  const res = await fetch(path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
     const message = await res.text();
     throw new Error(message || `Request failed: ${res.status}`);
   }
-
-  throw new Error("Request failed");
+  return (await res.json()) as T;
 }
 
 function toNumber(value: unknown) {
@@ -134,21 +116,12 @@ export default function UsageView() {
   const queryParts = useMemo(() => {
     const from = range.from;
     const to = range.to;
-    const days = daysBetween(from, to);
     return {
-      summary: [
-        `/api/token-usage/summary?from=${from}&to=${to}`,
-        `/api/token-usage/summary?since=${from}T00:00:00.000Z`,
-      ],
-      squads: [
-        `/api/token-usage/by-squad?from=${from}&to=${to}`,
-        `/api/token-usage/by-squad?since=${from}T00:00:00.000Z`,
-      ],
-      daily: [`/api/token-usage/daily?from=${from}&to=${to}`, `/api/token-usage/daily?days=${days}`],
-      agentPaths: (squadId: string) => [
-        `/api/token-usage/by-agent?squad=${encodeURIComponent(squadId)}&from=${from}&to=${to}`,
-        `/api/token-usage/by-agent?squad_id=${encodeURIComponent(squadId)}&since=${from}T00:00:00.000Z`,
-      ],
+      summary: `/api/token-usage/summary?from=${from}&to=${to}`,
+      squads: `/api/token-usage/by-squad?from=${from}&to=${to}`,
+      daily: `/api/token-usage/daily?from=${from}&to=${to}`,
+      agentPath: (squadId: string) =>
+        `/api/token-usage/by-agent?squad_id=${encodeURIComponent(squadId)}&from=${from}&to=${to}`,
     };
   }, [range.from, range.to]);
 
@@ -182,7 +155,7 @@ export default function UsageView() {
     if (isOpen || agentsBySquad[squad.id]) return;
 
     try {
-      const response = await authJson<Record<string, unknown>[]>(queryParts.agentPaths(squad.id));
+      const response = await authJson<Record<string, unknown>[]>(queryParts.agentPath(squad.id));
       setAgentsBySquad((current) => ({
         ...current,
         [squad.id]: Array.isArray(response) ? response.map(normalizeGroup) : [],
