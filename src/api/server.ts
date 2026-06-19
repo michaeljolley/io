@@ -648,23 +648,31 @@ export async function startApiServer(config: Config): Promise<void> {
   // --- Token Usage ---
   app.get("/api/token-usage/summary", (req, res) => {
     const since = req.query.since as string | undefined;
-    res.json(getTokenUsageSummary({ since }));
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    res.json(getTokenUsageSummary({ since, from, to }));
   });
 
   app.get("/api/token-usage/by-squad", (req, res) => {
     const since = req.query.since as string | undefined;
-    res.json(getTokenUsageBySquad({ since }));
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    res.json(getTokenUsageBySquad({ since, from, to }));
   });
 
   app.get("/api/token-usage/by-agent", (req, res) => {
     const since = req.query.since as string | undefined;
-    const squadId = req.query.squad_id as string | undefined;
-    res.json(getTokenUsageByAgent({ since, squadId }));
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    const squadId = (req.query.squad_id ?? req.query.squad) as string | undefined;
+    res.json(getTokenUsageByAgent({ since, from, to, squadId }));
   });
 
   app.get("/api/token-usage/daily", (req, res) => {
-    const days = parseInt(req.query.days as string) || 30;
-    res.json(getDailyTokenUsage(days));
+    const days = parseInt(req.query.days as string) || undefined;
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
+    res.json(getDailyTokenUsage({ days, from, to }));
   });
 
   // --- Health (unauthenticated) ---

@@ -35,6 +35,30 @@ export interface DailyTokenUsage {
   total_tokens: number;
 }
 
+interface DateRangeOpts {
+  since?: string;
+  from?: string;
+  to?: string;
+}
+
+function buildDateFilter(opts: DateRangeOpts | undefined, alias: string): { clause: string; params: string[] } {
+  if (!opts) return { clause: "", params: [] };
+  const conditions: string[] = [];
+  const params: string[] = [];
+  if (opts.from) {
+    conditions.push(`${alias}.created_at >= ?`);
+    params.push(`${opts.from}T00:00:00`);
+  } else if (opts.since) {
+    conditions.push(`${alias}.created_at >= ?`);
+    params.push(opts.since);
+  }
+  if (opts.to) {
+    conditions.push(`${alias}.created_at < date(?, '+1 day')`);
+    params.push(opts.to);
+  }
+  return { clause: conditions.length ? " AND " + conditions.join(" AND ") : "", params };
+}
+
 export function recordTokenUsage(params: {
   squadId?: string;
   agentId?: string;
@@ -60,25 +84,22 @@ export function recordTokenUsage(params: {
   return db.prepare("SELECT * FROM token_usage WHERE id = ?").get(id) as TokenUsageRecord;
 }
 
-export function getTokenUsageSummary(opts?: { since?: string }): TokenUsageSummary {
+export function getTokenUsageSummary(opts?: DateRangeOpts): TokenUsageSummary {
   const db = getDb();
-  let sql = `SELECT
+  const { clause, params } = buildDateFilter(opts, "token_usage");
+  const sql = `SELECT
     COUNT(*) as total_records,
     COALESCE(SUM(input_tokens), 0) as total_input_tokens,
     COALESCE(SUM(output_tokens), 0) as total_output_tokens,
     COALESCE(SUM(input_tokens + output_tokens), 0) as total_tokens
-  FROM token_usage WHERE 1=1`;
-  const params: string[] = [];
-  if (opts?.since) {
-    sql += " AND created_at >= ?";
-    params.push(opts.since);
-  }
+  FROM token_usage WHERE 1=1${clause}`;
   return db.prepare(sql).get(...params) as TokenUsageSummary;
 }
 
-export function getTokenUsageBySquad(opts?: { since?: string }): TokenUsageByGroup[] {
+export function getTokenUsageBySquad(opts?: DateRangeOpts): TokenUsageByGroup[] {
   const db = getDb();
-  let sql = `SELECT
+  const { clause, params } = buildDateFilter(opts, "t");
+  const sql = `SELECT
     s.id,
     s.name,
     COALESCE(SUM(t.input_tokens), 0) as total_input_tokens,
@@ -86,18 +107,14 @@ export function getTokenUsageBySquad(opts?: { since?: string }): TokenUsageByGro
     COALESCE(SUM(t.input_tokens + t.output_tokens), 0) as total_tokens,
     COUNT(t.id) as record_count
   FROM squads s
-  LEFT JOIN token_usage t ON t.squad_id = s.id`;
-  const params: string[] = [];
-  if (opts?.since) {
-    sql += " AND t.created_at >= ?";
-    params.push(opts.since);
-  }
-  sql += " GROUP BY s.id ORDER BY total_tokens DESC";
+  LEFT JOIN token_usage t ON t.squad_id = s.id${clause}
+  GROUP BY s.id ORDER BY total_tokens DESC`;
   return db.prepare(sql).all(...params) as TokenUsageByGroup[];
 }
 
-export function getTokenUsageByAgent(opts?: { squadId?: string; since?: string }): TokenUsageByGroup[] {
+export function getTokenUsageByAgent(opts?: { squadId?: string } & DateRangeOpts): TokenUsageByGroup[] {
   const db = getDb();
+  const { clause: dateClause, params: dateParams } = buildDateFilter(opts, "t");
   let sql = `SELECT
     a.id,
     a.character_name as name,
@@ -106,36 +123,46 @@ export function getTokenUsageByAgent(opts?: { squadId?: string; since?: string }
     COALESCE(SUM(t.input_tokens + t.output_tokens), 0) as total_tokens,
     COUNT(t.id) as record_count
   FROM agents a
-  LEFT JOIN token_usage t ON t.agent_id = a.id`;
-  const params: string[] = [];
-  const conditions: string[] = [];
+  LEFT JOIN token_usage t ON t.agent_id = a.id${dateClause}`;
+  const params: string[] = [...dateParams];
   if (opts?.squadId) {
-    conditions.push("a.squad_id = ?");
+    sql += " WHERE a.squad_id = ?";
     params.push(opts.squadId);
-  }
-  if (opts?.since) {
-    conditions.push("(t.created_at >= ? OR t.created_at IS NULL)");
-    params.push(opts.since);
-  }
-  if (conditions.length > 0) {
-    sql += " WHERE " + conditions.join(" AND ");
   }
   sql += " GROUP BY a.id ORDER BY total_tokens DESC";
   return db.prepare(sql).all(...params) as TokenUsageByGroup[];
 }
 
-export function getDailyTokenUsage(days = 30): DailyTokenUsage[] {
+export function getDailyTokenUsage(opts?: { days?: number } & DateRangeOpts): DailyTokenUsage[] {
   const db = getDb();
+  const params: (string | number)[] = [];
+  let whereClause: string;
+  if (opts?.from || opts?.to) {
+    const conditions: string[] = [];
+    if (opts.from) {
+      conditions.push("created_at >= ?");
+      params.push(`${opts.from}T00:00:00`);
+    }
+    if (opts.to) {
+      conditions.push("created_at < date(?, '+1 day')");
+      params.push(opts.to);
+    }
+    whereClause = "WHERE " + conditions.join(" AND ");
+  } else {
+    const days = opts?.days ?? 30;
+    whereClause = "WHERE created_at >= date('now', '-' || ? || ' days')";
+    params.push(days);
+  }
   const sql = `SELECT
     date(created_at) as date,
     COALESCE(SUM(input_tokens), 0) as total_input_tokens,
     COALESCE(SUM(output_tokens), 0) as total_output_tokens,
     COALESCE(SUM(input_tokens + output_tokens), 0) as total_tokens
   FROM token_usage
-  WHERE created_at >= date('now', '-' || ? || ' days')
+  ${whereClause}
   GROUP BY date(created_at)
   ORDER BY date ASC`;
-  return db.prepare(sql).all(days) as DailyTokenUsage[];
+  return db.prepare(sql).all(...params) as DailyTokenUsage[];
 }
 
 export function getTokenUsageForTask(taskId: string): TokenUsageRecord[] {
