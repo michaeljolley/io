@@ -211,7 +211,7 @@ export default function UsageView() {
   }
 
   return (
-    <div className="mx-auto flex flex-1 w-full max-w-6xl flex-col gap-6 overflow-y-auto p-6 text-zinc-200 min-h-0">
+    <div className="mx-auto w-full max-w-6xl flex flex-col gap-6 p-6 text-zinc-200">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-4xl leading-none text-white" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
