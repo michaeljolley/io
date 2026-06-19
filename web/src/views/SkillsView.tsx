@@ -337,7 +337,7 @@ export default function SkillsView() {
   };
 
   return (
-    <div className="h-full">
+    <div className="flex-1 min-h-0">
       <div className="grid h-full min-h-0 grid-cols-[16rem_minmax(0,1fr)]">
         <aside className={`min-h-0 overflow-hidden flex flex-col border-r border-white/[0.06]`}>
           <div className="border-b border-white/[0.06] p-3">

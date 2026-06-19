@@ -280,7 +280,7 @@ export default function SettingsView() {
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 p-6 text-zinc-200">
+    <div className="mx-auto flex flex-1 min-h-0 overflow-y-auto w-full max-w-5xl flex-col gap-6 p-6 text-zinc-200">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl leading-none text-zinc-100" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
