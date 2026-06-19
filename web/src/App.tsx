@@ -29,12 +29,13 @@ export function App() {
       {showChrome && <AppSidebar />}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {showChrome && <AppHeader />}
-        <main className="flex-1 overflow-hidden flex flex-col min-h-0 ] relative bg-[var(--base-darker-gray)]">
+        <main className="flex-1 overflow-hidden flex flex-col min-h-0 relative bg-[var(--base-darker-gray)]">
           <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
             <div className="orb orb-pink" />
             <div className="orb orb-gray" />
           </div>
-          <div className="relative flex-1 overflow-hidden flex flex-col min-h-0" style={{ zIndex: 1 }}>
+          {/* Allow inner route content to scroll vertically when content exceeds the viewport. */}
+          <div className="relative flex-1 overflow-auto flex flex-col min-h-0" style={{ zIndex: 1 }}>
             <AppRoutes />
           </div>
         </main>
